@@ -60,6 +60,8 @@ All notable changes to this project will be documented in this file.
 cozy-kids-launcher/
   README.md
   LICENSE
+  VERSION
+  CHANGELOG.md
   docs/
     ARCHITECTURE.md
     INSTALL.md
@@ -70,12 +72,45 @@ cozy-kids-launcher/
     config.example.json
   scripts/
     install.sh
+    install-one-liner.sh
+    update.sh
+    deploy.sh
   src/
     server.py
     index.html
     no-media.html
     launcher.sh
 ```
+
+## [Unreleased] - Automated Updates & Easy Install
+
+### One-Line Installer
+
+- Added `scripts/install-one-liner.sh` — download, extract, and install with a single `curl | bash` command
+- No need to clone the repository manually
+- README updated to feature the one-liner prominently
+
+### Update Mechanism
+
+- Added `VERSION` file for semver tracking
+- Added `scripts/update.sh` — standalone updater
+  - Compares installed version with latest on GitHub
+  - Downloads and re-runs installer while preserving user config
+  - `--check-only` to check without installing
+  - `--force` to reinstall even if versions match
+- Server: `/api/version` endpoint for local version discovery
+- Admin panel: version display + "Check for updates" button
+
+### Simplified Documentation
+
+- Completely rewrote `docs/INSTALL.md` for non-technical parents
+  - One-liner command front and center
+  - Plain-language prerequisites
+  - Step-by-step "what happens after installing"
+  - Troubleshooting section with common issues
+  - Table of common options in simple terms
+  - Update instructions
+  - PIN reset instructions
 
 ## [Original] - Initial Release
 

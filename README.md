@@ -74,6 +74,8 @@ Recommended screenshots:
 cozy-kids-launcher/
   README.md
   LICENSE
+  VERSION
+  CHANGELOG.md
   docs/
     ARCHITECTURE.md
     INSTALL.md
@@ -84,6 +86,9 @@ cozy-kids-launcher/
     config.example.json
   scripts/
     install.sh
+    install-one-liner.sh
+    update.sh
+    deploy.sh
   src/
     server.py
     index.html
@@ -102,22 +107,17 @@ Short version:
 
 More here: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-## Installation status
+## Installation
 
-The project now includes a first real installer at `scripts/install.sh`.
+**One line. Open a terminal, paste, press Enter.**
 
-It already:
+```bash
+curl -fsSL https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/scripts/install-one-liner.sh | bash
+```
 
-- installs the launcher into a target user account
-- creates autostart and desktop shortcut entries
-- writes a starter config
-- auto-detects system language by default
-- allows `de`, `en`, or `auto` language selection
-- supports configurable browser launch mode (`window`, `fullscreen`, `kiosk`)
+It downloads, installs, and sets everything up automatically. Log out and back in — the launcher starts on its own.
 
-Before broad public release, it still needs more cross-system testing and packaging polish.
-
-See: [docs/INSTALL.md](docs/INSTALL.md)
+For details, options, and troubleshooting, see [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Privacy
 

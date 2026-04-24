@@ -1,181 +1,144 @@
 # Install Guide
 
-## Status
+## The Easy Way (One Line)
 
-The repository now includes a first real installer at `scripts/install.sh`.
-
-It is meant to turn the current proven setup into a reusable user-level install flow, while still keeping the project local-first and understandable.
-
-Current scope:
-
-- installs into one Linux user account
-- writes a ready-to-run local launcher setup
-- creates autostart and desktop shortcut entries
-- auto-detects the system language for installer defaults
-- supports manual language override with `--lang`
-- keeps shutdown integration optional
-- supports configurable browser launch mode
-
-## Target platform
-
-Currently intended for:
-
-- Ubuntu-based Linux
-- KDE Plasma desktop session
-- local user autostart
-- Firefox or Chromium-style kiosk browser
-- systemd-based systems
-
-## Quick start
-
-Run from the repository root:
+Open a terminal and paste this one line. That's it.
 
 ```bash
-bash scripts/install.sh --user your-child-user
+curl -fsSL https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/scripts/install-one-liner.sh | bash
 ```
 
-Useful options:
+It downloads the launcher, installs it for your user, and sets everything up automatically.
+
+## What You Need First
+
+- A Linux computer (Ubuntu, Linux Mint, or similar)
+- Firefox or Chromium browser installed (usually already there)
+- Python 3 (usually already there)
+- Internet connection for the download
+
+## What Happens After Installing
+
+1. **Log out and log back in** — the kids launcher opens automatically
+2. **Your child taps an app tile** to open apps
+3. **You tap "Parent"** to customize tiles, add apps, change colors
+4. **A shortcut appears on your desktop** to reopen kids mode anytime
+
+That's it. No complex configuration needed.
+
+## Manual Install (If You Prefer)
+
+If you already downloaded the repository:
+
+```bash
+bash scripts/install.sh --user $(id -un)
+```
+
+Or with specific options:
 
 ```bash
 bash scripts/install.sh \
-  --user your-child-user \
+  --user $(id -un) \
   --lang auto \
-  --browser auto \
   --theme rosa \
-  --layout gross \
-  --launch-mode window
+  --layout gross
 ```
 
-## Language handling
+## Common Options
 
-The installer now supports:
+| Option | What it does |
+|--------|-------------|
+| `--user <name>` | Install for this user (default: current user) |
+| `--lang auto` | Detect language automatically (default) |
+| `--lang de` | German |
+| `--lang en` | English |
+| `--theme rosa` | Pink theme (default) |
+| `--theme lila` | Purple |
+| `--theme blau` | Blue |
+| `--theme gruen` | Green |
+| `--theme regenbogen` | Rainbow |
+| `--layout gross` | Big tiles: 4 per page (default) |
+| `--layout klein` | Small tiles: 9 per page |
+| `--launch-mode window` | Normal window (default, most reliable) |
+| `--launch-mode fullscreen` | Fullscreen |
+| `--launch-mode kiosk` | Strict kiosk mode |
+| `--install-shutdown-helper` | Allow child to shut down the computer |
+| `--force` | Re-install even if already installed |
 
-- `--lang auto` to detect system language from `LANG` / locale
-- `--lang de`
-- `--lang en`
+## How to Remove
 
-The detected or chosen language is used for:
+The installer creates an uninstall note at:
 
-- default launcher title
-- parent button label
-- exit button label
-- shutdown button label
-- desktop shortcut naming
-- autostart entry naming
-- fallback no-media screen
+```
+~/.local/share/cozy-kids-launcher/uninstall.txt
+```
 
-This is intentionally simple because the amount of fixed UI text is small.
+Open that file and delete the listed paths to fully remove the launcher.
 
-The generated launcher UI now also uses the selected language for:
+Backups of overwritten files are also kept at:
 
-- parent settings title
-- admin placeholders and action buttons
-- layout labels
-- tile editor labels
-- default starter tile names
-- default kid-safe browser shortcut target
+```
+~/.local/share/cozy-kids-launcher-backups/<timestamp>/
+```
 
-## What the installer creates
+## How to Update
 
-User-level paths:
-
-- `~/.local/bin/cozy-kids-launcher`
-- `~/.local/share/cozy-kids-launcher/`
-- `~/.config/cozy-kids-launcher/config.json`
-- `~/.config/autostart/cozy-kids-launcher-autostart.desktop`
-- `~/Desktop/Cozy Kids Launcher.desktop` or `~/Schreibtisch/Kinder-Modus.desktop` depending on system layout
-- `~/.local/share/applications/cozy-kids-launcher.desktop`
-
-Inside the app directory, the installer writes:
-
-- local Python server
-- launcher UI
-- no-media fallback page
-- uninstall note
-
-## Runtime model
-
-A working install uses these building blocks:
-
-1. local config JSON
-2. local Python launcher server on localhost
-3. fullscreen browser window in kiosk mode
-4. user autostart entry
-5. desktop shortcut to reopen kids mode
-6. optional local shutdown action
-
-## Supported installer options
-
-- `--user <name>` install target user
-- `--home <path>` override resolved home directory
-- `--lang <auto|de|en>` language selection
-- `--browser <auto|firefox|chromium|chromium-browser|google-chrome>`
-- `--title <text>` custom default title
-- `--theme <rosa|lila|blau|gruen|regenbogen>`
-- `--layout <gross|klein>`
-- `--launch-mode <window|fullscreen|kiosk>`
-- `--parent-label <text>`
-- `--exit-label <text>`
-- `--install-shutdown-helper`
-- `--force`
-
-## Browser handling
-
-The launcher start mode is now configurable:
-
-- `window` default, most robust
-- `fullscreen` good compromise when supported cleanly
-- `kiosk` strict mode, but may behave differently depending on desktop environment, VM, graphics stack, or Firefox build
-
-This changed because kiosk mode can render a black screen in some otherwise valid environments even when the launcher itself works.
-
-When `--browser auto` is used, the installer currently checks in this order:
-
-1. Firefox
-2. Chromium
-3. chromium-browser
-4. Google Chrome
-
-If none are found, installation aborts with a clear error.
-
-## Shutdown behavior
-
-Shutdown is optional.
-
-By default, the UI still includes the shutdown button label, but the backend only performs a shutdown when the install was created with:
+Run the update script that was installed with the launcher:
 
 ```bash
---install-shutdown-helper
+bash ~/.local/share/cozy-kids-launcher/scripts/update.sh
 ```
 
-This keeps the default install safer while preserving the feature path.
+Or check for updates without installing:
 
-## Backups and rollback
+```bash
+bash ~/.local/share/cozy-kids-launcher/scripts/update.sh --check-only
+```
 
-Before overwriting generated files, the installer creates backups under:
+You can also re-run the original one-liner installer — it safely updates while keeping your config and tiles.
 
-- `~/.local/share/cozy-kids-launcher-backups/<timestamp>/`
+## Troubleshooting
 
-It also writes uninstall notes to:
+**"No supported browser found"**
 
-- `~/.local/share/cozy-kids-launcher/uninstall.txt`
+Install Firefox or Chromium first:
 
-## Current limitations
+```bash
+sudo apt-get install firefox
+```
 
-This is a strong first universal installer pass, but not the final packaging endpoint yet.
+**Kids launcher does not start after login**
 
-Still to improve:
+Make sure the autostart file exists:
 
-- proper per-language tile defaults beyond the base UI labels
-- optional protected parent settings PIN
-- broader desktop-environment testing beyond Plasma
-- distro-specific shutdown packaging polish
-- richer browser command templating for edge cases
+```bash
+ls ~/.config/autostart/cozy-kids-launcher-autostart.desktop
+```
 
-## Recommendation
+If missing, re-run the installer.
 
-Right now this installer is best suited for:
+**Launcher shows a black screen**
 
-- technically comfortable parents
-- tinkerers
-- Linux users happy to test and refine a near-release setup
+Your desktop environment may not support kiosk mode well. Try installing with `--launch-mode window` or `--launch-mode fullscreen`.
+
+**Forgot the parent PIN**
+
+Delete the PIN from the config file:
+
+```bash
+python3 -c "import json; d=json.load(open('$HOME/.config/cozy-kids-launcher/config.json')); d['pinHash']=''; json.dump(d, open('$HOME/.config/cozy-kids-launcher/config.json','w'), indent=2)"
+```
+
+Then re-open the launcher.
+
+## What Gets Installed Where
+
+| File | Purpose |
+|------|---------|
+| `~/.local/bin/cozy-kids-launcher` | The command that starts kids mode |
+| `~/.local/share/cozy-kids-launcher/` | App files: server, UI, version |
+| `~/.config/cozy-kids-launcher/config.json` | Your tiles, colors, labels, PIN |
+| `~/.config/autostart/...` | Auto-starts on login |
+| `~/Desktop/Kinder-Modus.desktop` | Desktop shortcut to reopen |
+
+Everything stays on your computer. Nothing is sent to the internet.
