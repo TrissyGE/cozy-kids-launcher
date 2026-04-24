@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="{{ACTIVE_LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{APP_NAME}}</title>
+<style>
+  :root { --bg1:#ffd6e8; --bg2:#ffeef6; --card:rgba(255,255,255,.92); --text:#5f2148; --shadow:0 14px 40px rgba(125,35,84,.18); }
+  body.theme-rosa { --bg1:#ffd6e8; --bg2:#ffeef6; --text:#5f2148; }
+  body.theme-lila { --bg1:#e3d6ff; --bg2:#f4eeff; --text:#45216a; }
+  body.theme-blau { --bg1:#d7ebff; --bg2:#eef7ff; --text:#1f4670; }
+  body.theme-gruen { --bg1:#d9f7df; --bg2:#effcf1; --text:#24563a; }
+  body.theme-regenbogen { --bg1:#ffd6e8; --bg2:#d7ebff; --text:#5f2148; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:system-ui,sans-serif; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text); overflow:hidden; }
+  .screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px 80px; }
+  .wrap { width:min(1180px,94vw); }
+  .titlewrap { height:112px; display:flex; align-items:flex-end; justify-content:center; margin-bottom:22px; }
+  h1 { text-align:center; font-size:clamp(2rem,5vw,3.5rem); margin:0; min-height:72px; display:flex; align-items:center; justify-content:center; }
+  .grid { display:grid; gap:26px; min-height:430px; }
+  .grid.gross { grid-template-columns:repeat(2,minmax(240px,1fr)); grid-template-rows:repeat(2,190px); }
+  .grid.klein { grid-template-columns:repeat(3,minmax(180px,1fr)); grid-template-rows:repeat(3,140px); }
+  .tile { border:0; border-radius:32px; background:var(--card); box-shadow:var(--shadow); font-weight:700; color:var(--text); cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; width:100%; height:100%; }
+  .placeholder { visibility:hidden; pointer-events:none; }
+  .grid.gross .tile { font-size:clamp(1.3rem,2.5vw,2rem); }
+  .grid.klein .tile { font-size:clamp(1rem,2vw,1.35rem); }
+  .grid.gross .emoji { font-size:4rem; }
+  .grid.klein .emoji { font-size:2.6rem; }
+  .cornerbar { position:fixed; left:20px; right:20px; bottom:18px; display:flex; justify-content:space-between; pointer-events:none; }
+  .smallcluster { display:flex; gap:12px; pointer-events:auto; }
+  .smallbtn { border:0; border-radius:18px; min-height:54px; min-width:110px; padding:0 18px; font-size:1rem; font-weight:700; background:#fff7fb; color:var(--text); box-shadow:var(--shadow); cursor:pointer; }
+  .nav { position:fixed; top:50%; transform:translateY(-50%); width:56px; height:120px; border:0; border-radius:22px; background:rgba(255,255,255,.88); box-shadow:var(--shadow); font-size:2rem; font-weight:700; color:var(--text); cursor:pointer; }
+  .nav.left { left:14px; }
+  .nav.right { right:14px; }
+  .hidden { display:none !important; }
+  .admin { max-width:1250px; margin:0 auto; }
+  .panel { background:rgba(255,255,255,.96); border-radius:24px; box-shadow:var(--shadow); padding:24px; }
+  .panel h2 { margin-top:0; margin-bottom:18px; font-size:1.7rem; }
+  .row2 { display:grid; grid-template-columns:1fr 220px 220px 220px; gap:12px; margin-bottom:18px; }
+  .tileform { display:grid; grid-template-columns:90px minmax(180px,1fr) 140px minmax(260px,1.6fr) 90px 90px 90px; gap:12px; align-items:center; margin-bottom:14px; }
+  input, select { font-size:1rem; padding:12px 14px; border-radius:12px; border:1px solid #e8bfd2; background:white; color:var(--text); width:100%; }
+  label.chk { display:flex; align-items:center; gap:8px; font-weight:600; background:white; border:1px solid #e8bfd2; border-radius:12px; padding:12px 14px; }
+  .save { background:#e85a9c; color:white; }
+  .pinoverlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:100; }
+  .pinbox { background:white; border-radius:24px; padding:32px; max-width:420px; width:90%; box-shadow:var(--shadow); text-align:center; }
+  .pinbox h2 { margin:0 0 18px; }
+  .pinbox input { text-align:center; font-size:1.5rem; letter-spacing:8px; margin-bottom:12px; }
+  .pinbox .err { color:#c00; font-weight:600; min-height:24px; margin-bottom:8px; }
+  .pinbox .hint { color:#888; font-size:.9rem; margin-top:12px; }
+  .adminpagenav { display:flex; justify-content:center; gap:12px; margin-bottom:14px; }
+  .muted { color:#888; font-size:.9rem; }
+</style>
+</head>
+<body class="theme-{{DEFAULT_THEME}}">
+<button id="navLeft" class="nav left hidden" onclick="changePage(-1)">‹</button>
+<button id="navRight" class="nav right hidden" onclick="changePage(1)">›</button>
+<div id="kids" class="screen">
+  <div class="wrap">
+    <div class="titlewrap"><h1 id="title"></h1></div>
+    <div id="grid" class="grid {{DEFAULT_LAYOUT}}"></div>
+  </div>
+</div>
+<div id="pin" class="pinoverlay hidden">
+  <div class="pinbox">
+    <h2 id="pinTitle">{{PIN_TITLE}}</h2>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')submitPin()">
+    <div class="err" id="pinErr"></div>
+    <button class="smallbtn save" onclick="submitPin()">{{LABEL_BACK}}</button>
+    <div class="hint" id="pinHint"></div>
+  </div>
+</div>
+<div id="admin" class="screen hidden">
+  <div class="wrap admin">
+    <div class="panel">
+      <h2 id="adminTitle">{{ADMIN_TITLE}}</h2>
+      <div class="row2">
+        <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}">
+        <select id="cfgTheme"><option value="rosa">Rosa</option><option value="lila">Lila</option><option value="blau">Blau</option><option value="gruen">Grün</option><option value="regenbogen">Regenbogen</option></select>
+        <select id="cfgLayoutMode"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
+        <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
+      </div>
+      <div class="row2">
+        <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
+        <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
+        <button id="backBtn" class="smallbtn" onclick="closeAdmin()">{{LABEL_BACK}}</button>
+        <button id="saveBtn" class="smallbtn save" onclick="saveConfig()">{{LABEL_SAVE}}</button>
+      </div>
+      <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
+        <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
+        <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">
+        <button class="smallbtn" onclick="savePin()">{{PIN_SET}}</button>
+        <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
+      </div>
+      <div id="pinMsg" class="muted"></div>
+      <div id="forms"></div>
+      <div class="adminpagenav" id="adminPageNav"></div>
+    </div>
+  </div>
+</div>
+<div class="cornerbar">
+  <div class="smallcluster"><button id="shutdownBtn" class="smallbtn" onclick="shutdownNow()"></button></div>
+  <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="openAdmin()"></button></div>
+</div>
+<script>
+let cfg=null, appOptions=[], adminPage=0, pinUnlocked=false;
+const uiText = {
+  adminTitle: {{JSON_ADMIN_TITLE}},
+  placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
+  placeholderParentLabel: {{JSON_PLACEHOLDER_PARENT_LABEL}},
+  placeholderExitLabel: {{JSON_PLACEHOLDER_EXIT_LABEL}},
+  addTile: {{JSON_ADD_TILE}},
+  back: {{JSON_BACK}},
+  save: {{JSON_SAVE}},
+  visible: {{JSON_VISIBLE}},
+  specialMedia: {{JSON_SPECIAL_MEDIA}},
+  noApp: {{JSON_NO_APP}},
+  customCmd: {{JSON_CUSTOM_CMD}},
+  moveUp: {{JSON_MOVE_UP}},
+  moveDown: {{JSON_MOVE_DOWN}},
+  delete: {{JSON_DELETE}},
+  newTile: {{JSON_NEW_TILE}},
+  pinTitle: {{JSON_PIN_TITLE}},
+  pinPlaceholder: {{JSON_PIN_PLACEHOLDER}},
+  pinWrong: {{JSON_PIN_WRONG}},
+  pinSet: {{JSON_PIN_SET}},
+  pinChange: {{JSON_PIN_CHANGE}},
+  pinRemove: {{JSON_PIN_REMOVE}},
+  pinConfirm: {{JSON_PIN_CONFIRM}},
+  pinMismatch: {{JSON_PIN_MISMATCH}},
+  pinSaved: {{JSON_PIN_SAVED}},
+  pinRemoved: {{JSON_PIN_REMOVED}},
+  adminPagePrev: {{JSON_ADMIN_PAGE_PREV}},
+  adminPageNext: {{JSON_ADMIN_PAGE_NEXT}}
+};
+function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
+function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
+function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageSize())); }
+function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }
+async function loadConfig(){ cfg=await fetch('/api/config').then(r=>r.json()); if(typeof cfg.currentPage!=='number') cfg.currentPage=0; renderAll(); }
+async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json()); }
+function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; document.getElementById('shutdownBtn').textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
+function renderKids(){ const grid=document.getElementById('grid'); grid.innerHTML=''; const tiles=tilesForPage(cfg.currentPage); const size=pageSize(); for(let i=0;i<size;i++){ if(i<tiles.length){ const tile=tiles[i]; const btn=document.createElement('button'); btn.className='tile'; btn.onclick=()=>launchTile(tile.id); btn.innerHTML='<div class="emoji">'+(tile.emoji||'✨')+'</div><div>'+(tile.label||'')+'</div>'; grid.appendChild(btn);} else { const ph=document.createElement('div'); ph.className='tile placeholder'; ph.innerHTML='<div class="emoji">✨</div><div></div>'; grid.appendChild(ph);} } }
+function renderNav(){ document.getElementById('navLeft').classList.toggle('hidden', cfg.currentPage<=0); document.getElementById('navRight').classList.toggle('hidden', cfg.currentPage>=pageCount()-1); }
+function changePage(dir){ cfg.currentPage=Math.max(0,Math.min(pageCount()-1,cfg.currentPage+dir)); renderAll(); }
+function launchTile(id){ fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).then(r=>{ if(r.redirected) window.location=r.url; }).catch(()=>{}); }
+
+// PIN handling
+function openAdmin(){ pinUnlocked=false; if(cfg.pinHash){ showPin(); return; } enterAdmin(); }
+function showPin(){ document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
+function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
+async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); enterAdmin(); } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
+function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); renderAdmin(); }
+function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); pinUnlocked=false; }
+function shutdownNow(){ fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
+function exitKids(){ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
+function tilePageIndex(idx){ return Math.floor(idx / pageSize()); }
+
+// PIN setup
+async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const hash=await sha256(p1); cfg.pinHash=hash; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
+async function removePin(){ const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; cfg.pinHash=''; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
+function updatePinButton(){ const btn=document.getElementById('removePinBtn'); btn.textContent=cfg.pinHash?uiText.pinRemove:uiText.pinRemove; btn.style.opacity=cfg.pinHash?1:.5; }
+async function sha256(str){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,16); }
+
+function renderAdmin(){ document.getElementById('adminTitle').textContent=uiText.adminTitle; document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle; document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel; document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel; document.getElementById('addTileBtn').textContent=uiText.addTile; document.getElementById('backBtn').textContent=uiText.back; document.getElementById('saveBtn').textContent=uiText.save; document.getElementById('cfgTitle').value=cfg.title||''; document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}'; document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}'; document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; updatePinButton(); const forms=document.getElementById('forms'); forms.innerHTML=''; cfg.tiles.forEach((tile, idx)=>{ const row=document.createElement('div'); row.className='tileform'; row.style.display = tilePageIndex(idx) === adminPage ? 'grid' : 'none'; const emoji=document.createElement('input'); emoji.value=tile.emoji||''; emoji.onchange=e=>tile.emoji=e.target.value; const label=document.createElement('input'); label.value=tile.label||''; label.onchange=e=>tile.label=e.target.value; const visibleWrap=document.createElement('label'); visibleWrap.className='chk'; const visible=document.createElement('input'); visible.type='checkbox'; visible.checked=!!tile.visible; visible.onchange=e=>tile.visible=e.target.checked; visibleWrap.append(visible,' '+uiText.visible); const select=document.createElement('select'); const special=document.createElement('option'); special.value='special:filme-musik'; special.textContent=uiText.specialMedia; select.appendChild(special); const empty=document.createElement('option'); empty.value=''; empty.textContent=uiText.noApp; select.appendChild(empty); for(const app of appOptions){ const opt=document.createElement('option'); opt.value=app.exec; opt.textContent=app.name; select.appendChild(opt); } const currentExec=Array.isArray(tile.cmd)?tile.cmd.join(' '):''; select.value=currentExec; if(select.value!==currentExec){ const opt=document.createElement('option'); opt.value=currentExec; opt.textContent=currentExec||uiText.customCmd; opt.selected=true; select.appendChild(opt);} select.onchange=e=>tile.cmd=[e.target.value]; const up=document.createElement('button'); up.className='smallbtn'; up.textContent=uiText.moveUp; up.onclick=()=>moveUp(idx); const down=document.createElement('button'); down.className='smallbtn'; down.textContent=uiText.moveDown; down.onclick=()=>moveDown(idx); const del=document.createElement('button'); del.className='smallbtn'; del.textContent=uiText.delete; del.onclick=()=>deleteTile(idx); row.append(emoji,label,visibleWrap,select,up,down,del); forms.appendChild(row); }); renderAdminPageNav(); }
+function moveUp(idx){ if(idx<1) return; const tmp=cfg.tiles[idx-1]; cfg.tiles[idx-1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
+function moveDown(idx){ if(idx>=cfg.tiles.length-1) return; const tmp=cfg.tiles[idx+1]; cfg.tiles[idx+1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
+function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
+function addTile(){ cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); renderAll(); adminPage=pageCount()-1; renderAdmin(); }
+function renderAdminPageNav(){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1, Math.ceil(cfg.tiles.length / pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
+async function saveConfig(){ cfg.title=document.getElementById('cfgTitle').value; cfg.theme=document.getElementById('cfgTheme').value; cfg.layoutMode=document.getElementById('cfgLayoutMode').value; cfg.parentLabel=document.getElementById('cfgParentLabel').value; cfg.exitLabel=document.getElementById('cfgExitLabel').value; cfg.currentPage=0; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); renderAll(); closeAdmin(); }
+(async()=>{ await loadApps(); await loadConfig(); })();
+</script>
+</body>
+</html>

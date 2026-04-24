@@ -1,0 +1,8 @@
+assets/screenshots/*.png
+assets/screenshots/*.jpg
+assets/screenshots/*.jpeg
+assets/screenshots/*.webp
+*.log
+.DS_Store
+__pycache__/
+*.pyc

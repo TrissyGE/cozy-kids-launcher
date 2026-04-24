@@ -1,0 +1,38 @@
+{
+  "title": "Hallo Kiddo 🌈",
+  "theme": "rosa",
+  "layoutMode": "gross",
+  "papaLabel": "Papa",
+  "exitLabel": "Kindermodus beenden",
+  "currentPage": 0,
+  "tiles": [
+    {
+      "id": "paint",
+      "label": "Malen",
+      "emoji": "🎨",
+      "cmd": ["tuxpaint"],
+      "visible": true
+    },
+    {
+      "id": "games",
+      "label": "Lernspiele",
+      "emoji": "🧩",
+      "cmd": ["gcompris"],
+      "visible": true
+    },
+    {
+      "id": "music",
+      "label": "Filme und Musik",
+      "emoji": "🎵",
+      "cmd": ["special:filme-musik"],
+      "visible": true
+    },
+    {
+      "id": "browser",
+      "label": "Kinder-Internet",
+      "emoji": "🌐",
+      "cmd": ["/usr/local/bin/kids-browser"],
+      "visible": false
+    }
+  ]
+}
