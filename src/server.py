@@ -10,6 +10,7 @@ from urllib.parse import unquote
 
 HOME = os.path.expanduser("~")
 APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
+VERSION_FILE = os.path.join(APP_ROOT, "version")
 CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
@@ -107,6 +108,14 @@ def media_location():
     return None
 
 
+def get_version():
+    try:
+        with open(VERSION_FILE, "r", encoding="utf-8") as fh:
+            return fh.read().strip()
+    except Exception:
+        return "0.0.0"
+
+
 def verify_pin(pin_hash, pin):
     if not pin_hash or not pin:
         return False
@@ -131,6 +140,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response(load_cfg())
         if self.path == "/api/apps":
             return self.json_response(scan_apps())
+        if self.path == "/api/version":
+            return self.json_response({"version": get_version()})
         return super().do_GET()
 
     def do_POST(self):

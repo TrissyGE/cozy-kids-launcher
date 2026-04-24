@@ -126,6 +126,11 @@ text() {
     de:pin_removed) echo "PIN entfernt" ;;
     de:admin_page_prev) echo "← Vorherige Seite" ;;
     de:admin_page_next) echo "Nächste Seite →" ;;
+    de:update_check) echo "Auf Updates prüfen" ;;
+    de:update_available) echo "Update verfügbar" ;;
+    de:update_up_to_date) echo "Aktuell" ;;
+    de:update_error) echo "Update-Prüfung fehlgeschlagen" ;;
+    de:version_label) echo "Version" ;;
     de:install_done) echo "Installation abgeschlossen." ;;
     de:next_steps) echo "Du kannst Cozy Kids Launcher jetzt über den Desktop-Shortcut oder nach dem nächsten Login starten." ;;
     en:app_name) echo "Cozy Kids Launcher" ;;
@@ -172,6 +177,11 @@ text() {
     en:pin_removed) echo "PIN removed" ;;
     en:admin_page_prev) echo "← Previous page" ;;
     en:admin_page_next) echo "Next page →" ;;
+    en:update_check) echo "Check for updates" ;;
+    en:update_available) echo "Update available" ;;
+    en:update_up_to_date) echo "Up to date" ;;
+    en:update_error) echo "Update check failed" ;;
+    en:version_label) echo "Version" ;;
     en:install_done) echo "Installation complete." ;;
     en:next_steps) echo "You can now launch Cozy Kids Launcher from the desktop shortcut or after the next login." ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
@@ -374,6 +384,7 @@ render_template() {
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
+  export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -437,6 +448,11 @@ PIN_SAVED="$(text pin_saved)"
 PIN_REMOVED="$(text pin_removed)"
 ADMIN_PAGE_PREV="$(text admin_page_prev)"
 ADMIN_PAGE_NEXT="$(text admin_page_next)"
+UPDATE_CHECK="$(text update_check)"
+UPDATE_AVAILABLE="$(text update_available)"
+UPDATE_UP_TO_DATE="$(text update_up_to_date)"
+UPDATE_ERROR="$(text update_error)"
+VERSION_LABEL="$(text version_label)"
 DEFAULT_TILE_PAINT="$(text tile_paint)"
 DEFAULT_TILE_GAMES="$(text tile_games)"
 DEFAULT_TILE_MUSIC="$(text tile_music)"
@@ -470,6 +486,11 @@ JSON_PIN_SAVED="$(json_text "$PIN_SAVED")"
 JSON_PIN_REMOVED="$(json_text "$PIN_REMOVED")"
 JSON_ADMIN_PAGE_PREV="$(json_text "$ADMIN_PAGE_PREV")"
 JSON_ADMIN_PAGE_NEXT="$(json_text "$ADMIN_PAGE_NEXT")"
+JSON_UPDATE_CHECK="$(json_text "$UPDATE_CHECK")"
+JSON_UPDATE_AVAILABLE="$(json_text "$UPDATE_AVAILABLE")"
+JSON_UPDATE_UP_TO_DATE="$(json_text "$UPDATE_UP_TO_DATE")"
+JSON_UPDATE_ERROR="$(json_text "$UPDATE_ERROR")"
+JSON_VERSION_LABEL="$(json_text "$VERSION_LABEL")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
@@ -557,6 +578,11 @@ Remove these paths to uninstall:
 Backups from this run are in:
 - $BACKUP_DIR
 EOF
+
+# Write version marker
+if [[ -f "$REPO_DIR/VERSION" ]]; then
+  install -m 0644 "$REPO_DIR/VERSION" "$APP_ROOT/version"
+fi
 
 chown -R "$TARGET_USER":"$TARGET_USER" "$APP_ROOT" "$CFG_DIR" "$CACHE_DIR"
 chown "$TARGET_USER":"$TARGET_USER" "$RUNTIME_BIN" "$AUTOSTART_FILE" "$DESKTOP_FILE" "$APP_DESKTOP_FILE"
