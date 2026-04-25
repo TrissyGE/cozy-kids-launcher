@@ -34,13 +34,11 @@
   .nav.right { right:14px; }
   .hidden { display:none !important; }
   .admin { max-width:1250px; margin:0 auto; }
-  #admin.screen { align-items:flex-start; padding:16px 80px 100px; overflow-y:auto; }
-  .panel { background:rgba(255,255,255,.96); border-radius:24px; box-shadow:var(--shadow); padding:20px; }
-  .panel h2 { margin-top:0; margin-bottom:14px; font-size:1.4rem; }
-  .admin .row2 { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
-  .admin .row2 > * { flex:1 1 180px; min-width:140px; }
-  .tileform { display:grid; grid-template-columns:64px 1fr 110px 1.2fr 72px 72px 72px; gap:8px; align-items:center; margin-bottom:10px; }
-  .admin input, .admin select { font-size:0.95rem; padding:8px 10px; }
+  #admin .wrap { max-height:calc(100vh - 120px); overflow-y:auto; padding-right:8px; }
+  .panel { background:rgba(255,255,255,.96); border-radius:24px; box-shadow:var(--shadow); padding:24px; }
+  .panel h2 { margin-top:0; margin-bottom:18px; font-size:1.7rem; }
+  .row2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
+  .tileform { display:grid; grid-template-columns:70px 1fr 120px 1.2fr 70px 70px 70px; gap:10px; align-items:center; margin-bottom:12px; }
   input, select { font-size:1rem; padding:12px 14px; border-radius:12px; border:1px solid #e8bfd2; background:white; color:var(--text); width:100%; }
   label.chk { display:flex; align-items:center; gap:8px; font-weight:600; background:white; border:1px solid #e8bfd2; border-radius:12px; padding:12px 14px; }
   .save { background:#e85a9c; color:white; }
