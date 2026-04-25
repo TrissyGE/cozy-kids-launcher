@@ -1,23 +1,30 @@
 # Roadmap
 
+## Completed
+
+- [x] Package current working setup into a single installer
+- [x] Remove machine-specific assumptions
+- [x] Add optional PIN for parent settings
+- [x] Improve tile reordering UX (move up / move down)
+- [x] Admin page navigation (paginated tile editing)
+- [x] One-line installer (`curl | bash`)
+- [x] Standalone update mechanism with version check
+- [x] Hardened Python server (threading, input validation, no `shell=True`)
+- [x] Curated app recommendations with auto-detection
+- [x] German and English language support
+- [x] Simplified install documentation for non-technical parents
+
 ## Near term
 
-- package current working setup into a single installer
-- remove machine-specific assumptions
-- capture polished screenshots
-- add optional PIN for parent settings
-- improve tile reordering UX
-
-## Medium term
-
-- support Chromium as well as Firefox
-- support multiple Linux desktop environments
-- theme editor beyond presets
-- optional export/import of launcher configs
+- [ ] Capture polished screenshots for GitHub
+- [ ] Support Chromium as well as Firefox
+- [ ] Support multiple Linux desktop environments
+- [ ] Theme editor beyond presets
+- [ ] Optional export/import of launcher configs
 
 ## Future ideas
 
-- multiple child profiles
-- scheduled availability of specific apps
-- whitelist browser mode
-- optional audio feedback and accessibility modes
+- [ ] Multiple child profiles
+- [ ] Scheduled availability of specific apps
+- [ ] Whitelist browser mode
+- [ ] Optional audio feedback and accessibility modes
