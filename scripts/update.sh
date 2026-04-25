@@ -29,7 +29,8 @@ die() {
 version_ge() {
   local a="$1" b="$2"
   # Use sort -V if available (GNU coreutils)
-  if printf '%s\n%s\n' "$a" "$b" | sort -V -C 2>/dev/null; then
+  # Checks if b <= a (equivalent to a >= b)
+  if printf '%s\n%s\n' "$b" "$a" | sort -V -C 2>/dev/null; then
     return 0
   fi
   # Fallback: naive numeric compare
