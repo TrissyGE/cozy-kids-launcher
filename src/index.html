@@ -55,7 +55,7 @@
   .rec-card { background:white; border-radius:18px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; box-shadow:0 4px 16px rgba(125,35,84,.08); }
   .rec-card .emoji { font-size:2.4rem; }
   .rec-card .name { font-weight:700; font-size:1rem; text-align:center; }
-  .rec-card .pkg { font-size:.8rem; color:#888; text-align:center; }
+  .rec-card .desc { font-size:.85rem; color:#666; text-align:center; line-height:1.3; }
   .rec-card .status { font-size:.75rem; padding:4px 10px; border-radius:10px; background:#f0f0f0; }
   .rec-card .status.installed { background:#d9f7df; color:#24563a; }
   .rec-card .status.missing { background:#ffeef0; color:#c00; }
@@ -265,7 +265,9 @@ function renderRecommendations(){
     const card=document.createElement('div'); card.className='rec-card';
     const em=document.createElement('div'); em.className='emoji'; em.textContent=rec.emoji||'✨';
     const nm=document.createElement('div'); nm.className='name';
-    nm.textContent=(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id;
+    nm.textContent=(cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id;
+    const desc=document.createElement('div'); desc.className='desc';
+    desc.textContent=(cfg.language==='de'?rec.desc_de:rec.desc_en)||'';
     const st=document.createElement('div'); st.className='status '+(rec.installed?'installed':'missing');
     st.textContent=rec.installed?(uiText.installed||'installed'):(uiText.notInstalled||'not installed');
     const actions=document.createElement('div'); actions.className='actions';
@@ -275,23 +277,25 @@ function renderRecommendations(){
       actions.appendChild(btn);
     } else if(rec.installed){
       const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.addTile||'Add tile';
-      btn.onclick=()=>{ cfg.tiles.push({ id:rec.id, label:nm.textContent, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true }); renderAll(); persistConfig(); };
+      btn.onclick=()=>{ cfg.tiles.push({ id:rec.id, label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true }); renderAll(); persistConfig(); };
       actions.appendChild(btn);
     } else {
       const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.install||'Install';
       btn.onclick=()=>{ triggerInstall(rec); };
       actions.appendChild(btn);
     }
-    card.append(em,nm,st,actions);
+    card.append(em,nm,desc,st,actions);
     grid.appendChild(card);
   }
   panel.appendChild(grid);
+  const disclaimer=document.createElement('div'); disclaimer.className='muted'; disclaimer.style.marginTop='14px'; disclaimer.style.fontSize='.85rem'; disclaimer.textContent=cfg.language==='de'?'Diese Programme stammen aus externen Quellen und stehen in keiner Verbindung zum Cozy Kids Launcher Projekt.':'This software comes from external sources and is not affiliated with the Cozy Kids Launcher project.';
+  panel.appendChild(disclaimer);
   container.appendChild(panel);
 }
 let pendingInstallCommand='';
 function triggerInstall(rec){
   pendingInstallCommand='sudo apt install -y '+rec.package;
-  document.getElementById('installTitle').textContent=(uiText.install||'Install')+' '+((cfg.language==='de'?rec.label_de:rec.label_en)||rec.id);
+  document.getElementById('installTitle').textContent=(uiText.install||'Install')+' '+((cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id);
   fetch('/api/install-package',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:rec.package})})
     .then(r=>r.json()).then(data=>{
       const msg=document.getElementById('installMessage');
