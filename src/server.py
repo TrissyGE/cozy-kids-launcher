@@ -204,6 +204,40 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(204)
             self.end_headers()
             return
+        if action == "api/update":
+            trigger_path = os.path.join(APP_ROOT, "update-trigger.sh")
+            trigger_script = """#!/usr/bin/env bash
+set -euo pipefail
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+REPO="TrissyGE/cozy-kids-launcher"
+APP_ID="cozy-kids-launcher"
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL -o "$TMP_DIR/cozy.zip" "https://github.com/$REPO/archive/refs/heads/main.zip"
+elif command -v wget >/dev/null 2>&1; then
+  wget -qO "$TMP_DIR/cozy.zip" "https://github.com/$REPO/archive/refs/heads/main.zip"
+else
+  exit 1
+fi
+unzip -q "$TMP_DIR/cozy.zip" -d "$TMP_DIR/"
+REPO_DIR="$TMP_DIR/cozy-kids-launcher-main"
+if [[ -f "$HOME/.config/$APP_ID/config.json" ]]; then
+  cp "$HOME/.config/$APP_ID/config.json" "$TMP_DIR/config-backup.json"
+fi
+cd "$REPO_DIR"
+bash scripts/install.sh --user "$(id -un)" --force
+if [[ -f "$TMP_DIR/config-backup.json" ]]; then
+  cp "$TMP_DIR/config-backup.json" "$HOME/.config/$APP_ID/config.json"
+fi
+"""
+            try:
+                with open(trigger_path, "w", encoding="utf-8") as fh:
+                    fh.write(trigger_script)
+                os.chmod(trigger_path, 0o755)
+                self.json_response({"status": "triggered"})
+            except Exception as e:
+                self.json_response({"status": "error", "message": str(e)}, 500)
+            return
         if action.startswith("launch/"):
             tile_id = unquote(action.split("/", 1)[1])
             if not tile_id or not re.match(r"^[A-Za-z0-9_-]+$", tile_id):

@@ -133,6 +133,7 @@ text() {
     de:update_up_to_date) echo "Aktuell" ;;
     de:update_error) echo "Update-Prüfung fehlgeschlagen" ;;
     de:version_label) echo "Version" ;;
+    de:update_now) echo "Jetzt aktualisieren" ;;
     de:install_done) echo "Installation abgeschlossen." ;;
     de:next_steps) echo "Du kannst Cozy Kids Launcher jetzt über den Desktop-Shortcut oder nach dem nächsten Login starten." ;;
     de:recommended_title) echo "Empfohlene Apps" ;;
@@ -188,6 +189,7 @@ text() {
     en:update_up_to_date) echo "Up to date" ;;
     en:update_error) echo "Update check failed" ;;
     en:version_label) echo "Version" ;;
+    en:update_now) echo "Update now" ;;
     en:install_done) echo "Installation complete." ;;
     en:next_steps) echo "You can now launch Cozy Kids Launcher from the desktop shortcut or after the next login." ;;
     en:recommended_title) echo "Recommended apps" ;;
@@ -398,7 +400,7 @@ render_template() {
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
-  export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL
+  export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export APP_NAME
@@ -469,6 +471,7 @@ UPDATE_AVAILABLE="$(text update_available)"
 UPDATE_UP_TO_DATE="$(text update_up_to_date)"
 UPDATE_ERROR="$(text update_error)"
 VERSION_LABEL="$(text version_label)"
+UPDATE_NOW="$(text update_now)"
 DEFAULT_TILE_PAINT="$(text tile_paint)"
 DEFAULT_TILE_GAMES="$(text tile_games)"
 DEFAULT_TILE_MUSIC="$(text tile_music)"
@@ -511,6 +514,7 @@ JSON_UPDATE_AVAILABLE="$(json_text "$UPDATE_AVAILABLE")"
 JSON_UPDATE_UP_TO_DATE="$(json_text "$UPDATE_UP_TO_DATE")"
 JSON_UPDATE_ERROR="$(json_text "$UPDATE_ERROR")"
 JSON_VERSION_LABEL="$(json_text "$VERSION_LABEL")"
+JSON_UPDATE_NOW="$(json_text "$UPDATE_NOW")"
 JSON_RECOMMENDED_TITLE="$(json_text "$RECOMMENDED_TITLE")"
 JSON_RECOMMENDED_INSTALLED="$(json_text "$RECOMMENDED_INSTALLED")"
 JSON_RECOMMENDED_NOT_INSTALLED="$(json_text "$RECOMMENDED_NOT_INSTALLED")"
