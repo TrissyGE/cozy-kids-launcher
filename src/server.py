@@ -149,6 +149,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=APP_ROOT, **kwargs)
 
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        super().end_headers()
+
     def json_response(self, payload, status=200):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -234,6 +239,13 @@ fi
                 with open(trigger_path, "w", encoding="utf-8") as fh:
                     fh.write(trigger_script)
                 os.chmod(trigger_path, 0o755)
+                # Execute after a short delay so the browser can exit first
+                subprocess.Popen(
+                    ["bash", "-c", "sleep 3 && bash '" + trigger_path + "'"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
                 self.json_response({"status": "triggered"})
             except Exception as e:
                 self.json_response({"status": "error", "message": str(e)}, 500)
