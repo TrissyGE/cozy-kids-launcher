@@ -1,14 +1,28 @@
 #!/usr/bin/env python3
+"""
+Screenshot generator for Cozy Kids Launcher GitHub page.
+
+This script temporarily modifies the installed launcher files to English,
+takes screenshots via Firefox headless, then restores the originals.
+
+Requirements: Firefox installed and the launcher server running on localhost:38431.
+"""
 import json
 import os
+import shutil
 import subprocess
 import time
 import tempfile
-import shutil
 
 HOME = os.path.expanduser("~")
+APP_ROOT = os.path.join(HOME, ".local", "share", "cozy-kids-launcher")
+INDEX = os.path.join(APP_ROOT, "index.html")
+CFG = os.path.join(HOME, ".config", "cozy-kids-launcher", "config.json")
 REPO = os.path.join(HOME, "cozy-kids-launcher")
 SHOTS = os.path.join(REPO, "screenshots")
+
+INDEX_BAK = INDEX + ".bak-screenshot"
+CFG_BAK = CFG + ".bak-screenshot"
 
 ENGLISH_UI_TEXT = '''const uiText = {
   adminTitle: "Parent Settings",
@@ -36,8 +50,8 @@ ENGLISH_UI_TEXT = '''const uiText = {
   pinMismatch: "PINs do not match",
   pinSaved: "PIN saved",
   pinRemoved: "PIN removed",
-  adminPagePrev: "← Previous",
-  adminPageNext: "Next →",
+  adminPagePrev: "<- Previous",
+  adminPageNext: "Next ->",
   updateCheck: "Check for updates",
   updateAvailable: "Update available",
   updateUpToDate: "Up to date",
@@ -59,9 +73,21 @@ ENGLISH_UI_TEXT = '''const uiText = {
   close: "Close"
 };'''
 
+
+def backup():
+    shutil.copy2(INDEX, INDEX_BAK)
+    shutil.copy2(CFG, CFG_BAK)
+
+
+def restore():
+    shutil.copy2(INDEX_BAK, INDEX)
+    shutil.copy2(CFG_BAK, CFG)
+
+
 def kill_firefox():
     subprocess.run(["pkill", "-9", "-f", "firefox"], capture_output=True)
     time.sleep(1)
+
 
 def screenshot(url, path, window_size="1280,800"):
     profile_dir = tempfile.mkdtemp(prefix="fx-screenshot-")
@@ -83,24 +109,18 @@ def screenshot(url, path, window_size="1280,800"):
     time.sleep(1)
     shutil.rmtree(profile_dir, ignore_errors=True)
 
-def make_html(path, theme="rosa", admin_mode=False):
-    # Fetch current HTML from running server
-    result = subprocess.run(
-        ["curl", "-s", "http://localhost:38431/"],
-        capture_output=True, text=True
-    )
-    html = result.stdout
 
-    if not html or "<!doctype html>" not in html.lower():
-        raise RuntimeError("Failed to fetch launcher HTML from server")
+def translate_installed_html():
+    with open(INDEX, "r", encoding="utf-8") as f:
+        html = f.read()
 
-    # Replace German uiText with English
+    # Replace German uiText block with English
     start = html.find("const uiText = {")
     end = html.find("function pageSize()")
     if start != -1 and end != -1:
         html = html[:start] + ENGLISH_UI_TEXT + "\n" + html[end:]
 
-    # Replace fallback strings
+    # Translate fallback strings
     html = html.replace("'Hallo Kiddo 🌈'", "'Hello Kiddo 🌈'")
     html = html.replace("'Papa'", "'Parent'")
     html = html.replace("'Zurück'", "'Back'")
@@ -108,7 +128,26 @@ def make_html(path, theme="rosa", admin_mode=False):
     html = html.replace("'Ausschalten'", "'Shut down'")
     html = html.replace("textContent=uiText.back||'Zurück'", "textContent=uiText.back||'Back'")
 
-    # Build embedded config
+    # Translate hardcoded select options
+    html = html.replace('<option value="rosa">Rosa</option>', '<option value="rosa">Pink</option>')
+    html = html.replace('<option value="lila">Lila</option>', '<option value="lila">Purple</option>')
+    html = html.replace('<option value="blau">Blau</option>', '<option value="blau">Blue</option>')
+    html = html.replace('<option value="gruen">Grün</option>', '<option value="gruen">Green</option>')
+    html = html.replace('<option value="regenbogen">Regenbogen</option>', '<option value="regenbogen">Rainbow</option>')
+
+    # Translate layout option labels
+    html = html.replace(">{{LABEL_LAYOUT_LARGE}}</option>", ">Large tiles</option>")
+    html = html.replace(">{{LABEL_LAYOUT_SMALL}}</option>", ">Small tiles</option>")
+
+    # Translate PIN input placeholders
+    html = html.replace('placeholder="{{PIN_SET}}"', 'placeholder="Set PIN"')
+    html = html.replace('placeholder="{{PIN_CONFIRM}}"', 'placeholder="Repeat"')
+
+    with open(INDEX, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
+def write_english_config(theme="rosa"):
     config = {
         "language": "en",
         "title": "Hello Kiddo 🌈",
@@ -128,69 +167,57 @@ def make_html(path, theme="rosa", admin_mode=False):
             {"id": "browser", "label": "Kids Web", "emoji": "🌐", "cmd": ["xdg-open", "https://www.fragfinn.de/"], "visible": False}
         ]
     }
-    config_json = json.dumps(config, ensure_ascii=False)
+    with open(CFG, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False, indent=2)
 
-    # Replace loadConfig to use embedded config instead of fetch
-    old_load = "async function loadConfig(){ cfg=await fetch('/api/config').then(r=>r.json());"
-    new_load = f"async function loadConfig(){{ cfg={config_json};"
-    html = html.replace(old_load, new_load)
 
-    # Also replace loadApps to avoid fetch errors for file:// URLs
-    old_apps = "async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json()); }"
-    new_apps = "async function loadApps(){ appOptions=[{name:'Tux Paint',exec:'tuxpaint'},{name:'GCompris',exec:'gcompris-qt'},{name:'TuxMath',exec:'tuxmath'},{name:'TuxType',exec:'tuxtype'}]; }"
-    html = html.replace(old_apps, new_apps)
-
-    # Replace loadRecommendations
-    old_rec = "async function loadRecommendations(){ try{ const r=await fetch('/api/recommendations'); recommendations=await r.json(); }catch(e){ recommendations=[]; } }"
-    new_rec = "async function loadRecommendations(){ recommendations=[]; }"
-    html = html.replace(old_rec, new_rec)
-
-    if admin_mode:
-        # Swap visibility: hide kids, show admin by default
-        html = html.replace('id="kids" class="screen"', 'id="kids" class="screen hidden"')
-        html = html.replace('id="admin" class="screen hidden"', 'id="admin" class="screen"')
-
-    with open(path, "w", encoding="utf-8") as f:
+def swap_to_admin_mode():
+    with open(INDEX, "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace('id="kids" class="screen"', 'id="kids" class="screen hidden"')
+    html = html.replace('id="admin" class="screen hidden"', 'id="admin" class="screen"')
+    with open(INDEX, "w", encoding="utf-8") as f:
         f.write(html)
+
+
+def swap_to_kids_mode():
+    with open(INDEX, "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace('id="kids" class="screen hidden"', 'id="kids" class="screen"')
+    html = html.replace('id="admin" class="screen"', 'id="admin" class="screen hidden"')
+    with open(INDEX, "w", encoding="utf-8") as f:
+        f.write(html)
+
 
 def main():
     os.makedirs(SHOTS, exist_ok=True)
-    tmpdir = tempfile.mkdtemp(prefix="ckl-screenshots-")
+    backup()
     try:
-        print("Creating home screen HTML...")
-        home_html = os.path.join(tmpdir, "home.html")
-        make_html(home_html, theme="rosa", admin_mode=False)
+        print("Translating installed HTML...")
+        translate_installed_html()
 
-        print("Taking screenshot: home screen...")
-        screenshot(
-            "file://" + home_html,
-            os.path.join(SHOTS, "screenshot-home.png")
-        )
-
-        print("Creating admin settings HTML...")
-        admin_html = os.path.join(tmpdir, "admin.html")
-        make_html(admin_html, theme="rosa", admin_mode=True)
+        print("Taking screenshot: home screen (rosa)...")
+        write_english_config("rosa")
+        screenshot("http://localhost:38431", os.path.join(SHOTS, "screenshot-home.png"))
 
         print("Taking screenshot: admin settings...")
-        screenshot(
-            "file://" + admin_html,
-            os.path.join(SHOTS, "screenshot-parent-settings.png")
-        )
-
-        print("Creating blue theme HTML...")
-        blue_html = os.path.join(tmpdir, "blue.html")
-        make_html(blue_html, theme="blau", admin_mode=False)
+        swap_to_admin_mode()
+        screenshot("http://localhost:38431", os.path.join(SHOTS, "screenshot-parent-settings.png"))
+        swap_to_kids_mode()
 
         print("Taking screenshot: blue theme...")
-        screenshot(
-            "file://" + blue_html,
-            os.path.join(SHOTS, "screenshot-theme-blue.png")
-        )
+        write_english_config("blau")
+        screenshot("http://localhost:38431", os.path.join(SHOTS, "screenshot-theme-blue.png"))
 
         print("Done! Screenshots saved to", SHOTS)
     finally:
+        print("Restoring original files...")
+        restore()
         kill_firefox()
-        shutil.rmtree(tmpdir, ignore_errors=True)
+        for bak in (INDEX_BAK, CFG_BAK):
+            if os.path.exists(bak):
+                os.remove(bak)
+
 
 if __name__ == "__main__":
     main()
