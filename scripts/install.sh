@@ -25,6 +25,16 @@ LANG_MODE="auto"
 FORCE="0"
 SKIP_BROWSER_CHECK="0"
 RECOMMENDED="0"
+EXPLICIT_LANG=0
+EXPLICIT_BROWSER=0
+EXPLICIT_TITLE=0
+EXPLICIT_THEME=0
+EXPLICIT_LAYOUT=0
+EXPLICIT_LAUNCH_MODE=0
+EXPLICIT_PARENT_LABEL=0
+EXPLICIT_EXIT_LABEL=0
+EXPLICIT_SHUTDOWN=0
+EXPLICIT_RECOMMENDED=0
 
 usage() {
   cat <<'EOF'
@@ -223,42 +233,52 @@ while [[ $# -gt 0 ]]; do
       ;;
     --lang)
       LANG_MODE="${2:-}"
+      EXPLICIT_LANG=1
       shift 2
       ;;
     --browser)
       DEFAULT_BROWSER="${2:-}"
+      EXPLICIT_BROWSER=1
       shift 2
       ;;
     --title)
       DEFAULT_TITLE="${2:-}"
+      EXPLICIT_TITLE=1
       shift 2
       ;;
     --theme)
       DEFAULT_THEME="${2:-}"
+      EXPLICIT_THEME=1
       shift 2
       ;;
     --layout)
       DEFAULT_LAYOUT="${2:-}"
+      EXPLICIT_LAYOUT=1
       shift 2
       ;;
     --launch-mode)
       DEFAULT_LAUNCH_MODE="${2:-}"
+      EXPLICIT_LAUNCH_MODE=1
       shift 2
       ;;
     --parent-label)
       DEFAULT_PARENT_LABEL="${2:-}"
+      EXPLICIT_PARENT_LABEL=1
       shift 2
       ;;
     --exit-label)
       DEFAULT_EXIT_LABEL="${2:-}"
+      EXPLICIT_EXIT_LABEL=1
       shift 2
       ;;
     --install-shutdown-helper)
       INSTALL_SHUTDOWN_HELPER="1"
+      EXPLICIT_SHUTDOWN=1
       shift
       ;;
     --recommended)
       RECOMMENDED="1"
+      EXPLICIT_RECOMMENDED=1
       shift
       ;;
     --skip-browser-check)
@@ -308,6 +328,151 @@ case "$DEFAULT_LAUNCH_MODE" in
   *) die "Unsupported launch mode: $DEFAULT_LAUNCH_MODE" ;;
 esac
 
+guided_setup() {
+  local input
+  echo ""
+  echo "========================================="
+  echo "  Guided Setup"
+  echo "========================================="
+  echo ""
+
+  if [[ "$EXPLICIT_LANG" == "0" ]]; then
+    echo "Choose language:"
+    echo "  1) English"
+    echo "  2) Deutsch"
+    echo "  3) Auto-detect (default)"
+    read -r -p "Choice [3]: " input
+    case "$input" in
+      1) LANG_MODE="en"; EXPLICIT_LANG=1 ;;
+      2) LANG_MODE="de"; EXPLICIT_LANG=1 ;;
+      *) ;;
+    esac
+    case "$LANG_MODE" in
+      auto) ACTIVE_LANG="$(auto_detect_lang)" ;;
+      de|en) ACTIVE_LANG="$LANG_MODE" ;;
+    esac
+  fi
+
+  if [[ "$EXPLICIT_BROWSER" == "0" ]]; then
+    echo ""
+    echo "Choose browser:"
+    echo "  1) Auto-detect (default)"
+    echo "  2) Firefox"
+    echo "  3) Chromium"
+    echo "  4) Google Chrome"
+    read -r -p "Choice [1]: " input
+    case "$input" in
+      2) DEFAULT_BROWSER="firefox"; EXPLICIT_BROWSER=1 ;;
+      3) DEFAULT_BROWSER="chromium"; EXPLICIT_BROWSER=1 ;;
+      4) DEFAULT_BROWSER="google-chrome"; EXPLICIT_BROWSER=1 ;;
+      *) ;;
+    esac
+  fi
+
+  if [[ "$EXPLICIT_THEME" == "0" ]]; then
+    echo ""
+    echo "Choose theme:"
+    echo "  1) Rosa (default)"
+    echo "  2) Lila"
+    echo "  3) Blau"
+    echo "  4) Gruen"
+    echo "  5) Regenbogen"
+    read -r -p "Choice [1]: " input
+    case "$input" in
+      2) DEFAULT_THEME="lila"; EXPLICIT_THEME=1 ;;
+      3) DEFAULT_THEME="blau"; EXPLICIT_THEME=1 ;;
+      4) DEFAULT_THEME="gruen"; EXPLICIT_THEME=1 ;;
+      5) DEFAULT_THEME="regenbogen"; EXPLICIT_THEME=1 ;;
+      *) ;;
+    esac
+  fi
+
+  if [[ "$EXPLICIT_LAYOUT" == "0" ]]; then
+    echo ""
+    echo "Choose tile layout:"
+    echo "  1) Gross / Large - 4 big tiles (default)"
+    echo "  2) Klein / Small - 9 smaller tiles"
+    read -r -p "Choice [1]: " input
+    case "$input" in
+      2) DEFAULT_LAYOUT="klein"; EXPLICIT_LAYOUT=1 ;;
+      *) ;;
+    esac
+  fi
+
+  if [[ "$EXPLICIT_LAUNCH_MODE" == "0" ]]; then
+    echo ""
+    echo "Choose launch mode:"
+    echo "  1) Kiosk - fullscreen, no window controls (default)"
+    echo "  2) Fullscreen - fullscreen with minimal controls"
+    echo "  3) Window - regular browser window"
+    read -r -p "Choice [1]: " input
+    case "$input" in
+      2) DEFAULT_LAUNCH_MODE="fullscreen"; EXPLICIT_LAUNCH_MODE=1 ;;
+      3) DEFAULT_LAUNCH_MODE="window"; EXPLICIT_LAUNCH_MODE=1 ;;
+      *) ;;
+    esac
+  fi
+
+  if [[ "$EXPLICIT_TITLE" == "0" ]]; then
+    echo ""
+    read -r -p "Launcher title [$(text config_title)]: " input
+    if [[ -n "$input" ]]; then
+      DEFAULT_TITLE="$input"
+      EXPLICIT_TITLE=1
+    fi
+  fi
+
+  if [[ "$EXPLICIT_PARENT_LABEL" == "0" ]]; then
+    echo ""
+    read -r -p "Parent button label [$(text parent_label)]: " input
+    if [[ -n "$input" ]]; then
+      DEFAULT_PARENT_LABEL="$input"
+      EXPLICIT_PARENT_LABEL=1
+    fi
+  fi
+
+  if [[ "$EXPLICIT_EXIT_LABEL" == "0" ]]; then
+    echo ""
+    read -r -p "Exit button label [$(text exit_label)]: " input
+    if [[ -n "$input" ]]; then
+      DEFAULT_EXIT_LABEL="$input"
+      EXPLICIT_EXIT_LABEL=1
+    fi
+  fi
+
+  if [[ "$EXPLICIT_SHUTDOWN" == "0" ]]; then
+    echo ""
+    read -r -p "Install shutdown helper? [y/N]: " input
+    case "$input" in
+      [jJyY]*) INSTALL_SHUTDOWN_HELPER="1"; EXPLICIT_SHUTDOWN=1 ;;
+    esac
+  fi
+
+  if [[ "$EXPLICIT_RECOMMENDED" == "0" ]]; then
+    echo ""
+    read -r -p "Create tiles for recommended apps if installed? [y/N]: " input
+    case "$input" in
+      [jJyY]*) RECOMMENDED="1"; EXPLICIT_RECOMMENDED=1 ;;
+    esac
+  fi
+}
+
+# Offer guided mode when running interactively without explicit customizations
+if [[ -t 0 ]]; then
+  echo ""
+  read -r -p "Use quick defaults, or walk through options? [d/w]: " input
+  case "$input" in
+    [wW]*) guided_setup ;;
+    *) echo "Using defaults..." ;;
+  esac
+
+  # Re-derive language if it changed during guided setup
+  case "$LANG_MODE" in
+    auto) ACTIVE_LANG="$(auto_detect_lang)" ;;
+    de|en) ACTIVE_LANG="$LANG_MODE" ;;
+  esac
+fi
+
 find_browser() {
   if [[ "$DEFAULT_BROWSER" != "auto" ]]; then
     command -v "$DEFAULT_BROWSER" >/dev/null 2>&1 || die "Browser not found: $DEFAULT_BROWSER"
@@ -335,6 +500,32 @@ find_browser() {
 BROWSER_CMD="$(find_browser)"
 command -v python3 >/dev/null 2>&1 || die "python3 is required"
 command -v install >/dev/null 2>&1 || die "install is required"
+
+# Summary
+echo ""
+echo "========================================="
+echo "  Install Summary"
+echo "========================================="
+echo "  User:             $TARGET_USER"
+echo "  Home:             $TARGET_HOME"
+echo "  Language:         $ACTIVE_LANG"
+echo "  Browser:          $BROWSER_CMD"
+echo "  Theme:            $DEFAULT_THEME"
+echo "  Layout:           $DEFAULT_LAYOUT"
+echo "  Launch mode:      $DEFAULT_LAUNCH_MODE"
+echo "  Title:            ${DEFAULT_TITLE:-$(text config_title)}"
+echo "  Parent label:     ${DEFAULT_PARENT_LABEL:-$(text parent_label)}"
+echo "  Exit label:       ${DEFAULT_EXIT_LABEL:-$(text exit_label)}"
+echo "  Shutdown helper:  $INSTALL_SHUTDOWN_HELPER"
+echo "  Recommended apps: $RECOMMENDED"
+echo ""
+
+if [[ -t 0 ]]; then
+  read -r -p "Proceed with installation? [Y/n]: " input
+  case "$input" in
+    [nN]*) echo "Installation cancelled."; exit 0 ;;
+  esac
+fi
 
 APP_ROOT="$TARGET_HOME/.local/share/$APP_DIR_NAME"
 BIN_DIR="$TARGET_HOME/.local/bin"
@@ -536,17 +727,6 @@ backup_if_exists "$CONFIG_FILE"
 backup_if_exists "$AUTOSTART_FILE"
 backup_if_exists "$DESKTOP_FILE"
 backup_if_exists "$APP_DESKTOP_FILE"
-
-# Interactive recommended-apps prompt
-if [[ "$RECOMMENDED" != "1" && -t 0 ]]; then
-  echo ""
-  echo "$RECOMMENDED_PROMPT"
-  read -r answer
-  case "$answer" in
-    [jJyY]*) RECOMMENDED="1" ;;
-    *) RECOMMENDED="0" ;;
-  esac
-fi
 
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
