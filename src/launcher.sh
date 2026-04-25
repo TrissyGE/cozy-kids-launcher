@@ -18,13 +18,13 @@ else
 fi
 case "$LAUNCH_MODE" in
   kiosk)
-    "$BROWSER_CMD" --new-window --kiosk "$URL" &
+    "{{BROWSER_CMD}}" --new-window --kiosk "$URL" &
     ;;
   fullscreen)
-    "$BROWSER_CMD" --new-window --fullscreen "$URL" &
+    "{{BROWSER_CMD}}" --new-window --fullscreen "$URL" &
     ;;
   window|*)
-    "$BROWSER_CMD" --new-window "$URL" &
+    "{{BROWSER_CMD}}" --new-window "$URL" &
     ;;
 esac
 BROWSER_PID=$!

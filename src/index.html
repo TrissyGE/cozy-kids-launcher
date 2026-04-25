@@ -65,7 +65,10 @@
     <h2 id="pinTitle">{{PIN_TITLE}}</h2>
     <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')submitPin()">
     <div class="err" id="pinErr"></div>
-    <button class="smallbtn save" onclick="submitPin()">{{LABEL_BACK}}</button>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+      <button class="smallbtn" onclick="cancelPin()">{{LABEL_BACK}}</button>
+      <button class="smallbtn save" onclick="submitPin()">OK</button>
+    </div>
     <div class="hint" id="pinHint"></div>
   </div>
 </div>
@@ -104,10 +107,10 @@
 </div>
 <div class="cornerbar">
   <div class="smallcluster"><button id="shutdownBtn" class="smallbtn" onclick="shutdownNow()"></button></div>
-  <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="openAdmin()"></button></div>
+  <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script>
-let cfg=null, appOptions=[], adminPage=0, pinUnlocked=false;
+let cfg=null, appOptions=[], adminPage=0, pinUnlocked=false, pinCallback=null;
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
@@ -148,21 +151,24 @@ function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageS
 function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }
 async function loadConfig(){ cfg=await fetch('/api/config').then(r=>r.json()); if(typeof cfg.currentPage!=='number') cfg.currentPage=0; renderAll(); }
 async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json()); }
-function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; document.getElementById('shutdownBtn').textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
+function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); document.getElementById('parentBtn').textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; document.getElementById('shutdownBtn').textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
 function renderKids(){ const grid=document.getElementById('grid'); grid.innerHTML=''; const tiles=tilesForPage(cfg.currentPage); const size=pageSize(); for(let i=0;i<size;i++){ if(i<tiles.length){ const tile=tiles[i]; const btn=document.createElement('button'); btn.className='tile'; btn.onclick=()=>launchTile(tile.id); btn.innerHTML='<div class="emoji">'+(tile.emoji||'✨')+'</div><div>'+(tile.label||'')+'</div>'; grid.appendChild(btn);} else { const ph=document.createElement('div'); ph.className='tile placeholder'; ph.innerHTML='<div class="emoji">✨</div><div></div>'; grid.appendChild(ph);} } }
 function renderNav(){ document.getElementById('navLeft').classList.toggle('hidden', cfg.currentPage<=0); document.getElementById('navRight').classList.toggle('hidden', cfg.currentPage>=pageCount()-1); }
 function changePage(dir){ cfg.currentPage=Math.max(0,Math.min(pageCount()-1,cfg.currentPage+dir)); renderAll(); }
 function launchTile(id){ fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).then(r=>{ if(r.redirected) window.location=r.url; }).catch(()=>{}); }
 
 // PIN handling
-function openAdmin(){ pinUnlocked=false; if(cfg.pinHash){ showPin(); return; } enterAdmin(); }
+function handleParentClick(){ if(document.getElementById('admin').classList.contains('hidden')){ openAdmin(); } else { closeAdmin(); } }
+function requestPin(callback){ pinCallback=callback; showPin(); }
+function openAdmin(){ pinUnlocked=false; if(cfg.pinHash){ requestPin(enterAdmin); return; } enterAdmin(); }
 function showPin(){ document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
-async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); enterAdmin(); } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
-function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); renderAdmin(); }
-function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); pinUnlocked=false; }
-function shutdownNow(){ fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
-function exitKids(){ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
+function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; }
+async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
+function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); }
+function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; pinUnlocked=false; }
+function shutdownNow(){ if(cfg.pinHash){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
+function exitKids(){ if(cfg.pinHash){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
 function tilePageIndex(idx){ return Math.floor(idx / pageSize()); }
 
 // PIN setup
