@@ -19,20 +19,25 @@ while true; do
   fi
   case "$LAUNCH_MODE" in
     kiosk)
-      "{{BROWSER_CMD}}" --new-window --kiosk "$URL" &
+      "{{BROWSER_CMD}}" --new-window --kiosk "$URL" >/dev/null 2>&1 &
       ;;
     fullscreen)
-      "{{BROWSER_CMD}}" --new-window --fullscreen "$URL" &
+      "{{BROWSER_CMD}}" --new-window --fullscreen "$URL" >/dev/null 2>&1 &
       ;;
     window|*)
-      "{{BROWSER_CMD}}" --new-window "$URL" &
+      "{{BROWSER_CMD}}" --new-window "$URL" >/dev/null 2>&1 &
       ;;
   esac
-  BROWSER_PID=$!
+  sleep 1
+  BROWSER_PID=$(pgrep -n -x "firefox" 2>/dev/null || pgrep -n -x "chromium" 2>/dev/null || pgrep -n -x "chromium-browser" 2>/dev/null || pgrep -n -x "google-chrome" 2>/dev/null || echo "$!")
   echo "$BROWSER_PID" > "$BROWSER_PIDFILE"
-  wait "$BROWSER_PID"
-  # Give browser time to release profile locks before restarting
-  sleep 2
+  # Poll until browser exits or update trigger appears
+  while kill -0 "$BROWSER_PID" 2>/dev/null; do
+    if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
+      break
+    fi
+    sleep 1
+  done
   if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
     if [[ -f "$PIDFILE" ]]; then
       kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
