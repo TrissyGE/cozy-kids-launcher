@@ -31,6 +31,8 @@ while true; do
   BROWSER_PID=$!
   echo "$BROWSER_PID" > "$BROWSER_PIDFILE"
   wait "$BROWSER_PID"
+  # Give browser time to release profile locks before restarting
+  sleep 2
   if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
     if [[ -f "$PIDFILE" ]]; then
       kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
@@ -47,6 +49,8 @@ while true; do
       wait "$ZENITY_PID" 2>/dev/null || true
     fi
     rm -f "$APP_ROOT/update-trigger.sh"
+    # Wait for any lingering browser processes to release profile locks
+    sleep 3
     # loop back to restart with updated files
   else
     break
