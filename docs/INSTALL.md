@@ -5,7 +5,7 @@
 Open a terminal and paste this one line. That's it.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/scripts/install-one-liner.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/scripts/install.sh | bash
 ```
 
 It downloads the launcher, installs it for your user, and sets everything up automatically.

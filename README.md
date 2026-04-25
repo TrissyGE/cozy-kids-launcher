@@ -86,7 +86,6 @@ cozy-kids-launcher/
     config.example.json
   scripts/
     install.sh
-    install-one-liner.sh
     update.sh
     deploy.sh
   src/
@@ -112,7 +111,7 @@ More here: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 **One line. Open a terminal, paste, press Enter.**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/scripts/install-one-liner.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/scripts/install.sh | bash
 ```
 
 It downloads, installs, and sets everything up automatically. Log out and back in — the launcher starts on its own.

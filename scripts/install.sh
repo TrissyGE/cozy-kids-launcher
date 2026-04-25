@@ -1,8 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Self-bootstrap: if run standalone (e.g. curl | bash) and src/ is missing,
+# download the repo and re-execute from the extracted copy.
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="$REPO_DIR/src"
+
+if [[ ! -d "$SRC_DIR" ]] || [[ ! -f "$SRC_DIR/server.py" ]]; then
+  REPO="TrissyGE/cozy-kids-launcher"
+  TMP_DIR="$(mktemp -d)"
+  trap 'rm -rf "$TMP_DIR"' EXIT
+
+  echo "Downloading Cozy Kids Launcher..."
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL -o "$TMP_DIR/repo.zip" "https://github.com/$REPO/archive/refs/heads/main.zip"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "$TMP_DIR/repo.zip" "https://github.com/$REPO/archive/refs/heads/main.zip"
+  else
+    echo "Error: curl or wget is required."
+    exit 1
+  fi
+
+  echo "Extracting..."
+  unzip -q "$TMP_DIR/repo.zip" -d "$TMP_DIR/"
+
+  # Re-execute with all original arguments
+  exec bash "$TMP_DIR/cozy-kids-launcher-main/scripts/install.sh" "$@"
+fi
+
 DEFAULT_LANG="en"
 APP_ID="cozy-kids-launcher"
 APP_DIR_NAME="$APP_ID"
