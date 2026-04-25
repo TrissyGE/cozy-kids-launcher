@@ -66,6 +66,20 @@ die() {
   exit 1
 }
 
+is_interactive() {
+  [[ -t 0 ]] || [[ -r /dev/tty ]]
+}
+
+prompt_read() {
+  local prompt_text="$1"
+  local var_name="$2"
+  if [[ -t 0 ]]; then
+    IFS= read -r -p "$prompt_text" "$var_name"
+  elif [[ -r /dev/tty ]]; then
+    IFS= read -r -p "$prompt_text" "$var_name" < /dev/tty
+  fi
+}
+
 trim() {
   local value="$1"
   value="${value#${value%%[![:space:]]*}}"
@@ -341,7 +355,7 @@ guided_setup() {
     echo "  1) English"
     echo "  2) Deutsch"
     echo "  3) Auto-detect (default)"
-    read -r -p "Choice [3]: " input
+    prompt_read "Choice [3]: " input
     case "$input" in
       1) LANG_MODE="en"; EXPLICIT_LANG=1 ;;
       2) LANG_MODE="de"; EXPLICIT_LANG=1 ;;
@@ -360,7 +374,7 @@ guided_setup() {
     echo "  2) Firefox"
     echo "  3) Chromium"
     echo "  4) Google Chrome"
-    read -r -p "Choice [1]: " input
+    prompt_read "Choice [1]: " input
     case "$input" in
       2) DEFAULT_BROWSER="firefox"; EXPLICIT_BROWSER=1 ;;
       3) DEFAULT_BROWSER="chromium"; EXPLICIT_BROWSER=1 ;;
@@ -377,7 +391,7 @@ guided_setup() {
     echo "  3) Blau"
     echo "  4) Gruen"
     echo "  5) Regenbogen"
-    read -r -p "Choice [1]: " input
+    prompt_read "Choice [1]: " input
     case "$input" in
       2) DEFAULT_THEME="lila"; EXPLICIT_THEME=1 ;;
       3) DEFAULT_THEME="blau"; EXPLICIT_THEME=1 ;;
@@ -392,7 +406,7 @@ guided_setup() {
     echo "Choose tile layout:"
     echo "  1) Gross / Large - 4 big tiles (default)"
     echo "  2) Klein / Small - 9 smaller tiles"
-    read -r -p "Choice [1]: " input
+    prompt_read "Choice [1]: " input
     case "$input" in
       2) DEFAULT_LAYOUT="klein"; EXPLICIT_LAYOUT=1 ;;
       *) ;;
@@ -405,7 +419,7 @@ guided_setup() {
     echo "  1) Kiosk - fullscreen, no window controls (default)"
     echo "  2) Fullscreen - fullscreen with minimal controls"
     echo "  3) Window - regular browser window"
-    read -r -p "Choice [1]: " input
+    prompt_read "Choice [1]: " input
     case "$input" in
       2) DEFAULT_LAUNCH_MODE="fullscreen"; EXPLICIT_LAUNCH_MODE=1 ;;
       3) DEFAULT_LAUNCH_MODE="window"; EXPLICIT_LAUNCH_MODE=1 ;;
@@ -415,7 +429,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_TITLE" == "0" ]]; then
     echo ""
-    read -r -p "Launcher title [$(text config_title)]: " input
+    prompt_read "Launcher title [$(text config_title)]: " input
     if [[ -n "$input" ]]; then
       DEFAULT_TITLE="$input"
       EXPLICIT_TITLE=1
@@ -424,7 +438,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_PARENT_LABEL" == "0" ]]; then
     echo ""
-    read -r -p "Parent button label [$(text parent_label)]: " input
+    prompt_read "Parent button label [$(text parent_label)]: " input
     if [[ -n "$input" ]]; then
       DEFAULT_PARENT_LABEL="$input"
       EXPLICIT_PARENT_LABEL=1
@@ -433,7 +447,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_EXIT_LABEL" == "0" ]]; then
     echo ""
-    read -r -p "Exit button label [$(text exit_label)]: " input
+    prompt_read "Exit button label [$(text exit_label)]: " input
     if [[ -n "$input" ]]; then
       DEFAULT_EXIT_LABEL="$input"
       EXPLICIT_EXIT_LABEL=1
@@ -442,7 +456,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_SHUTDOWN" == "0" ]]; then
     echo ""
-    read -r -p "Install shutdown helper? [y/N]: " input
+    prompt_read "Install shutdown helper? [y/N]: " input
     case "$input" in
       [jJyY]*) INSTALL_SHUTDOWN_HELPER="1"; EXPLICIT_SHUTDOWN=1 ;;
     esac
@@ -450,7 +464,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_RECOMMENDED" == "0" ]]; then
     echo ""
-    read -r -p "Create tiles for recommended apps if installed? [y/N]: " input
+    prompt_read "Create tiles for recommended apps if installed? [y/N]: " input
     case "$input" in
       [jJyY]*) RECOMMENDED="1"; EXPLICIT_RECOMMENDED=1 ;;
     esac
@@ -458,9 +472,9 @@ guided_setup() {
 }
 
 # Offer guided mode when running interactively without explicit customizations
-if [[ -t 0 ]]; then
+if is_interactive; then
   echo ""
-  read -r -p "Use quick defaults, or walk through options? [d/w]: " input
+  prompt_read "Use quick defaults, or walk through options? [d/w]: " input
   case "$input" in
     [wW]*) guided_setup ;;
     *) echo "Using defaults..." ;;
@@ -520,8 +534,8 @@ echo "  Shutdown helper:  $INSTALL_SHUTDOWN_HELPER"
 echo "  Recommended apps: $RECOMMENDED"
 echo ""
 
-if [[ -t 0 ]]; then
-  read -r -p "Proceed with installation? [Y/n]: " input
+if is_interactive; then
+  prompt_read "Proceed with installation? [Y/n]: " input
   case "$input" in
     [nN]*) echo "Installation cancelled."; exit 0 ;;
   esac
