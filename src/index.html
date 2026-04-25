@@ -77,6 +77,13 @@
     <div class="hint" id="pinHint"></div>
   </div>
 </div>
+<div id="updating" class="pinoverlay hidden">
+  <div class="pinbox">
+    <div class="emoji" style="font-size:3rem;">🔄</div>
+    <h2 id="updateProgressTitle">{{UPDATE_PROGRESS}}</h2>
+    <div class="muted" id="updateProgressText"></div>
+  </div>
+</div>
 <div id="admin" class="screen hidden">
   <div class="wrap admin">
     <div class="panel">
@@ -155,6 +162,8 @@ const uiText = {
   updateError: {{JSON_UPDATE_ERROR}},
   versionLabel: {{JSON_VERSION_LABEL}},
   updateNow: {{JSON_UPDATE_NOW}},
+  updateProgress: {{JSON_UPDATE_PROGRESS}},
+  updateConfirm: {{JSON_UPDATE_CONFIRM}},
   recommendedTitle: {{JSON_RECOMMENDED_TITLE}}
 };
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
@@ -194,7 +203,7 @@ async function sha256(str){ const buf=await crypto.subtle.digest('SHA-256', new 
 let installedVersion='0.0.0';
 async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'); const msg=document.getElementById('updateMsg'); const updateRow=document.getElementById('updateRow'); msg.textContent=''; msg.style.color=''; updateRow.style.display='none'; btn.disabled=true; try{ const localR=await fetch('/api/version'); const localData=await localR.json(); installedVersion=localData.version||'0.0.0'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; const remoteR=await fetch('https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION',{cache:'no-store'}); if(!remoteR.ok) throw new Error('fetch failed'); const remoteVersion=(await remoteR.text()).trim(); if(compareVersion(remoteVersion,installedVersion)>0){ msg.textContent=(uiText.updateAvailable||'Update available')+': '+remoteVersion; msg.style.color='green'; updateRow.style.display='grid'; } else { msg.textContent=uiText.updateUpToDate||'Up to date'; msg.style.color='green'; } } catch(e){ msg.textContent=uiText.updateError||'Update check failed'; msg.style.color='#c00'; } finally { btn.disabled=false; } }
 function compareVersion(a,b){ const A=a.split('.'); const B=b.split('.'); for(let i=0;i<Math.max(A.length,B.length);i++){ const av=parseInt(A[i]||0,10); const bv=parseInt(B[i]||0,10); if(av>bv) return 1; if(av<bv) return -1; } return 0; }
-async function installUpdate(){ if(!window.confirm('Browser will close to install the update. Continue?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
+async function installUpdate(){ if(!window.confirm(uiText.updateConfirm||'Close browser and install update now?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
 
 function renderAdmin(){ document.getElementById('adminTitle').textContent=uiText.adminTitle; document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle; document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel; document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel; document.getElementById('addTileBtn').textContent=uiText.addTile; document.getElementById('backBtn').textContent=uiText.back; document.getElementById('saveBtn').textContent=uiText.save; document.getElementById('cfgTitle').value=cfg.title||''; document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}'; document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}'; document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; document.getElementById('updateMsg').textContent=''; updatePinButton(); const forms=document.getElementById('forms'); forms.innerHTML=''; cfg.tiles.forEach((tile, idx)=>{ const row=document.createElement('div'); row.className='tileform'; row.style.display = tilePageIndex(idx) === adminPage ? 'grid' : 'none'; const emoji=document.createElement('input'); emoji.value=tile.emoji||''; emoji.onchange=e=>tile.emoji=e.target.value; const label=document.createElement('input'); label.value=tile.label||''; label.onchange=e=>tile.label=e.target.value; const visibleWrap=document.createElement('label'); visibleWrap.className='chk'; const visible=document.createElement('input'); visible.type='checkbox'; visible.checked=!!tile.visible; visible.onchange=e=>tile.visible=e.target.checked; visibleWrap.append(visible,' '+uiText.visible); const select=document.createElement('select'); const special=document.createElement('option'); special.value='special:filme-musik'; special.textContent=uiText.specialMedia; select.appendChild(special); const empty=document.createElement('option'); empty.value=''; empty.textContent=uiText.noApp; select.appendChild(empty); for(const app of appOptions){ const opt=document.createElement('option'); opt.value=app.exec; opt.textContent=app.name; select.appendChild(opt); } const currentExec=Array.isArray(tile.cmd)?tile.cmd.join(' '):''; select.value=currentExec; if(select.value!==currentExec){ const opt=document.createElement('option'); opt.value=currentExec; opt.textContent=currentExec||uiText.customCmd; opt.selected=true; select.appendChild(opt);} select.onchange=e=>tile.cmd=[e.target.value]; const up=document.createElement('button'); up.className='smallbtn'; up.textContent=uiText.moveUp; up.onclick=()=>moveUp(idx); const down=document.createElement('button'); down.className='smallbtn'; down.textContent=uiText.moveDown; down.onclick=()=>moveDown(idx); const del=document.createElement('button'); del.className='smallbtn'; del.textContent=uiText.delete; del.onclick=()=>deleteTile(idx); row.append(emoji,label,visibleWrap,select,up,down,del); forms.appendChild(row); }); renderAdminPageNav(); renderRecommendations(); }
 function moveUp(idx){ if(idx<1) return; const tmp=cfg.tiles[idx-1]; cfg.tiles[idx-1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }

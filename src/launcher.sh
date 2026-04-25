@@ -36,7 +36,16 @@ while true; do
       kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
       rm -f "$PIDFILE"
     fi
+    ZENITY_PID=""
+    if command -v zenity >/dev/null 2>&1; then
+      (zenity --progress --pulsate --title="{{APP_NAME}}" --text="Updating... please wait" --no-cancel --auto-close) >/dev/null 2>&1 &
+      ZENITY_PID=$!
+    fi
     bash "$APP_ROOT/update-trigger.sh"
+    if [[ -n "$ZENITY_PID" ]]; then
+      kill "$ZENITY_PID" 2>/dev/null || true
+      wait "$ZENITY_PID" 2>/dev/null || true
+    fi
     rm -f "$APP_ROOT/update-trigger.sh"
     # loop back to restart with updated files
   else
