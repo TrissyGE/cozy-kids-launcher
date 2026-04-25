@@ -5,6 +5,7 @@ import http.server
 import json
 import os
 import re
+import shutil
 import subprocess
 from urllib.parse import unquote
 
@@ -15,6 +16,7 @@ CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
+RECOMMENDATIONS_FILE = os.path.join(APP_ROOT, "recommendations.json")
 VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
 ALT_MUSIC = os.path.join(HOME, "Musik")
@@ -116,6 +118,26 @@ def get_version():
         return "0.0.0"
 
 
+def load_recommendations():
+    if not os.path.isfile(RECOMMENDATIONS_FILE):
+        return []
+    try:
+        with open(RECOMMENDATIONS_FILE, "r", encoding="utf-8") as fh:
+            recs = json.load(fh)
+    except Exception:
+        return []
+    result = []
+    for rec in recs:
+        all_cmds = []
+        if rec.get("cmd"):
+            all_cmds.append(rec["cmd"][0])
+        for alt in rec.get("alt_cmds", []):
+            all_cmds.append(alt)
+        installed = any(shutil.which(c) for c in all_cmds if c)
+        result.append({**rec, "installed": installed})
+    return result
+
+
 def verify_pin(pin_hash, pin):
     if not pin_hash or not pin:
         return False
@@ -140,6 +162,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response(load_cfg())
         if self.path == "/api/apps":
             return self.json_response(scan_apps())
+        if self.path == "/api/recommendations":
+            return self.json_response(load_recommendations())
         if self.path == "/api/version":
             return self.json_response({"version": get_version()})
         return super().do_GET()

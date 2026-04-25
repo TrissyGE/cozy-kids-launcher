@@ -24,6 +24,7 @@ INSTALL_SHUTDOWN_HELPER="0"
 LANG_MODE="auto"
 FORCE="0"
 SKIP_BROWSER_CHECK="0"
+RECOMMENDED="0"
 
 usage() {
   cat <<'EOF'
@@ -43,6 +44,7 @@ Options:
   --parent-label <text>      Default parent/settings button label
   --exit-label <text>        Default exit button label
   --install-shutdown-helper  Install optional local shutdown helper
+  --recommended              Add tiles for installed recommended apps
   --skip-browser-check       Generate files without requiring a local browser
   --force                    Overwrite existing generated files
   -h, --help                 Show this help
@@ -133,6 +135,10 @@ text() {
     de:version_label) echo "Version" ;;
     de:install_done) echo "Installation abgeschlossen." ;;
     de:next_steps) echo "Du kannst Cozy Kids Launcher jetzt über den Desktop-Shortcut oder nach dem nächsten Login starten." ;;
+    de:recommended_title) echo "Empfohlene Apps" ;;
+    de:recommended_installed) echo "installiert" ;;
+    de:recommended_not_installed) echo "nicht installiert" ;;
+    de:recommended_prompt) echo "Tiles für empfohlene Apps erstellen, falls installiert? [j/N]" ;;
     en:app_name) echo "Cozy Kids Launcher" ;;
     en:shortcut_name) echo "Kids Mode" ;;
     en:autostart_name) echo "Cozy Kids Launcher on Login" ;;
@@ -184,6 +190,10 @@ text() {
     en:version_label) echo "Version" ;;
     en:install_done) echo "Installation complete." ;;
     en:next_steps) echo "You can now launch Cozy Kids Launcher from the desktop shortcut or after the next login." ;;
+    en:recommended_title) echo "Recommended apps" ;;
+    en:recommended_installed) echo "installed" ;;
+    en:recommended_not_installed) echo "not installed" ;;
+    en:recommended_prompt) echo "Create tiles for recommended apps if installed? [y/N]" ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -239,6 +249,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --install-shutdown-helper)
       INSTALL_SHUTDOWN_HELPER="1"
+      shift
+      ;;
+    --recommended)
+      RECOMMENDED="1"
       shift
       ;;
     --skip-browser-check)
@@ -385,6 +399,8 @@ render_template() {
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
   export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL
+  export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
+  export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -458,6 +474,10 @@ DEFAULT_TILE_GAMES="$(text tile_games)"
 DEFAULT_TILE_MUSIC="$(text tile_music)"
 DEFAULT_TILE_BROWSER="$(text tile_browser)"
 DEFAULT_BROWSER_URL="$(text browser_url)"
+RECOMMENDED_TITLE="$(text recommended_title)"
+RECOMMENDED_INSTALLED="$(text recommended_installed)"
+RECOMMENDED_NOT_INSTALLED="$(text recommended_not_installed)"
+RECOMMENDED_PROMPT="$(text recommended_prompt)"
 
 JSON_ADMIN_TITLE="$(json_text "$ADMIN_TITLE")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
@@ -491,6 +511,10 @@ JSON_UPDATE_AVAILABLE="$(json_text "$UPDATE_AVAILABLE")"
 JSON_UPDATE_UP_TO_DATE="$(json_text "$UPDATE_UP_TO_DATE")"
 JSON_UPDATE_ERROR="$(json_text "$UPDATE_ERROR")"
 JSON_VERSION_LABEL="$(json_text "$VERSION_LABEL")"
+JSON_RECOMMENDED_TITLE="$(json_text "$RECOMMENDED_TITLE")"
+JSON_RECOMMENDED_INSTALLED="$(json_text "$RECOMMENDED_INSTALLED")"
+JSON_RECOMMENDED_NOT_INSTALLED="$(json_text "$RECOMMENDED_NOT_INSTALLED")"
+JSON_RECOMMENDED_PROMPT="$(json_text "$RECOMMENDED_PROMPT")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
@@ -501,6 +525,17 @@ backup_if_exists "$AUTOSTART_FILE"
 backup_if_exists "$DESKTOP_FILE"
 backup_if_exists "$APP_DESKTOP_FILE"
 
+# Interactive recommended-apps prompt
+if [[ "$RECOMMENDED" != "1" && -t 0 ]]; then
+  echo ""
+  echo "$RECOMMENDED_PROMPT"
+  read -r answer
+  case "$answer" in
+    [jJyY]*) RECOMMENDED="1" ;;
+    *) RECOMMENDED="0" ;;
+  esac
+fi
+
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
@@ -508,9 +543,9 @@ render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
 
 # Generate config JSON with proper escaping
-python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFAULT_LAYOUT" "$DEFAULT_PARENT_LABEL" "$DEFAULT_EXIT_LABEL" "$SHUTDOWN_LABEL" "$DEFAULT_TILE_PAINT" "$DEFAULT_TILE_GAMES" "$DEFAULT_TILE_MUSIC" "$DEFAULT_TILE_BROWSER" "$DEFAULT_BROWSER_URL" <<'PY'
-import json, sys
-path, lang, title, theme, layout, parent_label, exit_label, shutdown_label, tile_paint, tile_games, tile_music, tile_browser, browser_url = sys.argv[1:14]
+python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFAULT_LAYOUT" "$DEFAULT_PARENT_LABEL" "$DEFAULT_EXIT_LABEL" "$SHUTDOWN_LABEL" "$DEFAULT_TILE_PAINT" "$DEFAULT_TILE_GAMES" "$DEFAULT_TILE_MUSIC" "$DEFAULT_TILE_BROWSER" "$DEFAULT_BROWSER_URL" "$SRC_DIR/recommendations.json" "$RECOMMENDED" <<'PY'
+import json, sys, shutil, os
+path, lang, title, theme, layout, parent_label, exit_label, shutdown_label, tile_paint, tile_games, tile_music, tile_browser, browser_url, rec_path, recommended = sys.argv[1:16]
 config = {
     "language": lang,
     "title": title,
@@ -528,10 +563,45 @@ config = {
         {"id": "browser", "label": tile_browser, "emoji": "🌐", "cmd": ["xdg-open", browser_url], "visible": False}
     ]
 }
+existing_ids = {"paint", "games", "music", "browser"}
+if recommended == "1" and os.path.isfile(rec_path):
+    with open(rec_path, 'r', encoding='utf-8') as f:
+        recs = json.load(f)
+    for rec in recs:
+        if rec["id"] in existing_ids:
+            continue
+        cmds = rec.get("cmd", [])
+        alt_cmds = rec.get("alt_cmds", [])
+        found_cmd = None
+        for cmd in cmds:
+            if shutil.which(cmd):
+                found_cmd = cmd
+                break
+        if not found_cmd:
+            for cmd in alt_cmds:
+                if shutil.which(cmd):
+                    found_cmd = cmd
+                    break
+        if found_cmd:
+            label = rec.get("label_de" if lang == "de" else "label_en", rec["id"])
+            tile_cmd = cmds if (cmds and found_cmd == cmds[0]) else [found_cmd]
+            config["tiles"].append({
+                "id": rec["id"],
+                "label": label,
+                "emoji": rec.get("emoji", "✨"),
+                "cmd": tile_cmd,
+                "visible": True
+            })
+            existing_ids.add(rec["id"])
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(config, f, ensure_ascii=False, indent=2)
     f.write('\n')
 PY
+
+# Copy recommendations data for runtime use
+if [[ -f "$SRC_DIR/recommendations.json" ]]; then
+  install -m 0644 "$SRC_DIR/recommendations.json" "$APP_ROOT/recommendations.json"
+fi
 
 write_file "$AUTOSTART_FILE" 0644 <<EOF
 [Desktop Entry]

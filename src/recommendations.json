@@ -1,0 +1,131 @@
+[
+  {
+    "id": "tuxpaint",
+    "emoji": "🎨",
+    "label_de": "Malen",
+    "label_en": "Paint",
+    "cmd": ["tuxpaint"],
+    "package": "tuxpaint",
+    "category": "creative"
+  },
+  {
+    "id": "gcompris",
+    "emoji": "🧩",
+    "label_de": "Lernspiele",
+    "label_en": "Learning games",
+    "cmd": ["gcompris-qt"],
+    "alt_cmds": ["gcompris"],
+    "package": "gcompris-qt",
+    "category": "learning"
+  },
+  {
+    "id": "tuxmath",
+    "emoji": "🧮",
+    "label_de": "Rechnen",
+    "label_en": "Math",
+    "cmd": ["tuxmath"],
+    "package": "tuxmath",
+    "category": "learning"
+  },
+  {
+    "id": "tuxtype",
+    "emoji": "⌨️",
+    "label_de": "Tippen",
+    "label_en": "Typing",
+    "cmd": ["tuxtype"],
+    "package": "tuxtype",
+    "category": "learning"
+  },
+  {
+    "id": "kturtle",
+    "emoji": "🐢",
+    "label_de": "Programmieren",
+    "label_en": "Programming",
+    "cmd": ["kturtle"],
+    "package": "kturtle",
+    "category": "learning"
+  },
+  {
+    "id": "kanagram",
+    "emoji": "📝",
+    "label_de": "KAnagram",
+    "label_en": "KAnagram",
+    "cmd": ["kanagram"],
+    "package": "kanagram",
+    "category": "learning"
+  },
+  {
+    "id": "khangman",
+    "emoji": "🎯",
+    "label_de": "KHangman",
+    "label_en": "KHangman",
+    "cmd": ["khangman"],
+    "package": "khangman",
+    "category": "learning"
+  },
+  {
+    "id": "supertux",
+    "emoji": "🐧",
+    "label_de": "SuperTux",
+    "label_en": "SuperTux",
+    "cmd": ["supertux2"],
+    "alt_cmds": ["supertux"],
+    "package": "supertux",
+    "category": "game"
+  },
+  {
+    "id": "supertuxkart",
+    "emoji": "🏎️",
+    "label_de": "SuperTuxKart",
+    "label_en": "SuperTuxKart",
+    "cmd": ["supertuxkart"],
+    "package": "supertuxkart",
+    "category": "game"
+  },
+  {
+    "id": "frozen-bubble",
+    "emoji": "🫧",
+    "label_de": "Frozen Bubble",
+    "label_en": "Frozen Bubble",
+    "cmd": ["frozen-bubble"],
+    "package": "frozen-bubble",
+    "category": "game"
+  },
+  {
+    "id": "minetest",
+    "emoji": "⛏️",
+    "label_de": "Minetest",
+    "label_en": "Minetest",
+    "cmd": ["minetest"],
+    "package": "minetest",
+    "category": "game"
+  },
+  {
+    "id": "extremetuxracer",
+    "emoji": "🏔️",
+    "label_de": "Extreme Tux Racer",
+    "label_en": "Extreme Tux Racer",
+    "cmd": ["etr"],
+    "alt_cmds": ["extremetuxracer"],
+    "package": "extremetuxracer",
+    "category": "game"
+  },
+  {
+    "id": "pingus",
+    "emoji": "🐣",
+    "label_de": "Pingus",
+    "label_en": "Pingus",
+    "cmd": ["pingus"],
+    "package": "pingus",
+    "category": "game"
+  },
+  {
+    "id": "blinken",
+    "emoji": "🔵",
+    "label_de": "Blinken",
+    "label_en": "Blinken",
+    "cmd": ["blinken"],
+    "package": "blinken",
+    "category": "game"
+  }
+]
