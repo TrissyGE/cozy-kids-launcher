@@ -92,7 +92,7 @@ die() {
 }
 
 is_interactive() {
-  [[ -t 0 ]] || [[ -r /dev/tty ]]
+  [[ -t 0 ]]
 }
 
 prompt_read() {
@@ -100,7 +100,7 @@ prompt_read() {
   local var_name="$2"
   if [[ -t 0 ]]; then
     IFS= read -r -p "$prompt_text" "$var_name"
-  elif [[ -r /dev/tty ]]; then
+  elif [[ -r /dev/tty ]] && command -v tty >/dev/null 2>&1 && tty >/dev/null 2>&1; then
     IFS= read -r -p "$prompt_text" "$var_name" < /dev/tty
   fi
 }
@@ -249,6 +249,26 @@ text() {
     en:recommended_installed) echo "installed" ;;
     en:recommended_not_installed) echo "not installed" ;;
     en:recommended_prompt) echo "Create tiles for recommended apps if installed? [y/N]" ;;
+    de:app_browser_title) echo "App-Browser" ;;
+    de:install) echo "Installieren" ;;
+    de:added) echo "Hinzugefügt" ;;
+    de:installed) echo "installiert" ;;
+    de:not_installed) echo "nicht installiert" ;;
+    de:copy_command) echo "Kopieren" ;;
+    de:command_copied) echo "Kopiert!" ;;
+    de:install_started) echo "Installation gestartet. Suche nach einem Passwort-Dialog, oder führe den Befehl aus:" ;;
+    de:install_manual) echo "Bitte führe diesen Befehl im Terminal aus:" ;;
+    de:close) echo "Schließen" ;;
+    en:app_browser_title) echo "App Browser" ;;
+    en:install) echo "Install" ;;
+    en:added) echo "Added" ;;
+    en:installed) echo "installed" ;;
+    en:not_installed) echo "not installed" ;;
+    en:copy_command) echo "Copy" ;;
+    en:command_copied) echo "Copied!" ;;
+    en:install_started) echo "Installation started. Watch for a password dialog, or run the command below:" ;;
+    en:install_manual) echo "Please run this command in a terminal:" ;;
+    en:close) echo "Close" ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -627,6 +647,7 @@ render_template() {
   export LABEL_LAYOUT_LARGE LABEL_LAYOUT_SMALL LABEL_ADD_TILE LABEL_BACK LABEL_SAVE
   export LABEL_VISIBLE LABEL_SPECIAL_MEDIA LABEL_NO_APP LABEL_CUSTOM_CMD
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
+  export LABEL_COPY_COMMAND LABEL_CLOSE
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
@@ -637,6 +658,7 @@ render_template() {
   export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
+  export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -717,6 +739,16 @@ RECOMMENDED_TITLE="$(text recommended_title)"
 RECOMMENDED_INSTALLED="$(text recommended_installed)"
 RECOMMENDED_NOT_INSTALLED="$(text recommended_not_installed)"
 RECOMMENDED_PROMPT="$(text recommended_prompt)"
+APP_BROWSER_TITLE="$(text app_browser_title)"
+LABEL_INSTALL="$(text install)"
+LABEL_ADDED="$(text added)"
+LABEL_INSTALLED="$(text installed)"
+LABEL_NOT_INSTALLED="$(text not_installed)"
+LABEL_COPY_COMMAND="$(text copy_command)"
+LABEL_COMMAND_COPIED="$(text command_copied)"
+LABEL_INSTALL_STARTED="$(text install_started)"
+LABEL_INSTALL_MANUAL="$(text install_manual)"
+LABEL_CLOSE="$(text close)"
 
 JSON_ADMIN_TITLE="$(json_text "$ADMIN_TITLE")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
@@ -757,6 +789,16 @@ JSON_RECOMMENDED_TITLE="$(json_text "$RECOMMENDED_TITLE")"
 JSON_RECOMMENDED_INSTALLED="$(json_text "$RECOMMENDED_INSTALLED")"
 JSON_RECOMMENDED_NOT_INSTALLED="$(json_text "$RECOMMENDED_NOT_INSTALLED")"
 JSON_RECOMMENDED_PROMPT="$(json_text "$RECOMMENDED_PROMPT")"
+JSON_APP_BROWSER_TITLE="$(json_text "$APP_BROWSER_TITLE")"
+JSON_INSTALL="$(json_text "$LABEL_INSTALL")"
+JSON_ADDED="$(json_text "$LABEL_ADDED")"
+JSON_INSTALLED="$(json_text "$LABEL_INSTALLED")"
+JSON_NOT_INSTALLED="$(json_text "$LABEL_NOT_INSTALLED")"
+JSON_COPY_COMMAND="$(json_text "$LABEL_COPY_COMMAND")"
+JSON_COMMAND_COPIED="$(json_text "$LABEL_COMMAND_COPIED")"
+JSON_INSTALL_STARTED="$(json_text "$LABEL_INSTALL_STARTED")"
+JSON_INSTALL_MANUAL="$(json_text "$LABEL_INSTALL_MANUAL")"
+JSON_CLOSE="$(json_text "$LABEL_CLOSE")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"

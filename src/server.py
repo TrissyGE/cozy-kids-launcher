@@ -238,6 +238,18 @@ fi
             except Exception as e:
                 self.json_response({"status": "error", "message": str(e)}, 500)
             return
+        if action == "api/install-package":
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            data = json.loads(raw.decode("utf-8"))
+            package = data.get("package", "")
+            recs = load_recommendations()
+            valid_packages = {r["package"] for r in recs if r.get("package")}
+            if not package or package not in valid_packages:
+                self.json_response({"status": "error", "message": "Invalid package"}, 400)
+                return
+            command = f"sudo apt install -y {package}"
+            self.json_response({"status": "manual", "command": command})
+            return
         if action.startswith("launch/"):
             tile_id = unquote(action.split("/", 1)[1])
             if not tile_id or not re.match(r"^[A-Za-z0-9_-]+$", tile_id):

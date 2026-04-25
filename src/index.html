@@ -54,6 +54,13 @@
   .rec-card .emoji { font-size:2.4rem; }
   .rec-card .name { font-weight:700; font-size:1rem; text-align:center; }
   .rec-card .pkg { font-size:.8rem; color:#888; text-align:center; }
+  .rec-card .status { font-size:.75rem; padding:4px 10px; border-radius:10px; background:#f0f0f0; }
+  .rec-card .status.installed { background:#d9f7df; color:#24563a; }
+  .rec-card .status.missing { background:#ffeef0; color:#c00; }
+  .rec-card .actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .install-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:200; }
+  .install-box { background:white; border-radius:24px; padding:32px; max-width:480px; width:90%; box-shadow:var(--shadow); text-align:center; }
+  .command-box { background:#f5f5f5; border-radius:12px; padding:12px; font-family:monospace; font-size:.9rem; word-break:break-all; margin:12px 0; display:flex; align-items:center; gap:8px; }
 </style>
 </head>
 <body class="theme-{{DEFAULT_THEME}}">
@@ -82,6 +89,17 @@
     <div class="emoji" style="font-size:3rem;">🔄</div>
     <h2 id="updateProgressTitle">{{UPDATE_PROGRESS}}</h2>
     <div class="muted" id="updateProgressText"></div>
+  </div>
+</div>
+<div id="installOverlay" class="install-overlay hidden">
+  <div class="install-box">
+    <h2 id="installTitle"></h2>
+    <div id="installMessage"></div>
+    <div class="command-box">
+      <span id="installCommand"></span>
+      <button class="smallbtn" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
+    </div>
+    <button class="smallbtn" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
   </div>
 </div>
 <div id="admin" class="screen hidden">
@@ -164,7 +182,17 @@ const uiText = {
   updateNow: {{JSON_UPDATE_NOW}},
   updateProgress: {{JSON_UPDATE_PROGRESS}},
   updateConfirm: {{JSON_UPDATE_CONFIRM}},
-  recommendedTitle: {{JSON_RECOMMENDED_TITLE}}
+  recommendedTitle: {{JSON_RECOMMENDED_TITLE}},
+  appBrowserTitle: {{JSON_APP_BROWSER_TITLE}},
+  install: {{JSON_INSTALL}},
+  added: {{JSON_ADDED}},
+  installed: {{JSON_INSTALLED}},
+  notInstalled: {{JSON_NOT_INSTALLED}},
+  copyCommand: {{JSON_COPY_COMMAND}},
+  commandCopied: {{JSON_COMMAND_COPIED}},
+  installStarted: {{JSON_INSTALL_STARTED}},
+  installManual: {{JSON_INSTALL_MANUAL}},
+  close: {{JSON_CLOSE}}
 };
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
@@ -211,9 +239,101 @@ function moveDown(idx){ if(idx>=cfg.tiles.length-1) return; const tmp=cfg.tiles[
 function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
 function addTile(){ cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); renderAll(); adminPage=pageCount()-1; renderAdmin(); }
 function renderAdminPageNav(){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1, Math.ceil(cfg.tiles.length / pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
-function renderRecommendations(){ const container=document.getElementById('recommendations'); container.innerHTML=''; const existingIds=new Set(cfg.tiles.map(t=>t.id)); const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd))); const installed=recommendations.filter(r=>{ if(existingIds.has(r.id)) return false; const cmd=r.cmd||[]; return r.installed && !existingCmds.has(JSON.stringify(cmd)); }); if(installed.length===0) return; const panel=document.createElement('div'); panel.className='panel'; const h2=document.createElement('h2'); h2.textContent=uiText.recommendedTitle||'Recommended apps'; panel.appendChild(h2); const grid=document.createElement('div'); grid.className='rec-grid'; for(const rec of installed){ const card=document.createElement('div'); card.className='rec-card'; const em=document.createElement('div'); em.className='emoji'; em.textContent=rec.emoji||'✨'; const nm=document.createElement('div'); nm.className='name'; nm.textContent=rec.label_de||rec.label_en||rec.id; const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.addTile||'Add tile'; btn.onclick=()=>{ cfg.tiles.push({ id:rec.id, label:nm.textContent, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true }); renderAll(); }; card.append(em,nm,btn); grid.appendChild(card); } panel.appendChild(grid); container.appendChild(panel); }
-async function saveConfig(){ cfg.title=document.getElementById('cfgTitle').value; cfg.theme=document.getElementById('cfgTheme').value; cfg.layoutMode=document.getElementById('cfgLayoutMode').value; cfg.parentLabel=document.getElementById('cfgParentLabel').value; cfg.exitLabel=document.getElementById('cfgExitLabel').value; cfg.currentPage=0; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); renderAll(); closeAdmin(); }
-(async()=>{ await loadApps(); await loadRecommendations(); await loadConfig(); })();
+function renderRecommendations(){
+  const container=document.getElementById('recommendations');
+  container.innerHTML='';
+  if(!recommendations.length) return;
+  const existingIds=new Set(cfg.tiles.map(t=>t.id));
+  const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
+  const panel=document.createElement('div'); panel.className='panel';
+  const headerRow=document.createElement('div'); headerRow.style.display='flex'; headerRow.style.justifyContent='space-between'; headerRow.style.alignItems='center'; headerRow.style.marginBottom='12px';
+  const h2=document.createElement('h2'); h2.style.margin='0'; h2.textContent=uiText.appBrowserTitle||'App Browser';
+  const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; refreshBtn.textContent='↻'; refreshBtn.title='Refresh'; refreshBtn.onclick=async()=>{ await loadRecommendations(); renderRecommendations(); };
+  headerRow.appendChild(h2); headerRow.appendChild(refreshBtn);
+  panel.appendChild(headerRow);
+  const grid=document.createElement('div'); grid.className='rec-grid';
+  const sorted=[...recommendations].sort((a,b)=>{
+    const aAdded=existingIds.has(a.id)||existingCmds.has(JSON.stringify(a.cmd||[]));
+    const bAdded=existingIds.has(b.id)||existingCmds.has(JSON.stringify(b.cmd||[]));
+    if(aAdded!==bAdded) return aAdded?1:-1;
+    if(a.installed!==b.installed) return a.installed?-1:1;
+    return 0;
+  });
+  for(const rec of sorted){
+    const card=document.createElement('div'); card.className='rec-card';
+    const em=document.createElement('div'); em.className='emoji'; em.textContent=rec.emoji||'✨';
+    const nm=document.createElement('div'); nm.className='name';
+    nm.textContent=(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id;
+    const st=document.createElement('div'); st.className='status '+(rec.installed?'installed':'missing');
+    st.textContent=rec.installed?(uiText.installed||'installed'):(uiText.notInstalled||'not installed');
+    const actions=document.createElement('div'); actions.className='actions';
+    const added=existingIds.has(rec.id)||existingCmds.has(JSON.stringify(rec.cmd||[]));
+    if(added){
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.disabled=true; btn.textContent=uiText.added||'Added';
+      actions.appendChild(btn);
+    } else if(rec.installed){
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.addTile||'Add tile';
+      btn.onclick=()=>{ cfg.tiles.push({ id:rec.id, label:nm.textContent, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true }); renderAll(); persistConfig(); };
+      actions.appendChild(btn);
+    } else {
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.install||'Install';
+      btn.onclick=()=>{ triggerInstall(rec); };
+      actions.appendChild(btn);
+    }
+    card.append(em,nm,st,actions);
+    grid.appendChild(card);
+  }
+  panel.appendChild(grid);
+  container.appendChild(panel);
+}
+let pendingInstallCommand='';
+function triggerInstall(rec){
+  pendingInstallCommand='sudo apt install -y '+rec.package;
+  document.getElementById('installTitle').textContent=(uiText.install||'Install')+' '+((cfg.language==='de'?rec.label_de:rec.label_en)||rec.id);
+  fetch('/api/install-package',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:rec.package})})
+    .then(r=>r.json()).then(data=>{
+      const msg=document.getElementById('installMessage');
+      if(data.status==='started'){
+        msg.textContent=uiText.installStarted||'Installation started. Watch for a password dialog, or run the command below:';
+      } else {
+        msg.textContent=uiText.installManual||'Please run this command in a terminal:';
+      }
+      if(data.command) pendingInstallCommand=data.command;
+      document.getElementById('installCommand').textContent=pendingInstallCommand;
+      document.getElementById('installOverlay').classList.remove('hidden');
+    }).catch(()=>{
+      document.getElementById('installMessage').textContent=uiText.installManual||'Please run this command in a terminal:';
+      document.getElementById('installCommand').textContent=pendingInstallCommand;
+      document.getElementById('installOverlay').classList.remove('hidden');
+    });
+}
+function closeInstallOverlay(){ document.getElementById('installOverlay').classList.add('hidden'); }
+async function copyInstallCommand(){
+  try{
+    await navigator.clipboard.writeText(pendingInstallCommand);
+    const btn=document.querySelector('#installOverlay .command-box .smallbtn');
+    btn.textContent=uiText.commandCopied||'Copied!';
+    setTimeout(()=>btn.textContent=uiText.copyCommand||'Copy',2000);
+  }catch(e){}
+}
+async function autoScanRecommendations(){
+  const existingIds=new Set(cfg.tiles.map(t=>t.id));
+  const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
+  let added=false;
+  for(const rec of recommendations){
+    if(existingIds.has(rec.id)) continue;
+    if(rec.installed && !existingCmds.has(JSON.stringify(rec.cmd||[]))){
+      cfg.tiles.push({ id:rec.id, label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true });
+      added=true;
+    }
+  }
+  if(added){ await persistConfig(); renderAll(); }
+}
+async function persistConfig(){
+  await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+}
+async function saveConfig(){ cfg.title=document.getElementById('cfgTitle').value; cfg.theme=document.getElementById('cfgTheme').value; cfg.layoutMode=document.getElementById('cfgLayoutMode').value; cfg.parentLabel=document.getElementById('cfgParentLabel').value; cfg.exitLabel=document.getElementById('cfgExitLabel').value; cfg.currentPage=0; await persistConfig(); renderAll(); closeAdmin(); }
+(async()=>{ await loadApps(); await loadRecommendations(); await loadConfig(); await autoScanRecommendations(); })();
 </script>
 </body>
 </html>
