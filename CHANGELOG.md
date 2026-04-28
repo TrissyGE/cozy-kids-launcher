@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.8] - Theme Editor & Visual Theme Chooser
+
+### 9 New World Themes
+
+- **Wald** — green forest background with tree-themed tiles
+- **Weltraum** — purple cosmic background with futuristic tiles
+- **Ocean** — blue underwater background with wave-shaped tiles
+- **Dinosaurier** — prehistoric jungle with dotted green tiles
+- **Baustelle** — sunny construction site with dashed orange tiles
+- **Prinzessin** — magical pink kingdom with glowing tiles
+- **Bauernhof** — red farm scene with bordered tiles
+- **Katzen** — cozy cat interior with warm rounded tiles
+- **Hunde** — dog park meadow with soft rounded tiles
+
+### Visual Theme Chooser
+
+- Replaced plain theme dropdown with a **visual grid overlay**
+- Shows color swatches for 5 color themes (Rosa, Lila, Blau, Grün, Regenbogen)
+- Shows image thumbnails for 9 world themes
+- Selected theme highlighted with colored border and slight scale-up
+- Opens as a centered modal overlay to keep admin layout clean
+
+### Theme System Architecture
+
+- Themes now set **CSS custom properties** for buttons, inputs, shadows, and borders
+- Each world theme gets a **real background image** loaded via `/themes/*.jpg`
+- Background images fade in smoothly via a dedicated `#themeBg` layer
+- Images stored in `~/.local/share/cozy-kids-launcher/themes/`
+- Each theme has **unique tile styling** (borders, radius, shadows)
+
+### Installer Updates
+
+- Guided setup now lists all 14 themes with numbered options
+- Theme validation accepts all 14 theme names
+
 ## [Unreleased] - Major Improvements
 
 ### Installer Refactoring

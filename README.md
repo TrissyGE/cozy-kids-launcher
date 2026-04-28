@@ -65,6 +65,8 @@ Most kids launchers are either:
 | 4-tile (large) or 9-tile (compact) layout modes | ✅ |
 | Parent settings inside the UI | ✅ |
 | Editable title, colors, labels, and tiles | ✅ |
+| 14 themes (5 colors + 9 illustrated worlds) | ✅ |
+| Visual theme chooser with live previews | ✅ |
 | PIN protection for parent settings | ✅ |
 | Tile reordering (move up/down) | ✅ |
 | App recommendations with one-click add | ✅ |

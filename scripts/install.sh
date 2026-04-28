@@ -388,7 +388,7 @@ case "$LANG_MODE" in
 esac
 
 case "$DEFAULT_THEME" in
-  rosa|lila|blau|gruen|regenbogen) ;;
+  rosa|lila|blau|gruen|regenbogen|wald|weltraum|ocean|dinosaurier|baustelle|prinzessin|bauernhof|katzen|hunde) ;;
   *) die "Unsupported theme: $DEFAULT_THEME" ;;
 esac
 
@@ -466,12 +466,30 @@ guided_setup() {
     echo "  3) Blau"
     echo "  4) Gruen"
     echo "  5) Regenbogen"
+    echo "  6) Wald"
+    echo "  7) Weltraum"
+    echo "  8) Ocean"
+    echo "  9) Dinosaurier"
+    echo " 10) Baustelle"
+    echo " 11) Prinzessin"
+    echo " 12) Bauernhof"
+    echo " 13) Katzen"
+    echo " 14) Hunde"
     prompt_read "Choice [1]: " input
     case "$input" in
       2) DEFAULT_THEME="lila"; EXPLICIT_THEME=1 ;;
       3) DEFAULT_THEME="blau"; EXPLICIT_THEME=1 ;;
       4) DEFAULT_THEME="gruen"; EXPLICIT_THEME=1 ;;
       5) DEFAULT_THEME="regenbogen"; EXPLICIT_THEME=1 ;;
+      6) DEFAULT_THEME="wald"; EXPLICIT_THEME=1 ;;
+      7) DEFAULT_THEME="weltraum"; EXPLICIT_THEME=1 ;;
+      8) DEFAULT_THEME="ocean"; EXPLICIT_THEME=1 ;;
+      9) DEFAULT_THEME="dinosaurier"; EXPLICIT_THEME=1 ;;
+      10) DEFAULT_THEME="baustelle"; EXPLICIT_THEME=1 ;;
+      11) DEFAULT_THEME="prinzessin"; EXPLICIT_THEME=1 ;;
+      12) DEFAULT_THEME="bauernhof"; EXPLICIT_THEME=1 ;;
+      13) DEFAULT_THEME="katzen"; EXPLICIT_THEME=1 ;;
+      14) DEFAULT_THEME="hunde"; EXPLICIT_THEME=1 ;;
       *) ;;
     esac
   fi

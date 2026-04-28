@@ -19,7 +19,7 @@
 - [ ] Capture polished screenshots for GitHub
 - [x] Support Chromium as well as Firefox
 - [ ] Support multiple Linux desktop environments
-- [ ] Theme editor beyond presets
+- [x] Theme editor beyond presets
 - [x] Optional export/import of launcher configs
 
 ## Future ideas

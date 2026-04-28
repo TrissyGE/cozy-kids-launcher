@@ -5,12 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{APP_NAME}}</title>
 <style>
-  :root { --bg1:#ffd6e8; --bg2:#ffeef6; --card:rgba(255,255,255,.92); --text:#5f2148; --shadow:0 14px 40px rgba(125,35,84,.18); }
-  body.theme-rosa { --bg1:#ffd6e8; --bg2:#ffeef6; --text:#5f2148; }
-  body.theme-lila { --bg1:#e3d6ff; --bg2:#f4eeff; --text:#45216a; }
-  body.theme-blau { --bg1:#d7ebff; --bg2:#eef7ff; --text:#1f4670; }
-  body.theme-gruen { --bg1:#d9f7df; --bg2:#effcf1; --text:#24563a; }
-  body.theme-regenbogen { --bg1:#ffd6e8; --bg2:#d7ebff; --text:#5f2148; }
+  :root { --bg1:#ffd6e8; --bg2:#ffeef6; --card:rgba(255,255,255,.92); --text:#5f2148; --shadow:0 14px 40px rgba(125,35,84,.18); --btn:#e85a9c; --btn-text:#fff; --smallbtn-bg:#fff7fb; --input-border:#e8bfd2; --rec-shadow:rgba(125,35,84,.08); }
+  body.theme-rosa { --bg1:#ffd6e8; --bg2:#ffeef6; --text:#5f2148; --shadow:0 14px 40px rgba(125,35,84,.18); --btn:#e85a9c; --btn-text:#fff; --smallbtn-bg:#fff7fb; --input-border:#e8bfd2; --rec-shadow:rgba(125,35,84,.08); }
+  body.theme-lila { --bg1:#e3d6ff; --bg2:#f4eeff; --text:#45216a; --shadow:0 14px 40px rgba(69,33,106,.18); --btn:#9b59b6; --btn-text:#fff; --smallbtn-bg:#faf5ff; --input-border:#d2c4e8; --rec-shadow:rgba(69,33,106,.08); }
+  body.theme-blau { --bg1:#d7ebff; --bg2:#eef7ff; --text:#1f4670; --shadow:0 14px 40px rgba(31,70,112,.18); --btn:#3498db; --btn-text:#fff; --smallbtn-bg:#f0f8ff; --input-border:#a8d0f0; --rec-shadow:rgba(31,70,112,.08); }
+  body.theme-gruen { --bg1:#d9f7df; --bg2:#effcf1; --text:#24563a; --shadow:0 14px 40px rgba(36,86,58,.15); --btn:#27ae60; --btn-text:#fff; --smallbtn-bg:#f0fff4; --input-border:#a8e6c0; --rec-shadow:rgba(36,86,58,.08); }
+  body.theme-regenbogen { --bg1:#ffd6e8; --bg2:#d7ebff; --text:#5f2148; --shadow:0 14px 40px rgba(125,35,84,.18); --btn:#e85a9c; --btn-text:#fff; --smallbtn-bg:#fff7fb; --input-border:#e8bfd2; --rec-shadow:rgba(125,35,84,.08); }
+  body.theme-wald { --bg1:#c8e6c9; --bg2:#e8f5e9; --text:#1b5e20; --shadow:0 14px 40px rgba(27,94,32,.15); --btn:#43a047; --btn-text:#fff; --smallbtn-bg:#f1f8e9; --input-border:#a5d6a7; --rec-shadow:rgba(27,94,32,.08); }
+  body.theme-weltraum { --bg1:#d1c4e9; --bg2:#ede7f6; --text:#311b92; --shadow:0 14px 40px rgba(49,27,146,.18); --btn:#7e57c2; --btn-text:#fff; --smallbtn-bg:#f3e5f5; --input-border:#b39ddb; --rec-shadow:rgba(49,27,146,.08); }
+  body.theme-ocean { --bg1:#b3e5fc; --bg2:#e1f5fe; --text:#01579b; --shadow:0 14px 40px rgba(1,87,155,.18); --btn:#0288d1; --btn-text:#fff; --smallbtn-bg:#e0f7fa; --input-border:#81d4fa; --rec-shadow:rgba(1,87,155,.08); }
+  body.theme-dinosaurier { --bg1:#dcedc8; --bg2:#f1f8e9; --text:#33691e; --shadow:0 14px 40px rgba(51,105,30,.15); --btn:#689f38; --btn-text:#fff; --smallbtn-bg:#f9fbe7; --input-border:#aed581; --rec-shadow:rgba(51,105,30,.08); }
+  body.theme-baustelle { --bg1:#ffecb3; --bg2:#fff8e1; --text:#e65100; --shadow:0 14px 40px rgba(230,81,0,.15); --btn:#ff9800; --btn-text:#fff; --smallbtn-bg:#fff3e0; --input-border:#ffcc80; --rec-shadow:rgba(230,81,0,.08); }
+  body.theme-prinzessin { --bg1:#f8bbd0; --bg2:#fce4ec; --text:#880e4f; --shadow:0 14px 40px rgba(136,14,79,.18); --btn:#ec407a; --btn-text:#fff; --smallbtn-bg:#fff0f5; --input-border:#f48fb1; --rec-shadow:rgba(136,14,79,.08); }
+  body.theme-bauernhof { --bg1:#ffcdd2; --bg2:#ffebee; --text:#b71c1c; --shadow:0 14px 40px rgba(183,28,28,.15); --btn:#e53935; --btn-text:#fff; --smallbtn-bg:#fff5f5; --input-border:#ef9a9a; --rec-shadow:rgba(183,28,28,.08); }
+  body.theme-katzen { --bg1:#ffe0b2; --bg2:#fff3e0; --text:#e65100; --shadow:0 14px 40px rgba(230,81,0,.12); --btn:#fb8c00; --btn-text:#fff; --smallbtn-bg:#fff8e1; --input-border:#ffcc80; --rec-shadow:rgba(230,81,0,.08); }
+  body.theme-hunde { --bg1:#d7ccc8; --bg2:#efebe9; --text:#4e342e; --shadow:0 14px 40px rgba(78,52,46,.15); --btn:#8d6e63; --btn-text:#fff; --smallbtn-bg:#fafafa; --input-border:#bcaaa4; --rec-shadow:rgba(78,52,46,.08); }
+  body.theme-wald .tile { border:2px solid #81c784; border-radius:28px; }
+  body.theme-weltraum .tile { border-radius:20px; box-shadow:0 0 30px rgba(126,87,194,.15), var(--shadow); }
+  body.theme-ocean .tile { border-radius:32px 12px 32px 12px; }
+  body.theme-dinosaurier .tile { border:3px dotted #689f38; border-radius:24px; }
+  body.theme-baustelle .tile { border-radius:12px; border:3px dashed #ff9800; }
+  body.theme-prinzessin .tile { border-radius:40px; box-shadow:0 14px 40px rgba(236,64,122,.2), var(--shadow); }
+  body.theme-bauernhof .tile { border:2px solid #e57373; border-radius:28px; }
+  body.theme-katzen .tile { border-radius:36px; box-shadow:0 8px 24px rgba(251,140,0,.15), var(--shadow); }
+  body.theme-hunde .tile { border-radius:36px; box-shadow:0 8px 24px rgba(141,110,99,.15), var(--shadow); }
+  #themeBg { position:fixed; inset:0; z-index:-1; opacity:0; transition:opacity .6s ease; pointer-events:none; background-size:cover; background-position:center; }
+  body.theme-wald #themeBg { background-image:url('/themes/forrest.jpg'); opacity:1; }
+  body.theme-weltraum #themeBg { background-image:url('/themes/space.jpg'); opacity:1; }
+  body.theme-ocean #themeBg { background-image:url('/themes/ocean.jpg'); opacity:1; }
+  body.theme-dinosaurier #themeBg { background-image:url('/themes/dinosaur.jpg'); opacity:1; }
+  body.theme-baustelle #themeBg { background-image:url('/themes/construction-site.jpg'); opacity:1; }
+  body.theme-prinzessin #themeBg { background-image:url('/themes/princess.jpg'); opacity:1; }
+  body.theme-bauernhof #themeBg { background-image:url('/themes/farm.jpg'); opacity:1; }
+  body.theme-katzen #themeBg { background-image:url('/themes/cats.jpg'); opacity:1; }
+  body.theme-hunde #themeBg { background-image:url('/themes/dogs.jpg'); opacity:1; }
   * { box-sizing:border-box; }
   body { margin:0; min-height:100vh; font-family:system-ui,sans-serif; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text); overflow:hidden; }
   .screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px 80px; }
@@ -28,7 +56,7 @@
   .grid.klein .emoji { font-size:2.6rem; }
   .cornerbar { position:fixed; left:20px; right:20px; bottom:18px; display:flex; justify-content:space-between; pointer-events:none; }
   .smallcluster { display:flex; gap:12px; pointer-events:auto; }
-  .smallbtn { border:0; border-radius:18px; min-height:54px; min-width:110px; padding:0 18px; font-size:1rem; font-weight:700; background:#fff7fb; color:var(--text); box-shadow:var(--shadow); cursor:pointer; }
+  .smallbtn { border:0; border-radius:18px; min-height:54px; min-width:110px; padding:0 18px; font-size:1rem; font-weight:700; background:var(--smallbtn-bg); color:var(--text); box-shadow:var(--shadow); cursor:pointer; }
   .nav { position:fixed; top:50%; transform:translateY(-50%); width:56px; height:120px; border:0; border-radius:22px; background:rgba(255,255,255,.88); box-shadow:var(--shadow); font-size:2rem; font-weight:700; color:var(--text); cursor:pointer; }
   .nav.left { left:14px; }
   .nav.right { right:14px; }
@@ -40,9 +68,9 @@
   .panel h2 { margin-top:0; margin-bottom:18px; font-size:1.7rem; }
   .row2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
   .tileform { display:grid; grid-template-columns:70px 1fr 120px 1.2fr 70px 70px 70px; gap:10px; align-items:center; margin-bottom:12px; }
-  input, select { font-size:1rem; padding:12px 14px; border-radius:12px; border:1px solid #e8bfd2; background:white; color:var(--text); width:100%; }
-  label.chk { display:flex; align-items:center; gap:8px; font-weight:600; background:white; border:1px solid #e8bfd2; border-radius:12px; padding:12px 14px; }
-  .save { background:#e85a9c; color:white; }
+  input, select { font-size:1rem; padding:12px 14px; border-radius:12px; border:1px solid var(--input-border); background:white; color:var(--text); width:100%; }
+  label.chk { display:flex; align-items:center; gap:8px; font-weight:600; background:white; border:1px solid var(--input-border); border-radius:12px; padding:12px 14px; }
+  .save { background:var(--btn); color:var(--btn-text); }
   .pinoverlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:100; }
   .pinbox { background:white; border-radius:24px; padding:32px; max-width:420px; width:90%; box-shadow:var(--shadow); text-align:center; }
   .pinbox h2 { margin:0 0 18px; }
@@ -52,7 +80,7 @@
   .adminpagenav { display:flex; justify-content:center; gap:12px; margin-bottom:14px; }
   .muted { color:#888; font-size:.9rem; }
   .rec-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
-  .rec-card { background:white; border-radius:18px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; box-shadow:0 4px 16px rgba(125,35,84,.08); }
+  .rec-card { background:white; border-radius:18px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; box-shadow:0 4px 16px var(--rec-shadow); }
   .rec-card .emoji { font-size:2.4rem; }
   .rec-card .name { font-weight:700; font-size:1rem; text-align:center; }
   .rec-card .desc { font-size:.85rem; color:#666; text-align:center; line-height:1.3; }
@@ -63,9 +91,14 @@
   .install-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:200; }
   .install-box { background:white; border-radius:24px; padding:32px; max-width:480px; width:90%; box-shadow:var(--shadow); text-align:center; }
   .command-box { background:#f5f5f5; border-radius:12px; padding:12px; font-family:monospace; font-size:.9rem; word-break:break-all; margin:12px 0; display:flex; align-items:center; gap:8px; }
+  .theme-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:16px; }
+  .theme-thumb { border-radius:18px; height:90px; cursor:pointer; border:3px solid transparent; transition:.2s; background-size:cover; background-position:center; position:relative; overflow:hidden; }
+  .theme-thumb.active { border-color:var(--btn); box-shadow:0 4px 12px rgba(0,0,0,.15); transform:scale(1.04); }
+  .theme-thumb .thumb-label { position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,.88); padding:4px 6px; font-size:.78rem; font-weight:700; text-align:center; color:var(--text); }
 </style>
 </head>
 <body class="theme-{{DEFAULT_THEME}}">
+<div id="themeBg"></div>
 <button id="navLeft" class="nav left hidden" onclick="changePage(-1)">‹</button>
 <button id="navRight" class="nav right hidden" onclick="changePage(1)">›</button>
 <div id="kids" class="screen">
@@ -105,13 +138,21 @@
     <button class="smallbtn" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
   </div>
 </div>
+<div id="themeOverlay" class="install-overlay hidden">
+  <div class="install-box" style="max-width:900px;">
+    <h2 id="themePickerTitle">Theme</h2>
+    <div id="themeChooser" class="theme-grid" style="max-height:60vh; overflow-y:auto; padding:8px;"></div>
+    <button class="smallbtn" onclick="closeThemePicker()" style="margin-top:12px;">{{LABEL_CLOSE}}</button>
+  </div>
+</div>
 <div id="admin" class="screen hidden">
   <div class="wrap admin">
     <div class="panel">
       <h2 id="adminTitle">{{ADMIN_TITLE}}</h2>
       <div class="row2">
         <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}">
-        <select id="cfgTheme"><option value="rosa">Rosa</option><option value="lila">Lila</option><option value="blau">Blau</option><option value="gruen">Grün</option><option value="regenbogen">Regenbogen</option></select>
+        <input type="hidden" id="cfgTheme">
+        <button id="openThemeBtn" class="smallbtn" onclick="openThemePicker()"><span id="themeDisplay"></span></button>
         <select id="cfgLayoutMode"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
         <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
       </div>
@@ -236,6 +277,42 @@ function shutdownNow(){ if(cfg.pinHash){ requestPin(() => { fetch('/shutdown',{m
 function exitKids(){ if(cfg.pinHash){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
 function tilePageIndex(idx){ return Math.floor(idx / pageSize()); }
 
+const ALL_THEMES=[
+  {id:'rosa',label:'Rosa',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'},
+  {id:'lila',label:'Lila',type:'color',gradient:'linear-gradient(180deg,#e3d6ff,#f4eeff)'},
+  {id:'blau',label:'Blau',type:'color',gradient:'linear-gradient(180deg,#d7ebff,#eef7ff)'},
+  {id:'gruen',label:'Grün',type:'color',gradient:'linear-gradient(180deg,#d9f7df,#effcf1)'},
+  {id:'regenbogen',label:'Regenbogen',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#d7ebff)'},
+  {id:'wald',label:'Wald',type:'world',img:'/themes/forrest.jpg'},
+  {id:'weltraum',label:'Weltraum',type:'world',img:'/themes/space.jpg'},
+  {id:'ocean',label:'Ocean',type:'world',img:'/themes/ocean.jpg'},
+  {id:'dinosaurier',label:'Dinosaurier',type:'world',img:'/themes/dinosaur.jpg'},
+  {id:'baustelle',label:'Baustelle',type:'world',img:'/themes/construction-site.jpg'},
+  {id:'prinzessin',label:'Prinzessin',type:'world',img:'/themes/princess.jpg'},
+  {id:'bauernhof',label:'Bauernhof',type:'world',img:'/themes/farm.jpg'},
+  {id:'katzen',label:'Katzen',type:'world',img:'/themes/cats.jpg'},
+  {id:'hunde',label:'Hunde',type:'world',img:'/themes/dogs.jpg'}
+];
+function openThemePicker(){ document.getElementById('themeOverlay').classList.remove('hidden'); renderThemeChooser(); }
+function closeThemePicker(){ document.getElementById('themeOverlay').classList.add('hidden'); updateThemeDisplay(); }
+function updateThemeDisplay(){ const id=document.getElementById('cfgTheme').value; const t=ALL_THEMES.find(x=>x.id===id); document.getElementById('themeDisplay').textContent=t?t.label:id; }
+function renderThemeChooser(){
+  const container=document.getElementById('themeChooser');
+  const current=document.getElementById('cfgTheme').value;
+  container.innerHTML='';
+  for(const t of ALL_THEMES){
+    const el=document.createElement('div');
+    el.className='theme-thumb'+(t.id===current?' active':'');
+    el.style.background=t.type==='color'?t.gradient:'url('+t.img+') center/cover no-repeat';
+    el.onclick=()=>{ document.getElementById('cfgTheme').value=t.id; renderThemeChooser(); closeThemePicker(); };
+    const lbl=document.createElement('div');
+    lbl.className='thumb-label';
+    lbl.textContent=t.label;
+    el.appendChild(lbl);
+    container.appendChild(el);
+  }
+}
+
 // PIN setup
 async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const hash=await sha256(p1); cfg.pinHash=hash; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
 async function removePin(){ const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; cfg.pinHash=''; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
@@ -248,7 +325,7 @@ async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'
 function compareVersion(a,b){ const A=a.split('.'); const B=b.split('.'); for(let i=0;i<Math.max(A.length,B.length);i++){ const av=parseInt(A[i]||0,10); const bv=parseInt(B[i]||0,10); if(av>bv) return 1; if(av<bv) return -1; } return 0; }
 async function installUpdate(){ if(!window.confirm(uiText.updateConfirm||'Close browser and install update now?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
 
-function renderAdmin(){ document.getElementById('adminTitle').textContent=uiText.adminTitle; document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle; document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel; document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel; document.getElementById('addTileBtn').textContent=uiText.addTile; document.getElementById('backBtn').textContent=uiText.back; document.getElementById('saveBtn').textContent=uiText.save; document.getElementById('cfgTitle').value=cfg.title||''; document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}'; document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}'; document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; document.getElementById('updateMsg').textContent=''; updatePinButton(); const forms=document.getElementById('forms'); forms.innerHTML=''; cfg.tiles.forEach((tile, idx)=>{ const row=document.createElement('div'); row.className='tileform'; row.style.display = tilePageIndex(idx) === adminPage ? 'grid' : 'none'; const emoji=document.createElement('input'); emoji.value=tile.emoji||''; emoji.onchange=e=>tile.emoji=e.target.value; const label=document.createElement('input'); label.value=tile.label||''; label.onchange=e=>tile.label=e.target.value; const visibleWrap=document.createElement('label'); visibleWrap.className='chk'; const visible=document.createElement('input'); visible.type='checkbox'; visible.checked=!!tile.visible; visible.onchange=e=>tile.visible=e.target.checked; visibleWrap.append(visible,' '+uiText.visible); const select=document.createElement('select'); const special=document.createElement('option'); special.value='special:filme-musik'; special.textContent=uiText.specialMedia; select.appendChild(special); const empty=document.createElement('option'); empty.value=''; empty.textContent=uiText.noApp; select.appendChild(empty); for(const app of appOptions){ const opt=document.createElement('option'); opt.value=app.exec; opt.textContent=app.name; select.appendChild(opt); } const currentExec=Array.isArray(tile.cmd)?tile.cmd.join(' '):''; select.value=currentExec; if(select.value!==currentExec){ const opt=document.createElement('option'); opt.value=currentExec; opt.textContent=currentExec||uiText.customCmd; opt.selected=true; select.appendChild(opt);} select.onchange=e=>tile.cmd=[e.target.value]; const up=document.createElement('button'); up.className='smallbtn'; up.textContent=uiText.moveUp; up.onclick=()=>moveUp(idx); const down=document.createElement('button'); down.className='smallbtn'; down.textContent=uiText.moveDown; down.onclick=()=>moveDown(idx); const del=document.createElement('button'); del.className='smallbtn'; del.textContent=uiText.delete; del.onclick=()=>deleteTile(idx); row.append(emoji,label,visibleWrap,select,up,down,del); forms.appendChild(row); }); renderAdminPageNav(); renderRecommendations(); }
+function renderAdmin(){ document.getElementById('adminTitle').textContent=uiText.adminTitle; document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle; document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel; document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel; document.getElementById('addTileBtn').textContent=uiText.addTile; document.getElementById('backBtn').textContent=uiText.back; document.getElementById('saveBtn').textContent=uiText.save; document.getElementById('cfgTitle').value=cfg.title||''; document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}'; updateThemeDisplay(); document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}'; document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; document.getElementById('updateMsg').textContent=''; updatePinButton(); const forms=document.getElementById('forms'); forms.innerHTML=''; cfg.tiles.forEach((tile, idx)=>{ const row=document.createElement('div'); row.className='tileform'; row.style.display = tilePageIndex(idx) === adminPage ? 'grid' : 'none'; const emoji=document.createElement('input'); emoji.value=tile.emoji||''; emoji.onchange=e=>tile.emoji=e.target.value; const label=document.createElement('input'); label.value=tile.label||''; label.onchange=e=>tile.label=e.target.value; const visibleWrap=document.createElement('label'); visibleWrap.className='chk'; const visible=document.createElement('input'); visible.type='checkbox'; visible.checked=!!tile.visible; visible.onchange=e=>tile.visible=e.target.checked; visibleWrap.append(visible,' '+uiText.visible); const select=document.createElement('select'); const special=document.createElement('option'); special.value='special:filme-musik'; special.textContent=uiText.specialMedia; select.appendChild(special); const empty=document.createElement('option'); empty.value=''; empty.textContent=uiText.noApp; select.appendChild(empty); for(const app of appOptions){ const opt=document.createElement('option'); opt.value=app.exec; opt.textContent=app.name; select.appendChild(opt); } const currentExec=Array.isArray(tile.cmd)?tile.cmd.join(' '):''; select.value=currentExec; if(select.value!==currentExec){ const opt=document.createElement('option'); opt.value=currentExec; opt.textContent=currentExec||uiText.customCmd; opt.selected=true; select.appendChild(opt);} select.onchange=e=>tile.cmd=[e.target.value]; const up=document.createElement('button'); up.className='smallbtn'; up.textContent=uiText.moveUp; up.onclick=()=>moveUp(idx); const down=document.createElement('button'); down.className='smallbtn'; down.textContent=uiText.moveDown; down.onclick=()=>moveDown(idx); const del=document.createElement('button'); del.className='smallbtn'; del.textContent=uiText.delete; del.onclick=()=>deleteTile(idx); row.append(emoji,label,visibleWrap,select,up,down,del); forms.appendChild(row); }); renderAdminPageNav(); renderRecommendations(); }
 function moveUp(idx){ if(idx<1) return; const tmp=cfg.tiles[idx-1]; cfg.tiles[idx-1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
 function moveDown(idx){ if(idx>=cfg.tiles.length-1) return; const tmp=cfg.tiles[idx+1]; cfg.tiles[idx+1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
 function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
