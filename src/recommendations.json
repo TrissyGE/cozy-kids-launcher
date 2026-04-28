@@ -8,7 +8,7 @@
     "name_en": "Tux Paint",
     "desc_de": "Ein buntes Malprogramm für Kinder mit lustigen Stempeln und Zaubereffekten.",
     "desc_en": "A colorful paint program for kids with funny stamps and magic effects.",
-    "cmd": ["tuxpaint","--fullscreen"],
+    "cmd": ["tuxpaint","--fullscreen=yes"],
     "package": "tuxpaint",
     "category": "creative"
   },
@@ -140,7 +140,9 @@
     "name_en": "Minetest",
     "desc_de": "Eine offene Blockwelt zum Bauen, Graben und Entdecken ohne Grenzen.",
     "desc_en": "An open block world to build, dig and explore without limits.",
-    "cmd": ["minetest","--fullscreen"],
+    "cmd": ["minetest"],
+    "hint_de": "Tipp: Vollbild kannst du in den Minetest-Einstellungen aktivieren.",
+    "hint_en": "Tip: You can enable fullscreen in the Minetest settings.",
     "package": "minetest",
     "category": "game"
   },
@@ -153,8 +155,10 @@
     "name_en": "Extreme Tux Racer",
     "desc_de": "Tux rutscht auf dem Bauch den verschneiten Berg hinab – so schnell wie möglich!",
     "desc_en": "Tux slides down the snowy mountain on his belly – as fast as possible!",
-    "cmd": ["etr","--fullscreen"],
+    "cmd": ["etr"],
     "alt_cmds": ["extremetuxracer"],
+    "hint_de": "Tipp: Vollbild kannst du in den ETR-Einstellungen aktivieren.",
+    "hint_en": "Tip: You can enable fullscreen in the ETR settings.",
     "package": "extremetuxracer",
     "category": "game"
   },
@@ -223,7 +227,7 @@
     "name_en": "KTuberling",
     "desc_de": "Der digitale Kartoffelmann! Setze Augen, Nasen und Münder zusammen und bastel lustige Gesichter.",
     "desc_en": "The digital potato man! Put together eyes, noses and mouths to craft funny faces.",
-    "cmd": ["ktuberling","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","ktuberling"],
     "package": "ktuberling",
     "category": "creative"
   },
@@ -236,7 +240,7 @@
     "name_en": "KLettres",
     "desc_de": "Lerne Buchstaben und erste Wörter spielerisch mit Lauten und Bildern.",
     "desc_en": "Learn letters and first words playfully with sounds and pictures.",
-    "cmd": ["klettres","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","klettres"],
     "package": "klettres",
     "category": "learning"
   },
@@ -249,7 +253,7 @@
     "name_en": "KBruch",
     "desc_de": "Bruchrechnung spielerisch lernen mit bunten Kreisen und Balken.",
     "desc_en": "Learn fractions playfully with colorful circles and bars.",
-    "cmd": ["kbruch","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","kbruch"],
     "package": "kbruch",
     "category": "learning"
   },
@@ -262,7 +266,7 @@
     "name_en": "KWordQuiz",
     "desc_de": "Vokabeln lernen mit digitalen Karteikarten – ideal für die Schule.",
     "desc_en": "Learn vocabulary with digital flashcards – great for school.",
-    "cmd": ["kwordquiz","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","kwordquiz"],
     "package": "kwordquiz",
     "category": "learning"
   },
@@ -275,7 +279,7 @@
     "name_en": "Parley",
     "desc_de": "Ein umfangreicher Vokabeltrainer für verschiedene Sprachen und Altersstufen.",
     "desc_en": "A comprehensive vocabulary trainer for different languages and age groups.",
-    "cmd": ["parley","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","parley"],
     "package": "parley",
     "category": "learning"
   },
@@ -288,7 +292,7 @@
     "name_en": "Potato Guy",
     "desc_de": "Lustige Figuren aus Kartoffeln und Zubehör basteln – einfach und kreativ.",
     "desc_en": "Craft funny figures from potatoes and accessories – simple and creative.",
-    "cmd": ["potato-guy","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","potato-guy"],
     "package": "potato-guy",
     "category": "creative"
   },
@@ -301,7 +305,7 @@
     "name_en": "KBlocks",
     "desc_de": "Ein entspanntes Block-Puzzle ohne Zeitdruck, bei dem du Reihen löschen musst.",
     "desc_en": "A relaxed block puzzle without time pressure where you clear lines.",
-    "cmd": ["kblocks","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","kblocks"],
     "package": "kblocks",
     "category": "game"
   },
@@ -314,7 +318,7 @@
     "name_en": "KReversi",
     "desc_de": "Das klassische Othello-Spiel – umkreise die Steine des Gegners und gewinne.",
     "desc_en": "The classic Othello game – surround your opponent's pieces and win.",
-    "cmd": ["kreversi","--fullscreen"],
+    "cmd": ["kstart5","--fullscreen","kreversi"],
     "package": "kreversi",
     "category": "game"
   }

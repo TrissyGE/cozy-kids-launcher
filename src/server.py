@@ -36,9 +36,17 @@ def load_cfg():
     with open(CFG, "r", encoding="utf-8") as fh:
         data = json.load(fh)
     migrated = False
+    recs = load_recommendations()
+    rec_by_first_cmd = {}
+    for rec in recs:
+        if rec.get("cmd"):
+            rec_by_first_cmd[rec["cmd"][0]] = rec["cmd"]
+        for alt in rec.get("alt_cmds", []):
+            rec_by_first_cmd[alt] = rec["cmd"]
     for tile in data.get("tiles", []):
-        if tile.get("cmd") == ["frozen-bubble"]:
-            tile["cmd"] = ["frozen-bubble", "--fullscreen"]
+        cmd = tile.get("cmd", [])
+        if cmd and len(cmd) >= 1 and cmd[0] in rec_by_first_cmd and cmd != rec_by_first_cmd[cmd[0]]:
+            tile["cmd"] = rec_by_first_cmd[cmd[0]]
             migrated = True
     if migrated:
         save_cfg(data)
