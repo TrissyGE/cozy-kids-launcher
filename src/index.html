@@ -101,6 +101,7 @@
       <span id="installCommand"></span>
       <button class="smallbtn" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
     </div>
+    <div id="installHint" class="muted" style="margin-top:12px;"></div>
     <button class="smallbtn" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
   </div>
 </div>
@@ -318,10 +319,18 @@ function triggerInstall(rec){
       }
       if(data.command) pendingInstallCommand=data.command;
       document.getElementById('installCommand').textContent=pendingInstallCommand;
+      const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
+      const hintEl=document.getElementById('installHint');
+      hintEl.textContent=hint||'';
+      hintEl.style.display=hint?'block':'none';
       document.getElementById('installOverlay').classList.remove('hidden');
     }).catch(()=>{
       document.getElementById('installMessage').textContent=uiText.installManual||'Please run this command in a terminal:';
       document.getElementById('installCommand').textContent=pendingInstallCommand;
+      const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
+      const hintEl=document.getElementById('installHint');
+      hintEl.textContent=hint||'';
+      hintEl.style.display=hint?'block':'none';
       document.getElementById('installOverlay').classList.remove('hidden');
     });
 }

@@ -34,7 +34,15 @@ def has_media(path):
 
 def load_cfg():
     with open(CFG, "r", encoding="utf-8") as fh:
-        return json.load(fh)
+        data = json.load(fh)
+    migrated = False
+    for tile in data.get("tiles", []):
+        if tile.get("cmd") == ["frozen-bubble"]:
+            tile["cmd"] = ["frozen-bubble", "--fullscreen"]
+            migrated = True
+    if migrated:
+        save_cfg(data)
+    return data
 
 
 def save_cfg(data):
