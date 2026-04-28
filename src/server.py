@@ -171,6 +171,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response(load_recommendations())
         if self.path == "/api/version":
             return self.json_response({"version": get_version()})
+        if self.path == "/api/export-config":
+            data = load_cfg()
+            payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="cozy-kids-config.json"')
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
         return super().do_GET()
 
     def do_POST(self):
@@ -191,6 +201,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             pin = data.get("pin", "")
             self.json_response({"valid": verify_pin(pin_hash, pin)})
+            return
+        if action == "api/import-config":
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            data = json.loads(raw.decode("utf-8"))
+            if not isinstance(data, dict) or not isinstance(data.get("tiles"), list):
+                self.json_response({"status": "error", "message": "Invalid config format"}, 400)
+                return
+            save_cfg(data)
+            self.json_response({"status": "ok"})
             return
         if action == "shutdown":
             if os.environ.get("COZY_KIDS_ENABLE_SHUTDOWN") == "1":

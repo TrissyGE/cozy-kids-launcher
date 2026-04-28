@@ -1,11 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ -d /snap/bin ]] && [[ ":$PATH:" != *":/snap/bin:"* ]]; then
+  export PATH="$PATH:/snap/bin"
+fi
 APP_ROOT="$HOME/.local/share/{{APP_ID}}"
 PORT="${COZY_KIDS_PORT:-{{DEFAULT_PORT}}}"
 PIDFILE="$HOME/.cache/{{APP_ID}}/server.pid"
 BROWSER_PIDFILE="$HOME/.cache/{{APP_ID}}/browser.pid"
 URL="http://127.0.0.1:${PORT}/index.html"
 LAUNCH_MODE="{{DEFAULT_LAUNCH_MODE}}"
+BROWSER_CMD="{{BROWSER_CMD}}"
+BROWSER_BIN=$(basename "$BROWSER_CMD")
+
+case "$BROWSER_BIN" in
+  chromium|chromium-browser|google-chrome|google-chrome-stable|brave|brave-browser|opera|opera-stable|vivaldi|vivaldi-stable|microsoft-edge|microsoft-edge-stable|edge|cachy-browser)
+    BROWSER_FAMILY="chromium"
+    ;;
+  firefox|firefox-esr|librewolf)
+    BROWSER_FAMILY="firefox"
+    ;;
+  *)
+    BROWSER_FAMILY="firefox"
+    ;;
+esac
+
+CHROMIUM_PROFILE="$HOME/.cache/{{APP_ID}}/chromium-profile"
 mkdir -p "$HOME/.cache/{{APP_ID}}"
 while true; do
   if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; then
@@ -19,17 +38,48 @@ while true; do
   fi
   case "$LAUNCH_MODE" in
     kiosk)
-      "{{BROWSER_CMD}}" --new-window --kiosk "$URL" >/dev/null 2>&1 &
+      if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
+        "$BROWSER_CMD" --user-data-dir="$CHROMIUM_PROFILE" --no-first-run --disable-session-crashed-bubble --kiosk "$URL" >/dev/null 2>&1 &
+      else
+        "$BROWSER_CMD" --new-window --kiosk "$URL" >/dev/null 2>&1 &
+      fi
       ;;
     fullscreen)
-      "{{BROWSER_CMD}}" --new-window --fullscreen "$URL" >/dev/null 2>&1 &
+      if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
+        "$BROWSER_CMD" --user-data-dir="$CHROMIUM_PROFILE" --no-first-run --disable-session-crashed-bubble --fullscreen "$URL" >/dev/null 2>&1 &
+      else
+        "$BROWSER_CMD" --new-window --fullscreen "$URL" >/dev/null 2>&1 &
+      fi
       ;;
     window|*)
-      "{{BROWSER_CMD}}" --new-window "$URL" >/dev/null 2>&1 &
+      if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
+        "$BROWSER_CMD" --user-data-dir="$CHROMIUM_PROFILE" --no-first-run --disable-session-crashed-bubble "$URL" >/dev/null 2>&1 &
+      else
+        "$BROWSER_CMD" --new-window "$URL" >/dev/null 2>&1 &
+      fi
       ;;
   esac
   sleep 1
-  BROWSER_PID=$(pgrep -n -x "firefox" 2>/dev/null || pgrep -n -x "chromium" 2>/dev/null || pgrep -n -x "chromium-browser" 2>/dev/null || pgrep -n -x "google-chrome" 2>/dev/null || echo "$!")
+  BROWSER_PID="$!"
+  if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
+    # Chromium forks many child processes (--type=renderer, gpu, etc.).
+    # The main process is the one without a --type= flag.
+    for _b in chromium chromium-browser google-chrome google-chrome-stable chrome brave brave-browser opera opera-stable vivaldi vivaldi-stable microsoft-edge microsoft-edge-stable edge cachy-browser; do
+      _pid=$(pgrep -a -x "$_b" 2>/dev/null | grep -v -- "--type=" | awk '{print $1}' | tail -1 || true)
+      if [[ -n "$_pid" ]]; then
+        BROWSER_PID="$_pid"
+        break
+      fi
+    done
+  else
+    # Firefox: the $! wrapper execs into the real process, but $! may
+    # have been a transient wrapper. Fall back to pgrep if $! is dead.
+    if ! kill -0 "$BROWSER_PID" 2>/dev/null; then
+      for _b in firefox firefox-esr librewolf; do
+        _pid=$(pgrep -n -x "$_b" 2>/dev/null) && { BROWSER_PID="$_pid"; break; }
+      done
+    fi
+  fi
   echo "$BROWSER_PID" > "$BROWSER_PIDFILE"
   # Poll until browser exits or update trigger appears
   while kill -0 "$BROWSER_PID" 2>/dev/null; do

@@ -17,10 +17,10 @@
 ## Near term
 
 - [ ] Capture polished screenshots for GitHub
-- [ ] Support Chromium as well as Firefox
+- [x] Support Chromium as well as Firefox
 - [ ] Support multiple Linux desktop environments
 - [ ] Theme editor beyond presets
-- [ ] Optional export/import of launcher configs
+- [x] Optional export/import of launcher configs
 
 ## Future ideas
 

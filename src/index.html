@@ -136,6 +136,12 @@
         <span class="muted"></span>
         <button class="smallbtn save" id="updateNowBtn" onclick="installUpdate()">{{UPDATE_NOW}}</button>
       </div>
+      <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
+        <button class="smallbtn" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
+        <button class="smallbtn" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
+      </div>
+      <div id="importMsg" class="muted"></div>
       <div id="forms"></div>
       <div class="adminpagenav" id="adminPageNav"></div>
       <div id="recommendations" style="margin-top:18px;"></div>
@@ -194,7 +200,13 @@ const uiText = {
   commandCopied: {{JSON_COMMAND_COPIED}},
   installStarted: {{JSON_INSTALL_STARTED}},
   installManual: {{JSON_INSTALL_MANUAL}},
-  close: {{JSON_CLOSE}}
+  close: {{JSON_CLOSE}},
+  exportConfig: {{JSON_EXPORT_CONFIG}},
+  importConfig: {{JSON_IMPORT_CONFIG}},
+  importSuccess: {{JSON_IMPORT_SUCCESS}},
+  importError: {{JSON_IMPORT_ERROR}},
+  invalidConfig: {{JSON_INVALID_CONFIG}},
+  importConfirm: {{JSON_IMPORT_CONFIRM}}
 };
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
@@ -339,6 +351,42 @@ async function persistConfig(){
   await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
 }
 async function saveConfig(){ cfg.title=document.getElementById('cfgTitle').value; cfg.theme=document.getElementById('cfgTheme').value; cfg.layoutMode=document.getElementById('cfgLayoutMode').value; cfg.parentLabel=document.getElementById('cfgParentLabel').value; cfg.exitLabel=document.getElementById('cfgExitLabel').value; cfg.currentPage=0; await persistConfig(); renderAll(); closeAdmin(); }
+async function exportConfig(){
+  const r=await fetch('/api/export-config');
+  const blob=await r.blob();
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='cozy-kids-config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function importConfig(input){
+  const msg=document.getElementById('importMsg');
+  msg.textContent='';
+  msg.style.color='';
+  if(!input.files||!input.files[0]) return;
+  if(!window.confirm(uiText.importConfirm||'This will overwrite all settings. Continue?')){ input.value=''; return; }
+  try{
+    const text=await input.files[0].text();
+    const data=JSON.parse(text);
+    const r=await fetch('/api/import-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const result=await r.json();
+    if(result.status==='ok'){
+      msg.textContent=uiText.importSuccess||'Config imported';
+      msg.style.color='green';
+      await loadConfig();
+      renderAll();
+    }else{
+      msg.textContent=result.message||(uiText.importError||'Import failed');
+      msg.style.color='#c00';
+    }
+  }catch(e){
+    msg.textContent=uiText.invalidConfig||'Invalid config file';
+    msg.style.color='#c00';
+  }
+  input.value='';
+}
 (async()=>{ await loadApps(); await loadRecommendations(); await loadConfig(); await autoScanRecommendations(); })();
 </script>
 </body>

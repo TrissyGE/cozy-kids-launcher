@@ -54,6 +54,15 @@ All notable changes to this project will be documented in this file.
 - Added 12 new translations for PIN and reordering features
 - No unreplaced template placeholders in generated files
 
+### Config Export/Import
+
+- Added **Export** button in parent settings — downloads `cozy-kids-config.json`
+- Added **Import** button — uploads and validates a config JSON file
+- Server endpoints: `GET /api/export-config` and `POST /api/import-config`
+- Import validates that the file contains a `tiles` array before saving
+- All strings fully translated (German + English)
+- Patched both source templates and installed runtime files for immediate testing
+
 ### New Repository Structure
 
 ```

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ -d /snap/bin ]] && [[ ":$PATH:" != *":/snap/bin:"* ]]; then
+  export PATH="$PATH:/snap/bin"
+fi
 
 # Self-bootstrap: if run standalone (e.g. curl | bash) and src/ is missing,
 # download the repo and re-execute from the extracted copy.
@@ -69,7 +72,7 @@ Options:
   --user <name>              Install for this Linux user
   --home <path>              Override user home directory
   --lang <auto|de|en>        Installer and default UI language
-  --browser <auto|firefox|chromium|chromium-browser|google-chrome>
+  --browser <auto|firefox|chromium|chromium-browser|google-chrome|google-chrome-stable|brave|opera|opera-stable|vivaldi|vivaldi-stable|microsoft-edge|microsoft-edge-stable|cachy-browser|librewolf>
                              Preferred kiosk browser
   --title <text>             Default launcher title
   --theme <rosa|lila|blau|gruen|regenbogen>
@@ -259,6 +262,12 @@ text() {
     de:install_started) echo "Installation gestartet. Suche nach einem Passwort-Dialog, oder führe den Befehl aus:" ;;
     de:install_manual) echo "Bitte führe diesen Befehl im Terminal aus:" ;;
     de:close) echo "Schließen" ;;
+    de:export_config) echo "Konfiguration exportieren" ;;
+    de:import_config) echo "Konfiguration importieren" ;;
+    de:import_success) echo "Konfiguration importiert" ;;
+    de:import_error) echo "Import fehlgeschlagen" ;;
+    de:invalid_config) echo "Ungültige Konfigurationsdatei" ;;
+    de:import_confirm) echo "Dies überschreibt die gesamte Konfiguration. Fortfahren?" ;;
     en:app_browser_title) echo "App Browser" ;;
     en:install) echo "Install" ;;
     en:added) echo "Added" ;;
@@ -269,6 +278,12 @@ text() {
     en:install_started) echo "Installation started. Watch for a password dialog, or run the command below:" ;;
     en:install_manual) echo "Please run this command in a terminal:" ;;
     en:close) echo "Close" ;;
+    en:export_config) echo "Export config" ;;
+    en:import_config) echo "Import config" ;;
+    en:import_success) echo "Config imported" ;;
+    en:import_error) echo "Import failed" ;;
+    en:invalid_config) echo "Invalid config file" ;;
+    en:import_confirm) echo "This will overwrite all settings. Continue?" ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -419,11 +434,26 @@ guided_setup() {
     echo "  2) Firefox"
     echo "  3) Chromium"
     echo "  4) Google Chrome"
+    echo "  5) Other browser"
     prompt_read "Choice [1]: " input
     case "$input" in
       2) DEFAULT_BROWSER="firefox"; EXPLICIT_BROWSER=1 ;;
       3) DEFAULT_BROWSER="chromium"; EXPLICIT_BROWSER=1 ;;
-      4) DEFAULT_BROWSER="google-chrome"; EXPLICIT_BROWSER=1 ;;
+      4)
+        if command -v google-chrome >/dev/null 2>&1; then
+          DEFAULT_BROWSER="google-chrome"; EXPLICIT_BROWSER=1
+        elif command -v google-chrome-stable >/dev/null 2>&1; then
+          DEFAULT_BROWSER="google-chrome-stable"; EXPLICIT_BROWSER=1
+        else
+          DEFAULT_BROWSER="google-chrome"; EXPLICIT_BROWSER=1
+        fi
+        ;;
+      5)
+        prompt_read "Browser command name (e.g. brave, opera, vivaldi): " input
+        if [[ -n "$input" ]]; then
+          DEFAULT_BROWSER="$input"; EXPLICIT_BROWSER=1
+        fi
+        ;;
       *) ;;
     esac
   fi
@@ -539,7 +569,7 @@ find_browser() {
     return
   fi
 
-  local candidates=(firefox chromium chromium-browser google-chrome)
+  local candidates=(firefox chromium chromium-browser google-chrome google-chrome-stable brave brave-browser opera opera-stable vivaldi vivaldi-stable microsoft-edge microsoft-edge-stable cachy-browser librewolf)
   local browser
   for browser in "${candidates[@]}"; do
     if command -v "$browser" >/dev/null 2>&1; then
@@ -548,12 +578,22 @@ find_browser() {
     fi
   done
 
+  # Snap-installed browsers (Ubuntu / Zorin)
+  if [[ -d /snap/bin ]]; then
+    for browser in "${candidates[@]}"; do
+      if [[ -x "/snap/bin/$browser" ]]; then
+        printf '%s' "/snap/bin/$browser"
+        return
+      fi
+    done
+  fi
+
   if [[ "$SKIP_BROWSER_CHECK" == "1" ]]; then
     printf '%s' "firefox"
     return
   fi
 
-  die "No supported browser found. Install Firefox or Chromium, or pass --browser."
+  die "No supported browser found. Install Firefox, Chromium, or another supported browser, or pass --browser."
 }
 
 BROWSER_CMD="$(find_browser)"
@@ -648,6 +688,7 @@ render_template() {
   export LABEL_VISIBLE LABEL_SPECIAL_MEDIA LABEL_NO_APP LABEL_CUSTOM_CMD
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
   export LABEL_COPY_COMMAND LABEL_CLOSE
+  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
@@ -656,6 +697,7 @@ render_template() {
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
   export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
+  export JSON_EXPORT_CONFIG JSON_IMPORT_CONFIG JSON_IMPORT_SUCCESS JSON_IMPORT_ERROR JSON_INVALID_CONFIG JSON_IMPORT_CONFIRM
   export UPDATE_CHECK UPDATE_AVAILABLE UPDATE_UP_TO_DATE UPDATE_ERROR VERSION_LABEL UPDATE_NOW UPDATE_PROGRESS UPDATE_CONFIRM
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
@@ -750,6 +792,12 @@ LABEL_COMMAND_COPIED="$(text command_copied)"
 LABEL_INSTALL_STARTED="$(text install_started)"
 LABEL_INSTALL_MANUAL="$(text install_manual)"
 LABEL_CLOSE="$(text close)"
+LABEL_EXPORT_CONFIG="$(text export_config)"
+LABEL_IMPORT_CONFIG="$(text import_config)"
+IMPORT_SUCCESS="$(text import_success)"
+IMPORT_ERROR="$(text import_error)"
+INVALID_CONFIG="$(text invalid_config)"
+IMPORT_CONFIRM="$(text import_confirm)"
 
 JSON_ADMIN_TITLE="$(json_text "$ADMIN_TITLE")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
@@ -800,6 +848,12 @@ JSON_COMMAND_COPIED="$(json_text "$LABEL_COMMAND_COPIED")"
 JSON_INSTALL_STARTED="$(json_text "$LABEL_INSTALL_STARTED")"
 JSON_INSTALL_MANUAL="$(json_text "$LABEL_INSTALL_MANUAL")"
 JSON_CLOSE="$(json_text "$LABEL_CLOSE")"
+JSON_EXPORT_CONFIG="$(json_text "$LABEL_EXPORT_CONFIG")"
+JSON_IMPORT_CONFIG="$(json_text "$LABEL_IMPORT_CONFIG")"
+JSON_IMPORT_SUCCESS="$(json_text "$IMPORT_SUCCESS")"
+JSON_IMPORT_ERROR="$(json_text "$IMPORT_ERROR")"
+JSON_INVALID_CONFIG="$(json_text "$INVALID_CONFIG")"
+JSON_IMPORT_CONFIRM="$(json_text "$IMPORT_CONFIRM")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
