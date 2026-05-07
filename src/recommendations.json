@@ -21,8 +21,8 @@
     "name_en": "GCompris",
     "desc_de": "Über 150 Lernspiele für Kinder jeden Alters: Mathe, Lesen, Logik und mehr.",
     "desc_en": "Over 150 learning games for kids of all ages: math, reading, logic and more.",
-    "cmd": ["gcompris-qt","--fullscreen"],
-    "alt_cmds": ["gcompris"],
+    "cmd": ["gcompris"],
+    "alt_cmds": ["gcompris-qt"],
     "package": "gcompris-qt",
     "category": "learning"
   },
