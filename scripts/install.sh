@@ -298,50 +298,60 @@ PY
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --user)
-      TARGET_USER="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      TARGET_USER="$2"
       shift 2
       ;;
     --home)
-      TARGET_HOME="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      TARGET_HOME="$2"
       shift 2
       ;;
     --lang)
-      LANG_MODE="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      LANG_MODE="$2"
       EXPLICIT_LANG=1
       shift 2
       ;;
     --browser)
-      DEFAULT_BROWSER="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_BROWSER="$2"
       EXPLICIT_BROWSER=1
       shift 2
       ;;
     --title)
-      DEFAULT_TITLE="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_TITLE="$2"
       EXPLICIT_TITLE=1
       shift 2
       ;;
     --theme)
-      DEFAULT_THEME="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_THEME="$2"
       EXPLICIT_THEME=1
       shift 2
       ;;
     --layout)
-      DEFAULT_LAYOUT="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_LAYOUT="$2"
       EXPLICIT_LAYOUT=1
       shift 2
       ;;
     --launch-mode)
-      DEFAULT_LAUNCH_MODE="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_LAUNCH_MODE="$2"
       EXPLICIT_LAUNCH_MODE=1
       shift 2
       ;;
     --parent-label)
-      DEFAULT_PARENT_LABEL="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_PARENT_LABEL="$2"
       EXPLICIT_PARENT_LABEL=1
       shift 2
       ;;
     --exit-label)
-      DEFAULT_EXIT_LABEL="${2:-}"
+      [[ -n "${2:-}" ]] || die "Missing value for $1"
+      DEFAULT_EXIT_LABEL="$2"
       EXPLICIT_EXIT_LABEL=1
       shift 2
       ;;
