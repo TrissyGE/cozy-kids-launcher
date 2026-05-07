@@ -98,10 +98,48 @@
   .theme-thumb { border-radius:18px; height:90px; cursor:pointer; border:3px solid transparent; transition:.2s; background-size:cover; background-position:center; position:relative; overflow:hidden; }
   .theme-thumb.active { border-color:var(--btn); box-shadow:0 4px 12px rgba(0,0,0,.15); transform:scale(1.04); }
   .theme-thumb .thumb-label { position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,.88); padding:4px 6px; font-size:.78rem; font-weight:700; text-align:center; color:var(--text); }
+  #timerBadge { position:fixed; top:18px; right:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 16px; font-weight:700; font-size:1.1rem; color:var(--text); box-shadow:var(--shadow); display:none; }
+  #timerBadge.warning { background:#fff3e0; color:#e65100; }
+  #timerBadge.expired { background:#ffebee; color:#c00; }
+  .timeroverlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:250; }
+  .timerbox { background:white; border-radius:24px; padding:32px; max-width:420px; width:90%; box-shadow:var(--shadow); text-align:center; }
+  .timerbox h2 { margin:0 0 12px; }
+  .timerbox .emoji { font-size:3rem; }
+  /* Bouncy tile animations */
+  @keyframes tileBounce { 0%{transform:scale(1)} 40%{transform:scale(1.06) rotate(1deg)} 100%{transform:scale(1.02)} }
+  @keyframes tileWiggle { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-2deg)} 75%{transform:rotate(2deg)} }
+  .tile { transition:transform .15s ease, box-shadow .2s ease; }
+  .tile:hover { transform:scale(1.05) rotate(1deg); box-shadow:0 20px 50px rgba(125,35,84,.22); }
+  .tile:active { transform:scale(.95); }
+  .tile.last-launched { animation:tileWiggle .5s ease; box-shadow:0 0 0 4px var(--btn), var(--shadow); }
+  .tile .last-star { position:absolute; top:8px; right:8px; font-size:1.4rem; animation:tileBounce 1s ease infinite; }
+  /* Start feedback overlay */
+  .startoverlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:60; }
+  .startbox { background:white; border-radius:28px; padding:40px 48px; box-shadow:var(--shadow); text-align:center; }
+  .startbox .emoji { font-size:4rem; animation:tileBounce 1s ease infinite; }
+  .startbox h2 { margin:12px 0 0; font-size:1.6rem; color:var(--text); }
+  /* Clock & battery badges */
+  #clockBadge { position:fixed; top:18px; right:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 14px; font-weight:700; font-size:1rem; color:var(--text); box-shadow:var(--shadow); display:flex; align-items:center; gap:6px; }
+  #batteryBadge { position:fixed; top:18px; left:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 14px; font-weight:700; font-size:1rem; color:var(--text); box-shadow:var(--shadow); display:none; align-items:center; gap:4px; }
+  /* Empty state */
+  .empty-state { grid-column:1 / -1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:40px; }
+  .empty-state .emoji { font-size:5rem; }
+  .empty-state p { font-size:1.3rem; text-align:center; max-width:500px; }
+  /* Admin live preview */
+  .preview-panel { position:fixed; top:80px; right:20px; width:280px; background:rgba(255,255,255,.96); border-radius:20px; padding:16px; box-shadow:var(--shadow); z-index:90; max-height:calc(100vh - 120px); overflow-y:auto; }
+  .preview-panel h3 { margin:0 0 12px; font-size:1.1rem; }
+  .preview-grid { display:grid; gap:8px; }
+  .preview-grid.gross { grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(2,60px); }
+  .preview-grid.klein { grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,40px); }
+  .preview-tile { border-radius:12px; background:var(--card); display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:700; color:var(--text); overflow:hidden; padding:2px; text-align:center; }
+  @media (max-width:900px) { .preview-panel { display:none; } }
 </style>
 </head>
 <body class="theme-{{DEFAULT_THEME}}">
 <div id="themeBg"></div>
+<div id="clockBadge"></div>
+<div id="batteryBadge"></div>
+<div id="timerBadge"></div>
 <button id="navLeft" class="nav left hidden" onclick="changePage(-1)">‹</button>
 <button id="navRight" class="nav right hidden" onclick="changePage(1)">›</button>
 <div id="kids" class="screen">
@@ -148,6 +186,36 @@
     <button class="smallbtn" onclick="closeThemePicker()" style="margin-top:12px;">{{LABEL_CLOSE}}</button>
   </div>
 </div>
+<div id="timerWarning" class="timeroverlay hidden">
+  <div class="timerbox">
+    <div class="emoji">⏰</div>
+    <h2 id="timerWarningTitle"></h2>
+    <div class="muted" id="timerWarningText"></div>
+  </div>
+</div>
+<div id="timerBlock" class="timeroverlay hidden">
+  <div class="timerbox">
+    <div class="emoji">⏰</div>
+    <h2>{{TIMER_EXPIRED_TITLE}}</h2>
+    <p>{{TIMER_EXPIRED_BODY}}</p>
+    <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')extendFromBlock()">
+    <div class="err" id="timerBlockErr"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
+      <button class="smallbtn" onclick="extendFromBlock(15)">+15</button>
+      <button class="smallbtn" onclick="extendFromBlock(30)">+30</button>
+      <button class="smallbtn" onclick="extendFromBlock(60)">+60</button>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="smallbtn" onclick="exitKids()">{{TIMER_EXIT}}</button>
+    </div>
+  </div>
+</div>
+<div id="startOverlay" class="startoverlay hidden">
+  <div class="startbox">
+    <div class="emoji" id="startEmoji">✨</div>
+    <h2 id="startText">{{STARTING_APP}}</h2>
+  </div>
+</div>
 <div id="admin" class="screen hidden">
   <div class="wrap admin">
     <div class="panel">
@@ -172,6 +240,19 @@
         <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
       </div>
       <div id="pinMsg" class="muted"></div>
+      <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px; align-items:center;">
+        <label style="font-weight:700; color:var(--text);"><span id="timerLabel"></span></label>
+        <select id="cfgTimerMinutes">
+          <option value="0">{{TIMER_OFF}}</option>
+          <option value="15">15 {{TIMER_MINUTES}}</option>
+          <option value="30">30 {{TIMER_MINUTES}}</option>
+          <option value="60">60 {{TIMER_MINUTES}}</option>
+          <option value="custom">{{TIMER_CUSTOM}}</option>
+        </select>
+        <input id="cfgTimerCustom" type="number" min="1" max="180" placeholder="Minuten" style="display:none;">
+        <button class="smallbtn" id="timerToggleBtn" onclick="toggleTimer()">{{TIMER_START}}</button>
+      </div>
+      <div id="timerStatus" class="muted"></div>
       <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
         <span class="muted" id="versionDisplay"></span>
         <button class="smallbtn" id="checkUpdateBtn" onclick="checkUpdate()">{{UPDATE_CHECK}}</button>
@@ -192,6 +273,10 @@
       <div id="recommendations" style="margin-top:18px;"></div>
     </div>
   </div>
+  <div id="previewPanel" class="preview-panel hidden">
+    <h3>{{LABEL_PREVIEW_TITLE}}</h3>
+    <div id="previewGrid" class="preview-grid"></div>
+  </div>
 </div>
 <div class="cornerbar">
   <div class="smallcluster"><button id="shutdownBtn" class="smallbtn" onclick="shutdownNow()"></button></div>
@@ -200,6 +285,7 @@
 <script>
 let cfg=null, appOptions=[], recommendations=[], adminPage=0, pinUnlocked=false, pinCallback=null;
 let features={shutdownAvailable:false};
+let timerPollInterval=null, lastTimerStatus={};
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
@@ -252,7 +338,29 @@ const uiText = {
   importSuccess: {{JSON_IMPORT_SUCCESS}},
   importError: {{JSON_IMPORT_ERROR}},
   invalidConfig: {{JSON_INVALID_CONFIG}},
-  importConfirm: {{JSON_IMPORT_CONFIRM}}
+  importConfirm: {{JSON_IMPORT_CONFIRM}},
+  startingApp: {{JSON_STARTING_APP}},
+  emptyStateEmoji: {{JSON_EMPTY_STATE_EMOJI}},
+  emptyStateText: {{JSON_EMPTY_STATE_TEXT}},
+  previewTitle: {{JSON_PREVIEW_TITLE}},
+  timerLabel: {{JSON_TIMER_LABEL}},
+  timerOff: {{JSON_TIMER_OFF}},
+  timerMinutes15: {{JSON_TIMER_15}},
+  timerMinutes30: {{JSON_TIMER_30}},
+  timerMinutes60: {{JSON_TIMER_60}},
+  timerCustom: {{JSON_TIMER_CUSTOM}},
+  timerStart: {{JSON_TIMER_START}},
+  timerStop: {{JSON_TIMER_STOP}},
+  timerActive: {{JSON_TIMER_ACTIVE}},
+  timerExpired: {{JSON_TIMER_EXPIRED}},
+  timerRemaining: {{JSON_TIMER_REMAINING}},
+  timerWarningTitle: {{JSON_TIMER_WARNING_TITLE}},
+  timerWarningText: {{JSON_TIMER_WARNING_TEXT}},
+  timerEnterPin: {{JSON_TIMER_ENTER_PIN}},
+  timerExtend: {{JSON_TIMER_EXTEND}},
+  timerExit: {{JSON_TIMER_EXIT}},
+  timerWrongPin: {{JSON_TIMER_WRONG_PIN}},
+  timerExtended: {{JSON_TIMER_EXTENDED}}
 };
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
@@ -263,16 +371,60 @@ async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json())
 async function loadRecommendations(){ try{ const r=await fetch('/api/recommendations'); recommendations=await r.json(); }catch(e){ recommendations=[]; } }
 async function loadFeatures(){ try{ const r=await fetch('/api/features'); features=await r.json(); }catch(e){} }
 function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); document.getElementById('parentBtn').textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; const shutdownBtn=document.getElementById('shutdownBtn'); shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; shutdownBtn.style.display=features.shutdownAvailable?'':'none'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
-function renderKids(){ const grid=document.getElementById('grid'); grid.innerHTML=''; const tiles=tilesForPage(cfg.currentPage); const size=pageSize(); for(let i=0;i<size;i++){ if(i<tiles.length){ const tile=tiles[i]; const btn=document.createElement('button'); btn.className='tile'; btn.onclick=()=>launchTile(tile.id); btn.innerHTML='<div class="emoji">'+(tile.emoji||'✨')+'</div><div>'+(tile.label||'')+'</div>'; grid.appendChild(btn);} else { const ph=document.createElement('div'); ph.className='tile placeholder'; ph.innerHTML='<div class="emoji">✨</div><div></div>'; grid.appendChild(ph);} } }
+function renderKids(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  const tiles=tilesForPage(cfg.currentPage);
+  const size=pageSize();
+  let lastLaunched='';
+  try{ lastLaunched=localStorage.getItem('cozyLastLaunched')||''; }catch(e){}
+  if(tiles.length===0){
+    const empty=document.createElement('div');
+    empty.className='empty-state';
+    empty.innerHTML='<div class="emoji">'+(uiText.emptyStateEmoji||'🤔')+'</div><p>'+(uiText.emptyStateText||'Frag Mama oder Papa, um Apps hinzuzufügen!')+'</p>';
+    grid.appendChild(empty);
+    return;
+  }
+  for(let i=0;i<size;i++){
+    if(i<tiles.length){
+      const tile=tiles[i];
+      const btn=document.createElement('button');
+      btn.className='tile'+(tile.id===lastLaunched?' last-launched':'');
+      btn.style.position='relative';
+      btn.onclick=()=>launchTile(tile.id);
+      let html='<div class="emoji">'+(tile.emoji||'✨')+'</div><div>'+(tile.label||'')+'</div>';
+      if(tile.id===lastLaunched) html+='<div class="last-star">⭐</div>';
+      btn.innerHTML=html;
+      grid.appendChild(btn);
+    } else {
+      const ph=document.createElement('div');
+      ph.className='tile placeholder';
+      ph.innerHTML='<div class="emoji">✨</div><div></div>';
+      grid.appendChild(ph);
+    }
+  }
+}
 function renderNav(){ document.getElementById('navLeft').classList.toggle('hidden', cfg.currentPage<=0); document.getElementById('navRight').classList.toggle('hidden', cfg.currentPage>=pageCount()-1); }
 function changePage(dir){ cfg.currentPage=Math.max(0,Math.min(pageCount()-1,cfg.currentPage+dir)); renderAll(); }
+function showStartFeedback(tile){
+  const overlay=document.getElementById('startOverlay');
+  const emoji=document.getElementById('startEmoji');
+  const text=document.getElementById('startText');
+  emoji.textContent=tile.emoji||'✨';
+  text.textContent=(uiText.startingApp||'Starte {app}...').replace('{app}',tile.label||'');
+  overlay.classList.remove('hidden');
+  setTimeout(()=>overlay.classList.add('hidden'),1500);
+}
 function launchTile(id){
   const tile=cfg.tiles.find(t=>t.id===id);
-  if(tile && tile.cmd && tile.cmd.length===1 && tile.cmd[0].startsWith('special:browser:')){
+  if(!tile) return;
+  try{ localStorage.setItem('cozyLastLaunched',id); }catch(e){}
+  showStartFeedback(tile);
+  if(tile.cmd && tile.cmd.length===1 && tile.cmd[0].startsWith('special:browser:')){
     window.location.href='/browser.html?url='+encodeURIComponent(tile.cmd[0].substring('special:browser:'.length));
     return;
   }
-  if(tile && tile.cmd && tile.cmd.length===1 && tile.cmd[0].startsWith('special:external-browser:')){
+  if(tile.cmd && tile.cmd.length===1 && tile.cmd[0].startsWith('special:external-browser:')){
     fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).catch(()=>{});
     return;
   }
@@ -359,6 +511,33 @@ function renderAdmin(){
   document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
   document.getElementById('updateMsg').textContent='';
   updatePinButton();
+  // Timer admin
+  document.getElementById('timerLabel').textContent=uiText.timerLabel||'Bildschirmzeit';
+  const timerSel=document.getElementById('cfgTimerMinutes');
+  const timerCustom=document.getElementById('cfgTimerCustom');
+  const minutes=cfg.timerMinutes||0;
+  if([15,30,60].includes(minutes)){
+    timerSel.value=String(minutes);
+    timerCustom.style.display='none';
+  }else if(minutes>0){
+    timerSel.value='custom';
+    timerCustom.value=String(minutes);
+    timerCustom.style.display='';
+  }else{
+    timerSel.value='0';
+    timerCustom.style.display='none';
+  }
+  timerSel.onchange=function(){
+    timerCustom.style.display=timerSel.value==='custom'?'':'none';
+  };
+  const timerBtn=document.getElementById('timerToggleBtn');
+  if(lastTimerStatus.active&&!lastTimerStatus.expired){
+    timerBtn.textContent=uiText.timerStop||'Stop';
+    document.getElementById('timerStatus').textContent=(uiText.timerRemaining||'Noch {time}').replace('{time}',formatTime(lastTimerStatus.remainingSeconds));
+  }else{
+    timerBtn.textContent=uiText.timerStart||'Start';
+    document.getElementById('timerStatus').textContent='';
+  }
   const forms=document.getElementById('forms');
   forms.innerHTML='';
   cfg.tiles.forEach((tile, idx)=>{
@@ -480,6 +659,7 @@ function renderAdmin(){
   });
   renderAdminPageNav();
   renderRecommendations();
+  renderPreview();
 }
 function moveUp(idx){ if(idx<1) return; const tmp=cfg.tiles[idx-1]; cfg.tiles[idx-1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
 function moveDown(idx){ if(idx>=cfg.tiles.length-1) return; const tmp=cfg.tiles[idx+1]; cfg.tiles[idx+1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
@@ -594,7 +774,196 @@ async function autoScanRecommendations(){
 async function persistConfig(){
   await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
 }
-async function saveConfig(){ cfg.title=document.getElementById('cfgTitle').value; cfg.theme=document.getElementById('cfgTheme').value; cfg.layoutMode=document.getElementById('cfgLayoutMode').value; cfg.parentLabel=document.getElementById('cfgParentLabel').value; cfg.exitLabel=document.getElementById('cfgExitLabel').value; cfg.currentPage=0; await persistConfig(); renderAll(); closeAdmin(); }
+
+// Timer logic
+function formatTime(sec){
+  const m=Math.floor(sec/60);
+  const s=sec%60;
+  return m+':'+String(s).padStart(2,'0');
+}
+async function pollTimer(){
+  try{
+    const r=await fetch('/api/timer/status');
+    const data=await r.json();
+    lastTimerStatus=data;
+    const badge=document.getElementById('timerBadge');
+    if(data.active){
+      badge.style.display='block';
+      badge.textContent='⏱️ '+formatTime(data.remainingSeconds);
+      badge.className='warning';
+      if(data.expired){
+        badge.className='expired';
+        badge.textContent='⏰ '+uiText.timerExpired;
+        showTimerBlock();
+      }else if(data.warning){
+        badge.className='warning';
+        showTimerWarning(data.remainingSeconds);
+      }else{
+        badge.className='';
+        hideTimerWarning();
+      }
+    }else{
+      badge.style.display='none';
+      hideTimerWarning();
+      hideTimerBlock();
+    }
+  }catch(e){}
+}
+function showTimerWarning(remaining){
+  const el=document.getElementById('timerWarning');
+  if(!el.classList.contains('hidden')) return;
+  document.getElementById('timerWarningTitle').textContent=uiText.timerWarningTitle||'Noch 5 Minuten!';
+  document.getElementById('timerWarningText').textContent=(uiText.timerWarningText||'').replace('{time}',formatTime(remaining));
+  el.classList.remove('hidden');
+  setTimeout(hideTimerWarning,6000);
+}
+function hideTimerWarning(){
+  document.getElementById('timerWarning').classList.add('hidden');
+}
+function showTimerBlock(){
+  document.getElementById('timerBlock').classList.remove('hidden');
+}
+function hideTimerBlock(){
+  document.getElementById('timerBlock').classList.add('hidden');
+  document.getElementById('timerBlockPin').value='';
+  document.getElementById('timerBlockErr').textContent='';
+}
+async function toggleTimer(){
+  const btn=document.getElementById('timerToggleBtn');
+  if(lastTimerStatus.active && !lastTimerStatus.expired){
+    // Stop timer
+    const pin=cfg.pinHash?prompt(uiText.pinTitle||'PIN eingeben'):'';
+    const r=await fetch('/api/timer/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin||''})});
+    const data=await r.json();
+    if(data.valid){
+      btn.textContent=uiText.timerStart;
+      document.getElementById('timerStatus').textContent='';
+      pollTimer();
+    }
+  }else{
+    // Start timer
+    let minutes=parseInt(document.getElementById('cfgTimerMinutes').value,10);
+    if(isNaN(minutes)||minutes<=0){
+      minutes=parseInt(document.getElementById('cfgTimerCustom').value,10);
+    }
+    if(isNaN(minutes)||minutes<=0) return;
+    cfg.timerMinutes=minutes;
+    await persistConfig();
+    const pin=cfg.pinHash?prompt(uiText.pinTitle||'PIN eingeben'):'';
+    const r=await fetch('/api/timer/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin||'',minutes:minutes})});
+    const data=await r.json();
+    if(data.valid){
+      btn.textContent=uiText.timerStop;
+      document.getElementById('timerStatus').textContent=uiText.timerActive;
+      pollTimer();
+    }
+  }
+}
+async function extendFromBlock(minutes){
+  const pin=document.getElementById('timerBlockPin').value;
+  const r=await fetch('/api/timer/extend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin,minutes:minutes})});
+  const data=await r.json();
+  if(data.valid){
+    hideTimerBlock();
+    pollTimer();
+  }else{
+    document.getElementById('timerBlockErr').textContent=uiText.timerWrongPin||'Falscher PIN';
+    document.getElementById('timerBlockPin').value='';
+    document.getElementById('timerBlockPin').focus();
+  }
+}
+
+// Touch swipe
+let touchStartX=0, touchStartY=0;
+document.addEventListener('touchstart',function(e){
+  if(e.touches.length!==1) return;
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+},false);
+document.addEventListener('touchend',function(e){
+  if(!touchStartX && !touchStartY) return;
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  touchStartX=0; touchStartY=0;
+  if(Math.abs(dx)<50 || Math.abs(dy)>Math.abs(dx)) return;
+  if(document.getElementById('admin').classList.contains('hidden') && !document.getElementById('pin').classList.contains('hidden')) return;
+  if(dx>0) changePage(-1); else changePage(1);
+},false);
+
+// Clock
+function clockEmoji(h){
+  if(h>=5 && h<11) return '🌅';
+  if(h>=11 && h<17) return '☀️';
+  if(h>=17 && h<21) return '🌇';
+  return '🌙';
+}
+function updateClock(){
+  const now=new Date();
+  const h=now.getHours();
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const badge=document.getElementById('clockBadge');
+  badge.textContent=clockEmoji(h)+' '+h+':'+m;
+}
+setInterval(updateClock,30000);
+updateClock();
+
+// Battery
+async function updateBattery(){
+  const badge=document.getElementById('batteryBadge');
+  if(!navigator.getBattery) return;
+  try{
+    const bat=await navigator.getBattery();
+    const pct=Math.round(bat.level*100);
+    let icon='🔋';
+    if(bat.charging) icon='⚡';
+    else if(pct<=20) icon='🪫';
+    badge.style.display='flex';
+    badge.textContent=icon+' '+pct+'%';
+    bat.addEventListener('levelchange',updateBattery);
+    bat.addEventListener('chargingchange',updateBattery);
+  }catch(e){}
+}
+updateBattery();
+
+// Live preview
+function renderPreview(){
+  const panel=document.getElementById('previewPanel');
+  const grid=document.getElementById('previewGrid');
+  if(document.getElementById('admin').classList.contains('hidden')){
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+  grid.innerHTML='';
+  const visible=cfg.tiles.filter(t=>t.visible);
+  const size=cfg.layoutMode==='klein'?9:4;
+  grid.className='preview-grid '+(cfg.layoutMode||'gross');
+  for(let i=0;i<Math.min(size,visible.length);i++){
+    const t=visible[i];
+    const el=document.createElement('div');
+    el.className='preview-tile';
+    el.textContent=t.emoji||'✨';
+    grid.appendChild(el);
+  }
+}
+
+async function saveConfig(){
+  cfg.title=document.getElementById('cfgTitle').value;
+  cfg.theme=document.getElementById('cfgTheme').value;
+  cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
+  cfg.parentLabel=document.getElementById('cfgParentLabel').value;
+  cfg.exitLabel=document.getElementById('cfgExitLabel').value;
+  let minutes=parseInt(document.getElementById('cfgTimerMinutes').value,10);
+  if(isNaN(minutes)||minutes<=0){
+    minutes=parseInt(document.getElementById('cfgTimerCustom').value,10)||0;
+  }
+  cfg.timerMinutes=minutes;
+  cfg.timerWarningMinutes=cfg.timerWarningMinutes||5;
+  cfg.currentPage=0;
+  await persistConfig();
+  renderAll();
+  closeAdmin();
+}
 async function exportConfig(){
   const r=await fetch('/api/export-config');
   const blob=await r.blob();
@@ -631,7 +1000,7 @@ async function importConfig(input){
   }
   input.value='';
 }
-(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadConfig(); await autoScanRecommendations(); })();
+(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); })();
 </script>
 </body>
 </html>

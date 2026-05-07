@@ -8,6 +8,7 @@ PORT="${COZY_KIDS_PORT:-{{DEFAULT_PORT}}}"
 PIDFILE="$HOME/.cache/{{APP_ID}}/server.pid"
 BROWSER_PIDFILE="$HOME/.cache/{{APP_ID}}/browser.pid"
 EXIT_FLAGFILE="$HOME/.cache/{{APP_ID}}/exit-requested"
+WATCHDOG_PIDFILE="$HOME/.cache/{{APP_ID}}/watchdog.pid"
 URL="http://127.0.0.1:${PORT}/index.html"
 LAUNCH_MODE="{{DEFAULT_LAUNCH_MODE}}"
 BROWSER_CMD="{{BROWSER_CMD}}"
@@ -36,6 +37,11 @@ while true; do
     COZY_KIDS_PORT="$PORT" \
     python3 "$APP_ROOT/server.py" >/dev/null 2>&1 &
     sleep 1
+    # Start timer watchdog
+    if [[ -f "$APP_ROOT/timer_watchdog.py" ]]; then
+      python3 "$APP_ROOT/timer_watchdog.py" --port "$PORT" >/dev/null 2>&1 &
+      echo "$!" > "$WATCHDOG_PIDFILE"
+    fi
   fi
   case "$LAUNCH_MODE" in
     kiosk)
@@ -94,6 +100,10 @@ while true; do
     sleep 1
   done
   if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
+    if [[ -f "$WATCHDOG_PIDFILE" ]]; then
+      kill "$(cat "$WATCHDOG_PIDFILE" 2>/dev/null)" 2>/dev/null || true
+      rm -f "$WATCHDOG_PIDFILE"
+    fi
     if [[ -f "$PIDFILE" ]]; then
       kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
       rm -f "$PIDFILE"
@@ -116,3 +126,9 @@ while true; do
     break
   fi
 done
+
+# Cleanup watchdog on exit
+if [[ -f "$WATCHDOG_PIDFILE" ]]; then
+  kill "$(cat "$WATCHDOG_PIDFILE" 2>/dev/null)" 2>/dev/null || true
+  rm -f "$WATCHDOG_PIDFILE"
+fi

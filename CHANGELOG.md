@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - Screen Time Timer
+
+### Screen Time Timer
+
+- **Timer is OFF by default** — parents must explicitly start it from the admin panel
+- **Preset durations**: 15, 30, 60 minutes, or custom value (1–180 minutes)
+- **Visual warning**: 5 minutes before time runs out, a friendly overlay appears
+- **Fullscreen block screen**: when time is up, a styled overlay blocks all interaction
+  - Works across the launcher, embedded browser, external browser, and native apps/games
+  - PIN-protected extension (15/30/60/custom minutes)
+  - "Exit" button to close kids mode immediately
+- **System watchdog** (`timer_watchdog.py`): a separate Tkinter process that polls the server
+  - Covers native apps and games that the browser overlay cannot reach
+  - Always-on-top fullscreen window when timer expires
+  - Styled to match the launcher theme (rounded cards, emoji, theme colours)
+- **Browser timer UI**: both `index.html` and `browser.html` show a live countdown badge
+  - Warning and block overlays as fallback when the watchdog is not running
+- **Admin panel**: new timer section with duration selector, custom input, start/stop button, and status display
+
+### New Files
+
+- `src/timer_watchdog.py` — system-level fullscreen timer block overlay
+
+### UI Improvements
+
+- **Visual start feedback**: clicking a tile now shows a friendly overlay with the app's emoji and "Starting..." text, so kids know something is happening while the app loads
+- **Touch swipe navigation**: swipe left/right on touchscreens to change pages (navigation arrows remain for mouse users)
+- **Bouncy tile animations**: tiles gently scale up and wiggle on hover/tap, making the UI feel alive and playful for children
+- **Clock badge**: top-right corner shows the current time with a day-phase emoji (🌅 morning, ☀️ day, 🌇 evening, 🌙 night)
+- **Battery badge**: top-left corner shows battery level and charging status when the browser supports the Battery API
+- **"Last launched" highlight**: the most recently clicked tile gets a glowing border and a ⭐ star badge, making favorite apps easier to find
+- **Improved empty state**: when no tiles are visible, a friendly message with a large emoji appears instead of a blank grid
+- **Admin live preview**: a mini preview panel in the parent settings shows exactly how the kids screen currently looks
+
+### Bug Fixes
+
+- **Theme wallpapers not installed**: `scripts/install.sh` now copies the `themes/` directory (containing `.jpg` wallpaper files) to `~/.local/share/cozy-kids-launcher/themes/`. Previously, world themes that rely on background images appeared with blank backgrounds.
+
+### Updated Files
+
+- `src/server.py` — new API endpoints: `/api/timer/status`, `/api/timer/start`, `/api/timer/stop`, `/api/timer/extend`
+- `src/index.html` — timer badge, warning/block overlays, admin timer controls
+- `src/browser.html` — timer badge and overlays for embedded browser
+- `src/launcher.sh` — starts the watchdog alongside the server
+- `scripts/install.sh` — new translations, copies watchdog, timer config defaults
+
 ## [0.2.9] - Browser Apps, Streaming Support & Bug Fixes
 
 ### Bug Fixes

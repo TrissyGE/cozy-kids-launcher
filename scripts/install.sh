@@ -288,6 +288,56 @@ text() {
     en:import_error) echo "Import failed" ;;
     en:invalid_config) echo "Invalid config file" ;;
     en:import_confirm) echo "This will overwrite all settings. Continue?" ;;
+    de:timer_label) echo "Bildschirmzeit" ;;
+    en:timer_label) echo "Screen time" ;;
+    de:timer_off) echo "Aus" ;;
+    en:timer_off) echo "Off" ;;
+    de:timer_15) echo "15 Minuten" ;;
+    en:timer_15) echo "15 minutes" ;;
+    de:timer_30) echo "30 Minuten" ;;
+    en:timer_30) echo "30 minutes" ;;
+    de:timer_60) echo "60 Minuten" ;;
+    en:timer_60) echo "60 minutes" ;;
+    de:timer_custom) echo "Eigene" ;;
+    en:timer_custom) echo "Custom" ;;
+    de:timer_start) echo "Timer starten" ;;
+    en:timer_start) echo "Start timer" ;;
+    de:timer_stop) echo "Timer stoppen" ;;
+    en:timer_stop) echo "Stop timer" ;;
+    de:timer_active) echo "Timer läuft" ;;
+    en:timer_active) echo "Timer running" ;;
+    de:timer_expired) echo "Zeit um!" ;;
+    en:timer_expired) echo "Time's up!" ;;
+    de:timer_remaining) echo "Noch {time}" ;;
+    en:timer_remaining) echo "{time} left" ;;
+    de:timer_warning_title) echo "Noch 5 Minuten!" ;;
+    en:timer_warning_title) echo "5 minutes left!" ;;
+    de:timer_warning_text) echo "Die Bildschirmzeit läuft bald ab." ;;
+    en:timer_warning_text) echo "Screen time is running out." ;;
+    de:timer_enter_pin) echo "PIN eingeben:" ;;
+    en:timer_enter_pin) echo "Enter PIN:" ;;
+    de:timer_extend) echo "Verlängern" ;;
+    en:timer_extend) echo "Extend" ;;
+    de:timer_exit) echo "Beenden" ;;
+    en:timer_exit) echo "Exit" ;;
+    de:timer_wrong_pin) echo "Falscher PIN" ;;
+    en:timer_wrong_pin) echo "Wrong PIN" ;;
+    de:timer_extended) echo "Verlängert!" ;;
+    en:timer_extended) echo "Extended!" ;;
+    de:timer_expired_title) echo "Zeit ist um!" ;;
+    en:timer_expired_title) echo "Time is up!" ;;
+    de:timer_expired_body) echo "Frag Mama oder Papa, um weiterzuspielen." ;;
+    en:timer_expired_body) echo "Ask Mom or Dad to keep playing." ;;
+    de:timer_minutes) echo "Minuten" ;;
+    en:timer_minutes) echo "minutes" ;;
+    de:starting_app) echo "Starte {app}..." ;;
+    en:starting_app) echo "Starting {app}..." ;;
+    de:empty_state_emoji) echo "🤔" ;;
+    en:empty_state_emoji) echo "🤔" ;;
+    de:empty_state_text) echo "Frag Mama oder Papa, um Apps hinzuzufügen!" ;;
+    en:empty_state_text) echo "Ask Mom or Dad to add apps!" ;;
+    de:preview_title) echo "Vorschau" ;;
+    en:preview_title) echo "Preview" ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -720,7 +770,7 @@ render_template() {
   export LABEL_VISIBLE LABEL_SPECIAL_MEDIA LABEL_NO_APP LABEL_CUSTOM_CMD
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
   export LABEL_COPY_COMMAND LABEL_CLOSE
-  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM
+  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
@@ -734,6 +784,8 @@ render_template() {
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
+  export TIMER_LABEL TIMER_OFF TIMER_15 TIMER_30 TIMER_60 TIMER_CUSTOM TIMER_START TIMER_STOP TIMER_ACTIVE TIMER_EXPIRED TIMER_REMAINING TIMER_WARNING_TITLE TIMER_WARNING_TEXT TIMER_ENTER_PIN TIMER_EXTEND TIMER_EXIT TIMER_WRONG_PIN TIMER_EXTENDED TIMER_EXPIRED_TITLE TIMER_EXPIRED_BODY TIMER_MINUTES
+  export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -830,6 +882,32 @@ IMPORT_SUCCESS="$(text import_success)"
 IMPORT_ERROR="$(text import_error)"
 INVALID_CONFIG="$(text invalid_config)"
 IMPORT_CONFIRM="$(text import_confirm)"
+TIMER_LABEL="$(text timer_label)"
+TIMER_OFF="$(text timer_off)"
+TIMER_15="$(text timer_15)"
+TIMER_30="$(text timer_30)"
+TIMER_60="$(text timer_60)"
+TIMER_CUSTOM="$(text timer_custom)"
+TIMER_START="$(text timer_start)"
+TIMER_STOP="$(text timer_stop)"
+TIMER_ACTIVE="$(text timer_active)"
+TIMER_EXPIRED="$(text timer_expired)"
+TIMER_REMAINING="$(text timer_remaining)"
+TIMER_WARNING_TITLE="$(text timer_warning_title)"
+TIMER_WARNING_TEXT="$(text timer_warning_text)"
+TIMER_ENTER_PIN="$(text timer_enter_pin)"
+TIMER_EXTEND="$(text timer_extend)"
+TIMER_EXIT="$(text timer_exit)"
+TIMER_WRONG_PIN="$(text timer_wrong_pin)"
+TIMER_EXTENDED="$(text timer_extended)"
+TIMER_EXPIRED_TITLE="$(text timer_expired_title)"
+TIMER_EXPIRED_BODY="$(text timer_expired_body)"
+TIMER_MINUTES="$(text timer_minutes)"
+LABEL_PREVIEW_TITLE="$(text preview_title)"
+STARTING_APP="$(text starting_app)"
+EMPTY_STATE_EMOJI="$(text empty_state_emoji)"
+EMPTY_STATE_TEXT="$(text empty_state_text)"
+PREVIEW_TITLE="$(text preview_title)"
 
 JSON_ADMIN_TITLE="$(json_text "$ADMIN_TITLE")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
@@ -886,6 +964,28 @@ JSON_IMPORT_SUCCESS="$(json_text "$IMPORT_SUCCESS")"
 JSON_IMPORT_ERROR="$(json_text "$IMPORT_ERROR")"
 JSON_INVALID_CONFIG="$(json_text "$INVALID_CONFIG")"
 JSON_IMPORT_CONFIRM="$(json_text "$IMPORT_CONFIRM")"
+JSON_TIMER_LABEL="$(json_text "$TIMER_LABEL")"
+JSON_TIMER_OFF="$(json_text "$TIMER_OFF")"
+JSON_TIMER_15="$(json_text "$TIMER_15")"
+JSON_TIMER_30="$(json_text "$TIMER_30")"
+JSON_TIMER_60="$(json_text "$TIMER_60")"
+JSON_TIMER_CUSTOM="$(json_text "$TIMER_CUSTOM")"
+JSON_TIMER_START="$(json_text "$TIMER_START")"
+JSON_TIMER_STOP="$(json_text "$TIMER_STOP")"
+JSON_TIMER_ACTIVE="$(json_text "$TIMER_ACTIVE")"
+JSON_TIMER_EXPIRED="$(json_text "$TIMER_EXPIRED")"
+JSON_TIMER_REMAINING="$(json_text "$TIMER_REMAINING")"
+JSON_TIMER_WARNING_TITLE="$(json_text "$TIMER_WARNING_TITLE")"
+JSON_TIMER_WARNING_TEXT="$(json_text "$TIMER_WARNING_TEXT")"
+JSON_TIMER_ENTER_PIN="$(json_text "$TIMER_ENTER_PIN")"
+JSON_TIMER_EXTEND="$(json_text "$TIMER_EXTEND")"
+JSON_TIMER_EXIT="$(json_text "$TIMER_EXIT")"
+JSON_TIMER_WRONG_PIN="$(json_text "$TIMER_WRONG_PIN")"
+JSON_TIMER_EXTENDED="$(json_text "$TIMER_EXTENDED")"
+JSON_STARTING_APP="$(json_text "$STARTING_APP")"
+JSON_EMPTY_STATE_EMOJI="$(json_text "$EMPTY_STATE_EMOJI")"
+JSON_EMPTY_STATE_TEXT="$(json_text "$EMPTY_STATE_TEXT")"
+JSON_PREVIEW_TITLE="$(json_text "$PREVIEW_TITLE")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
@@ -903,6 +1003,12 @@ render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
 render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644
 render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755
+render_template "$SRC_DIR/timer_watchdog.py" "$APP_ROOT/timer_watchdog.py" 0755
+
+# Copy theme wallpapers (binary files, no template rendering)
+if [[ -d "$SRC_DIR/../themes" ]]; then
+  cp -r "$SRC_DIR/../themes" "$APP_ROOT/themes"
+fi
 
 # Generate config JSON with proper escaping
 python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFAULT_LAYOUT" "$DEFAULT_PARENT_LABEL" "$DEFAULT_EXIT_LABEL" "$SHUTDOWN_LABEL" "$DEFAULT_TILE_PAINT" "$DEFAULT_TILE_GAMES" "$DEFAULT_TILE_MUSIC" "$DEFAULT_TILE_BROWSER" "$DEFAULT_BROWSER_URL" "$SRC_DIR/recommendations.json" "$RECOMMENDED" <<'PY'
@@ -919,6 +1025,8 @@ config = {
     "pinHash": "",
     "currentPage": 0,
     "autoScanDone": False,
+    "timerMinutes": 0,
+    "timerWarningMinutes": 5,
     "tiles": [
         {"id": "paint", "label": tile_paint, "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
         {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": ["gcompris"], "visible": True},

@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 from urllib.parse import unquote
 
 HOME = os.path.expanduser("~")
@@ -25,6 +26,7 @@ VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
 ALT_MUSIC = os.path.join(HOME, "Musik")
 EXTS = ("*.mp4", "*.mkv", "*.webm", "*.avi", "*.mov", "*.mp3", "*.ogg", "*.wav", "*.flac", "*.m4a")
+TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
 
 
 def has_media(path):
@@ -181,6 +183,51 @@ def verify_pin(pin_hash, pin):
     return computed == pin_hash
 
 
+def load_timer():
+    if not os.path.isfile(TIMER_FILE):
+        return None
+    try:
+        with open(TIMER_FILE, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return None
+
+
+def save_timer(data):
+    os.makedirs(os.path.dirname(TIMER_FILE), exist_ok=True)
+    with open(TIMER_FILE, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=2)
+
+
+def clear_timer():
+    try:
+        if os.path.isfile(TIMER_FILE):
+            os.remove(TIMER_FILE)
+    except Exception:
+        pass
+
+
+def timer_status(cfg):
+    data = load_timer()
+    if not data or not isinstance(data, dict):
+        return {"active": False, "expired": False, "warning": False, "remainingSeconds": 0, "totalMinutes": 0}
+    end_time = data.get("end_time", 0)
+    total_minutes = data.get("totalMinutes", 0)
+    warning_minutes = cfg.get("timerWarningMinutes", 5)
+    now = time.time()
+    remaining = int(end_time - now)
+    if remaining <= 0:
+        return {"active": True, "expired": True, "warning": False, "remainingSeconds": 0, "totalMinutes": total_minutes}
+    warning_seconds = warning_minutes * 60
+    return {
+        "active": True,
+        "expired": False,
+        "warning": remaining <= warning_seconds,
+        "remainingSeconds": remaining,
+        "totalMinutes": total_minutes,
+    }
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=APP_ROOT, **kwargs)
@@ -212,6 +259,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 shutil.which("systemctl") or shutil.which("loginctl")
             )
             return self.json_response({"shutdownAvailable": shutdown_ok})
+        if self.path == "/api/timer/status":
+            return self.json_response(timer_status(load_cfg()))
         if self.path == "/api/export-config":
             data = load_cfg()
             payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -282,6 +331,49 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             # Shutdown the HTTP server so launcher.sh exits cleanly
             threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
+        if action == "api/timer/start":
+            cfg = load_cfg()
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            body = json.loads(raw.decode("utf-8")) if raw else {}
+            pin_hash = cfg.get("pinHash", "")
+            if pin_hash and not verify_pin(pin_hash, body.get("pin", "")):
+                self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+                return
+            minutes = body.get("minutes", cfg.get("timerMinutes", 0))
+            if minutes <= 0:
+                self.json_response({"valid": False, "message": "Invalid duration"}, 400)
+                return
+            end_time = int(time.time()) + minutes * 60
+            save_timer({"end_time": end_time, "totalMinutes": minutes})
+            self.json_response({"valid": True, "endTime": end_time, "minutes": minutes})
+            return
+        if action == "api/timer/stop":
+            cfg = load_cfg()
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            body = json.loads(raw.decode("utf-8")) if raw else {}
+            pin_hash = cfg.get("pinHash", "")
+            if pin_hash and not verify_pin(pin_hash, body.get("pin", "")):
+                self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+                return
+            clear_timer()
+            self.json_response({"valid": True})
+            return
+        if action == "api/timer/extend":
+            cfg = load_cfg()
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            body = json.loads(raw.decode("utf-8")) if raw else {}
+            pin_hash = cfg.get("pinHash", "")
+            if pin_hash and not verify_pin(pin_hash, body.get("pin", "")):
+                self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+                return
+            minutes = body.get("minutes", 15)
+            if minutes <= 0:
+                self.json_response({"valid": False, "message": "Invalid duration"}, 400)
+                return
+            end_time = int(time.time()) + minutes * 60
+            save_timer({"end_time": end_time, "totalMinutes": minutes})
+            self.json_response({"valid": True, "endTime": end_time, "minutes": minutes})
             return
         if action == "api/update":
             trigger_path = os.path.join(APP_ROOT, "update-trigger.sh")

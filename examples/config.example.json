@@ -5,6 +5,8 @@
   "papaLabel": "Papa",
   "exitLabel": "Kindermodus beenden",
   "currentPage": 0,
+  "timerMinutes": 0,
+  "timerWarningMinutes": 5,
   "tiles": [
     {
       "id": "paint",
