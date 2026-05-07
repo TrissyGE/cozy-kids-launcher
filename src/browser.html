@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="{{ACTIVE_LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{APP_NAME}}</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; overflow:hidden; font-family:system-ui,sans-serif; background:#000; }
+  iframe { width:100vw; height:100vh; border:none; display:block; }
+  #backBtn {
+    position:fixed; top:14px; left:14px; z-index:9999;
+    width:90px; height:90px; border:0; border-radius:24px;
+    background:rgba(255,255,255,.92); box-shadow:0 8px 24px rgba(0,0,0,.25);
+    font-size:2.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:transform .15s ease;
+  }
+  #backBtn:active { transform:scale(.92); }
+  #backLabel {
+    position:fixed; top:108px; left:14px; z-index:9999;
+    background:rgba(255,255,255,.88); padding:4px 10px; border-radius:10px;
+    font-weight:700; font-size:.85rem; color:#333; pointer-events:none;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+  }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<button id="backBtn" onclick="goHome()" title="{{LABEL_BACK}}">🏠</button>
+<span id="backLabel">{{LABEL_BACK}}</span>
+<iframe id="frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation allow-downloads allow-presentation" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const url = params.get('url');
+  const label = params.get('label') || '';
+  if (!url) {
+    document.getElementById('frame').style.display = 'none';
+    document.body.innerHTML += '<div style="color:white;text-align:center;padding-top:40vh;font-size:1.5rem;">No URL provided</div>';
+    return;
+  }
+  // Only allow http: and https: protocols
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+      throw new Error('Invalid protocol');
+    }
+  } catch (e) {
+    document.getElementById('frame').style.display = 'none';
+    document.body.innerHTML += '<div style="color:white;text-align:center;padding-top:40vh;font-size:1.5rem;">Invalid URL</div>';
+    return;
+  }
+  document.getElementById('frame').src = url;
+  if (label) {
+    document.getElementById('backLabel').textContent = label;
+  }
+})();
+function goHome() { window.location.href = '/index.html'; }
+</script>
+</body>
+</html>

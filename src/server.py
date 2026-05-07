@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from urllib.parse import unquote
 
 HOME = os.path.expanduser("~")
@@ -16,6 +17,7 @@ CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
+EXTERNAL_BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "external-browser.pid")
 RECOMMENDATIONS_FILE = os.path.join(APP_ROOT, "recommendations.json")
 VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
@@ -150,6 +152,8 @@ def load_recommendations():
         for alt in rec.get("alt_cmds", []):
             all_cmds.append(alt)
         installed = any(shutil.which(c) for c in all_cmds if c)
+        if not installed and rec.get("category") == "browser":
+            installed = True
         result.append({**rec, "installed": installed})
     return result
 
@@ -187,6 +191,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response(load_recommendations())
         if self.path == "/api/version":
             return self.json_response({"version": get_version()})
+        if self.path == "/api/features":
+            shutdown_ok = bool(
+                shutil.which("systemctl") or shutil.which("loginctl")
+            )
+            return self.json_response({"shutdownAvailable": shutdown_ok})
         if self.path == "/api/export-config":
             data = load_cfg()
             payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -228,10 +237,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "ok"})
             return
         if action == "shutdown":
-            if os.environ.get("COZY_KIDS_ENABLE_SHUTDOWN") == "1":
-                subprocess.Popen(["systemctl", "poweroff"], env=dict(os.environ))
-            self.send_response(204)
-            self.end_headers()
+            shutdown_ok = False
+            for cmd in (["systemctl", "poweroff"], ["loginctl", "poweroff"]):
+                if shutil.which(cmd[0]):
+                    try:
+                        subprocess.Popen(cmd, env=dict(os.environ))
+                        shutdown_ok = True
+                        break
+                    except Exception:
+                        pass
+            self.json_response({"status": "ok" if shutdown_ok else "error"})
             return
         if action == "exit-kids":
             if os.path.isfile(BROWSER_PIDFILE):
@@ -320,18 +335,47 @@ fi
                     self.send_header("Location", "/no-media.html")
                 self.end_headers()
                 return
+            if cmd and len(cmd) == 1 and cmd[0].startswith("special:browser:"):
+                url = cmd[0][len("special:browser:"):]
+                self.send_response(302)
+                self.send_header("Location", f"/browser.html?url={url}")
+                self.end_headers()
+                return
+            if cmd and len(cmd) == 1 and cmd[0].startswith("special:external-browser:"):
+                url = cmd[0][len("special:external-browser:"):]
+                external_browser = None
+                for candidate in ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable", "brave", "brave-browser", "microsoft-edge", "microsoft-edge-stable", "vivaldi", "vivaldi-stable", "opera", "opera-stable"]:
+                    if shutil.which(candidate):
+                        external_browser = candidate
+                        break
+                if external_browser:
+                    proc = subprocess.Popen([external_browser, f"--app={url}", "--fullscreen", "--no-first-run", "--disable-session-crashed-bubble"], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    try:
+                        with open(EXTERNAL_BROWSER_PIDFILE, "w", encoding="utf-8") as f:
+                            f.write(str(proc.pid))
+                    except Exception:
+                        pass
+                    overlay_script = os.path.join(APP_ROOT, "overlay.py")
+                    if os.path.isfile(overlay_script):
+                        subprocess.Popen([sys.executable, overlay_script, "--url", url, "--label", "Home", "--browser-pid", str(proc.pid)], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    subprocess.Popen(["xdg-open", url], env=dict(os.environ))
+                self.send_response(204)
+                self.end_headers()
+                return
             clean = [part for part in cmd if part]
             if not clean:
                 self.send_response(204)
                 self.end_headers()
                 return
-            # Avoid shell=True whenever possible
+            # KDE wrapper fallback: if kstart5/kstart is missing, drop it and launch directly
+            if len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
+                if not shutil.which(clean[0]):
+                    clean = clean[2:]
+            # Avoid shell=True to prevent command injection from user-editable configs
             if len(clean) == 1:
                 parts = clean[0].split()
-                if len(parts) == 1 and not any(c in parts[0] for c in ";&|<>$`\n"):
-                    subprocess.Popen(parts, env=dict(os.environ))
-                else:
-                    subprocess.Popen(clean[0], env=dict(os.environ), shell=True)
+                subprocess.Popen(parts, env=dict(os.environ))
             else:
                 subprocess.Popen(clean, env=dict(os.environ))
             self.send_response(204)

@@ -62,6 +62,7 @@
     "desc_de": "Erste Schritte ins Programmieren – steuere eine kleine Schildkröte mit Befehlen.",
     "desc_en": "First steps into programming – control a little turtle with commands.",
     "cmd": ["kstart5","--fullscreen","kturtle"],
+    "alt_cmds": ["kturtle"],
     "package": "kturtle",
     "category": "learning"
   },
@@ -75,6 +76,7 @@
     "desc_de": "Bilde Wörter aus durcheinandergewürfelten Buchstaben und trainiere deinen Wortschatz.",
     "desc_en": "Build words from scrambled letters and train your vocabulary.",
     "cmd": ["kstart5","--fullscreen","kanagram"],
+    "alt_cmds": ["kanagram"],
     "package": "kanagram",
     "category": "learning"
   },
@@ -88,6 +90,7 @@
     "desc_de": "Das klassische Galgenmännchen mit vielen Wortkategorien und Schwierigkeitsstufen.",
     "desc_en": "The classic hangman game with many word categories and difficulty levels.",
     "cmd": ["kstart5","--fullscreen","khangman"],
+    "alt_cmds": ["khangman"],
     "package": "khangman",
     "category": "learning"
   },
@@ -187,6 +190,7 @@
     "desc_de": "Merke dir die Reihenfolge der blinkenden Lichter und wiederhole sie.",
     "desc_en": "Remember the sequence of flashing lights and repeat it.",
     "cmd": ["kstart5","--fullscreen","blinken"],
+    "alt_cmds": ["blinken"],
     "package": "blinken",
     "category": "game"
   },
@@ -228,6 +232,7 @@
     "desc_de": "Der digitale Kartoffelmann! Setze Augen, Nasen und Münder zusammen und bastel lustige Gesichter.",
     "desc_en": "The digital potato man! Put together eyes, noses and mouths to craft funny faces.",
     "cmd": ["kstart5","--fullscreen","ktuberling"],
+    "alt_cmds": ["ktuberling"],
     "package": "ktuberling",
     "category": "creative"
   },
@@ -241,6 +246,7 @@
     "desc_de": "Lerne Buchstaben und erste Wörter spielerisch mit Lauten und Bildern.",
     "desc_en": "Learn letters and first words playfully with sounds and pictures.",
     "cmd": ["kstart5","--fullscreen","klettres"],
+    "alt_cmds": ["klettres"],
     "package": "klettres",
     "category": "learning"
   },
@@ -254,6 +260,7 @@
     "desc_de": "Bruchrechnung spielerisch lernen mit bunten Kreisen und Balken.",
     "desc_en": "Learn fractions playfully with colorful circles and bars.",
     "cmd": ["kstart5","--fullscreen","kbruch"],
+    "alt_cmds": ["kbruch"],
     "package": "kbruch",
     "category": "learning"
   },
@@ -267,6 +274,7 @@
     "desc_de": "Vokabeln lernen mit digitalen Karteikarten – ideal für die Schule.",
     "desc_en": "Learn vocabulary with digital flashcards – great for school.",
     "cmd": ["kstart5","--fullscreen","kwordquiz"],
+    "alt_cmds": ["kwordquiz"],
     "package": "kwordquiz",
     "category": "learning"
   },
@@ -280,6 +288,7 @@
     "desc_de": "Ein umfangreicher Vokabeltrainer für verschiedene Sprachen und Altersstufen.",
     "desc_en": "A comprehensive vocabulary trainer for different languages and age groups.",
     "cmd": ["kstart5","--fullscreen","parley"],
+    "alt_cmds": ["parley"],
     "package": "parley",
     "category": "learning"
   },
@@ -293,6 +302,7 @@
     "desc_de": "Lustige Figuren aus Kartoffeln und Zubehör basteln – einfach und kreativ.",
     "desc_en": "Craft funny figures from potatoes and accessories – simple and creative.",
     "cmd": ["kstart5","--fullscreen","potato-guy"],
+    "alt_cmds": ["potato-guy"],
     "package": "potato-guy",
     "category": "creative"
   },
@@ -306,6 +316,7 @@
     "desc_de": "Ein entspanntes Block-Puzzle ohne Zeitdruck, bei dem du Reihen löschen musst.",
     "desc_en": "A relaxed block puzzle without time pressure where you clear lines.",
     "cmd": ["kstart5","--fullscreen","kblocks"],
+    "alt_cmds": ["kblocks"],
     "package": "kblocks",
     "category": "game"
   },
@@ -319,7 +330,99 @@
     "desc_de": "Das klassische Othello-Spiel – umkreise die Steine des Gegners und gewinne.",
     "desc_en": "The classic Othello game – surround your opponent's pieces and win.",
     "cmd": ["kstart5","--fullscreen","kreversi"],
+    "alt_cmds": ["kreversi"],
     "package": "kreversi",
     "category": "game"
+  },
+  {
+    "id": "youtube-kids",
+    "emoji": "📺",
+    "label_de": "YouTube Kids",
+    "label_en": "YouTube Kids",
+    "name_de": "YouTube Kids",
+    "name_en": "YouTube Kids",
+    "desc_de": "Kindgerechte Videos und Musik – ohne Werbung und mit Elternkontrolle.",
+    "desc_en": "Kid-friendly videos and music – no ads with parental controls.",
+    "cmd": ["special:browser:https://www.youtubekids.com"],
+    "package": "",
+    "category": "browser"
+  },
+  {
+    "id": "netflix-kids",
+    "emoji": "🎬",
+    "label_de": "Netflix Kids",
+    "label_en": "Netflix Kids",
+    "name_de": "Netflix Kids",
+    "name_en": "Netflix Kids",
+    "desc_de": "Filme und Serien fuer Kinder bei Netflix.",
+    "desc_en": "Movies and shows for kids on Netflix.",
+    "cmd": ["special:external-browser:https://www.netflix.com/browse/kids"],
+    "package": "",
+    "category": "browser"
+  },
+  {
+    "id": "disney-plus",
+    "emoji": "✨",
+    "label_de": "Disney+",
+    "label_en": "Disney+",
+    "name_de": "Disney+",
+    "name_en": "Disney+",
+    "desc_de": "Disney, Pixar, Marvel und Star Wars fuer die ganze Familie.",
+    "desc_en": "Disney, Pixar, Marvel and Star Wars for the whole family.",
+    "cmd": ["special:external-browser:https://www.disneyplus.com"],
+    "package": "",
+    "category": "browser"
+  },
+  {
+    "id": "prime-kids",
+    "emoji": "📦",
+    "label_de": "Prime Kids",
+    "label_en": "Prime Kids",
+    "name_de": "Prime Kids",
+    "name_en": "Prime Kids",
+    "desc_de": "Kinderfilme und -serien bei Amazon Prime Video.",
+    "desc_en": "Kids movies and shows on Amazon Prime Video.",
+    "cmd": ["special:external-browser:https://www.amazon.de/gp/video/storefront/?ie=UTF8&node=17402232031"],
+    "package": "",
+    "category": "browser"
+  },
+  {
+    "id": "pbs-kids",
+    "emoji": "🎓",
+    "label_de": "PBS Kids",
+    "label_en": "PBS Kids",
+    "name_de": "PBS Kids",
+    "name_en": "PBS Kids",
+    "desc_de": "Lernspiele und Videos von PBS Kids.",
+    "desc_en": "Learning games and videos from PBS Kids.",
+    "cmd": ["special:browser:https://www.pbskids.org"],
+    "package": "",
+    "category": "browser"
+  },
+  {
+    "id": "zdf-tivi",
+    "emoji": "📺",
+    "label_de": "ZDFtivi",
+    "label_en": "ZDFtivi",
+    "name_de": "ZDFtivi",
+    "name_en": "ZDFtivi",
+    "desc_de": "Videos und Spiele vom ZDF fuer Kinder.",
+    "desc_en": "Videos and games from ZDF for kids.",
+    "cmd": ["special:browser:https://www.tivi.de"],
+    "package": "",
+    "category": "browser"
+  },
+  {
+    "id": "kika",
+    "emoji": "🧸",
+    "label_de": "KiKA",
+    "label_en": "KiKA",
+    "name_de": "KiKA",
+    "name_en": "KiKA",
+    "desc_de": "Der Kinderkanal von ARD und ZDF mit Videos und Spielen.",
+    "desc_en": "The kids channel from ARD and ZDF with videos and games.",
+    "cmd": ["special:browser:https://www.kika.de"],
+    "package": "",
+    "category": "browser"
   }
 ]

@@ -887,6 +887,8 @@ render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
+render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644
+render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755
 
 # Generate config JSON with proper escaping
 python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFAULT_LAYOUT" "$DEFAULT_PARENT_LABEL" "$DEFAULT_EXIT_LABEL" "$SHUTDOWN_LABEL" "$DEFAULT_TILE_PAINT" "$DEFAULT_TILE_GAMES" "$DEFAULT_TILE_MUSIC" "$DEFAULT_TILE_BROWSER" "$DEFAULT_BROWSER_URL" "$SRC_DIR/recommendations.json" "$RECOMMENDED" <<'PY'
