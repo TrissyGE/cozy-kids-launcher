@@ -6,7 +6,11 @@ fi
 
 # Self-bootstrap: if run standalone (e.g. curl | bash) and src/ is missing,
 # download the repo and re-execute from the extracted copy.
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+else
+  REPO_DIR="."
+fi
 SRC_DIR="$REPO_DIR/src"
 
 if [[ ! -d "$SRC_DIR" ]] || [[ ! -f "$SRC_DIR/server.py" ]]; then
