@@ -894,6 +894,8 @@ render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755
 python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFAULT_LAYOUT" "$DEFAULT_PARENT_LABEL" "$DEFAULT_EXIT_LABEL" "$SHUTDOWN_LABEL" "$DEFAULT_TILE_PAINT" "$DEFAULT_TILE_GAMES" "$DEFAULT_TILE_MUSIC" "$DEFAULT_TILE_BROWSER" "$DEFAULT_BROWSER_URL" "$SRC_DIR/recommendations.json" "$RECOMMENDED" <<'PY'
 import json, sys, shutil, os
 path, lang, title, theme, layout, parent_label, exit_label, shutdown_label, tile_paint, tile_games, tile_music, tile_browser, browser_url, rec_path, recommended = sys.argv[1:16]
+# Use modern gcompris-qt if available, fall back to plain gcompris
+gcompris_cmd = ["gcompris-qt", "--fullscreen"] if shutil.which("gcompris-qt") else ["gcompris"]
 config = {
     "language": lang,
     "title": title,
@@ -907,7 +909,7 @@ config = {
     "autoScanDone": False,
     "tiles": [
         {"id": "paint", "label": tile_paint, "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
-        {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": ["gcompris"], "visible": True},
+        {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": gcompris_cmd, "visible": True},
         {"id": "music", "label": tile_music, "emoji": "🎵", "cmd": ["special:filme-musik"], "visible": True},
         {"id": "browser", "label": tile_browser, "emoji": "🌐", "cmd": ["xdg-open", browser_url], "visible": False}
     ]
