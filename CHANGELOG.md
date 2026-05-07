@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.9] - Browser Apps, Streaming Support & Bug Fixes
+
+### Bug Fixes
+
+- **KDE Apps fullscreen fallback**: All KDE apps now have `alt_cmds` with the bare binary name. When `kstart5` is missing (Plasma 6 or non-KDE desktops), the app launches directly instead of failing silently.
+- **Shutdown button**: No longer requires `--install-shutdown-helper` flag. Auto-detects `systemctl` or `loginctl` and enables the button dynamically. Hidden on systems where shutdown is unavailable.
+- **Security fix**: Removed `shell=True` from the `/launch/` endpoint to prevent command injection from user-editable configs.
+- **PIN button label**: Admin panel now correctly shows "PIN ändern" instead of duplicating "PIN entfernen" when a PIN is already set.
+
+### New Browser Apps
+
+- **YouTube Kids** (embedded) — opens inside the launcher with a home button
+- **PBS Kids** (embedded) — learning games and videos
+- **ZDFtivi** (embedded) — German kids TV channel
+- **KiKA** (embedded) — ARD/ZDF kids channel
+
+### Streaming Pseudo-Apps (External Browser)
+
+- **Netflix Kids** — launches Chromium in app-fullscreen mode with a floating overlay home button
+- **Disney+** — same external-browser overlay approach
+- **Prime Kids** (Amazon Prime Video kids section) — same approach
+- DRM-protected sites cannot be embedded in iframes, so they launch in a separate Chromium window
+- A small always-on-top Tkinter overlay shows a home button to return to the launcher
+
+### Embedded Browser (`src/browser.html`)
+
+- Fullscreen iframe for kid-friendly websites
+- Large floating home button (🏠) top-left, always visible
+- URL validation (only `http://` and `https://` allowed)
+- Sandboxed iframe without `allow-popups` to prevent unwanted new windows
+
+### External Browser Overlay (`src/overlay.py`)
+
+- Small always-on-top window with a home button
+- Tracks the external browser PID and kills it cleanly on click (SIGTERM → wait → SIGKILL)
+- Auto-closes if the browser process dies on its own
+- Uses `wmctrl` / `xdotool` to bring the launcher back to the foreground
+
+### Admin Panel Improvements
+
+- New "🌐 Browser-Seite" option in the app dropdown
+- When selected, shows a URL input field and a type selector (embedded / external)
+- Parents can now add any website as a launcher tile
+
+### New Files
+
+- `src/browser.html` — embedded iframe browser
+- `src/overlay.py` — external browser overlay utility
+
 ## [0.2.8] - Theme Editor & Visual Theme Chooser
 
 ### 9 New World Themes
