@@ -95,6 +95,7 @@ function formatTime(sec){
   const s=sec%60;
   return m+':'+String(s).padStart(2,'0');
 }
+let timerWarningShown=false;
 async function pollTimer(){
   try{
     const r=await fetch('/api/timer/status');
@@ -107,14 +108,16 @@ async function pollTimer(){
         badge.className='expired';
         badge.textContent='⏰ {{TIMER_EXPIRED}}';
         showTimerBlock();
-      }else if(data.warning){
+      }else if(data.warning && !timerWarningShown){
         badge.className='warning';
+        timerWarningShown=true;
         showTimerWarning(data.remainingSeconds);
-      }else{
+      }else if(!data.warning){
         badge.className='';
         hideTimerWarning();
       }
     }else{
+      timerWarningShown=false;
       badge.style.display='none';
       hideTimerWarning();
       hideTimerBlock();
@@ -136,6 +139,7 @@ async function extendFromBlock(minutes){
   const r=await fetch('/api/timer/extend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin,minutes:minutes})});
   const data=await r.json();
   if(data.valid){
+    timerWarningShown=false;
     hideTimerBlock();
   }else{
     document.getElementById('timerBlockErr').textContent='{{TIMER_WRONG_PIN}}';

@@ -776,6 +776,7 @@ async function persistConfig(){
 }
 
 // Timer logic
+let timerWarningShown=false;
 function formatTime(sec){
   const m=Math.floor(sec/60);
   const s=sec%60;
@@ -790,19 +791,20 @@ async function pollTimer(){
     if(data.active){
       badge.style.display='block';
       badge.textContent='⏱️ '+formatTime(data.remainingSeconds);
-      badge.className='warning';
       if(data.expired){
         badge.className='expired';
         badge.textContent='⏰ '+uiText.timerExpired;
         showTimerBlock();
-      }else if(data.warning){
+      }else if(data.warning && !timerWarningShown){
         badge.className='warning';
+        timerWarningShown=true;
         showTimerWarning(data.remainingSeconds);
-      }else{
+      }else if(!data.warning){
         badge.className='';
         hideTimerWarning();
       }
     }else{
+      timerWarningShown=false;
       badge.style.display='none';
       hideTimerWarning();
       hideTimerBlock();
@@ -836,6 +838,7 @@ async function toggleTimer(){
     const r=await fetch('/api/timer/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin||''})});
     const data=await r.json();
     if(data.valid){
+      timerWarningShown=false;
       btn.textContent=uiText.timerStart;
       document.getElementById('timerStatus').textContent='';
       pollTimer();
@@ -849,6 +852,7 @@ async function toggleTimer(){
     if(isNaN(minutes)||minutes<=0) return;
     cfg.timerMinutes=minutes;
     await persistConfig();
+    timerWarningShown=false;
     const pin=cfg.pinHash?prompt(uiText.pinTitle||'PIN eingeben'):'';
     const r=await fetch('/api/timer/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin||'',minutes:minutes})});
     const data=await r.json();
@@ -864,6 +868,7 @@ async function extendFromBlock(minutes){
   const r=await fetch('/api/timer/extend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin,minutes:minutes})});
   const data=await r.json();
   if(data.valid){
+    timerWarningShown=false;
     hideTimerBlock();
     pollTimer();
   }else{
