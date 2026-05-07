@@ -6,20 +6,23 @@ All notable changes to this project will be documented in this file.
 
 ### Bug Fixes
 
-- **KDE Apps fullscreen fallback**: All KDE apps now have `alt_cmds` with the bare binary name. When `kstart5` is missing (Plasma 6 or non-KDE desktops), the app launches directly instead of failing silently.
+- **KDE Apps fullscreen fallback**: All KDE apps now use `kstart` (Plasma 6) instead of `kstart5` (Plasma 5) as the primary wrapper. `alt_cmds` contains only the bare app binary so the "installed" check verifies the actual app, not the wrapper.
+- **KDE Apps on Plasma 6**: Wrapper detection in `load_recommendations()` now ignores `kstart`/`kstart5` when checking if an app is installed.
 - **Shutdown button**: No longer requires `--install-shutdown-helper` flag. Auto-detects `systemctl` or `loginctl` and enables the button dynamically. Hidden on systems where shutdown is unavailable.
 - **Security fix**: Removed `shell=True` from the `/launch/` endpoint to prevent command injection from user-editable configs.
 - **PIN button label**: Admin panel now correctly shows "PIN ändern" instead of duplicating "PIN entfernen" when a PIN is already set.
+- **Exit kids mode**: `launcher.sh` now watches for an `exit-requested` flag file. When the user presses "Kindermodus beenden", the server creates the flag and the launcher exits its `while true` loop cleanly instead of restarting the browser.
+- **Deleted tiles reappearing**: Added `autoScanDone` flag to config. `autoScanRecommendations()` only runs once per installation. Existing configs are migrated with `autoScanDone: true` so they won't suddenly add new tiles.
 
 ### New Browser Apps
 
-- **YouTube Kids** (embedded) — opens inside the launcher with a home button
 - **PBS Kids** (embedded) — learning games and videos
 - **ZDFtivi** (embedded) — German kids TV channel
 - **KiKA** (embedded) — ARD/ZDF kids channel
 
 ### Streaming Pseudo-Apps (External Browser)
 
+- **YouTube Kids** — runs as external Chromium app-mode with overlay home button (Firefox blocks YouTube in iframes due to X-Frame-Options)
 - **Netflix Kids** — launches Chromium in app-fullscreen mode with a floating overlay home button
 - **Disney+** — same external-browser overlay approach
 - **Prime Kids** (Amazon Prime Video kids section) — same approach

@@ -904,6 +904,7 @@ config = {
     "shutdownLabel": shutdown_label,
     "pinHash": "",
     "currentPage": 0,
+    "autoScanDone": False,
     "tiles": [
         {"id": "paint", "label": tile_paint, "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
         {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": ["gcompris"], "visible": True},
@@ -941,6 +942,8 @@ if recommended == "1" and os.path.isfile(rec_path):
                 "visible": True
             })
             existing_ids.add(rec["id"])
+    if existing_ids > {"paint", "games", "music", "browser"}:
+        config["autoScanDone"] = True
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(config, f, ensure_ascii=False, indent=2)
     f.write('\n')

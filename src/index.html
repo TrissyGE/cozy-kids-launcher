@@ -576,6 +576,7 @@ async function copyInstallCommand(){
   }catch(e){}
 }
 async function autoScanRecommendations(){
+  if(cfg.autoScanDone) return;
   const existingIds=new Set(cfg.tiles.map(t=>t.id));
   const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
   let added=false;
@@ -586,7 +587,9 @@ async function autoScanRecommendations(){
       added=true;
     }
   }
-  if(added){ await persistConfig(); renderAll(); }
+  cfg.autoScanDone=true;
+  await persistConfig();
+  if(added){ renderAll(); }
 }
 async function persistConfig(){
   await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});

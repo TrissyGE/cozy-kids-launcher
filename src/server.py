@@ -18,6 +18,7 @@ PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
 EXTERNAL_BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "external-browser.pid")
+EXIT_FLAGFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "exit-requested")
 RECOMMENDATIONS_FILE = os.path.join(APP_ROOT, "recommendations.json")
 VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
@@ -50,6 +51,9 @@ def load_cfg():
         if cmd and len(cmd) >= 1 and cmd[0] in rec_by_first_cmd and cmd != rec_by_first_cmd[cmd[0]]:
             tile["cmd"] = rec_by_first_cmd[cmd[0]]
             migrated = True
+    if "autoScanDone" not in data:
+        data["autoScanDone"] = True
+        migrated = True
     if migrated:
         save_cfg(data)
     return data
@@ -147,10 +151,21 @@ def load_recommendations():
     result = []
     for rec in recs:
         all_cmds = []
-        if rec.get("cmd"):
-            all_cmds.append(rec["cmd"][0])
-        for alt in rec.get("alt_cmds", []):
-            all_cmds.append(alt)
+        cmd = rec.get("cmd", [])
+        # KDE wrapper detection: kstart/kstart5 are wrappers, not the app itself
+        is_wrapper = cmd and cmd[0] in ("kstart", "kstart5")
+        if is_wrapper:
+            # Only check alt_cmds or the actual app name (skip wrapper and --fullscreen)
+            for alt in rec.get("alt_cmds", []):
+                all_cmds.append(alt)
+            for part in cmd[2:]:
+                if part and not part.startswith("-"):
+                    all_cmds.append(part)
+        else:
+            if cmd:
+                all_cmds.append(cmd[0])
+            for alt in rec.get("alt_cmds", []):
+                all_cmds.append(alt)
         installed = any(shutil.which(c) for c in all_cmds if c)
         if not installed and rec.get("category") == "browser":
             installed = True
@@ -249,6 +264,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "ok" if shutdown_ok else "error"})
             return
         if action == "exit-kids":
+            # Signal launcher.sh to exit its while-true loop
+            try:
+                with open(EXIT_FLAGFILE, "w", encoding="utf-8") as f:
+                    f.write("1")
+            except Exception:
+                pass
             if os.path.isfile(BROWSER_PIDFILE):
                 try:
                     with open(BROWSER_PIDFILE, "r", encoding="utf-8") as f:

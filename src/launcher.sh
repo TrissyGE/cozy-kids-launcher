@@ -7,6 +7,7 @@ APP_ROOT="$HOME/.local/share/{{APP_ID}}"
 PORT="${COZY_KIDS_PORT:-{{DEFAULT_PORT}}}"
 PIDFILE="$HOME/.cache/{{APP_ID}}/server.pid"
 BROWSER_PIDFILE="$HOME/.cache/{{APP_ID}}/browser.pid"
+EXIT_FLAGFILE="$HOME/.cache/{{APP_ID}}/exit-requested"
 URL="http://127.0.0.1:${PORT}/index.html"
 LAUNCH_MODE="{{DEFAULT_LAUNCH_MODE}}"
 BROWSER_CMD="{{BROWSER_CMD}}"
@@ -81,10 +82,14 @@ while true; do
     fi
   fi
   echo "$BROWSER_PID" > "$BROWSER_PIDFILE"
-  # Poll until browser exits or update trigger appears
+  # Poll until browser exits, update trigger appears, or exit is requested
   while kill -0 "$BROWSER_PID" 2>/dev/null; do
     if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
       break
+    fi
+    if [[ -f "$EXIT_FLAGFILE" ]]; then
+      rm -f "$EXIT_FLAGFILE"
+      break 2
     fi
     sleep 1
   done

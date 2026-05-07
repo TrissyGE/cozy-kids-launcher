@@ -61,7 +61,7 @@
     "name_en": "KTurtle",
     "desc_de": "Erste Schritte ins Programmieren – steuere eine kleine Schildkröte mit Befehlen.",
     "desc_en": "First steps into programming – control a little turtle with commands.",
-    "cmd": ["kstart5","--fullscreen","kturtle"],
+    "cmd": ["kstart","--fullscreen","kturtle"],
     "alt_cmds": ["kturtle"],
     "package": "kturtle",
     "category": "learning"
@@ -75,7 +75,7 @@
     "name_en": "KAnagram",
     "desc_de": "Bilde Wörter aus durcheinandergewürfelten Buchstaben und trainiere deinen Wortschatz.",
     "desc_en": "Build words from scrambled letters and train your vocabulary.",
-    "cmd": ["kstart5","--fullscreen","kanagram"],
+    "cmd": ["kstart","--fullscreen","kanagram"],
     "alt_cmds": ["kanagram"],
     "package": "kanagram",
     "category": "learning"
@@ -89,7 +89,7 @@
     "name_en": "KHangman",
     "desc_de": "Das klassische Galgenmännchen mit vielen Wortkategorien und Schwierigkeitsstufen.",
     "desc_en": "The classic hangman game with many word categories and difficulty levels.",
-    "cmd": ["kstart5","--fullscreen","khangman"],
+    "cmd": ["kstart","--fullscreen","khangman"],
     "alt_cmds": ["khangman"],
     "package": "khangman",
     "category": "learning"
@@ -189,7 +189,7 @@
     "name_en": "Blinken",
     "desc_de": "Merke dir die Reihenfolge der blinkenden Lichter und wiederhole sie.",
     "desc_en": "Remember the sequence of flashing lights and repeat it.",
-    "cmd": ["kstart5","--fullscreen","blinken"],
+    "cmd": ["kstart","--fullscreen","blinken"],
     "alt_cmds": ["blinken"],
     "package": "blinken",
     "category": "game"
@@ -231,7 +231,7 @@
     "name_en": "KTuberling",
     "desc_de": "Der digitale Kartoffelmann! Setze Augen, Nasen und Münder zusammen und bastel lustige Gesichter.",
     "desc_en": "The digital potato man! Put together eyes, noses and mouths to craft funny faces.",
-    "cmd": ["kstart5","--fullscreen","ktuberling"],
+    "cmd": ["kstart","--fullscreen","ktuberling"],
     "alt_cmds": ["ktuberling"],
     "package": "ktuberling",
     "category": "creative"
@@ -245,7 +245,7 @@
     "name_en": "KLettres",
     "desc_de": "Lerne Buchstaben und erste Wörter spielerisch mit Lauten und Bildern.",
     "desc_en": "Learn letters and first words playfully with sounds and pictures.",
-    "cmd": ["kstart5","--fullscreen","klettres"],
+    "cmd": ["kstart","--fullscreen","klettres"],
     "alt_cmds": ["klettres"],
     "package": "klettres",
     "category": "learning"
@@ -259,7 +259,7 @@
     "name_en": "KBruch",
     "desc_de": "Bruchrechnung spielerisch lernen mit bunten Kreisen und Balken.",
     "desc_en": "Learn fractions playfully with colorful circles and bars.",
-    "cmd": ["kstart5","--fullscreen","kbruch"],
+    "cmd": ["kstart","--fullscreen","kbruch"],
     "alt_cmds": ["kbruch"],
     "package": "kbruch",
     "category": "learning"
@@ -273,7 +273,7 @@
     "name_en": "KWordQuiz",
     "desc_de": "Vokabeln lernen mit digitalen Karteikarten – ideal für die Schule.",
     "desc_en": "Learn vocabulary with digital flashcards – great for school.",
-    "cmd": ["kstart5","--fullscreen","kwordquiz"],
+    "cmd": ["kstart","--fullscreen","kwordquiz"],
     "alt_cmds": ["kwordquiz"],
     "package": "kwordquiz",
     "category": "learning"
@@ -287,7 +287,7 @@
     "name_en": "Parley",
     "desc_de": "Ein umfangreicher Vokabeltrainer für verschiedene Sprachen und Altersstufen.",
     "desc_en": "A comprehensive vocabulary trainer for different languages and age groups.",
-    "cmd": ["kstart5","--fullscreen","parley"],
+    "cmd": ["kstart","--fullscreen","parley"],
     "alt_cmds": ["parley"],
     "package": "parley",
     "category": "learning"
@@ -301,7 +301,7 @@
     "name_en": "Potato Guy",
     "desc_de": "Lustige Figuren aus Kartoffeln und Zubehör basteln – einfach und kreativ.",
     "desc_en": "Craft funny figures from potatoes and accessories – simple and creative.",
-    "cmd": ["kstart5","--fullscreen","potato-guy"],
+    "cmd": ["kstart","--fullscreen","potato-guy"],
     "alt_cmds": ["potato-guy"],
     "package": "potato-guy",
     "category": "creative"
@@ -315,7 +315,7 @@
     "name_en": "KBlocks",
     "desc_de": "Ein entspanntes Block-Puzzle ohne Zeitdruck, bei dem du Reihen löschen musst.",
     "desc_en": "A relaxed block puzzle without time pressure where you clear lines.",
-    "cmd": ["kstart5","--fullscreen","kblocks"],
+    "cmd": ["kstart","--fullscreen","kblocks"],
     "alt_cmds": ["kblocks"],
     "package": "kblocks",
     "category": "game"
@@ -329,7 +329,7 @@
     "name_en": "KReversi",
     "desc_de": "Das klassische Othello-Spiel – umkreise die Steine des Gegners und gewinne.",
     "desc_en": "The classic Othello game – surround your opponent's pieces and win.",
-    "cmd": ["kstart5","--fullscreen","kreversi"],
+    "cmd": ["kstart","--fullscreen","kreversi"],
     "alt_cmds": ["kreversi"],
     "package": "kreversi",
     "category": "game"
@@ -343,7 +343,7 @@
     "name_en": "YouTube Kids",
     "desc_de": "Kindgerechte Videos und Musik – ohne Werbung und mit Elternkontrolle.",
     "desc_en": "Kid-friendly videos and music – no ads with parental controls.",
-    "cmd": ["special:browser:https://www.youtubekids.com"],
+    "cmd": ["special:external-browser:https://www.youtubekids.com"],
     "package": "",
     "category": "browser"
   },
