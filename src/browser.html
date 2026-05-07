@@ -91,9 +91,8 @@ function goHome() { window.location.href = '/index.html'; }
 
 // Timer support
 function formatTime(sec){
-  const m=Math.floor(sec/60);
-  const s=sec%60;
-  return m+':'+String(s).padStart(2,'0');
+  const m=Math.max(0,Math.floor(sec/60));
+  return m+' {{TIMER_MINUTES}}';
 }
 let timerWarningShown=false;
 async function pollTimer(){
