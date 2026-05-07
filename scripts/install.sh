@@ -933,7 +933,14 @@ if recommended == "1" and os.path.isfile(rec_path):
                     break
         if found_cmd:
             label = rec.get("label_de" if lang == "de" else "label_en", rec["id"])
-            tile_cmd = cmds if (cmds and found_cmd == cmds[0]) else [found_cmd]
+            if cmds and found_cmd == cmds[0]:
+                tile_cmd = cmds
+            elif cmds and cmds[0] in ("kstart", "kstart5"):
+                # KDE wrapper: use wrapper + args if available, else bare app
+                tile_cmd = cmds if shutil.which(cmds[0]) else [found_cmd]
+            else:
+                # Normal alt_cmd replacement: keep all args
+                tile_cmd = [found_cmd] + list(cmds[1:])
             config["tiles"].append({
                 "id": rec["id"],
                 "label": label,

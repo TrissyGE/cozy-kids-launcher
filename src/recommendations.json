@@ -395,7 +395,7 @@
     "name_en": "PBS Kids",
     "desc_de": "Lernspiele und Videos von PBS Kids.",
     "desc_en": "Learning games and videos from PBS Kids.",
-    "cmd": ["special:browser:https://www.pbskids.org"],
+    "cmd": ["special:external-browser:https://www.pbskids.org"],
     "package": "",
     "category": "browser"
   },

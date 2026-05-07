@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from urllib.parse import unquote
 
 HOME = os.path.expanduser("~")
@@ -279,6 +280,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     pass
             self.send_response(204)
             self.end_headers()
+            # Shutdown the HTTP server so launcher.sh exits cleanly
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
             return
         if action == "api/update":
             trigger_path = os.path.join(APP_ROOT, "update-trigger.sh")
@@ -370,7 +373,7 @@ fi
                         external_browser = candidate
                         break
                 if external_browser:
-                    proc = subprocess.Popen([external_browser, f"--app={url}", "--fullscreen", "--no-first-run", "--disable-session-crashed-bubble"], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    proc = subprocess.Popen([external_browser, f"--app={url}", "--kiosk", "--no-first-run", "--disable-session-crashed-bubble"], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                     try:
                         with open(EXTERNAL_BROWSER_PIDFILE, "w", encoding="utf-8") as f:
                             f.write(str(proc.pid))

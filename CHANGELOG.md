@@ -11,8 +11,11 @@ All notable changes to this project will be documented in this file.
 - **Shutdown button**: No longer requires `--install-shutdown-helper` flag. Auto-detects `systemctl` or `loginctl` and enables the button dynamically. Hidden on systems where shutdown is unavailable.
 - **Security fix**: Removed `shell=True` from the `/launch/` endpoint to prevent command injection from user-editable configs.
 - **PIN button label**: Admin panel now correctly shows "PIN ändern" instead of duplicating "PIN entfernen" when a PIN is already set.
-- **Exit kids mode**: `launcher.sh` now watches for an `exit-requested` flag file. When the user presses "Kindermodus beenden", the server creates the flag and the launcher exits its `while true` loop cleanly instead of restarting the browser.
+- **Exit kids mode**: Server now shuts down itself after handling `/exit-kids`, and kills the browser PID. `launcher.sh` detects the browser death and exits its `while true` loop cleanly.
 - **Deleted tiles reappearing**: Added `autoScanDone` flag to config. `autoScanRecommendations()` only runs once per installation. Existing configs are migrated with `autoScanDone: true` so they won't suddenly add new tiles.
+- **GCompris fullscreen lost**: Installer `--recommended` logic now preserves command-line arguments (e.g. `--fullscreen`) when using an `alt_cmd`.
+- **PBS Kids iframe blocked**: Moved to external-browser mode (like YouTube Kids) because PBSKids also sends X-Frame-Options.
+- **External browser glitchy / no fullscreen**: Switched from `--fullscreen` to `--kiosk` for Chromium-based external browsers. `--kiosk` is more reliable for app-mode windows.
 
 ### New Browser Apps
 
