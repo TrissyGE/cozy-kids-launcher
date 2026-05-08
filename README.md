@@ -10,13 +10,19 @@ No locked-down environment. No cloud dependencies. No subscription. Just a simpl
 
 ## What it looks like
 
-| Kids Home Screen | Parent Settings |
-|---|---|
-| ![Kids home screen](screenshots/screenshot-home.png) | ![Parent settings](screenshots/screenshot-parent-settings.png) |
+Screenshots below reflect the latest v0.3.x release. Replace them after capturing your own on the target device — see [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md) for the full guide.
 
-| Blue Theme | Desktop Shortcut |
+| Kids Home (Default) | Kids Home (World Theme) |
 |---|---|
-| ![Blue theme](screenshots/screenshot-theme-blue.png) | *(add your own desktop screenshot here)* |
+| ![Kids home default](screenshots/screenshot-home-default.png) | ![Kids home world](screenshots/screenshot-home-world.png) |
+
+| Parent Settings | Theme Picker |
+|---|---|
+| ![Parent settings](screenshots/screenshot-admin-general.png) | ![Theme picker](screenshots/screenshot-theme-picker.png) |
+
+| Browser with Overlay | Timer Block Screen |
+|---|---|
+| ![Browser overlay](screenshots/screenshot-browser-overlay.png) | ![Timer block](screenshots/screenshot-timer-block.png) |
 
 ---
 
@@ -61,20 +67,24 @@ Most kids launchers are either:
 | Feature | Status |
 |---|---|
 | Fullscreen kids home screen with large emoji tiles | ✅ |
-| Dynamic pages with left/right navigation | ✅ |
+| Dynamic pages with left/right navigation (swipe + arrows) | ✅ |
 | 4-tile (large) or 9-tile (compact) layout modes | ✅ |
 | Parent settings inside the UI | ✅ |
 | Editable title, colors, labels, and tiles | ✅ |
-| 14 themes (5 colors + 9 illustrated worlds) | ✅ |
+| **15 themes** (5 colors + 9 illustrated worlds + **1 custom**) | ✅ |
 | Visual theme chooser with live previews | ✅ |
+| **Custom theme** — freely adjustable colors & background image | ✅ |
 | PIN protection for parent settings | ✅ |
-| Tile reordering (move up/down) | ✅ |
+| **Drag-and-drop** tile reordering in admin panel | ✅ |
 | App recommendations with one-click add | ✅ |
 | Local app launching | ✅ |
+| **In-app overlay** (close button + timer) for every app type | ✅ |
+| **Keyboard navigation** (arrow keys, Enter, Escape) | ✅ |
 | Exit back to desktop | ✅ |
 | Safe shutdown button | ✅ |
 | Desktop shortcut to reopen kids mode | ✅ |
-| Automatic updates | ✅ |
+| **Screen time timer** with visual warning and block screen | ✅ |
+| **Automatic update check** on startup with badge notification | ✅ |
 | One-line installer | ✅ |
 | German and English language support | ✅ |
 
@@ -84,10 +94,12 @@ Most kids launchers are either:
 
 1. Child logs in
 2. Fullscreen launcher opens automatically
-3. Child taps an app tile
-4. Parent taps **Parent** to customize tiles, colors, apps
-5. Parent can exit back to desktop anytime
-6. Parent can reopen kids mode from the desktop shortcut
+3. Child taps an app tile (or uses arrow keys + Enter)
+4. In-app overlay appears with a close button and optional timer
+5. Parent taps **Parent** to customize tiles, colours, apps
+6. Parent drags-and-drops tiles to reorder, picks themes, or sets a screen-time timer
+7. Parent can exit back to desktop anytime (PIN-protected)
+8. Parent can reopen kids mode from the desktop shortcut
 
 ---
 
@@ -148,8 +160,11 @@ cozy-kids-launcher/
   src/
     server.py            # Python HTTP server
     index.html           # Kids UI template
+    browser.html         # Embedded browser wrapper with overlay
     no-media.html        # "No media found" page
     launcher.sh          # Runtime launcher script
+    overlay.py           # Universal close-button overlay for apps
+    timer_watchdog.py    # System-level fullscreen timer block
     recommendations.json # Curated app recommendations
 ```
 
