@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - Auto Update Check on Startup
+
+### Automatic Update Check
+
+- **Update check runs automatically on startup** — no need to open the admin panel manually
+- If a newer version is available on GitHub, a **small red badge** appears on the "Parent" button in the kids screen
+- Badge is unobtrusive (22×22 px red dot with "1") but clearly visible for parents
+- Badge disappears when entering the admin panel or after the update is installed
+- Uses the same version comparison logic as the manual "Check for updates" button
+
+### Updated Files
+
+- `src/index.html` — `startupUpdateCheck()` function, badge rendering in `renderAll()`
+
 ## [0.3.2] - Custom Theme + Admin Drag-and-Drop
 
 ### Custom Theme

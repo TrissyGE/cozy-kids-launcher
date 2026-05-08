@@ -61,6 +61,7 @@
   .nav.left { left:14px; }
   .nav.right { right:14px; }
   .hidden { display:none !important; }
+  .update-badge { position:absolute; top:-8px; right:-8px; background:#e53935; color:#fff; border-radius:50%; width:22px; height:22px; font-size:.75rem; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.2); pointer-events:none; }
   .admin { max-width:1250px; margin:0 auto; }
   #admin .wrap { max-height:calc(100vh - 120px); overflow-y:auto; padding-right:8px; }
   .admin .smallbtn { min-height:40px; min-width:80px; padding:0 12px; font-size:0.9rem; border-radius:12px; }
@@ -286,6 +287,7 @@
 let cfg=null, appOptions=[], recommendations=[], adminPage=0, pinUnlocked=false, pinCallback=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
+let updateAvailable=false, remoteVersion='';
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
@@ -398,7 +400,7 @@ function applyDynamicTheme(){
     }
   }
 }
-function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); applyDynamicTheme(); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); document.getElementById('parentBtn').textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; const shutdownBtn=document.getElementById('shutdownBtn'); shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; shutdownBtn.style.display=features.shutdownAvailable?'':'none'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
+function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); applyDynamicTheme(); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); const parentBtn=document.getElementById('parentBtn'); parentBtn.textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); parentBtn.style.position='relative'; let badge=parentBtn.querySelector('.update-badge'); if(updateAvailable && !isAdmin){ if(!badge){ badge=document.createElement('span'); badge.className='update-badge'; parentBtn.appendChild(badge); } badge.textContent='1'; }else if(badge){ badge.remove(); } document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; const shutdownBtn=document.getElementById('shutdownBtn'); shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; shutdownBtn.style.display=features.shutdownAvailable?'':'none'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
 function renderKids(){
   const grid=document.getElementById('grid');
   grid.innerHTML='';
@@ -528,6 +530,20 @@ async function sha256(str){ const buf=await crypto.subtle.digest('SHA-256', new 
 let installedVersion='0.0.0';
 async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'); const msg=document.getElementById('updateMsg'); const updateRow=document.getElementById('updateRow'); msg.textContent=''; msg.style.color=''; updateRow.style.display='none'; btn.disabled=true; try{ const localR=await fetch('/api/version'); const localData=await localR.json(); installedVersion=localData.version||'0.0.0'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; const remoteR=await fetch('https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION?nocache='+Date.now(),{cache:'no-store'}); if(!remoteR.ok) throw new Error('fetch failed'); const remoteVersion=(await remoteR.text()).trim(); if(compareVersion(remoteVersion,installedVersion)>0){ msg.textContent=(uiText.updateAvailable||'Update available')+': '+remoteVersion; msg.style.color='green'; updateRow.style.display='grid'; } else { msg.textContent=uiText.updateUpToDate||'Up to date'; msg.style.color='green'; } } catch(e){ msg.textContent=uiText.updateError||'Update check failed'; msg.style.color='#c00'; } finally { btn.disabled=false; } }
 function compareVersion(a,b){ const A=a.split('.'); const B=b.split('.'); for(let i=0;i<Math.max(A.length,B.length);i++){ const av=parseInt(A[i]||0,10); const bv=parseInt(B[i]||0,10); if(av>bv) return 1; if(av<bv) return -1; } return 0; }
+async function startupUpdateCheck(){
+  try{
+    const localR=await fetch('/api/version');
+    const localData=await localR.json();
+    installedVersion=localData.version||'0.0.0';
+    const remoteR=await fetch('https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION?nocache='+Date.now(),{cache:'no-store'});
+    if(!remoteR.ok) return;
+    remoteVersion=(await remoteR.text()).trim();
+    if(compareVersion(remoteVersion,installedVersion)>0){
+      updateAvailable=true;
+      renderAll();
+    }
+  }catch(e){}
+}
 async function installUpdate(){ if(!window.confirm(uiText.updateConfirm||'Close browser and install update now?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
 
 function renderAdmin(){
@@ -1113,7 +1129,7 @@ document.addEventListener('keydown',function(e){
   }else if(e.key==='Escape') exitKids();
 });
 
-(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); })();
+(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); await startupUpdateCheck(); })();
 </script>
 </body>
 </html>
