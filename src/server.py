@@ -441,6 +441,17 @@ fi
                 self.end_headers()
                 return
             cmd = tile.get("cmd", [])
+            # Kill any existing overlay so only one runs at a time
+            try:
+                result = subprocess.run(["pgrep", "-f", "overlay.py"], capture_output=True, text=True)
+                for pid_str in result.stdout.strip().split("\n"):
+                    if pid_str:
+                        try:
+                            os.kill(int(pid_str), 15)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
             if cmd == ["special:filme-musik"]:
                 location = media_location()
                 if location:
@@ -473,7 +484,7 @@ fi
                         pass
                     overlay_script = os.path.join(APP_ROOT, "overlay.py")
                     if os.path.isfile(overlay_script):
-                        subprocess.Popen([sys.executable, overlay_script, "--url", url, "--label", "Home", "--browser-pid", str(proc.pid)], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        subprocess.Popen([sys.executable, overlay_script, "--mode", "external", "--url", url, "--label", "Home", "--browser-pid", str(proc.pid)], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
                     subprocess.Popen(["xdg-open", url], env=dict(os.environ))
                 self.send_response(204)
@@ -488,12 +499,28 @@ fi
             if len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
                 if not shutil.which(clean[0]):
                     clean = clean[2:]
+            # Determine primary app command for overlay tracking
+            app_cmd = ""
+            if len(clean) == 1:
+                parts = clean[0].split()
+                app_cmd = parts[0] if parts else ""
+            elif len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
+                app_cmd = clean[2] if len(clean) > 2 else ""
+            else:
+                app_cmd = clean[0] if clean else ""
+
             # Avoid shell=True to prevent command injection from user-editable configs
             if len(clean) == 1:
                 parts = clean[0].split()
                 subprocess.Popen(parts, env=dict(os.environ))
             else:
                 subprocess.Popen(clean, env=dict(os.environ))
+
+            # Start overlay for local apps so the child can close them and see the timer
+            overlay_script = os.path.join(APP_ROOT, "overlay.py")
+            if os.path.isfile(overlay_script) and app_cmd:
+                subprocess.Popen([sys.executable, overlay_script, "--mode", "local", "--app-cmd", app_cmd, "--label", "Home"], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
             self.send_response(204)
             self.end_headers()
             return

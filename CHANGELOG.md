@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - App Overlay (Timer + Close Button)
+
+### App Overlay
+
+- **Unified in-app overlay** for every app type — embedded browser, external browser, and local apps/games
+  - Shows a **close button** (❌) that kills the app and returns to the launcher
+  - Shows a **live timer countdown** when screen time is active
+  - Overlay auto-hides after 2 seconds of inactivity (mouse/touch/keyboard) to preserve immersion
+  - Re-appears on any movement or interaction
+- **`browser.html` (embedded sites)**: replaced the large static home button with the new floating overlay pill
+- **`overlay.py` (external browser + local apps)**: completely rewritten as universal overlay
+  - Supports `--mode external` (DRM browsers) and `--mode local` (native apps like TuxPaint, GCompris)
+  - Tracks the app process and closes it when the child presses the close button
+  - Timer polling via HTTP API every 10 seconds
+  - Auto-hide/minimize: shrinks to a small 60×60 close button after inactivity, expands to full size on motion
+- **`server.py`**: starts the overlay for local apps alongside the app process; kills any previous overlay before starting a new one
+
+### Updated Files
+
+- `src/browser.html` — unified floating overlay with close button, timer, and auto-hide
+- `src/overlay.py` — universal overlay for external browser and local apps with timer and auto-hide
+- `src/server.py` — launches overlay for local apps; passes `--mode` to overlay
+
 ## [0.3.0] - Screen Time Timer
 
 ### Screen Time Timer
