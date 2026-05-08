@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - Custom Theme + Admin Drag-and-Drop
+
+### Custom Theme
+
+- **New "Custom" theme** in the theme picker — parents can choose their own colours
+  - 5 colour pickers: background gradient (2 colours), text colour, button colour, card colour
+  - Optional custom background image path (can point to any image on the system)
+  - Colours are applied dynamically via CSS variables at runtime
+  - Background image is set on `#themeBg` dynamically
+- **Admin panel** shows colour inputs only when "Custom" theme is selected
+- **Config schema** extended with `customColors` (bg1, bg2, text, btn, card) and `customBackground`
+
+### Admin Drag-and-Drop Reordering
+
+- **Replaced Up/Down arrow buttons** with intuitive HTML5 drag-and-drop
+  - Each tile row has a `⋮⋮` drag handle on the left
+  - Drag a row to any position to reorder tiles
+  - Visual feedback: dragged row becomes semi-transparent, drop target gets a highlight line
+  - No server changes needed — reordering mutates `cfg.tiles` and calls `renderAdmin()`
+
+### Updated Files
+
+- `src/index.html` — dynamic theme application, custom theme admin controls, drag-and-drop handlers
+- `examples/config.example.json` — documented `customColors` and `customBackground` fields
+
 ## [0.3.1] - App Overlay + Keyboard Navigation
 
 ### App Overlay

@@ -1,6 +1,14 @@
 {
   "title": "Hallo Kiddo 🌈",
   "theme": "rosa",
+  "customColors": {
+    "bg1": "#ffd6e8",
+    "bg2": "#ffeef6",
+    "text": "#5f2148",
+    "btn": "#e85a9c",
+    "card": "#ffffff"
+  },
+  "customBackground": "",
   "layoutMode": "gross",
   "papaLabel": "Papa",
   "exitLabel": "Kindermodus beenden",

@@ -67,7 +67,10 @@
   .panel { background:rgba(255,255,255,.96); border-radius:24px; box-shadow:var(--shadow); padding:24px; }
   .panel h2 { margin-top:0; margin-bottom:18px; font-size:1.7rem; }
   .row2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
-  .tileform { display:grid; grid-template-columns:70px 1fr 120px 1.2fr 120px 70px 70px 70px; gap:10px; align-items:center; margin-bottom:12px; }
+  .tileform { display:grid; grid-template-columns:40px 70px 1fr 120px 1.2fr 120px 70px; gap:10px; align-items:center; margin-bottom:12px; cursor:grab; }
+  .tileform.dragging { opacity:.5; outline:2px dashed var(--btn); }
+  .tileform.drag-over { border-top:3px solid var(--btn); }
+  .dragHandle { font-size:1.2rem; text-align:center; cursor:grab; user-select:none; color:var(--text); }
   .browserWrap { display:none; grid-column:4; grid-row:1; }
   .tileform.has-browser .browserWrap { display:grid; grid-template-columns:1fr 120px; gap:8px; }
   .tileform.has-browser select { display:none; }
@@ -220,6 +223,14 @@
         <select id="cfgLayoutMode"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
         <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
       </div>
+      <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG2 <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Text <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Btn <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;"></label>
+        <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
+      </div>
       <div class="row2">
         <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
         <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
@@ -359,7 +370,35 @@ async function loadConfig(){ cfg=await fetch('/api/config').then(r=>r.json()); i
 async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json()); }
 async function loadRecommendations(){ try{ const r=await fetch('/api/recommendations'); recommendations=await r.json(); }catch(e){ recommendations=[]; } }
 async function loadFeatures(){ try{ const r=await fetch('/api/features'); features=await r.json(); }catch(e){} }
-function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); document.getElementById('parentBtn').textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; const shutdownBtn=document.getElementById('shutdownBtn'); shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; shutdownBtn.style.display=features.shutdownAvailable?'':'none'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
+function applyDynamicTheme(){
+  const body=document.body;
+  const bg=document.getElementById('themeBg');
+  if(!cfg || cfg.theme!=='custom'){
+    if(bg) bg.style.backgroundImage='';
+    return;
+  }
+  const c=cfg.customColors||{};
+  if(c.bg1) body.style.setProperty('--bg1',c.bg1);
+  if(c.bg2) body.style.setProperty('--bg2',c.bg2);
+  if(c.text) body.style.setProperty('--text',c.text);
+  if(c.btn) body.style.setProperty('--btn',c.btn);
+  if(c.card) body.style.setProperty('--card',c.card);
+  if(c.btnText) body.style.setProperty('--btn-text',c.btnText);
+  if(c.smallbtnBg) body.style.setProperty('--smallbtn-bg',c.smallbtnBg);
+  if(c.inputBorder) body.style.setProperty('--input-border',c.inputBorder);
+  if(c.recShadow) body.style.setProperty('--rec-shadow',c.recShadow);
+  if(c.shadow) body.style.setProperty('--shadow',c.shadow);
+  if(bg){
+    if(cfg.customBackground){
+      bg.style.backgroundImage='url('+cfg.customBackground+')';
+      bg.style.opacity='1';
+    }else{
+      bg.style.backgroundImage='';
+      bg.style.opacity='0';
+    }
+  }
+}
+function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); applyDynamicTheme(); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); document.getElementById('parentBtn').textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; const shutdownBtn=document.getElementById('shutdownBtn'); shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; shutdownBtn.style.display=features.shutdownAvailable?'':'none'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
 function renderKids(){
   const grid=document.getElementById('grid');
   grid.innerHTML='';
@@ -450,10 +489,17 @@ const ALL_THEMES=[
   {id:'prinzessin',label:'Prinzessin',type:'world',img:'/themes/princess.jpg'},
   {id:'bauernhof',label:'Bauernhof',type:'world',img:'/themes/farm.jpg'},
   {id:'katzen',label:'Katzen',type:'world',img:'/themes/cats.jpg'},
-  {id:'hunde',label:'Hunde',type:'world',img:'/themes/dogs.jpg'}
+  {id:'hunde',label:'Hunde',type:'world',img:'/themes/dogs.jpg'},
+  {id:'custom',label:'Custom',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'}
 ];
 function openThemePicker(){ document.getElementById('themeOverlay').classList.remove('hidden'); renderThemeChooser(); }
-function closeThemePicker(){ document.getElementById('themeOverlay').classList.add('hidden'); updateThemeDisplay(); }
+function closeThemePicker(){
+  document.getElementById('themeOverlay').classList.add('hidden');
+  updateThemeDisplay();
+  const ctp=document.getElementById('customThemePanel');
+  const isCustom=(document.getElementById('cfgTheme').value||'')==='custom';
+  ctp.style.display=isCustom?'grid':'none';
+}
 function updateThemeDisplay(){ const id=document.getElementById('cfgTheme').value; const t=ALL_THEMES.find(x=>x.id===id); document.getElementById('themeDisplay').textContent=t?t.label:id; }
 function renderThemeChooser(){
   const container=document.getElementById('themeChooser');
@@ -495,6 +541,19 @@ function renderAdmin(){
   document.getElementById('cfgTitle').value=cfg.title||'';
   document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}';
   updateThemeDisplay();
+  // Custom theme controls
+  const ctp=document.getElementById('customThemePanel');
+  const isCustom=(cfg.theme||'')==='custom';
+  ctp.style.display=isCustom?'grid':'none';
+  if(isCustom){
+    const c=cfg.customColors||{};
+    document.getElementById('cfgCustomBg1').value=c.bg1||'#ffd6e8';
+    document.getElementById('cfgCustomBg2').value=c.bg2||'#ffeef6';
+    document.getElementById('cfgCustomText').value=c.text||'#5f2148';
+    document.getElementById('cfgCustomBtn').value=c.btn||'#e85a9c';
+    document.getElementById('cfgCustomCard').value=c.card||'#ffffff';
+    document.getElementById('cfgCustomBg').value=cfg.customBackground||'';
+  }
   document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}';
   document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
@@ -633,26 +692,58 @@ function renderAdmin(){
     urlInput.onchange=updateBrowserCmd;
     typeSelect.onchange=updateBrowserCmd;
 
-    const up=document.createElement('button');
-    up.className='smallbtn';
-    up.textContent=uiText.moveUp;
-    up.onclick=()=>moveUp(idx);
-    const down=document.createElement('button');
-    down.className='smallbtn';
-    down.textContent=uiText.moveDown;
-    down.onclick=()=>moveDown(idx);
+    const dragHandle=document.createElement('div');
+    dragHandle.className='dragHandle';
+    dragHandle.textContent='⋮⋮';
     const del=document.createElement('button');
     del.className='smallbtn';
     del.textContent=uiText.delete;
     del.onclick=()=>deleteTile(idx);
-    row.append(emoji,label,visibleWrap,select,browserWrap,up,down,del);
+
+    row.draggable=true;
+    row.dataset.index=String(idx);
+    row.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',String(idx));
+      e.dataTransfer.effectAllowed='move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend',()=>{
+      row.classList.remove('dragging');
+      document.querySelectorAll('.tileform').forEach(r=>r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      const target=e.currentTarget;
+      if(!target.classList.contains('drag-over')){
+        document.querySelectorAll('.tileform').forEach(r=>r.classList.remove('drag-over'));
+        target.classList.add('drag-over');
+      }
+    });
+    row.addEventListener('dragleave',e=>{
+      if(e.currentTarget===e.target) e.currentTarget.classList.remove('drag-over');
+    });
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      const from=parseInt(e.dataTransfer.getData('text/plain'),10);
+      const to=parseInt(e.currentTarget.dataset.index,10);
+      document.querySelectorAll('.tileform').forEach(r=>r.classList.remove('drag-over'));
+      reorderTile(from,to);
+    });
+
+    row.append(dragHandle,emoji,label,visibleWrap,select,browserWrap,del);
     forms.appendChild(row);
   });
   renderAdminPageNav();
   renderRecommendations();
 }
-function moveUp(idx){ if(idx<1) return; const tmp=cfg.tiles[idx-1]; cfg.tiles[idx-1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
-function moveDown(idx){ if(idx>=cfg.tiles.length-1) return; const tmp=cfg.tiles[idx+1]; cfg.tiles[idx+1]=cfg.tiles[idx]; cfg.tiles[idx]=tmp; renderAdmin(); }
+function reorderTile(from,to){
+  if(from===to||from<0||to<0||from>=cfg.tiles.length||to>=cfg.tiles.length) return;
+  const[tile]=cfg.tiles.splice(from,1);
+  cfg.tiles.splice(to,0,tile);
+  adminPage=tilePageIndex(to);
+  renderAdmin();
+}
 function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
 function addTile(){ cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); renderAll(); adminPage=pageCount()-1; renderAdmin(); }
 function renderAdminPageNav(){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1, Math.ceil(cfg.tiles.length / pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
@@ -931,6 +1022,16 @@ async function saveConfig(){
   }
   cfg.timerMinutes=minutes;
   cfg.timerWarningMinutes=cfg.timerWarningMinutes||5;
+  if(cfg.theme==='custom'){
+    cfg.customColors={
+      bg1:document.getElementById('cfgCustomBg1').value,
+      bg2:document.getElementById('cfgCustomBg2').value,
+      text:document.getElementById('cfgCustomText').value,
+      btn:document.getElementById('cfgCustomBtn').value,
+      card:document.getElementById('cfgCustomCard').value,
+    };
+    cfg.customBackground=document.getElementById('cfgCustomBg').value;
+  }
   cfg.currentPage=0;
   await persistConfig();
   renderAll();
