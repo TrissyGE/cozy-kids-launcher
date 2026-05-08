@@ -12,6 +12,10 @@ WATCHDOG_PIDFILE="$HOME/.cache/{{APP_ID}}/watchdog.pid"
 URL="http://127.0.0.1:${PORT}/index.html"
 LAUNCH_MODE="{{DEFAULT_LAUNCH_MODE}}"
 BROWSER_CMD="{{BROWSER_CMD}}"
+BROWSER_OVERRIDE="$HOME/.config/{{APP_ID}}/browser"
+if [[ -f "$BROWSER_OVERRIDE" ]]; then
+  BROWSER_CMD="$(cat "$BROWSER_OVERRIDE")"
+fi
 BROWSER_BIN=$(basename "$BROWSER_CMD")
 
 case "$BROWSER_BIN" in

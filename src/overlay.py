@@ -150,13 +150,26 @@ class AppOverlay:
         )
         self.timer_lbl.pack(side=tk.LEFT, padx=4, pady=8)
 
-        self.root.bind("<Motion>", self.on_motion)
-        self.root.bind("<Enter>", self.on_motion)
+        # Bind motion/enter on root, frame, and button for robustness
+        for widget in (self.root, self.frame, self.close_btn):
+            widget.bind("<Motion>", self.on_motion)
+            widget.bind("<Enter>", self.on_motion)
+
         self.hide_timer = None
         self.reset_hide_timer()
 
         self.poll_browser()
         self.poll_timer()
+        self.stay_on_top()
+
+    def stay_on_top(self):
+        """Periodically force this window to the front so it stays visible over kiosk apps."""
+        try:
+            self.root.lift()
+            self.root.attributes("-topmost", True)
+        except tk.TclError:
+            pass
+        self.root.after(500, self.stay_on_top)
 
     def reset_hide_timer(self):
         if self.hide_timer:
@@ -167,18 +180,11 @@ class AppOverlay:
     def show_full(self):
         self.timer_lbl.pack(side=tk.LEFT, padx=4, pady=8)
         self.root.geometry("220x70+24+24")
-        try:
-            self.root.attributes("-alpha", 1.0)
-        except tk.TclError:
-            pass
 
     def show_minimal(self):
+        # Hide timer label but keep close button visible and fully opaque
         self.timer_lbl.pack_forget()
         self.root.geometry("60x60+24+24")
-        try:
-            self.root.attributes("-alpha", 0.5)
-        except tk.TclError:
-            pass
 
     def on_motion(self, event=None):
         self.reset_hide_timer()

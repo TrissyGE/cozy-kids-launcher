@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - Browser Settings + Overlay Fixes
+
+### Browser Selection in Admin Settings
+
+- **New browser dropdown** in the admin panel lets parents switch the default browser
+- Detects installed browsers automatically (Firefox, Chromium, Chrome, Brave, Opera, Vivaldi, Edge, LibreWolf, etc.)
+- Only installed browsers are shown in the dropdown
+- Selection is saved to a browser override file; `launcher.sh` reads it on next startup
+- Hint text explains: "Change takes effect after re-login"
+
+### Overlay Bug Fixes
+
+- **Fixed overlay not visible over external/local apps**: `overlay.py` now runs a periodic `lift()` + `attributes("-topmost", True)` loop every 500ms. This keeps the overlay above kiosk-mode browsers and fullscreen native apps (TuxPaint, GCompris, etc.).
+- **Fixed overlay not restoring on hover**: Removed `alpha` transparency changes. Instead, the overlay now simply shrinks to 60×60px (showing only the close button) and expands back to full size on mouse motion/enter. This avoids Tkinter event-delivery issues with semi-transparent windows.
+- **Added robust motion bindings**: `<Motion>` and `<Enter>` are now bound to the root window, the frame, and the close button itself.
+
+### Updated Files
+
+- `src/index.html` — browser dropdown, `loadBrowsers()`, `saveConfig()` update
+- `src/server.py` — `/api/browsers` endpoint, browser override file in `save-config`
+- `src/launcher.sh` — reads browser override file before launch
+- `src/overlay.py` — periodic lift loop, removed alpha, robust hover bindings
+
 ## [0.3.3] - Auto Update Check on Startup
 
 ### Automatic Update Check

@@ -259,6 +259,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 shutil.which("systemctl") or shutil.which("loginctl")
             )
             return self.json_response({"shutdownAvailable": shutdown_ok})
+        if self.path == "/api/browsers":
+            candidates = [
+                "firefox", "firefox-esr", "librewolf",
+                "chromium", "chromium-browser", "google-chrome", "google-chrome-stable",
+                "brave", "brave-browser", "opera", "opera-stable",
+                "vivaldi", "vivaldi-stable", "microsoft-edge", "microsoft-edge-stable",
+                "edge", "cachy-browser"
+            ]
+            return self.json_response([
+                {"name": b, "installed": bool(shutil.which(b))} for b in candidates
+            ])
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
         if self.path == "/api/export-config":
@@ -277,7 +288,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         action = self.path.strip("/")
         if action == "api/save-config":
             raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            save_cfg(json.loads(raw.decode("utf-8")))
+            data = json.loads(raw.decode("utf-8"))
+            save_cfg(data)
+            browser = data.get("browser", "")
+            if browser:
+                try:
+                    browser_file = os.path.join(os.path.dirname(CFG), "browser")
+                    with open(browser_file, "w", encoding="utf-8") as f:
+                        f.write(browser)
+                except Exception:
+                    pass
             self.send_response(204)
             self.end_headers()
             return

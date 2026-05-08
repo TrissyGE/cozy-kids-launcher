@@ -232,6 +232,11 @@
         <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;"></label>
         <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
       </div>
+      <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
+        <label style="font-weight:700; color:var(--text);">Browser</label>
+        <select id="cfgBrowser"></select>
+      </div>
+      <div id="browserHint" class="muted" style="margin-bottom:8px;"></div>
       <div class="row2">
         <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
         <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
@@ -288,6 +293,7 @@ let cfg=null, appOptions=[], recommendations=[], adminPage=0, pinUnlocked=false,
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
+let browserOptions=[];
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
@@ -372,6 +378,7 @@ async function loadConfig(){ cfg=await fetch('/api/config').then(r=>r.json()); i
 async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json()); }
 async function loadRecommendations(){ try{ const r=await fetch('/api/recommendations'); recommendations=await r.json(); }catch(e){ recommendations=[]; } }
 async function loadFeatures(){ try{ const r=await fetch('/api/features'); features=await r.json(); }catch(e){} }
+async function loadBrowsers(){ try{ const r=await fetch('/api/browsers'); browserOptions=await r.json(); }catch(e){ browserOptions=[]; } }
 function applyDynamicTheme(){
   const body=document.body;
   const bg=document.getElementById('themeBg');
@@ -571,6 +578,28 @@ function renderAdmin(){
     document.getElementById('cfgCustomBg').value=cfg.customBackground||'';
   }
   document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}';
+  // Browser dropdown
+  const browserSel=document.getElementById('cfgBrowser');
+  browserSel.innerHTML='';
+  const installedBrowsers=browserOptions.filter(b=>b.installed);
+  if(installedBrowsers.length===0){
+    const opt=document.createElement('option');
+    opt.value=''; opt.textContent='Kein Browser gefunden';
+    browserSel.appendChild(opt);
+  }else{
+    for(const b of installedBrowsers){
+      const opt=document.createElement('option');
+      opt.value=b.name; opt.textContent=b.name;
+      browserSel.appendChild(opt);
+    }
+  }
+  const currentBrowser=cfg.browser||'{{BROWSER_CMD}}';
+  if(browserSel.querySelector('option[value="'+currentBrowser+'"]')){
+    browserSel.value=currentBrowser;
+  }else if(installedBrowsers.length>0){
+    browserSel.value=installedBrowsers[0].name;
+  }
+  document.getElementById('browserHint').textContent='Änderung wirkt erst nach erneutem Login.';
   document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
   document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates';
@@ -1048,6 +1077,7 @@ async function saveConfig(){
     };
     cfg.customBackground=document.getElementById('cfgCustomBg').value;
   }
+  cfg.browser=document.getElementById('cfgBrowser').value;
   cfg.currentPage=0;
   await persistConfig();
   renderAll();
@@ -1129,7 +1159,7 @@ document.addEventListener('keydown',function(e){
   }else if(e.key==='Escape') exitKids();
 });
 
-(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); await startupUpdateCheck(); })();
+(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadBrowsers(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); await startupUpdateCheck(); })();
 </script>
 </body>
 </html>
