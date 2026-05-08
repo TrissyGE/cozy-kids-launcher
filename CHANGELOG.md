@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.0] - App Overlay (Timer + Close Button)
+## [0.3.1] - App Overlay + Keyboard Navigation
 
 ### App Overlay
 
@@ -18,6 +18,17 @@ All notable changes to this project will be documented in this file.
   - Timer polling via HTTP API every 10 seconds
   - Auto-hide/minimize: shrinks to a small 60×60 close button after inactivity, expands to full size on motion
 - **`server.py`**: starts the overlay for local apps alongside the app process; kills any previous overlay before starting a new one
+
+### Keyboard Navigation
+
+- **Arrow keys**: navigate between visible tiles (up/down/left/right in the grid)
+- **Enter / Space**: launch the currently focused tile
+- **Escape**: exit back to desktop (same as the Exit button)
+- Focus ring matches the active theme colour for clear visual feedback
+
+### Admin UI Cleanup
+
+- **Removed live preview panel**: the mini preview in the parent settings was removed to keep the admin page cleaner and less cluttered
 
 ### Updated Files
 
