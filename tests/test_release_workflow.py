@@ -17,12 +17,14 @@ class StableMainReleaseContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         publish = 'gh release edit "$GITHUB_REF_NAME" --draft=false'
-        promote = 'git push origin "$GITHUB_SHA:refs/heads/main"'
+        promote = 'git push "git@github.com:$GITHUB_REPOSITORY.git" "$GITHUB_SHA:refs/heads/main"'
         self.assertIn(publish, workflow)
         self.assertIn(promote, workflow)
         self.assertLess(workflow.index(publish), workflow.index(promote))
         self.assertIn("git merge-base --is-ancestor", workflow)
         self.assertIn("group: stable-release-promotion", workflow)
+        self.assertIn("secrets.RELEASE_DEPLOY_KEY", workflow)
+        self.assertIn('git ls-remote "git@github.com:$GITHUB_REPOSITORY.git"', workflow)
 
     def test_stable_main_check_compares_commit_with_latest_release_tag(self):
         workflow = (

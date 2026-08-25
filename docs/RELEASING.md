@@ -22,6 +22,14 @@ The release workflow needs the repository's default GitHub Actions token permiss
 
 Create `develop` from the current stable `main` and do all ongoing work on `develop`, feature branches, or release branches. Protect `main` against ordinary human pushes and configure its repository rules so the release workflow is allowed to perform its fast-forward promotion. `.github/workflows/stable-main.yml` checks on pushes and daily that `main` is exactly the latest published release tag.
 
+Use a dedicated Ed25519 deploy key for that promotion:
+
+1. Add its public key under **Settings → Deploy keys**, enable **Allow write access**, and give it a release-specific title.
+2. Add the private key under **Settings → Secrets and variables → Actions** as the repository secret `RELEASE_DEPLOY_KEY`.
+3. In the stable-main branch ruleset, add **Deploy keys** to the bypass list. Do not add repository administrators as a permanent bypass.
+
+The release workflow checks this credential against the repository before it runs tests or publishes anything. Never use a personal SSH key as the Actions secret.
+
 ## Prepare a release
 
 1. Start from `develop` or create a release branch that descends from the current `main`. Never prepare the release directly on `main`.
