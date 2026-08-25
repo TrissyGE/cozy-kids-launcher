@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - Security and Testability Foundation
+
+### Parent authentication
+
+- Enforced parent authentication in the local server for config changes, imports/exports, timer administration, update, package, shutdown, and exit actions
+- Replaced browser-generated short PIN hashes with salted PBKDF2-SHA256 hashes while retaining and upgrading legacy PINs
+- Added short-lived HTTP-only parent sessions and stopped exposing `pinHash` through `/api/config`
+- Added PIN attempt throttling and cross-site POST protection
+
+### Validation and safety
+
+- Added bounded config validation, duplicate tile detection, safe browser-name validation, request body limits, and atomic config writes
+- Render user-controlled tile labels and emoji as text to prevent imported config from injecting HTML
+- Validate embedded and external browser URLs before launching them
+- Added baseline security headers to local HTTP responses
+
+### Development workflow
+
+- Made the server importable and testable through `create_server()` and a guarded `main()` entry point
+- Added standard-library unit and HTTP integration tests
+- Added GitHub Actions checks for supported Python versions, Python compilation, JSON data, and shell syntax
+- Added development instructions and a prioritized technical audit
+- Added a reproducible WSLg environment and isolated graphical smoke test for display, GPU, audio, VLC, Chrome, and all recommended web targets
+
+### Unified app and multimedia launching
+
+- Route every tile through the same server-side launch resolver while retaining old config formats
+- Respect the configured browser for external web apps and isolate streaming logins in a dedicated browser profile
+- Open local video and music through VLC or MPV playlists instead of only opening one folder
+- Move all curated public media sites to external mode after live iframe checks; update obsolete Netflix and ZDF targets and migrate existing tiles
+- Localize the website mode controls in German and English
+
+### Verified releases and compatible updates
+
+- Added a tag-driven release workflow that validates `VERSION`, runs all tests plus an isolated installer smoke test, and publishes versioned tar/zip assets
+- Added `SHA256SUMS` and build-provenance attestations to release artifacts
+- Made the updater prefer complete stable releases, verify the archive checksum, reject downgrades, and preserve language, browser, launch mode, shutdown support, and user configuration
+- Added an automatic pre-install snapshot and rollback when installation or post-install version validation fails
+- Retained the original `main/VERSION` path for existing v0.3.x installations and pre-release migration, with an explicit `--legacy-main` emergency override
+- Defined `main` as a stable legacy-updater channel: the release workflow publishes first and only then fast-forwards the exact tagged commit, with an automated invariant check for drift
+- Made verified-release installations fail closed instead of silently falling back to mutable `main`
+- Routed UI update checks through the local server and removed the duplicate server/launcher update execution race
+
 ## [0.3.4] - Browser Settings + Overlay Fixes
 
 ### Browser Selection in Admin Settings

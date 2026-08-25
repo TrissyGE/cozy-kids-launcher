@@ -26,7 +26,8 @@ THEME = {
 
 
 def api(path, data=None):
-    url = f"http://127.0.0.1:{{DEFAULT_PORT}}{path}"
+    port = os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}")
+    url = f"http://127.0.0.1:{port}{path}"
     try:
         if data is not None:
             payload = json.dumps(data).encode("utf-8")
@@ -205,8 +206,9 @@ class AppOverlay:
                     pass
             except Exception:
                 pass
-        kill_browser_by_pidfile()
-        if self.mode == "local" and self.app_cmd:
+        if self.mode == "external":
+            kill_browser_by_pidfile()
+        if self.mode == "local" and self.app_cmd and not self.browser_pid:
             kill_local_app(self.app_cmd)
         focus_launcher()
         self.root.destroy()
@@ -254,10 +256,12 @@ def main():
     parser.add_argument("--url", default="")
     parser.add_argument("--label", default="Home")
     parser.add_argument("--browser-pid", type=int, default=None)
+    parser.add_argument("--app-pid", type=int, default=None)
     parser.add_argument("--app-cmd", default="")
     args = parser.parse_args()
 
-    overlay = AppOverlay(args.mode, args.url, args.label, args.browser_pid, args.app_cmd)
+    process_pid = args.app_pid or args.browser_pid
+    overlay = AppOverlay(args.mode, args.url, args.label, process_pid, args.app_cmd)
     overlay.run()
 
 

@@ -289,7 +289,7 @@
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script>
-let cfg=null, appOptions=[], recommendations=[], adminPage=0, pinUnlocked=false, pinCallback=null;
+let cfg=null, appOptions=[], recommendations=[], adminPage=0, pinCallback=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
@@ -332,6 +332,9 @@ const uiText = {
   updateConfirm: {{JSON_UPDATE_CONFIRM}},
   recommendedTitle: {{JSON_RECOMMENDED_TITLE}},
   appBrowserTitle: {{JSON_APP_BROWSER_TITLE}},
+  browserPage: {{JSON_BROWSER_PAGE}},
+  webModeEmbedded: {{JSON_WEB_MODE_EMBEDDED}},
+  webModeExternal: {{JSON_WEB_MODE_EXTERNAL}},
   install: {{JSON_INSTALL}},
   added: {{JSON_ADDED}},
   installed: {{JSON_INSTALLED}},
@@ -418,7 +421,12 @@ function renderKids(){
   if(tiles.length===0){
     const empty=document.createElement('div');
     empty.className='empty-state';
-    empty.innerHTML='<div class="emoji">'+(uiText.emptyStateEmoji||'🤔')+'</div><p>'+(uiText.emptyStateText||'Frag Mama oder Papa, um Apps hinzuzufügen!')+'</p>';
+    const emptyEmoji=document.createElement('div');
+    emptyEmoji.className='emoji';
+    emptyEmoji.textContent=uiText.emptyStateEmoji||'🤔';
+    const emptyText=document.createElement('p');
+    emptyText.textContent=uiText.emptyStateText||'Frag Mama oder Papa, um Apps hinzuzufügen!';
+    empty.append(emptyEmoji,emptyText);
     grid.appendChild(empty);
     return;
   }
@@ -429,14 +437,26 @@ function renderKids(){
       btn.className='tile'+(tile.id===lastLaunched?' last-launched':'');
       btn.style.position='relative';
       btn.onclick=()=>launchTile(tile.id);
-      let html='<div class="emoji">'+(tile.emoji||'✨')+'</div><div>'+(tile.label||'')+'</div>';
-      if(tile.id===lastLaunched) html+='<div class="last-star">⭐</div>';
-      btn.innerHTML=html;
+      const tileEmoji=document.createElement('div');
+      tileEmoji.className='emoji';
+      tileEmoji.textContent=tile.emoji||'✨';
+      const tileLabel=document.createElement('div');
+      tileLabel.textContent=tile.label||'';
+      btn.append(tileEmoji,tileLabel);
+      if(tile.id===lastLaunched){
+        const star=document.createElement('div');
+        star.className='last-star';
+        star.textContent='⭐';
+        btn.appendChild(star);
+      }
       grid.appendChild(btn);
     } else {
       const ph=document.createElement('div');
       ph.className='tile placeholder';
-      ph.innerHTML='<div class="emoji">✨</div><div></div>';
+      const phEmoji=document.createElement('div');
+      phEmoji.className='emoji';
+      phEmoji.textContent='✨';
+      ph.append(phEmoji,document.createElement('div'));
       grid.appendChild(ph);
     }
   }
@@ -459,29 +479,21 @@ function launchTile(id){
   if(!tile) return;
   try{ localStorage.setItem('cozyLastLaunched',id); }catch(e){}
   showStartFeedback(tile);
-  if(tile.cmd && tile.cmd.length===1 && tile.cmd[0].startsWith('special:browser:')){
-    window.location.href='/browser.html?url='+encodeURIComponent(tile.cmd[0].substring('special:browser:'.length));
-    return;
-  }
-  if(tile.cmd && tile.cmd.length===1 && tile.cmd[0].startsWith('special:external-browser:')){
-    fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).catch(()=>{});
-    return;
-  }
   fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).then(r=>{ if(r.redirected) window.location=r.url; }).catch(()=>{});
 }
 
 // PIN handling
 function handleParentClick(){ if(document.getElementById('admin').classList.contains('hidden')){ openAdmin(); } else { closeAdmin(); } }
 function requestPin(callback){ pinCallback=callback; showPin(); }
-function openAdmin(){ pinUnlocked=false; if(cfg.pinHash){ requestPin(enterAdmin); return; } enterAdmin(); }
+function openAdmin(){ if(cfg.pinConfigured){ requestPin(enterAdmin); return; } enterAdmin(); }
 function showPin(){ document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
 function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; }
 async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
 function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); }
-function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; pinUnlocked=false; focusedTileIndex=0; renderAll(); }
-function shutdownNow(){ if(cfg.pinHash){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
-function exitKids(){ if(cfg.pinHash){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
+function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); }
+function shutdownNow(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
+function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
 function tilePageIndex(idx){ return Math.floor(idx / pageSize()); }
 
 const ALL_THEMES=[
@@ -528,24 +540,20 @@ function renderThemeChooser(){
 }
 
 // PIN setup
-async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const hash=await sha256(p1); cfg.pinHash=hash; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
-async function removePin(){ const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; cfg.pinHash=''; await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}); msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
-function updatePinButton(){ const btn=document.getElementById('removePinBtn'); btn.textContent=cfg.pinHash?uiText.pinChange:uiText.pinRemove; btn.style.opacity=cfg.pinHash?1:.5; }
-async function sha256(str){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,16); }
+async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1||p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const r=await fetch('/api/pin/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p1})}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht gespeichert werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=true; msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
+async function removePin(){ if(!cfg.pinConfigured) return; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; const r=await fetch('/api/pin/remove',{method:'POST'}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht entfernt werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=false; msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
+function updatePinButton(){ const btn=document.getElementById('removePinBtn'); btn.textContent=uiText.pinRemove; btn.disabled=!cfg.pinConfigured; btn.style.opacity=cfg.pinConfigured?1:.5; }
 
 // Update check
 let installedVersion='0.0.0';
-async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'); const msg=document.getElementById('updateMsg'); const updateRow=document.getElementById('updateRow'); msg.textContent=''; msg.style.color=''; updateRow.style.display='none'; btn.disabled=true; try{ const localR=await fetch('/api/version'); const localData=await localR.json(); installedVersion=localData.version||'0.0.0'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; const remoteR=await fetch('https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION?nocache='+Date.now(),{cache:'no-store'}); if(!remoteR.ok) throw new Error('fetch failed'); const remoteVersion=(await remoteR.text()).trim(); if(compareVersion(remoteVersion,installedVersion)>0){ msg.textContent=(uiText.updateAvailable||'Update available')+': '+remoteVersion; msg.style.color='green'; updateRow.style.display='grid'; } else { msg.textContent=uiText.updateUpToDate||'Up to date'; msg.style.color='green'; } } catch(e){ msg.textContent=uiText.updateError||'Update check failed'; msg.style.color='#c00'; } finally { btn.disabled=false; } }
-function compareVersion(a,b){ const A=a.split('.'); const B=b.split('.'); for(let i=0;i<Math.max(A.length,B.length);i++){ const av=parseInt(A[i]||0,10); const bv=parseInt(B[i]||0,10); if(av>bv) return 1; if(av<bv) return -1; } return 0; }
+async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'); const msg=document.getElementById('updateMsg'); const updateRow=document.getElementById('updateRow'); msg.textContent=''; msg.style.color=''; updateRow.style.display='none'; btn.disabled=true; try{ const statusR=await fetch('/api/update/status',{cache:'no-store'}); if(!statusR.ok) throw new Error('fetch failed'); const status=await statusR.json(); installedVersion=status.installedVersion||'0.0.0'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; if(status.updateAvailable){ msg.textContent=(uiText.updateAvailable||'Update available')+': '+status.latestVersion; msg.style.color='green'; updateRow.style.display='grid'; } else { msg.textContent=uiText.updateUpToDate||'Up to date'; msg.style.color='green'; } } catch(e){ msg.textContent=uiText.updateError||'Update check failed'; msg.style.color='#c00'; } finally { btn.disabled=false; } }
 async function startupUpdateCheck(){
   try{
-    const localR=await fetch('/api/version');
-    const localData=await localR.json();
-    installedVersion=localData.version||'0.0.0';
-    const remoteR=await fetch('https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION?nocache='+Date.now(),{cache:'no-store'});
-    if(!remoteR.ok) return;
-    remoteVersion=(await remoteR.text()).trim();
-    if(compareVersion(remoteVersion,installedVersion)>0){
+    const statusR=await fetch('/api/update/status',{cache:'no-store'});
+    if(!statusR.ok) return;
+    const status=await statusR.json();
+    installedVersion=status.installedVersion||'0.0.0';
+    if(status.updateAvailable){
       updateAvailable=true;
       renderAll();
     }
@@ -594,7 +602,7 @@ function renderAdmin(){
     }
   }
   const currentBrowser=cfg.browser||'{{BROWSER_CMD}}';
-  if(browserSel.querySelector('option[value="'+currentBrowser+'"]')){
+  if(Array.from(browserSel.options).some(option=>option.value===currentBrowser)){
     browserSel.value=currentBrowser;
   }else if(installedBrowsers.length>0){
     browserSel.value=installedBrowsers[0].name;
@@ -659,7 +667,7 @@ function renderAdmin(){
     select.appendChild(special);
     const browserOpt=document.createElement('option');
     browserOpt.value='__BROWSER__';
-    browserOpt.textContent='🌐 Browser-Seite';
+    browserOpt.textContent='🌐 '+uiText.browserPage;
     select.appendChild(browserOpt);
     const empty=document.createElement('option');
     empty.value='';
@@ -679,10 +687,10 @@ function renderAdmin(){
     const typeSelect=document.createElement('select');
     const optEmb=document.createElement('option');
     optEmb.value='embedded';
-    optEmb.textContent='Eingebettet';
+    optEmb.textContent=uiText.webModeEmbedded;
     const optExt=document.createElement('option');
     optExt.value='external';
-    optExt.textContent='Extern (DRM)';
+    optExt.textContent=uiText.webModeExternal;
     typeSelect.appendChild(optEmb);
     typeSelect.appendChild(optExt);
     browserWrap.appendChild(urlInput);
@@ -883,6 +891,7 @@ async function copyInstallCommand(){
 }
 async function autoScanRecommendations(){
   if(cfg.autoScanDone) return;
+  if(cfg.pinConfigured) return;
   const existingIds=new Set(cfg.tiles.map(t=>t.id));
   const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
   let added=false;
@@ -898,7 +907,8 @@ async function autoScanRecommendations(){
   if(added){ renderAll(); }
 }
 async function persistConfig(){
-  await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+  const r=await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+  if(!r.ok) throw new Error('Config could not be saved');
 }
 
 // Timer logic
@@ -959,8 +969,7 @@ async function toggleTimer(){
   const btn=document.getElementById('timerToggleBtn');
   if(lastTimerStatus.active && !lastTimerStatus.expired){
     // Stop timer
-    const pin=cfg.pinHash?prompt(uiText.pinTitle||'PIN eingeben'):'';
-    const r=await fetch('/api/timer/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin||''})});
+    const r=await fetch('/api/timer/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
     const data=await r.json();
     if(data.valid){
       timerWarningShown=false;
@@ -978,8 +987,7 @@ async function toggleTimer(){
     cfg.timerMinutes=minutes;
     await persistConfig();
     timerWarningShown=false;
-    const pin=cfg.pinHash?prompt(uiText.pinTitle||'PIN eingeben'):'';
-    const r=await fetch('/api/timer/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin||'',minutes:minutes})});
+    const r=await fetch('/api/timer/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minutes:minutes})});
     const data=await r.json();
     if(data.valid){
       btn.textContent=uiText.timerStop;

@@ -161,6 +161,9 @@ text() {
     de:layout_small) echo "Klein (9)" ;;
     de:visible) echo "sichtbar" ;;
     de:special_media) echo "Spezial: Filme und Musik" ;;
+    de:browser_page) echo "Webseite" ;;
+    de:web_mode_embedded) echo "Eingebettet (kompatible Seiten)" ;;
+    de:web_mode_external) echo "Extern (empfohlen / DRM)" ;;
     de:no_app) echo "Kein Programm" ;;
     de:custom_cmd) echo "Benutzerdefiniert" ;;
     de:move_up) echo "Hoch" ;;
@@ -219,6 +222,9 @@ text() {
     en:layout_small) echo "Small (9)" ;;
     en:visible) echo "visible" ;;
     en:special_media) echo "Special: Movies and music" ;;
+    en:browser_page) echo "Website" ;;
+    en:web_mode_embedded) echo "Embedded (compatible sites)" ;;
+    en:web_mode_external) echo "External (recommended / DRM)" ;;
     en:no_app) echo "No app" ;;
     en:custom_cmd) echo "Custom" ;;
     en:move_up) echo "Up" ;;
@@ -722,6 +728,7 @@ CONFIG_FILE="$CFG_DIR/config.json"
 SERVER_FILE="$APP_ROOT/server.py"
 INDEX_FILE="$APP_ROOT/index.html"
 MEDIA_FILE="$APP_ROOT/no-media.html"
+UPDATE_SCRIPT="$APP_ROOT/update.sh"
 AUTOSTART_FILE="$AUTOSTART_DIR/$AUTOSTART_FILE_ID"
 DESKTOP_FILE="$DESKTOP_DIR/$DESKTOP_SHORTCUT_ID"
 APP_DESKTOP_FILE="$TARGET_HOME/.local/share/applications/$DESKTOP_FILE_ID"
@@ -771,6 +778,7 @@ render_template() {
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
   export LABEL_COPY_COMMAND LABEL_CLOSE
   export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
+  export JSON_BROWSER_PAGE JSON_WEB_MODE_EMBEDDED JSON_WEB_MODE_EXTERNAL
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
@@ -867,6 +875,9 @@ RECOMMENDED_INSTALLED="$(text recommended_installed)"
 RECOMMENDED_NOT_INSTALLED="$(text recommended_not_installed)"
 RECOMMENDED_PROMPT="$(text recommended_prompt)"
 APP_BROWSER_TITLE="$(text app_browser_title)"
+BROWSER_PAGE="$(text browser_page)"
+WEB_MODE_EMBEDDED="$(text web_mode_embedded)"
+WEB_MODE_EXTERNAL="$(text web_mode_external)"
 LABEL_INSTALL="$(text install)"
 LABEL_ADDED="$(text added)"
 LABEL_INSTALLED="$(text installed)"
@@ -949,6 +960,9 @@ JSON_RECOMMENDED_INSTALLED="$(json_text "$RECOMMENDED_INSTALLED")"
 JSON_RECOMMENDED_NOT_INSTALLED="$(json_text "$RECOMMENDED_NOT_INSTALLED")"
 JSON_RECOMMENDED_PROMPT="$(json_text "$RECOMMENDED_PROMPT")"
 JSON_APP_BROWSER_TITLE="$(json_text "$APP_BROWSER_TITLE")"
+JSON_BROWSER_PAGE="$(json_text "$BROWSER_PAGE")"
+JSON_WEB_MODE_EMBEDDED="$(json_text "$WEB_MODE_EMBEDDED")"
+JSON_WEB_MODE_EXTERNAL="$(json_text "$WEB_MODE_EXTERNAL")"
 JSON_INSTALL="$(json_text "$LABEL_INSTALL")"
 JSON_ADDED="$(json_text "$LABEL_ADDED")"
 JSON_INSTALLED="$(json_text "$LABEL_INSTALLED")"
@@ -991,6 +1005,7 @@ backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
 backup_if_exists "$INDEX_FILE"
 backup_if_exists "$MEDIA_FILE"
+backup_if_exists "$UPDATE_SCRIPT"
 backup_if_exists "$CONFIG_FILE"
 backup_if_exists "$AUTOSTART_FILE"
 backup_if_exists "$DESKTOP_FILE"
@@ -1004,6 +1019,9 @@ render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
 render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644
 render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755
 render_template "$SRC_DIR/timer_watchdog.py" "$APP_ROOT/timer_watchdog.py" 0755
+
+# Install the standalone updater used by the parent UI and the command line.
+install -m 0755 "$REPO_DIR/scripts/update.sh" "$UPDATE_SCRIPT"
 
 # Copy theme wallpapers (binary files, no template rendering)
 if [[ -d "$SRC_DIR/../themes" ]]; then
@@ -1031,7 +1049,7 @@ config = {
         {"id": "paint", "label": tile_paint, "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
         {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": ["gcompris"], "visible": True},
         {"id": "music", "label": tile_music, "emoji": "🎵", "cmd": ["special:filme-musik"], "visible": True},
-        {"id": "browser", "label": tile_browser, "emoji": "🌐", "cmd": ["xdg-open", browser_url], "visible": False}
+        {"id": "browser", "label": tile_browser, "emoji": "🌐", "cmd": ["special:external-browser:" + browser_url], "visible": False}
     ]
 }
 existing_ids = {"paint", "games", "music", "browser"}

@@ -86,16 +86,24 @@ Backups of overwritten files are also kept at:
 Run the update script that was installed with the launcher:
 
 ```bash
-bash ~/.local/share/cozy-kids-launcher/scripts/update.sh
+bash ~/.local/share/cozy-kids-launcher/update.sh
 ```
 
 Or check for updates without installing:
 
 ```bash
-bash ~/.local/share/cozy-kids-launcher/scripts/update.sh --check-only
+bash ~/.local/share/cozy-kids-launcher/update.sh --check-only
 ```
 
-You can also re-run the original one-liner installer — it safely updates while keeping your config and tiles.
+The updater prefers a versioned GitHub Release and verifies its SHA-256 checksum before installing it. If this installation predates the first compatible release, it automatically retains the original `main/VERSION` update path. After a verified release has been installed, it will not silently fall back to mutable `main` if GitHub's release endpoint is unavailable.
+
+For an explicit emergency fallback, run:
+
+```bash
+bash ~/.local/share/cozy-kids-launcher/update.sh --legacy-main
+```
+
+This does not allow downgrades. You can also re-run the original one-line installer; existing v0.3.x installations remain compatible with that path.
 
 ## Troubleshooting
 
@@ -136,7 +144,7 @@ Then re-open the launcher.
 | File | Purpose |
 |------|---------|
 | `~/.local/bin/cozy-kids-launcher` | The command that starts kids mode |
-| `~/.local/share/cozy-kids-launcher/` | App files: server, UI, version |
+| `~/.local/share/cozy-kids-launcher/` | App files: server, UI, version, updater |
 | `~/.config/cozy-kids-launcher/config.json` | Your tiles, colors, labels, PIN |
 | `~/.config/autostart/...` | Auto-starts on login |
 | `~/Desktop/Kinder-Modus.desktop` | Desktop shortcut to reopen |

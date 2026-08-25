@@ -1,0 +1,37 @@
+name: Stable main invariant
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require main to equal the latest published release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"
+          git fetch --force origin "refs/tags/$tag:refs/tags/$tag"
+          release_sha="$(git rev-parse "$tag^{commit}")"
+          main_sha="$(git rev-parse HEAD)"
+          if [[ "$main_sha" != "$release_sha" ]]; then
+            echo "main ($main_sha) is not the latest release $tag ($release_sha)" >&2
+            echo "Development commits belong on develop or feature branches." >&2
+            exit 1
+          fi
+          echo "main equals $tag at $release_sha"
+        env:
+          GH_TOKEN: ${{ github.token }}

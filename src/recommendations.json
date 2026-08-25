@@ -356,7 +356,7 @@
     "name_en": "Netflix Kids",
     "desc_de": "Filme und Serien fuer Kinder bei Netflix.",
     "desc_en": "Movies and shows for kids on Netflix.",
-    "cmd": ["special:external-browser:https://www.netflix.com/browse/kids"],
+    "cmd": ["special:external-browser:https://www.netflix.com/browse/genre/27346"],
     "package": "",
     "category": "browser"
   },
@@ -408,7 +408,7 @@
     "name_en": "ZDFtivi",
     "desc_de": "Videos und Spiele vom ZDF fuer Kinder.",
     "desc_en": "Videos and games from ZDF for kids.",
-    "cmd": ["special:browser:https://www.tivi.de"],
+    "cmd": ["special:external-browser:https://www.zdf.de/kinder"],
     "package": "",
     "category": "browser"
   },
@@ -421,7 +421,7 @@
     "name_en": "KiKA",
     "desc_de": "Der Kinderkanal von ARD und ZDF mit Videos und Spielen.",
     "desc_en": "The kids channel from ARD and ZDF with videos and games.",
-    "cmd": ["special:browser:https://www.kika.de"],
+    "cmd": ["special:external-browser:https://www.kika.de"],
     "package": "",
     "category": "browser"
   }

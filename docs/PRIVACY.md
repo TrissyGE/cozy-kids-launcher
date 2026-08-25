@@ -18,7 +18,9 @@ No cloud backend is required.
 - which applications are visible to the child
 - whether a web browser is enabled
 - whether shutdown should be available
-- whether parent settings should be protected with a PIN in a future version
+- whether parent settings should be protected with a PIN
+
+When configured, the PIN is stored as a salted password hash. The public launcher API exposes only that a PIN exists. A successful PIN entry creates a temporary parent session for sensitive actions.
 
 ## Publishing guidance
 
@@ -34,3 +36,4 @@ Before sharing screenshots or configs publicly:
 This project is a launcher UI, not a hardened sandbox.
 
 It improves usability for children, but it is not a full kiosk security solution by itself.
+The parent PIN protects launcher controls; it does not replace Linux user separation, disk encryption, operating-system updates, or a restricted child account.

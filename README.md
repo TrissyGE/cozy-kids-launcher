@@ -85,6 +85,7 @@ Most kids launchers are either:
 | Desktop shortcut to reopen kids mode | ✅ |
 | **Screen time timer** with visual warning and block screen | ✅ |
 | **Automatic update check** on startup with badge notification | ✅ |
+| Versioned, checksum-verified release updates with v0.3.x fallback | ✅ |
 | One-line installer | ✅ |
 | German and English language support | ✅ |
 
@@ -133,6 +134,10 @@ All three have Firefox and Python pre-installed, so the launcher works out of th
 - [Architecture](docs/ARCHITECTURE.md) — how it works under the hood
 - [Privacy & Safety](docs/PRIVACY.md) — local-first design and what parents should know
 - [Roadmap](docs/ROADMAP.md) — what's done and what's coming next
+- [Development](docs/DEVELOPMENT.md) — local checks and manual smoke testing
+- [Release guide](docs/RELEASING.md) — immutable artifacts, checksums, compatibility, and recovery
+- [WSLg testing](docs/WSL_TESTING.md) — graphical Windows test environment for browser, audio, and video
+- [Technical audit](docs/TECHNICAL_AUDIT.md) — prioritized modernization work
 - [Changelog](CHANGELOG.md) — version history
 
 ---
@@ -151,12 +156,19 @@ cozy-kids-launcher/
     PRIVACY.md           # Privacy & safety notes
     ROADMAP.md           # Future plans
     SCREENSHOTS.md       # Screenshot capture guide
+    RELEASING.md         # Versioned release and updater contract
+    WSL_TESTING.md       # Reproducible graphical tests on Windows/WSLg
   examples/
     config.example.json  # Example configuration
   scripts/
     install.sh           # One-line installer
     update.sh            # Standalone updater
     deploy.sh            # Release helper
+    wsl/                 # WSLg setup, GUI smoke test, and website probe
+  .github/workflows/
+    ci.yml               # Pull request and main-branch checks
+    release.yml          # Tag-driven release build and publication
+    stable-main.yml      # Ensures legacy main matches the latest release
   src/
     server.py            # Python HTTP server
     index.html           # Kids UI template

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run unit and API tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Compile Python templates
+        run: python -m py_compile src/server.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+
+      - name: Validate JSON data
+        run: |
+          python -m json.tool examples/config.example.json >/dev/null
+          python -m json.tool src/recommendations.json >/dev/null
+
+      - name: Check shell syntax
+        run: bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh

@@ -1,20 +1,30 @@
 #!/usr/bin/env python3
 import glob
 import hashlib
+import hmac
 import http.server
 import json
 import os
 import re
+import secrets
+import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
-from urllib.parse import unquote
+from http.cookies import SimpleCookie
+from urllib.parse import quote, unquote, urlparse
+from urllib.request import Request, urlopen
 
 HOME = os.path.expanduser("~")
 APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
 VERSION_FILE = os.path.join(APP_ROOT, "version")
+UPDATE_SCRIPT = os.path.join(APP_ROOT, "update.sh")
+UPDATE_CHANNEL_FILE = os.path.join(APP_ROOT, "update-channel")
+LATEST_RELEASE_API = "https://api.github.com/repos/TrissyGE/cozy-kids-launcher/releases/latest"
+LEGACY_VERSION_URL = "https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION"
 CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
@@ -26,7 +36,242 @@ VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
 ALT_MUSIC = os.path.join(HOME, "Musik")
 EXTS = ("*.mp4", "*.mkv", "*.webm", "*.avi", "*.mov", "*.mp3", "*.ogg", "*.wav", "*.flac", "*.m4a")
+BROWSER_CANDIDATES = (
+    "firefox", "firefox-esr", "librewolf",
+    "chromium", "chromium-browser", "google-chrome", "google-chrome-stable",
+    "brave", "brave-browser", "opera", "opera-stable",
+    "vivaldi", "vivaldi-stable", "microsoft-edge", "microsoft-edge-stable",
+    "edge", "cachy-browser",
+)
+CHROMIUM_BROWSER_NAMES = {
+    "chromium", "chromium-browser", "google-chrome", "google-chrome-stable",
+    "brave", "brave-browser", "opera", "opera-stable",
+    "vivaldi", "vivaldi-stable", "microsoft-edge", "microsoft-edge-stable",
+    "edge", "cachy-browser",
+}
+LEGACY_WEB_ACTION_MIGRATIONS = {
+    "special:external-browser:https://www.netflix.com/browse/kids":
+        "special:external-browser:https://www.netflix.com/browse/genre/27346",
+    "special:browser:https://www.tivi.de":
+        "special:external-browser:https://www.zdf.de/kinder",
+    "special:browser:https://www.kika.de":
+        "special:external-browser:https://www.kika.de",
+}
 TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
+MAX_JSON_BODY_BYTES = 512 * 1024
+MAX_TILES = 200
+ADMIN_SESSION_TTL_SECONDS = 30 * 60
+PIN_FAILURE_WINDOW_SECONDS = 60
+PIN_FAILURE_LIMIT = 5
+PIN_KDF_ITERATIONS = 200_000
+ADMIN_COOKIE_NAME = "cozy_admin"
+
+_admin_sessions = {}
+_admin_sessions_lock = threading.Lock()
+_pin_failures = []
+_pin_failures_lock = threading.Lock()
+
+
+def _bounded_string(value, field, maximum, allow_empty=True):
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be a string")
+    if not allow_empty and not value:
+        raise ValueError(f"{field} must not be empty")
+    if len(value) > maximum:
+        raise ValueError(f"{field} is too long")
+    return value
+
+
+def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
+    """Validate untrusted config data while preserving future-compatible keys."""
+    if not isinstance(data, dict):
+        raise ValueError("Config must be a JSON object")
+
+    result = dict(data)
+    result.pop("pinConfigured", None)
+    tiles = result.get("tiles")
+    if not isinstance(tiles, list):
+        raise ValueError("tiles must be a list")
+    if len(tiles) > MAX_TILES:
+        raise ValueError(f"A maximum of {MAX_TILES} tiles is supported")
+
+    validated_tiles = []
+    seen_ids = set()
+    for index, tile in enumerate(tiles):
+        if not isinstance(tile, dict):
+            raise ValueError(f"tiles[{index}] must be an object")
+        tile_id = _bounded_string(tile.get("id"), f"tiles[{index}].id", 80, False)
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", tile_id):
+            raise ValueError(f"tiles[{index}].id contains invalid characters")
+        if tile_id in seen_ids:
+            raise ValueError(f"Duplicate tile id: {tile_id}")
+        seen_ids.add(tile_id)
+
+        label = _bounded_string(tile.get("label", ""), f"tiles[{index}].label", 200)
+        emoji = _bounded_string(tile.get("emoji", ""), f"tiles[{index}].emoji", 32)
+        command = tile.get("cmd", [])
+        if not isinstance(command, list) or len(command) > 32:
+            raise ValueError(f"tiles[{index}].cmd must be a short list")
+        clean_command = [
+            _bounded_string(part, f"tiles[{index}].cmd", 2048)
+            for part in command
+        ]
+        visible = tile.get("visible", True)
+        if not isinstance(visible, bool):
+            raise ValueError(f"tiles[{index}].visible must be a boolean")
+        validated_tiles.append({
+            **tile,
+            "id": tile_id,
+            "label": label,
+            "emoji": emoji,
+            "cmd": clean_command,
+            "visible": visible,
+        })
+    result["tiles"] = validated_tiles
+
+    for field, maximum in (
+        ("title", 200),
+        ("theme", 64),
+        ("parentLabel", 100),
+        ("exitLabel", 100),
+        ("shutdownLabel", 100),
+        ("customBackground", 2048),
+        ("browser", 128),
+    ):
+        if field in result:
+            result[field] = _bounded_string(result[field], field, maximum)
+
+    if "language" in result and result["language"] not in ("de", "en"):
+        raise ValueError("language must be 'de' or 'en'")
+    if "layoutMode" in result and result["layoutMode"] not in ("gross", "klein"):
+        raise ValueError("layoutMode must be 'gross' or 'klein'")
+    if "browser" in result and result["browser"] and not re.fullmatch(r"[A-Za-z0-9._+-]+", result["browser"]):
+        raise ValueError("browser must be an executable name")
+
+    for field, minimum, maximum in (
+        ("currentPage", 0, 10_000),
+        ("timerMinutes", 0, 180),
+        ("timerWarningMinutes", 0, 60),
+    ):
+        if field in result:
+            value = result[field]
+            if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+                raise ValueError(f"{field} must be between {minimum} and {maximum}")
+
+    for field in ("autoScanDone",):
+        if field in result and not isinstance(result[field], bool):
+            raise ValueError(f"{field} must be a boolean")
+
+    if "customColors" in result:
+        colors = result["customColors"]
+        if not isinstance(colors, dict):
+            raise ValueError("customColors must be an object")
+        result["customColors"] = {
+            _bounded_string(key, "customColors key", 40, False):
+            _bounded_string(value, f"customColors.{key}", 128)
+            for key, value in colors.items()
+        }
+
+    if allow_pin_hash:
+        pin_hash = result.get("pinHash", "")
+        if pin_hash and not is_supported_pin_hash(pin_hash):
+            raise ValueError("pinHash has an unsupported format")
+        result["pinHash"] = pin_hash
+    else:
+        result["pinHash"] = existing_pin_hash
+    return result
+
+
+def public_config(data):
+    result = dict(data)
+    result["pinConfigured"] = bool(result.pop("pinHash", ""))
+    return result
+
+
+def is_supported_pin_hash(pin_hash):
+    if not isinstance(pin_hash, str):
+        return False
+    if re.fullmatch(r"[0-9a-f]{16}", pin_hash):
+        return True
+    parts = pin_hash.split("$")
+    return (
+        len(parts) == 4
+        and parts[0] == "pbkdf2_sha256"
+        and parts[1].isdigit()
+        and 50_000 <= int(parts[1]) <= 1_000_000
+        and bool(re.fullmatch(r"[0-9a-f]{32}", parts[2]))
+        and bool(re.fullmatch(r"[0-9a-f]{64}", parts[3]))
+    )
+
+
+def hash_pin(pin, salt=None):
+    if not isinstance(pin, str) or not re.fullmatch(r"\d{4,6}", pin):
+        raise ValueError("PIN must contain 4 to 6 digits")
+    salt = salt or secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        pin.encode("utf-8"),
+        bytes.fromhex(salt),
+        PIN_KDF_ITERATIONS,
+    ).hex()
+    return f"pbkdf2_sha256${PIN_KDF_ITERATIONS}${salt}${digest}"
+
+
+def create_admin_session(now=None):
+    now = time.time() if now is None else now
+    token = secrets.token_urlsafe(32)
+    with _admin_sessions_lock:
+        expired = [key for key, expiry in _admin_sessions.items() if expiry <= now]
+        for key in expired:
+            _admin_sessions.pop(key, None)
+        _admin_sessions[token] = now + ADMIN_SESSION_TTL_SECONDS
+    return token
+
+
+def clear_admin_sessions():
+    with _admin_sessions_lock:
+        _admin_sessions.clear()
+
+
+def valid_admin_session(cookie_header, now=None):
+    if not cookie_header:
+        return False
+    try:
+        cookie = SimpleCookie()
+        cookie.load(cookie_header)
+        morsel = cookie.get(ADMIN_COOKIE_NAME)
+        token = morsel.value if morsel else ""
+    except Exception:
+        return False
+    if not token:
+        return False
+    now = time.time() if now is None else now
+    with _admin_sessions_lock:
+        expiry = _admin_sessions.get(token, 0)
+        if expiry <= now:
+            _admin_sessions.pop(token, None)
+            return False
+        _admin_sessions[token] = now + ADMIN_SESSION_TTL_SECONDS
+    return True
+
+
+def pin_attempt_blocked(now=None):
+    now = time.time() if now is None else now
+    cutoff = now - PIN_FAILURE_WINDOW_SECONDS
+    with _pin_failures_lock:
+        _pin_failures[:] = [stamp for stamp in _pin_failures if stamp > cutoff]
+        return len(_pin_failures) >= PIN_FAILURE_LIMIT
+
+
+def record_pin_failure(now=None):
+    now = time.time() if now is None else now
+    with _pin_failures_lock:
+        _pin_failures.append(now)
+
+
+def clear_pin_failures():
+    with _pin_failures_lock:
+        _pin_failures.clear()
 
 
 def has_media(path):
@@ -51,6 +296,10 @@ def load_cfg():
             rec_by_first_cmd[alt] = rec["cmd"]
     for tile in data.get("tiles", []):
         cmd = tile.get("cmd", [])
+        if len(cmd) == 1 and cmd[0] in LEGACY_WEB_ACTION_MIGRATIONS:
+            tile["cmd"] = [LEGACY_WEB_ACTION_MIGRATIONS[cmd[0]]]
+            cmd = tile["cmd"]
+            migrated = True
         if cmd and len(cmd) >= 1 and cmd[0] in rec_by_first_cmd and cmd != rec_by_first_cmd[cmd[0]]:
             tile["cmd"] = rec_by_first_cmd[cmd[0]]
             migrated = True
@@ -63,8 +312,22 @@ def load_cfg():
 
 
 def save_cfg(data):
-    with open(CFG, "w", encoding="utf-8") as fh:
-        json.dump(data, fh, ensure_ascii=False, indent=2)
+    config_dir = os.path.dirname(CFG)
+    os.makedirs(config_dir, exist_ok=True)
+    fd, temp_path = tempfile.mkstemp(prefix="config-", suffix=".json", dir=config_dir)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(temp_path, CFG)
+    except Exception:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
+        raise
 
 
 def parse_desktop_file(path):
@@ -126,13 +389,35 @@ def scan_apps():
 
 
 def media_location():
-    if has_media(VIDEOS):
-        return VIDEOS
-    if has_media(MUSIC):
-        return MUSIC
-    if has_media(ALT_MUSIC):
-        return ALT_MUSIC
+    locations = media_locations()
+    return locations[0] if locations else None
+
+
+def media_locations():
+    """Return every configured media directory that contains supported files."""
+    result = []
+    seen = set()
+    for location in (VIDEOS, MUSIC, ALT_MUSIC):
+        normalized = os.path.realpath(location)
+        if normalized not in seen and has_media(location):
+            result.append(location)
+            seen.add(normalized)
+    return result
+
+
+def find_media_player():
+    for candidate in ("vlc", "mpv", "celluloid", "totem"):
+        if shutil.which(candidate):
+            return candidate
     return None
+
+
+def media_player_command(player, locations):
+    if player == "vlc":
+        return [player, "--fullscreen", "--play-and-exit", "--no-video-title-show", *locations]
+    if player == "mpv":
+        return [player, "--fullscreen", *locations]
+    return [player, *locations]
 
 
 def get_version():
@@ -141,6 +426,88 @@ def get_version():
             return fh.read().strip()
     except Exception:
         return "0.0.0"
+
+
+def parse_semver(value):
+    """Return a comparable three-part version tuple, or None."""
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", value):
+        return None
+    return tuple(int(part) for part in value.split("."))
+
+
+def version_is_newer(candidate, installed):
+    candidate_parts = parse_semver(candidate)
+    installed_parts = parse_semver(installed)
+    return bool(candidate_parts and installed_parts and candidate_parts > installed_parts)
+
+
+def _fetch_remote_json(url, timeout=5):
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "cozy-kids-launcher",
+        },
+    )
+    with urlopen(request, timeout=timeout) as response:
+        return json.load(response)
+
+
+def _fetch_remote_text(url, timeout=5):
+    request = Request(url, headers={"User-Agent": "cozy-kids-launcher"})
+    with urlopen(request, timeout=timeout) as response:
+        return response.read().decode("utf-8").strip()
+
+
+def get_update_status(timeout=5):
+    """Prefer a complete stable release, retaining legacy updater compatibility."""
+    installed = get_version()
+    release_error = None
+    try:
+        release = _fetch_remote_json(LATEST_RELEASE_API, timeout=timeout)
+    except Exception as exc:
+        release_error = exc
+    else:
+        try:
+            tag = release.get("tag_name", "")
+            latest = tag[1:] if tag.startswith("v") else tag
+            archive_name = f"cozy-kids-launcher-{latest}.tar.gz"
+            asset_names = {
+                asset.get("name") for asset in release.get("assets", [])
+                if isinstance(asset, dict)
+            }
+            if release.get("draft") or release.get("prerelease"):
+                raise ValueError("Latest release is not stable")
+            if not parse_semver(latest):
+                raise ValueError("Release tag is not a supported semantic version")
+            if archive_name not in asset_names or "SHA256SUMS" not in asset_names:
+                raise ValueError("Release is missing verified update assets")
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise RuntimeError("Update check failed: invalid release metadata") from exc
+        return {
+            "installedVersion": installed,
+            "latestVersion": latest,
+            "source": "release",
+            "tag": tag,
+            "updateAvailable": version_is_newer(latest, installed),
+        }
+
+    try:
+        if os.path.isfile(UPDATE_CHANNEL_FILE):
+            with open(UPDATE_CHANNEL_FILE, "r", encoding="utf-8") as handle:
+                if handle.read().strip() == "release":
+                    raise RuntimeError("Verified release channel is temporarily unavailable") from release_error
+        latest = _fetch_remote_text(LEGACY_VERSION_URL, timeout=timeout)
+        if not parse_semver(latest):
+            raise ValueError("Legacy VERSION is invalid")
+        return {
+            "installedVersion": installed,
+            "latestVersion": latest,
+            "source": "legacy-main",
+            "updateAvailable": version_is_newer(latest, installed),
+        }
+    except Exception as legacy_error:
+        raise RuntimeError("Update check failed") from legacy_error
 
 
 def load_recommendations():
@@ -179,8 +546,124 @@ def load_recommendations():
 def verify_pin(pin_hash, pin):
     if not pin_hash or not pin:
         return False
-    computed = hashlib.sha256(pin.encode("utf-8")).hexdigest()[:16]
-    return computed == pin_hash
+    if re.fullmatch(r"[0-9a-f]{16}", pin_hash):
+        computed = hashlib.sha256(pin.encode("utf-8")).hexdigest()[:16]
+        return hmac.compare_digest(computed, pin_hash)
+    if not is_supported_pin_hash(pin_hash):
+        return False
+    _, iterations, salt, expected = pin_hash.split("$")
+    computed = hashlib.pbkdf2_hmac(
+        "sha256",
+        pin.encode("utf-8"),
+        bytes.fromhex(salt),
+        int(iterations),
+    ).hex()
+    return hmac.compare_digest(computed, expected)
+
+
+def is_safe_web_url(url):
+    if not isinstance(url, str) or len(url) > 2048:
+        return False
+    parsed = urlparse(url)
+    return parsed.scheme in ("http", "https") and bool(parsed.hostname)
+
+
+def resolve_tile_action(tile):
+    """Normalize legacy tile commands into one launch action model."""
+    command = tile.get("cmd", []) if isinstance(tile, dict) else []
+    if not isinstance(command, list):
+        return {"type": "none"}
+    clean = [part for part in command if isinstance(part, str) and part]
+    if clean == ["special:filme-musik"]:
+        return {"type": "media"}
+    if len(clean) == 1:
+        for prefix, mode in (
+            ("special:browser:", "embedded"),
+            ("special:external-browser:", "external"),
+        ):
+            if clean[0].startswith(prefix):
+                url = clean[0][len(prefix):]
+                if not is_safe_web_url(url):
+                    raise ValueError("Invalid browser URL")
+                return {"type": "web", "mode": mode, "url": url}
+    # Older installer versions created browser tiles as `xdg-open URL`.
+    if len(clean) == 2 and clean[0] == "xdg-open" and is_safe_web_url(clean[1]):
+        return {"type": "web", "mode": "external", "url": clean[1]}
+    if len(clean) == 1:
+        try:
+            clean = shlex.split(clean[0])
+        except ValueError:
+            clean = []
+    return {"type": "app", "argv": clean} if clean else {"type": "none"}
+
+
+def browser_family(browser):
+    return "chromium" if os.path.basename(browser) in CHROMIUM_BROWSER_NAMES else "firefox"
+
+
+def find_browser(config=None):
+    config = config or {}
+    preferred = config.get("browser", "")
+    candidates = ([preferred] if preferred else []) + list(BROWSER_CANDIDATES)
+    seen = set()
+    for candidate in candidates:
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        if shutil.which(candidate):
+            return candidate
+    return None
+
+
+def external_browser_command(browser, url):
+    cache_root = os.path.join(HOME, ".cache", "{{APP_ID}}")
+    if browser_family(browser) == "chromium":
+        profile = os.path.join(cache_root, "external-chromium-profile")
+        return [
+            browser,
+            f"--user-data-dir={profile}",
+            "--no-first-run",
+            "--disable-session-crashed-bubble",
+            "--kiosk",
+            f"--app={url}",
+        ]
+    profile = os.path.join(cache_root, "external-firefox-profile")
+    os.makedirs(profile, exist_ok=True)
+    return [browser, "--no-remote", "--profile", profile, "--kiosk", url]
+
+
+def stop_existing_overlay():
+    overlay_script = os.path.join(APP_ROOT, "overlay.py")
+    try:
+        result = subprocess.run(["pgrep", "-f", overlay_script], capture_output=True, text=True)
+        for pid_str in result.stdout.split():
+            try:
+                pid = int(pid_str)
+                if pid != os.getpid():
+                    os.kill(pid, 15)
+            except (ValueError, ProcessLookupError, PermissionError):
+                pass
+    except Exception:
+        pass
+
+
+def start_overlay(mode, app_cmd="", url="", process_pid=None):
+    overlay_script = os.path.join(APP_ROOT, "overlay.py")
+    if not os.path.isfile(overlay_script):
+        return
+    command = [sys.executable, overlay_script, "--mode", mode, "--label", "Home"]
+    if app_cmd:
+        command.extend(["--app-cmd", app_cmd])
+    if url:
+        command.extend(["--url", url])
+    if process_pid:
+        command.extend(["--app-pid", str(process_pid)])
+    subprocess.Popen(
+        command,
+        env=dict(os.environ),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def load_timer():
@@ -229,51 +712,122 @@ def timer_status(cfg):
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    server_version = "CozyKidsLauncher"
+    sys_version = ""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=APP_ROOT, **kwargs)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
         super().end_headers()
 
-    def json_response(self, payload, status=200):
+    def json_response(self, payload, status=200, headers=None):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        for name, value in (headers or {}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(data)
 
+    def read_json_body(self, required=True):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self.json_response({"status": "error", "message": "Invalid Content-Length"}, 400)
+            return None
+        if length < 0 or length > MAX_JSON_BODY_BYTES:
+            self.json_response({"status": "error", "message": "Request body is too large"}, 413)
+            return None
+        if length == 0:
+            if required:
+                self.json_response({"status": "error", "message": "JSON body required"}, 400)
+                return None
+            return {}
+        try:
+            data = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self.json_response({"status": "error", "message": "Invalid JSON"}, 400)
+            return None
+        if not isinstance(data, dict):
+            self.json_response({"status": "error", "message": "JSON body must be an object"}, 400)
+            return None
+        return data
+
+    def request_has_local_origin(self):
+        if self.headers.get("Sec-Fetch-Site", "").lower() == "cross-site":
+            return False
+        origin = self.headers.get("Origin")
+        if not origin:
+            return True
+        try:
+            parsed = urlparse(origin)
+            expected_port = self.server.server_address[1]
+            actual_port = parsed.port or (443 if parsed.scheme == "https" else 80)
+            return (
+                parsed.scheme == "http"
+                and parsed.hostname in ("127.0.0.1", "localhost", "::1")
+                and actual_port == expected_port
+            )
+        except ValueError:
+            return False
+
+    def has_admin_access(self, cfg=None):
+        cfg = load_cfg() if cfg is None else cfg
+        if not cfg.get("pinHash", ""):
+            return True
+        return valid_admin_session(self.headers.get("Cookie", ""))
+
+    def require_admin(self, cfg=None):
+        if self.has_admin_access(cfg):
+            return True
+        self.json_response({"status": "error", "message": "Parent authentication required"}, 403)
+        return False
+
+    @staticmethod
+    def admin_cookie(token):
+        return (
+            f"{ADMIN_COOKIE_NAME}={token}; Path=/; HttpOnly; "
+            f"SameSite=Strict; Max-Age={ADMIN_SESSION_TTL_SECONDS}"
+        )
+
     def do_GET(self):
         if self.path == "/api/config":
-            return self.json_response(load_cfg())
+            return self.json_response(public_config(load_cfg()))
         if self.path == "/api/apps":
             return self.json_response(scan_apps())
         if self.path == "/api/recommendations":
             return self.json_response(load_recommendations())
         if self.path == "/api/version":
             return self.json_response({"version": get_version()})
+        if self.path == "/api/update/status":
+            try:
+                return self.json_response(get_update_status())
+            except RuntimeError as exc:
+                return self.json_response({"status": "error", "message": str(exc)}, 503)
         if self.path == "/api/features":
             shutdown_ok = bool(
                 shutil.which("systemctl") or shutil.which("loginctl")
             )
             return self.json_response({"shutdownAvailable": shutdown_ok})
         if self.path == "/api/browsers":
-            candidates = [
-                "firefox", "firefox-esr", "librewolf",
-                "chromium", "chromium-browser", "google-chrome", "google-chrome-stable",
-                "brave", "brave-browser", "opera", "opera-stable",
-                "vivaldi", "vivaldi-stable", "microsoft-edge", "microsoft-edge-stable",
-                "edge", "cachy-browser"
-            ]
             return self.json_response([
-                {"name": b, "installed": bool(shutil.which(b))} for b in candidates
+                {"name": browser, "installed": bool(shutil.which(browser))}
+                for browser in BROWSER_CANDIDATES
             ])
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
         if self.path == "/api/export-config":
             data = load_cfg()
+            if not self.require_admin(data):
+                return
             payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -285,11 +839,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        if not self.request_has_local_origin():
+            self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
+            return
         action = self.path.strip("/")
         if action == "api/save-config":
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            data = json.loads(raw.decode("utf-8"))
-            save_cfg(data)
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            data = self.read_json_body()
+            if data is None:
+                return
+            try:
+                data = validate_config(data, existing_pin_hash=cfg.get("pinHash", ""))
+                save_cfg(data)
+            except (OSError, ValueError) as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
             browser = data.get("browser", "")
             if browser:
                 try:
@@ -298,30 +864,91 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         f.write(browser)
                 except Exception:
                     pass
-            self.send_response(204)
-            self.end_headers()
+            self.json_response({"status": "ok"})
             return
         if action == "api/verify-pin":
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            data = json.loads(raw.decode("utf-8"))
+            if pin_attempt_blocked():
+                self.json_response({"valid": False, "message": "Too many attempts"}, 429)
+                return
+            data = self.read_json_body()
+            if data is None:
+                return
             cfg = load_cfg()
             pin_hash = cfg.get("pinHash", "")
             if not pin_hash:
-                self.json_response({"valid": True})
+                self.json_response({"valid": True, "pinConfigured": False})
                 return
             pin = data.get("pin", "")
-            self.json_response({"valid": verify_pin(pin_hash, pin)})
+            if not isinstance(pin, str) or not verify_pin(pin_hash, pin):
+                record_pin_failure()
+                self.json_response({"valid": False}, 403)
+                return
+            clear_pin_failures()
+            if re.fullmatch(r"[0-9a-f]{16}", pin_hash):
+                cfg["pinHash"] = hash_pin(pin)
+                save_cfg(cfg)
+            token = create_admin_session()
+            self.json_response(
+                {"valid": True, "pinConfigured": True},
+                headers={"Set-Cookie": self.admin_cookie(token)},
+            )
+            return
+        if action == "api/pin/set":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            data = self.read_json_body()
+            if data is None:
+                return
+            try:
+                cfg["pinHash"] = hash_pin(data.get("pin", ""))
+                save_cfg(cfg)
+            except (OSError, ValueError) as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            clear_admin_sessions()
+            token = create_admin_session()
+            self.json_response(
+                {"status": "ok", "pinConfigured": True},
+                headers={"Set-Cookie": self.admin_cookie(token)},
+            )
+            return
+        if action == "api/pin/remove":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            cfg["pinHash"] = ""
+            save_cfg(cfg)
+            clear_admin_sessions()
+            self.json_response(
+                {"status": "ok", "pinConfigured": False},
+                headers={"Set-Cookie": f"{ADMIN_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"},
+            )
             return
         if action == "api/import-config":
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            data = json.loads(raw.decode("utf-8"))
-            if not isinstance(data, dict) or not isinstance(data.get("tiles"), list):
-                self.json_response({"status": "error", "message": "Invalid config format"}, 400)
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
                 return
-            save_cfg(data)
+            data = self.read_json_body()
+            if data is None:
+                return
+            try:
+                imported = validate_config(
+                    data,
+                    existing_pin_hash=cfg.get("pinHash", ""),
+                    allow_pin_hash="pinHash" in data,
+                )
+                save_cfg(imported)
+            except (OSError, ValueError) as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            if imported.get("pinHash", "") != cfg.get("pinHash", ""):
+                clear_admin_sessions()
             self.json_response({"status": "ok"})
             return
         if action == "shutdown":
+            if not self.require_admin():
+                return
             shutdown_ok = False
             for cmd in (["systemctl", "poweroff"], ["loginctl", "poweroff"]):
                 if shutil.which(cmd[0]):
@@ -334,6 +961,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "ok" if shutdown_ok else "error"})
             return
         if action == "exit-kids":
+            if not self.require_admin():
+                return
             # Signal launcher.sh to exit its while-true loop
             try:
                 with open(EXIT_FLAGFILE, "w", encoding="utf-8") as f:
@@ -354,14 +983,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if action == "api/timer/start":
             cfg = load_cfg()
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            body = json.loads(raw.decode("utf-8")) if raw else {}
-            pin_hash = cfg.get("pinHash", "")
-            if pin_hash and not verify_pin(pin_hash, body.get("pin", "")):
-                self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+            if not self.require_admin(cfg):
+                return
+            body = self.read_json_body(required=False)
+            if body is None:
                 return
             minutes = body.get("minutes", cfg.get("timerMinutes", 0))
-            if minutes <= 0:
+            if isinstance(minutes, bool) or not isinstance(minutes, int) or not 1 <= minutes <= 180:
                 self.json_response({"valid": False, "message": "Invalid duration"}, 400)
                 return
             end_time = int(time.time()) + minutes * 60
@@ -370,25 +998,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if action == "api/timer/stop":
             cfg = load_cfg()
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            body = json.loads(raw.decode("utf-8")) if raw else {}
-            pin_hash = cfg.get("pinHash", "")
-            if pin_hash and not verify_pin(pin_hash, body.get("pin", "")):
-                self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+            if not self.require_admin(cfg):
+                return
+            body = self.read_json_body(required=False)
+            if body is None:
                 return
             clear_timer()
             self.json_response({"valid": True})
             return
         if action == "api/timer/extend":
             cfg = load_cfg()
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            body = json.loads(raw.decode("utf-8")) if raw else {}
-            pin_hash = cfg.get("pinHash", "")
-            if pin_hash and not verify_pin(pin_hash, body.get("pin", "")):
-                self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+            body = self.read_json_body(required=False)
+            if body is None:
                 return
+            pin_hash = cfg.get("pinHash", "")
+            if pin_hash:
+                if pin_attempt_blocked():
+                    self.json_response({"valid": False, "message": "Too many attempts"}, 429)
+                    return
+                pin = body.get("pin", "")
+                if not isinstance(pin, str) or not verify_pin(pin_hash, pin):
+                    record_pin_failure()
+                    self.json_response({"valid": False, "message": "Invalid PIN"}, 403)
+                    return
+                clear_pin_failures()
             minutes = body.get("minutes", 15)
-            if minutes <= 0:
+            if isinstance(minutes, bool) or not isinstance(minutes, int) or not 1 <= minutes <= 180:
                 self.json_response({"valid": False, "message": "Invalid duration"}, 400)
                 return
             end_time = int(time.time()) + minutes * 60
@@ -396,49 +1031,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"valid": True, "endTime": end_time, "minutes": minutes})
             return
         if action == "api/update":
+            if not self.require_admin():
+                return
             trigger_path = os.path.join(APP_ROOT, "update-trigger.sh")
-            trigger_script = """#!/usr/bin/env bash
-set -euo pipefail
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
-REPO="TrissyGE/cozy-kids-launcher"
-APP_ID="cozy-kids-launcher"
-if command -v curl >/dev/null 2>&1; then
-  curl -fsSL -o "$TMP_DIR/cozy.zip" "https://github.com/$REPO/archive/refs/heads/main.zip"
-elif command -v wget >/dev/null 2>&1; then
-  wget -qO "$TMP_DIR/cozy.zip" "https://github.com/$REPO/archive/refs/heads/main.zip"
-else
-  exit 1
-fi
-unzip -q "$TMP_DIR/cozy.zip" -d "$TMP_DIR/"
-REPO_DIR="$TMP_DIR/cozy-kids-launcher-main"
-if [[ -f "$HOME/.config/$APP_ID/config.json" ]]; then
-  cp "$HOME/.config/$APP_ID/config.json" "$TMP_DIR/config-backup.json"
-fi
-cd "$REPO_DIR"
-bash scripts/install.sh --user "$(id -un)" --force
-if [[ -f "$TMP_DIR/config-backup.json" ]]; then
-  cp "$TMP_DIR/config-backup.json" "$HOME/.config/$APP_ID/config.json"
-fi
-"""
             try:
+                if not os.path.isfile(UPDATE_SCRIPT):
+                    self.json_response(
+                        {"status": "error", "message": "Installed updater is missing"},
+                        503,
+                    )
+                    return
+                trigger_script = (
+                    "#!/usr/bin/env bash\n"
+                    "set -euo pipefail\n"
+                    f"exec bash {shlex.quote(UPDATE_SCRIPT)}\n"
+                )
                 with open(trigger_path, "w", encoding="utf-8") as fh:
                     fh.write(trigger_script)
                 os.chmod(trigger_path, 0o755)
-                # Execute after a short delay so the browser can exit first
-                subprocess.Popen(
-                    ["bash", "-c", "sleep 3 && bash '" + trigger_path + "'"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    start_new_session=True,
-                )
                 self.json_response({"status": "triggered"})
             except Exception as e:
                 self.json_response({"status": "error", "message": str(e)}, 500)
             return
         if action == "api/install-package":
-            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-            data = json.loads(raw.decode("utf-8"))
+            if not self.require_admin():
+                return
+            data = self.read_json_body()
+            if data is None:
+                return
             package = data.get("package", "")
             recs = load_recommendations()
             valid_packages = {r["package"] for r in recs if r.get("package")}
@@ -460,58 +1080,66 @@ fi
                 self.send_response(404)
                 self.end_headers()
                 return
-            cmd = tile.get("cmd", [])
-            # Kill any existing overlay so only one runs at a time
             try:
-                result = subprocess.run(["pgrep", "-f", "overlay.py"], capture_output=True, text=True)
-                for pid_str in result.stdout.strip().split("\n"):
-                    if pid_str:
-                        try:
-                            os.kill(int(pid_str), 15)
-                        except Exception:
-                            pass
-            except Exception:
-                pass
-            if cmd == ["special:filme-musik"]:
-                location = media_location()
-                if location:
-                    subprocess.Popen(["xdg-open", location], env=dict(os.environ))
-                    self.send_response(204)
-                else:
+                launch = resolve_tile_action(tile)
+            except ValueError as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            stop_existing_overlay()
+
+            if launch["type"] == "media":
+                locations = media_locations()
+                if not locations:
                     self.send_response(302)
                     self.send_header("Location", "/no-media.html")
-                self.end_headers()
-                return
-            if cmd and len(cmd) == 1 and cmd[0].startswith("special:browser:"):
-                url = cmd[0][len("special:browser:"):]
-                self.send_response(302)
-                self.send_header("Location", f"/browser.html?url={url}")
-                self.end_headers()
-                return
-            if cmd and len(cmd) == 1 and cmd[0].startswith("special:external-browser:"):
-                url = cmd[0][len("special:external-browser:"):]
-                external_browser = None
-                for candidate in ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable", "brave", "brave-browser", "microsoft-edge", "microsoft-edge-stable", "vivaldi", "vivaldi-stable", "opera", "opera-stable"]:
-                    if shutil.which(candidate):
-                        external_browser = candidate
-                        break
-                if external_browser:
-                    proc = subprocess.Popen([external_browser, f"--app={url}", "--kiosk", "--no-first-run", "--disable-session-crashed-bubble"], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    try:
-                        with open(EXTERNAL_BROWSER_PIDFILE, "w", encoding="utf-8") as f:
-                            f.write(str(proc.pid))
-                    except Exception:
-                        pass
-                    overlay_script = os.path.join(APP_ROOT, "overlay.py")
-                    if os.path.isfile(overlay_script):
-                        subprocess.Popen([sys.executable, overlay_script, "--mode", "external", "--url", url, "--label", "Home", "--browser-pid", str(proc.pid)], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    self.end_headers()
+                    return
+                player = find_media_player()
+                if player:
+                    proc = subprocess.Popen(
+                        media_player_command(player, locations),
+                        env=dict(os.environ),
+                    )
+                    start_overlay("local", app_cmd=os.path.basename(player), process_pid=proc.pid)
                 else:
-                    subprocess.Popen(["xdg-open", url], env=dict(os.environ))
+                    subprocess.Popen(["xdg-open", locations[0]], env=dict(os.environ))
                 self.send_response(204)
                 self.end_headers()
                 return
-            clean = [part for part in cmd if part]
-            if not clean:
+
+            if launch["type"] == "web":
+                url = launch["url"]
+                if launch["mode"] == "embedded":
+                    self.send_response(302)
+                    self.send_header("Location", f"/browser.html?url={quote(url, safe='')}")
+                    self.end_headers()
+                    return
+                browser = find_browser(cfg)
+                if browser:
+                    proc = subprocess.Popen(
+                        external_browser_command(browser, url),
+                        env=dict(os.environ),
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    try:
+                        os.makedirs(os.path.dirname(EXTERNAL_BROWSER_PIDFILE), exist_ok=True)
+                        with open(EXTERNAL_BROWSER_PIDFILE, "w", encoding="utf-8") as f:
+                            f.write(str(proc.pid))
+                    except OSError:
+                        pass
+                    start_overlay("external", url=url, process_pid=proc.pid)
+                elif shutil.which("xdg-open"):
+                    subprocess.Popen(["xdg-open", url], env=dict(os.environ))
+                else:
+                    self.json_response({"status": "error", "message": "No supported browser found"}, 503)
+                    return
+                self.send_response(204)
+                self.end_headers()
+                return
+
+            clean = launch.get("argv", [])
+            if launch["type"] == "none" or not clean:
                 self.send_response(204)
                 self.end_headers()
                 return
@@ -521,25 +1149,18 @@ fi
                     clean = clean[2:]
             # Determine primary app command for overlay tracking
             app_cmd = ""
-            if len(clean) == 1:
-                parts = clean[0].split()
-                app_cmd = parts[0] if parts else ""
-            elif len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
+            if len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
                 app_cmd = clean[2] if len(clean) > 2 else ""
             else:
                 app_cmd = clean[0] if clean else ""
 
             # Avoid shell=True to prevent command injection from user-editable configs
-            if len(clean) == 1:
-                parts = clean[0].split()
-                subprocess.Popen(parts, env=dict(os.environ))
-            else:
-                subprocess.Popen(clean, env=dict(os.environ))
+            proc = subprocess.Popen(clean, env=dict(os.environ))
 
             # Start overlay for local apps so the child can close them and see the timer
-            overlay_script = os.path.join(APP_ROOT, "overlay.py")
-            if os.path.isfile(overlay_script) and app_cmd:
-                subprocess.Popen([sys.executable, overlay_script, "--mode", "local", "--app-cmd", app_cmd, "--label", "Home"], env=dict(os.environ), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if app_cmd:
+                tracked_pid = None if clean[0] in ("kstart5", "kstart") else proc.pid
+                start_overlay("local", app_cmd=app_cmd, process_pid=tracked_pid)
 
             self.send_response(204)
             self.end_headers()
@@ -548,8 +1169,17 @@ fi
         self.end_headers()
 
 
-with http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler) as httpd:
-    os.makedirs(os.path.dirname(PIDFILE), exist_ok=True)
-    with open(PIDFILE, "w", encoding="utf-8") as fh:
-        fh.write(str(os.getpid()))
-    httpd.serve_forever()
+def create_server(host="127.0.0.1", port=PORT):
+    return http.server.ThreadingHTTPServer((host, port), Handler)
+
+
+def main():
+    with create_server() as httpd:
+        os.makedirs(os.path.dirname(PIDFILE), exist_ok=True)
+        with open(PIDFILE, "w", encoding="utf-8") as fh:
+            fh.write(str(os.getpid()))
+        httpd.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

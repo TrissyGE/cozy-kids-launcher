@@ -6,3 +6,4 @@ assets/screenshots/*.webp
 .DS_Store
 __pycache__/
 *.pyc
+.test-artifacts/
