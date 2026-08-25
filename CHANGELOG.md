@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - Security and Testability Foundation
+## [0.4.0] - 2026-08-25
 
 ### Parent authentication
 
