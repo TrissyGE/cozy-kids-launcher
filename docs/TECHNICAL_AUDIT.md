@@ -22,7 +22,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 
 ## Next: maintainability
 
-1. Enable immutable releases in the GitHub repository and perform the first real release/upgrade drill.
+1. Complete a disposable real-device upgrade and rollback drill from v0.4.0 to the next published patch release.
 2. Split the large frontend template into focused CSS and JavaScript modules while keeping a dependency-free production build.
 3. Split server responsibilities into config, authentication, application discovery, process launching, update discovery, and timer modules.
 4. Add structured runtime logging and a small diagnostics export that excludes personal configuration and PIN data.

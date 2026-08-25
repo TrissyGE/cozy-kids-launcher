@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-25
+
 ### Project presentation and contributor workflow
 
 - Rebuilt the GitHub landing page around current features, working screenshots, concise navigation, and release/CI status

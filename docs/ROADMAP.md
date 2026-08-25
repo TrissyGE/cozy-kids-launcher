@@ -1,51 +1,84 @@
 # Roadmap
 
-## Completed
+Cozy Kids Launcher is growing into a lightweight, local-first family console for Linux: playful and simple for children, understandable and dependable for parents.
 
-- [x] Package current working setup into a single installer
-- [x] Remove machine-specific assumptions
-- [x] Add optional PIN for parent settings
-- [x] Admin page navigation (paginated tile editing)
-- [x] One-line installer (`curl | bash`)
-- [x] Standalone update mechanism with version check
-- [x] Hardened Python server (threading, input validation, no `shell=True`)
-- [x] Curated app recommendations with auto-detection
-- [x] German and English language support
-- [x] Simplified install documentation for non-technical parents
-- [x] Support Chromium as well as Firefox
-- [x] **Custom theme** — freely adjustable colors & background image
-- [x] **Drag-and-drop** tile reordering in admin panel
-- [x] **Screen time timer** with visual warning and block screen
-- [x] **In-app overlay** (close button + timer) for every app type
-- [x] **Keyboard navigation** (arrow keys, Enter, Escape)
-- [x] **Automatic update check** on startup with badge notification
-- [x] Export/import of launcher configs
-- [x] Server-side parent authentication and modern PIN hashing
-- [x] Config validation, atomic writes, and safe text rendering
-- [x] Automated unit/API tests and GitHub Actions CI
-- [x] Reproducible WSLg browser/audio/video smoke-test environment
-- [x] Unified media, website, and local-app launch path
-- [x] Tag-driven release workflow with versioned archives, checksums, provenance, and installer smoke test
-- [x] Release-first updater with verified assets, downgrade protection, and v0.3.x compatibility fallback
-- [x] Stable-main release promotion so legacy clients can never receive code newer than the latest release
+The roadmap is intentionally release-oriented. Stability work comes before the product features that depend on it, and every release must preserve legacy configurations and the stable-`main` updater contract.
 
-## Near term
+## v0.4.1 — Project polish
 
-- [ ] Enable immutable releases in GitHub and publish the first versioned release
-- [ ] Complete a real-device upgrade/rollback drill before the first public release
-- [ ] Modularize the frontend and local server without adding runtime dependencies
-- [ ] Capture polished screenshots for GitHub (reflecting v0.3.x features)
-- [ ] Complete release smoke matrix on GNOME, KDE Plasma, and XFCE virtual machines
-- [ ] **Favorites / "Last launched" highlight** improvements
-- [ ] **Better admin layout** — search/filter tiles, batch visibility toggle
+- [x] Rebuild the GitHub landing page around current screenshots and concise navigation
+- [x] Add deterministic screenshots generated from an isolated demo profile
+- [x] Document the `main`, `develop`, topic, release, and hotfix branch lifecycle
+- [x] Add contribution guidance and a pull-request template
+- [x] Make the one-line installer work without a separate `unzip` command
+- [x] Localize theme and browser-setting labels consistently
+- [x] Repair the website-tile editor layout
 
-## Future ideas
+## v0.5.0 — Solid Core
 
-- [ ] Multiple child profiles with separate tile sets
-- [ ] Scheduled availability of specific apps (time-based rules)
-- [ ] Whitelist browser mode (URL restrictions)
-- [ ] Optional audio feedback and accessibility modes
-- [ ] In-app timer / screen-time countdown display for kids
-- [ ] Simple keyboard-only mode for accessibility
+### Maintainability
 
-See the [technical audit](TECHNICAL_AUDIT.md) for the ordered modernization plan.
+- [ ] Split the frontend into focused style and JavaScript modules without adding a production build dependency
+- [ ] Split server responsibilities into configuration, authentication, discovery, launching, media, timer, and update modules
+- [ ] Add a versioned configuration schema with tested, automatic migrations
+- [ ] Add structured runtime logging with safe rotation
+- [ ] Add a privacy-safe diagnostics export that excludes PINs and personal configuration values
+
+### Runtime stability
+
+- [ ] Enforce a single launcher instance and make process ownership explicit
+- [ ] Detect server and launcher failures and recover without leaving a blank kiosk window
+- [ ] Track launched child processes reliably and close only the process tree owned by its tile
+- [ ] Make backup discovery and restoration available from Parent settings
+- [ ] Define and test clean startup, logout, shutdown, update, and crash-recovery states
+
+### Test confidence
+
+- [ ] Add browser end-to-end coverage for home, PIN, settings, timer, themes, and update states
+- [ ] Complete release smoke tests on GNOME, KDE Plasma, and XFCE
+- [ ] Document and test X11 and Wayland behavior for focus, overlays, and kiosk browsers
+- [ ] Exercise touch, keyboard-only, reduced-motion, high-contrast, and low-resolution flows
+
+### Design foundation
+
+- [ ] Introduce shared design tokens and reusable controls
+- [ ] Redesign Parent settings as Overview, Children, Apps & Media, Screen Time, Appearance, and System sections
+- [ ] Add a live preview, search, filtering, bulk actions, consistent dialogs, and clear empty/error/loading states
+- [ ] Create a coherent local icon system while keeping custom emoji tiles available
+
+## v0.6.0 — Family Edition
+
+- [ ] Add multiple child profiles with separate avatars, themes, tiles, favorites, and limits
+- [ ] Add a guided first-run setup for language, child, apps, time rules, and appearance
+- [ ] Add weekly screen-time schedules and per-app availability rules
+- [ ] Add a local, optional parent dashboard for recent activity and usage duration
+- [ ] Add a browser allowlist with understandable navigation boundaries
+- [ ] Keep all profile and activity data local, exportable, and removable
+
+## v0.7.0 — Delight
+
+- [ ] Add a cover-based local media library with favorites, recents, and resume support
+- [ ] Add animated world themes and optional time-of-day variants
+- [ ] Add subtle navigation, launch, success, and return transitions
+- [ ] Add optional local sounds and Linux text-to-speech feedback
+- [ ] Add accessibility presets for larger text, contrast, reduced motion, and keyboard-only operation
+- [ ] Add optional, non-manipulative celebration moments without engagement scoring
+
+## v0.8.0 — Platform
+
+- [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
+- [ ] Evaluate additional packaging only where host-app launching and desktop integration remain reliable
+- [ ] Add a supported user-service lifecycle with useful status and recovery commands
+- [ ] Add stable and opt-in preview update channels without weakening immutable releases
+- [ ] Expand the automated and manual compatibility matrix across supported distributions
+
+## Release standard
+
+A roadmap checkbox is not complete until:
+
+- automated tests or an explicit manual test cover it;
+- German and English behavior remain aligned;
+- old configurations migrate safely;
+- diagnostics do not expose private family data;
+- relevant documentation and screenshots are updated;
+- the release passes the full gate in [RELEASING.md](RELEASING.md).
