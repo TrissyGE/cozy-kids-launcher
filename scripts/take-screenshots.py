@@ -106,6 +106,7 @@ def install_profile(profile, browser):
 
 def write_config(profile, theme):
     config = {
+        "configVersion": 1,
         "language": "en",
         "title": "Ready for adventure! 🌈",
         "theme": theme,

@@ -1,3 +1,8 @@
+import getpass
+import json
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -46,6 +51,50 @@ class StableMainReleaseContractTests(unittest.TestCase):
         )
         self.assertIn("command -v unzip", installer)
         self.assertIn('python3 -m zipfile -e "$TMP_DIR/repo.zip" "$TMP_DIR/"', installer)
+
+    def test_new_installations_start_with_a_versioned_config(self):
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        example = json.loads(
+            (REPOSITORY_ROOT / "examples" / "config.example.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertIn('"configVersion": 1', installer)
+        self.assertEqual(example["configVersion"], 1)
+
+    @unittest.skipUnless(os.name == "posix", "Installer smoke test requires Linux")
+    def test_isolated_installer_writes_the_current_config_schema(self):
+        with tempfile.TemporaryDirectory() as home:
+            subprocess.run(
+                [
+                    "bash",
+                    str(REPOSITORY_ROOT / "scripts" / "install.sh"),
+                    "--user",
+                    getpass.getuser(),
+                    "--home",
+                    home,
+                    "--lang",
+                    "en",
+                    "--launch-mode",
+                    "window",
+                    "--skip-browser-check",
+                    "--force",
+                ],
+                cwd=REPOSITORY_ROOT,
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            installed = json.loads(
+                (
+                    Path(home)
+                    / ".config"
+                    / "cozy-kids-launcher"
+                    / "config.json"
+                ).read_text(encoding="utf-8")
+            )
+        self.assertEqual(installed["configVersion"], 1)
 
 
 if __name__ == "__main__":

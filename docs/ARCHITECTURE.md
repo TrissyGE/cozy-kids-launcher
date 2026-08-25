@@ -69,6 +69,14 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - desktop shortcut reopens kids mode
 - shutdown listener allows safe local poweroff
 
+### 7. Configuration lifecycle
+
+- every current configuration carries an integer `configVersion`
+- files without a version are treated as legacy schema 0 and migrated atomically
+- migrations preserve unknown keys so newer optional data is not discarded accidentally
+- files from a schema newer than the installed launcher are rejected instead of being rewritten
+- imported and edited configurations pass through the same migration and validation boundary
+
 ## Why not do everything in Plasma directly?
 
 Because desktop-shell configuration becomes brittle fast:
