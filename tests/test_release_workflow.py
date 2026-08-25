@@ -6,6 +6,12 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 class StableMainReleaseContractTests(unittest.TestCase):
+    def test_ci_runs_for_the_development_branch(self):
+        workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("branches: [main, develop]", workflow)
+
     def test_release_is_published_before_main_is_promoted(self):
         workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "release.yml").read_text(
             encoding="utf-8"
