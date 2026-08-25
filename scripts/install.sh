@@ -29,7 +29,14 @@ if [[ ! -d "$SRC_DIR" ]] || [[ ! -f "$SRC_DIR/server.py" ]]; then
   fi
 
   echo "Extracting..."
-  unzip -q "$TMP_DIR/repo.zip" -d "$TMP_DIR/"
+  if command -v unzip >/dev/null 2>&1; then
+    unzip -q "$TMP_DIR/repo.zip" -d "$TMP_DIR/"
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -m zipfile -e "$TMP_DIR/repo.zip" "$TMP_DIR/"
+  else
+    echo "Error: unzip or Python 3 is required to extract the download."
+    exit 1
+  fi
 
   # Re-execute with all original arguments
   exec bash "$TMP_DIR/cozy-kids-launcher-main/scripts/install.sh" "$@"
@@ -162,8 +169,8 @@ text() {
     de:visible) echo "sichtbar" ;;
     de:special_media) echo "Spezial: Filme und Musik" ;;
     de:browser_page) echo "Webseite" ;;
-    de:web_mode_embedded) echo "Eingebettet (kompatible Seiten)" ;;
-    de:web_mode_external) echo "Extern (empfohlen / DRM)" ;;
+    de:web_mode_embedded) echo "Eingebettet" ;;
+    de:web_mode_external) echo "Extern" ;;
     de:no_app) echo "Kein Programm" ;;
     de:custom_cmd) echo "Benutzerdefiniert" ;;
     de:move_up) echo "Hoch" ;;
@@ -223,8 +230,8 @@ text() {
     en:visible) echo "visible" ;;
     en:special_media) echo "Special: Movies and music" ;;
     en:browser_page) echo "Website" ;;
-    en:web_mode_embedded) echo "Embedded (compatible sites)" ;;
-    en:web_mode_external) echo "External (recommended / DRM)" ;;
+    en:web_mode_embedded) echo "Embedded" ;;
+    en:web_mode_external) echo "External" ;;
     en:no_app) echo "No app" ;;
     en:custom_cmd) echo "Custom" ;;
     en:move_up) echo "Up" ;;

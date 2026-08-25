@@ -40,6 +40,13 @@ class StableMainReleaseContractTests(unittest.TestCase):
         self.assertIn('[[ "$CURRENT_BRANCH" != "main" ]]', deploy)
         self.assertIn("main is the stable legacy-updater channel", deploy)
 
+    def test_standalone_installer_can_extract_without_unzip(self):
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("command -v unzip", installer)
+        self.assertIn('python3 -m zipfile -e "$TMP_DIR/repo.zip" "$TMP_DIR/"', installer)
+
 
 if __name__ == "__main__":
     unittest.main()

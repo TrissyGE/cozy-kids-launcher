@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Project presentation and contributor workflow
+
+- Rebuilt the GitHub landing page around current features, working screenshots, concise navigation, and release/CI status
+- Added a deterministic Linux/WSL screenshot command that uses an isolated demo profile
+- Documented the roles of `main`, `develop`, topic, release, and hotfix branches
+- Added contribution guidance and a pull-request template
+
+### Installer and interface polish
+
+- Added a Python extraction fallback so the one-line installer works when `unzip` is not installed
+- Localized theme names and the browser re-login hint according to the selected interface language
+- Fixed the website-tile editor layout so its URL, browser mode, visibility, and delete controls no longer overlap
+
 ## [0.4.0] - 2026-08-25
 
 ### Parent authentication

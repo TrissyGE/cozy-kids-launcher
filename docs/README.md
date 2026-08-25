@@ -10,6 +10,7 @@ Welcome to the Cozy Kids Launcher documentation.
 | [ROADMAP.md](ROADMAP.md) | Completed features and future plans |
 | [SCREENSHOTS.md](SCREENSHOTS.md) | How to capture and add screenshots to the repo |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Automated checks and local smoke tests |
+| [BRANCHING.md](BRANCHING.md) | Branch responsibilities, pull requests, releases, and hotfixes |
 | [RELEASING.md](RELEASING.md) | Versioned artifacts, updater compatibility, and release recovery |
 | [WSL_TESTING.md](WSL_TESTING.md) | Reproducible graphical browser and multimedia testing on Windows |
 | [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) | Modernization status and remaining priorities |

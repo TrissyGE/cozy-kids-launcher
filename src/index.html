@@ -72,9 +72,10 @@
   .tileform.dragging { opacity:.5; outline:2px dashed var(--btn); }
   .tileform.drag-over { border-top:3px solid var(--btn); }
   .dragHandle { font-size:1.2rem; text-align:center; cursor:grab; user-select:none; color:var(--text); }
-  .browserWrap { display:none; grid-column:4; grid-row:1; }
-  .tileform.has-browser .browserWrap { display:grid; grid-template-columns:1fr 120px; gap:8px; }
-  .tileform.has-browser select { display:none; }
+  .browserWrap { display:none; grid-column:5 / 7; grid-row:1; }
+  .tileform.has-browser .browserWrap { display:grid; grid-template-columns:minmax(0,1fr) 200px; gap:8px; }
+  .tileform.has-browser > .appSelect { display:none; }
+  .tileform > .smallbtn { grid-column:7; }
   input, select { font-size:1rem; padding:12px 14px; border-radius:12px; border:1px solid var(--input-border); background:white; color:var(--text); width:100%; }
   label.chk { display:flex; align-items:center; gap:8px; font-weight:600; background:white; border:1px solid var(--input-border); border-radius:12px; padding:12px 14px; }
   .save { background:var(--btn); color:var(--btn-text); }
@@ -497,22 +498,28 @@ function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids
 function tilePageIndex(idx){ return Math.floor(idx / pageSize()); }
 
 const ALL_THEMES=[
-  {id:'rosa',label:'Rosa',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'},
-  {id:'lila',label:'Lila',type:'color',gradient:'linear-gradient(180deg,#e3d6ff,#f4eeff)'},
-  {id:'blau',label:'Blau',type:'color',gradient:'linear-gradient(180deg,#d7ebff,#eef7ff)'},
-  {id:'gruen',label:'Grün',type:'color',gradient:'linear-gradient(180deg,#d9f7df,#effcf1)'},
-  {id:'regenbogen',label:'Regenbogen',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#d7ebff)'},
-  {id:'wald',label:'Wald',type:'world',img:'/themes/forrest.jpg'},
-  {id:'weltraum',label:'Weltraum',type:'world',img:'/themes/space.jpg'},
-  {id:'ocean',label:'Ocean',type:'world',img:'/themes/ocean.jpg'},
-  {id:'dinosaurier',label:'Dinosaurier',type:'world',img:'/themes/dinosaur.jpg'},
-  {id:'baustelle',label:'Baustelle',type:'world',img:'/themes/construction-site.jpg'},
-  {id:'prinzessin',label:'Prinzessin',type:'world',img:'/themes/princess.jpg'},
-  {id:'bauernhof',label:'Bauernhof',type:'world',img:'/themes/farm.jpg'},
-  {id:'katzen',label:'Katzen',type:'world',img:'/themes/cats.jpg'},
-  {id:'hunde',label:'Hunde',type:'world',img:'/themes/dogs.jpg'},
-  {id:'custom',label:'Custom',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'}
+  {id:'rosa',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'},
+  {id:'lila',type:'color',gradient:'linear-gradient(180deg,#e3d6ff,#f4eeff)'},
+  {id:'blau',type:'color',gradient:'linear-gradient(180deg,#d7ebff,#eef7ff)'},
+  {id:'gruen',type:'color',gradient:'linear-gradient(180deg,#d9f7df,#effcf1)'},
+  {id:'regenbogen',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#d7ebff)'},
+  {id:'wald',type:'world',img:'/themes/forrest.jpg'},
+  {id:'weltraum',type:'world',img:'/themes/space.jpg'},
+  {id:'ocean',type:'world',img:'/themes/ocean.jpg'},
+  {id:'dinosaurier',type:'world',img:'/themes/dinosaur.jpg'},
+  {id:'baustelle',type:'world',img:'/themes/construction-site.jpg'},
+  {id:'prinzessin',type:'world',img:'/themes/princess.jpg'},
+  {id:'bauernhof',type:'world',img:'/themes/farm.jpg'},
+  {id:'katzen',type:'world',img:'/themes/cats.jpg'},
+  {id:'hunde',type:'world',img:'/themes/dogs.jpg'},
+  {id:'custom',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'}
 ];
+const THEME_LABELS={
+  de:{rosa:'Rosa',lila:'Lila',blau:'Blau',gruen:'Grün',regenbogen:'Regenbogen',wald:'Wald',weltraum:'Weltraum',ocean:'Ozean',dinosaurier:'Dinosaurier',baustelle:'Baustelle',prinzessin:'Prinzessin',bauernhof:'Bauernhof',katzen:'Katzen',hunde:'Hunde',custom:'Eigene Farben'},
+  en:{rosa:'Pink',lila:'Purple',blau:'Blue',gruen:'Green',regenbogen:'Rainbow',wald:'Forest',weltraum:'Space',ocean:'Ocean',dinosaurier:'Dinosaurs',baustelle:'Construction',prinzessin:'Princess',bauernhof:'Farm',katzen:'Cats',hunde:'Dogs',custom:'Custom'}
+};
+function interfaceLanguage(){ return ((cfg&&cfg.language)||'{{ACTIVE_LANG}}')==='de'?'de':'en'; }
+function themeLabel(id){ return THEME_LABELS[interfaceLanguage()][id]||id; }
 function openThemePicker(){ document.getElementById('themeOverlay').classList.remove('hidden'); renderThemeChooser(); }
 function closeThemePicker(){
   document.getElementById('themeOverlay').classList.add('hidden');
@@ -521,7 +528,7 @@ function closeThemePicker(){
   const isCustom=(document.getElementById('cfgTheme').value||'')==='custom';
   ctp.style.display=isCustom?'grid':'none';
 }
-function updateThemeDisplay(){ const id=document.getElementById('cfgTheme').value; const t=ALL_THEMES.find(x=>x.id===id); document.getElementById('themeDisplay').textContent=t?t.label:id; }
+function updateThemeDisplay(){ const id=document.getElementById('cfgTheme').value; document.getElementById('themeDisplay').textContent=themeLabel(id); }
 function renderThemeChooser(){
   const container=document.getElementById('themeChooser');
   const current=document.getElementById('cfgTheme').value;
@@ -533,7 +540,7 @@ function renderThemeChooser(){
     el.onclick=()=>{ document.getElementById('cfgTheme').value=t.id; renderThemeChooser(); closeThemePicker(); };
     const lbl=document.createElement('div');
     lbl.className='thumb-label';
-    lbl.textContent=t.label;
+    lbl.textContent=themeLabel(t.id);
     el.appendChild(lbl);
     container.appendChild(el);
   }
@@ -607,7 +614,9 @@ function renderAdmin(){
   }else if(installedBrowsers.length>0){
     browserSel.value=installedBrowsers[0].name;
   }
-  document.getElementById('browserHint').textContent='Änderung wirkt erst nach erneutem Login.';
+  document.getElementById('browserHint').textContent=interfaceLanguage()==='de'
+    ? 'Änderung wirkt erst nach erneutem Login.'
+    : 'Changes take effect after the next login.';
   document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
   document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates';
@@ -661,6 +670,7 @@ function renderAdmin(){
     visible.onchange=e=>tile.visible=e.target.checked;
     visibleWrap.append(visible,' '+uiText.visible);
     const select=document.createElement('select');
+    select.className='appSelect';
     const special=document.createElement('option');
     special.value='special:filme-musik';
     special.textContent=uiText.specialMedia;

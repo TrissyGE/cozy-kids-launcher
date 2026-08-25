@@ -92,6 +92,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--profile", type=Path, required=True)
     parser.add_argument("--ready-expression", default="document.readyState === 'complete'")
+    parser.add_argument("--prepare-expression", default="")
     parser.add_argument("--timeout", type=float, default=25)
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=800)
@@ -149,6 +150,17 @@ def main():
             time.sleep(0.2)
         if not ready:
             raise TimeoutError(f"Readiness expression was false: {args.ready_expression}")
+
+        if args.prepare_expression:
+            prepared = devtools.call("Runtime.evaluate", {
+                "expression": args.prepare_expression,
+                "returnByValue": True,
+                "awaitPromise": True,
+            })
+            if "exceptionDetails" in prepared:
+                raise RuntimeError(
+                    f"Preparation expression failed: {prepared['exceptionDetails']}"
+                )
 
         time.sleep(0.5)
         screenshot = devtools.call("Page.captureScreenshot", {

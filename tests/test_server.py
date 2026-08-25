@@ -495,6 +495,19 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("fetch('/api/update/status'", source)
         self.assertNotIn("raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION", source)
 
+    def test_theme_and_browser_labels_follow_the_interface_language(self):
+        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("const THEME_LABELS=", source)
+        self.assertIn("function interfaceLanguage()", source)
+        self.assertIn("themeLabel(t.id)", source)
+        self.assertIn("Changes take effect after the next login.", source)
+
+    def test_browser_tile_fields_do_not_hide_their_mode_selector(self):
+        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("select.className='appSelect'", source)
+        self.assertIn(".tileform.has-browser > .appSelect { display:none; }", source)
+        self.assertNotIn(".tileform.has-browser select { display:none; }", source)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,222 +1,265 @@
 #!/usr/bin/env python3
-"""
-Screenshot generator for Cozy Kids Launcher GitHub page.
+"""Create the four real UI screenshots used by the GitHub README.
 
-This script temporarily modifies the installed launcher files to English,
-takes screenshots via Firefox headless, then restores the originals.
-
-Requirements: Firefox installed and the launcher server running on localhost:38431.
+The command installs the current checkout into a temporary home directory,
+starts its local server, captures deterministic 1440x900 views through a
+Chromium-family browser, and removes the temporary profile afterwards.
+It never reads or changes the developer's installed launcher configuration.
 """
+
+import argparse
+import getpass
+import http.client
 import json
 import os
 import shutil
+import socket
 import subprocess
-import time
+import sys
 import tempfile
-
-HOME = os.path.expanduser("~")
-APP_ROOT = os.path.join(HOME, ".local", "share", "cozy-kids-launcher")
-INDEX = os.path.join(APP_ROOT, "index.html")
-CFG = os.path.join(HOME, ".config", "cozy-kids-launcher", "config.json")
-REPO = os.path.join(HOME, "cozy-kids-launcher")
-SHOTS = os.path.join(REPO, "screenshots")
-
-INDEX_BAK = INDEX + ".bak-screenshot"
-CFG_BAK = CFG + ".bak-screenshot"
-
-ENGLISH_UI_TEXT = '''const uiText = {
-  adminTitle: "Parent Settings",
-  placeholderTitle: "Title",
-  placeholderParentLabel: "Parent button",
-  placeholderExitLabel: "Exit button",
-  addTile: "Add tile",
-  back: "Back",
-  save: "Save",
-  visible: "visible",
-  specialMedia: "Special: Movies & Music",
-  noApp: "No app",
-  customCmd: "Custom",
-  moveUp: "Up",
-  moveDown: "Down",
-  delete: "Delete",
-  newTile: "New tile",
-  pinTitle: "Enter PIN",
-  pinPlaceholder: "4-6 digits",
-  pinWrong: "Wrong PIN",
-  pinSet: "Set PIN",
-  pinChange: "Change PIN",
-  pinRemove: "Remove PIN",
-  pinConfirm: "Repeat",
-  pinMismatch: "PINs do not match",
-  pinSaved: "PIN saved",
-  pinRemoved: "PIN removed",
-  adminPagePrev: "<- Previous",
-  adminPageNext: "Next ->",
-  updateCheck: "Check for updates",
-  updateAvailable: "Update available",
-  updateUpToDate: "Up to date",
-  updateError: "Update check failed",
-  versionLabel: "Version",
-  updateNow: "Update now",
-  updateProgress: "Installing update... please wait",
-  updateConfirm: "Browser will close and update will be installed. Continue?",
-  recommendedTitle: "Recommended apps",
-  appBrowserTitle: "App Browser",
-  install: "Install",
-  added: "Added",
-  installed: "installed",
-  notInstalled: "not installed",
-  copyCommand: "Copy",
-  commandCopied: "Copied!",
-  installStarted: "Installation started. Watch for a password dialog, or run the command below:",
-  installManual: "Please run this command in a terminal:",
-  close: "Close"
-};'''
+import time
+from pathlib import Path
 
 
-def backup():
-    shutil.copy2(INDEX, INDEX_BAK)
-    shutil.copy2(CFG, CFG_BAK)
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+CAPTURE_SCRIPT = REPOSITORY_ROOT / "scripts" / "wsl" / "capture-page.py"
+INSTALL_SCRIPT = REPOSITORY_ROOT / "scripts" / "install.sh"
+DEFAULT_OUTPUT = REPOSITORY_ROOT / "screenshots"
 
 
-def restore():
-    shutil.copy2(INDEX_BAK, INDEX)
-    shutil.copy2(CFG_BAK, CFG)
-
-
-def kill_firefox():
-    subprocess.run(["pkill", "-9", "-f", "firefox"], capture_output=True)
-    time.sleep(1)
-
-
-def screenshot(url, path, window_size="1280,800"):
-    profile_dir = tempfile.mkdtemp(prefix="fx-screenshot-")
-    kill_firefox()
-    cmd = [
-        "firefox", "--headless", "--profile", profile_dir,
-        "--window-size", window_size,
-        "--screenshot", path, url
+def find_browser(requested):
+    candidates = [requested] if requested else [
+        "google-chrome",
+        "google-chrome-stable",
+        "chromium",
+        "chromium-browser",
     ]
-    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(25):
-        time.sleep(1)
-        if os.path.exists(path) and os.path.getsize(path) > 5000:
-            break
+    for candidate in candidates:
+        if candidate and shutil.which(candidate):
+            return candidate
+    names = ", ".join(candidate for candidate in candidates if candidate)
+    raise RuntimeError(f"No screenshot browser found ({names})")
+
+
+def free_port():
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        return listener.getsockname()[1]
+
+
+def wait_for_server(port, process, timeout=15):
+    deadline = time.monotonic() + timeout
+    last_error = None
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError(f"Launcher server exited early ({process.returncode})")
+        connection = None
+        try:
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+            connection.request("GET", "/api/config")
+            response = connection.getresponse()
+            if response.status == 200:
+                response.close()
+                return
+        except Exception as error:
+            last_error = error
+            time.sleep(0.1)
+        finally:
+            if connection:
+                connection.close()
+    raise TimeoutError(f"Launcher server did not become ready: {last_error}")
+
+
+def stop_process(process):
+    if process.poll() is not None:
+        return
+    process.terminate()
     try:
-        proc.wait(timeout=5)
+        process.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        proc.terminate()
-    time.sleep(1)
-    shutil.rmtree(profile_dir, ignore_errors=True)
+        process.kill()
+        process.wait(timeout=5)
 
 
-def translate_installed_html():
-    with open(INDEX, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    # Replace German uiText block with English
-    start = html.find("const uiText = {")
-    end = html.find("function pageSize()")
-    if start != -1 and end != -1:
-        html = html[:start] + ENGLISH_UI_TEXT + "\n" + html[end:]
-
-    # Translate fallback strings
-    html = html.replace("'Hallo Kiddo 🌈'", "'Hello Kiddo 🌈'")
-    html = html.replace("'Papa'", "'Parent'")
-    html = html.replace("'Zurück'", "'Back'")
-    html = html.replace("'Kindermodus beenden'", "'Exit Kids Mode'")
-    html = html.replace("'Ausschalten'", "'Shut down'")
-    html = html.replace("textContent=uiText.back||'Zurück'", "textContent=uiText.back||'Back'")
-
-    # Translate hardcoded select options
-    html = html.replace('<option value="rosa">Rosa</option>', '<option value="rosa">Pink</option>')
-    html = html.replace('<option value="lila">Lila</option>', '<option value="lila">Purple</option>')
-    html = html.replace('<option value="blau">Blau</option>', '<option value="blau">Blue</option>')
-    html = html.replace('<option value="gruen">Grün</option>', '<option value="gruen">Green</option>')
-    html = html.replace('<option value="regenbogen">Regenbogen</option>', '<option value="regenbogen">Rainbow</option>')
-
-    # Translate layout option labels
-    html = html.replace(">{{LABEL_LAYOUT_LARGE}}</option>", ">Large tiles</option>")
-    html = html.replace(">{{LABEL_LAYOUT_SMALL}}</option>", ">Small tiles</option>")
-
-    # Translate PIN input placeholders
-    html = html.replace('placeholder="{{PIN_SET}}"', 'placeholder="Set PIN"')
-    html = html.replace('placeholder="{{PIN_CONFIRM}}"', 'placeholder="Repeat"')
-
-    with open(INDEX, "w", encoding="utf-8") as f:
-        f.write(html)
+def install_profile(profile, browser):
+    subprocess.run(
+        [
+            "bash",
+            str(INSTALL_SCRIPT),
+            "--user",
+            getpass.getuser(),
+            "--home",
+            str(profile),
+            "--lang",
+            "en",
+            "--browser",
+            browser,
+            "--launch-mode",
+            "window",
+            "--force",
+        ],
+        cwd=REPOSITORY_ROOT,
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
 
 
-def write_english_config(theme="rosa"):
+def write_config(profile, theme):
     config = {
         "language": "en",
-        "title": "Hello Kiddo 🌈",
+        "title": "Ready for adventure! 🌈",
         "theme": theme,
         "layoutMode": "gross",
-        "parentLabel": "Parent",
-        "exitLabel": "Exit Kids Mode",
+        "parentLabel": "Parents",
+        "exitLabel": "Exit kids mode",
         "shutdownLabel": "Shut down",
         "pinHash": "",
         "currentPage": 0,
+        "autoScanDone": True,
+        "timerMinutes": 30,
+        "timerWarningMinutes": 5,
         "tiles": [
-            {"id": "paint", "label": "Paint", "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
-            {"id": "games", "label": "Learning games", "emoji": "🧩", "cmd": ["gcompris-qt"], "visible": True},
-            {"id": "music", "label": "Movies & Music", "emoji": "🎵", "cmd": ["special:filme-musik"], "visible": True},
-            {"id": "math", "label": "Math", "emoji": "🧮", "cmd": ["tuxmath"], "visible": True},
-            {"id": "typing", "label": "Typing", "emoji": "⌨️", "cmd": ["tuxtype"], "visible": False},
-            {"id": "browser", "label": "Kids Web", "emoji": "🌐", "cmd": ["xdg-open", "https://www.fragfinn.de/"], "visible": False}
-        ]
+            {
+                "id": "paint",
+                "label": "Paint",
+                "emoji": "🎨",
+                "cmd": ["tuxpaint"],
+                "visible": True,
+            },
+            {
+                "id": "games",
+                "label": "Learning games",
+                "emoji": "🧩",
+                "cmd": ["gcompris-qt"],
+                "visible": True,
+            },
+            {
+                "id": "media",
+                "label": "Movies & music",
+                "emoji": "🎵",
+                "cmd": ["special:filme-musik"],
+                "visible": True,
+            },
+            {
+                "id": "kika",
+                "label": "KiKA",
+                "emoji": "🚀",
+                "cmd": ["special:external-browser:https://www.kika.de/"],
+                "visible": True,
+            },
+        ],
     }
-    with open(CFG, "w", encoding="utf-8") as f:
-        json.dump(config, f, ensure_ascii=False, indent=2)
+    path = profile / ".config" / "cozy-kids-launcher" / "config.json"
+    path.write_text(
+        json.dumps(config, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
-def swap_to_admin_mode():
-    with open(INDEX, "r", encoding="utf-8") as f:
-        html = f.read()
-    html = html.replace('id="kids" class="screen"', 'id="kids" class="screen hidden"')
-    html = html.replace('id="admin" class="screen hidden"', 'id="admin" class="screen"')
-    with open(INDEX, "w", encoding="utf-8") as f:
-        f.write(html)
-
-
-def swap_to_kids_mode():
-    with open(INDEX, "r", encoding="utf-8") as f:
-        html = f.read()
-    html = html.replace('id="kids" class="screen hidden"', 'id="kids" class="screen"')
-    html = html.replace('id="admin" class="screen"', 'id="admin" class="screen hidden"')
-    with open(INDEX, "w", encoding="utf-8") as f:
-        f.write(html)
+def capture(browser, url, output, profile, prepare_expression=""):
+    command = [
+        sys.executable,
+        str(CAPTURE_SCRIPT),
+        "--browser",
+        browser,
+        "--url",
+        url,
+        "--output",
+        str(output),
+        "--profile",
+        str(profile),
+        "--width",
+        "1440",
+        "--height",
+        "900",
+        "--ready-expression",
+        "typeof cfg === 'object' && cfg !== null",
+    ]
+    if prepare_expression:
+        command.extend(["--prepare-expression", prepare_expression])
+    subprocess.run(command, cwd=REPOSITORY_ROOT, check=True)
 
 
 def main():
-    os.makedirs(SHOTS, exist_ok=True)
-    backup()
-    try:
-        print("Translating installed HTML...")
-        translate_installed_html()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--browser", help="Chromium-family browser command")
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args()
 
-        print("Taking screenshot: home screen (rosa)...")
-        write_english_config("rosa")
-        screenshot("http://localhost:38431", os.path.join(SHOTS, "screenshot-home.png"))
+    if os.name != "posix":
+        raise SystemExit("Run this command on Linux or through WSL.")
 
-        print("Taking screenshot: admin settings...")
-        swap_to_admin_mode()
-        screenshot("http://localhost:38431", os.path.join(SHOTS, "screenshot-parent-settings.png"))
-        swap_to_kids_mode()
+    browser = find_browser(args.browser)
+    output_dir = args.output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-        print("Taking screenshot: blue theme...")
-        write_english_config("blau")
-        screenshot("http://localhost:38431", os.path.join(SHOTS, "screenshot-theme-blue.png"))
+    with tempfile.TemporaryDirectory(prefix="cozy-kids-screenshots-") as temporary:
+        root = Path(temporary)
+        launcher_home = root / "home"
+        launcher_home.mkdir()
+        install_profile(launcher_home, browser)
+        write_config(launcher_home, "rosa")
 
-        print("Done! Screenshots saved to", SHOTS)
-    finally:
-        print("Restoring original files...")
-        restore()
-        kill_firefox()
-        for bak in (INDEX_BAK, CFG_BAK):
-            if os.path.exists(bak):
-                os.remove(bak)
+        port = free_port()
+        url = f"http://127.0.0.1:{port}"
+        environment = dict(os.environ)
+        environment["HOME"] = str(launcher_home)
+        environment["COZY_KIDS_PORT"] = str(port)
+        server_script = (
+            launcher_home
+            / ".local"
+            / "share"
+            / "cozy-kids-launcher"
+            / "server.py"
+        )
+        server_log_path = root / "server.log"
+        with server_log_path.open("w", encoding="utf-8") as server_log:
+            server = subprocess.Popen(
+                [sys.executable, str(server_script)],
+                env=environment,
+                stdout=server_log,
+                stderr=subprocess.STDOUT,
+            )
+            try:
+                wait_for_server(port, server)
+                capture(
+                    browser,
+                    url,
+                    output_dir / "screenshot-home-default.png",
+                    root / "chrome-home-default",
+                )
+                capture(
+                    browser,
+                    url,
+                    output_dir / "screenshot-admin-general.png",
+                    root / "chrome-admin",
+                    "(async () => { enterAdmin(); await checkUpdate(); return true; })()",
+                )
+                capture(
+                    browser,
+                    url,
+                    output_dir / "screenshot-theme-picker.png",
+                    root / "chrome-theme-picker",
+                    "(async () => { enterAdmin(); await checkUpdate(); openThemePicker(); return true; })()",
+                )
+                write_config(launcher_home, "ocean")
+                capture(
+                    browser,
+                    url,
+                    output_dir / "screenshot-home-world.png",
+                    root / "chrome-home-world",
+                )
+            except Exception:
+                stop_process(server)
+                server_log.flush()
+                details = server_log_path.read_text(encoding="utf-8").strip()
+                if details:
+                    print(details, file=sys.stderr)
+                raise
+            finally:
+                stop_process(server)
+
+    print(f"README screenshots written to {output_dir}")
 
 
 if __name__ == "__main__":

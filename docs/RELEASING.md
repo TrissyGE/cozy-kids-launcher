@@ -1,6 +1,6 @@
 # Releasing Cozy Kids Launcher
 
-Releases are built from a version tag by GitHub Actions. The workflow tests the exact tagged commit, creates versioned archives and `SHA256SUMS`, adds a build-provenance attestation, uploads everything to a draft, and only then publishes the release.
+Releases are built from a version tag by GitHub Actions. The workflow tests the exact tagged commit, creates versioned archives and `SHA256SUMS`, adds a build-provenance attestation, uploads everything to a draft, and only then publishes the release. Branch roles and pull-request targets are defined in [BRANCHING.md](BRANCHING.md).
 
 ## Compatibility contract
 
@@ -32,7 +32,7 @@ The release workflow checks this credential against the repository before it run
 
 ## Prepare a release
 
-1. Start from `develop` or create a release branch that descends from the current `main`. Never prepare the release directly on `main`.
+1. Start from `develop` or create `release/vX.Y.Z` from `develop`. The release commit must still descend from the current `main`. Never prepare the release directly on `main`.
 2. Choose the next semantic version, for example `0.4.0`.
 3. Update `VERSION` and turn the relevant Unreleased changelog section into that version with an ISO date, for example `## [0.4.0] - 2026-08-25`. Both local and hosted release gates require it.
 4. Run the local release gate:
@@ -51,6 +51,8 @@ The release workflow checks this credential against the repository before it run
 The tag starts `.github/workflows/release.yml`. A mismatch between the tag and `VERSION`, a release commit that does not descend from stable `main`, any failing test, a broken isolated install, or a packaging error stops the job before publication.
 
 Only after the release is published does the workflow fast-forward `main` to the exact tagged commit. If publication fails, `main` remains on the previous release. If the final fast-forward is blocked by repository rules, the new release already exists while `main` remains older, which is safe for legacy clients; correct the rule and promote only the exact tag commit.
+
+After a release branch has been used, merge any release-only fixes back into `develop` and delete the branch.
 
 ## Verify the result
 
