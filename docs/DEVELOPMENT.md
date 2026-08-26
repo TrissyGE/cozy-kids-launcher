@@ -8,7 +8,7 @@ From the repository root:
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m py_compile src/server.py src/config_store.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py
+python3 -m py_compile src/server.py src/config_store.py src/runtime_diagnostics.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py
 bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
 python3 -m py_compile scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null

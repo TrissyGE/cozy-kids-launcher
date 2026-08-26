@@ -36,7 +36,7 @@ python3 -m unittest discover -s tests -v
 
 echo "[2/5] Python, JSON, and shell validation"
 python3 -m py_compile \
-  src/server.py src/config_store.py src/overlay.py src/timer_watchdog.py \
+  src/server.py src/config_store.py src/runtime_diagnostics.py src/overlay.py src/timer_watchdog.py \
   scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null
@@ -57,6 +57,7 @@ bash scripts/install.sh \
 test -x "$TEST_HOME/.local/bin/cozy-kids-launcher"
 test -x "$TEST_HOME/.local/share/cozy-kids-launcher/update.sh"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/config_store.py"
+test -f "$TEST_HOME/.local/share/cozy-kids-launcher/runtime_diagnostics.py"
 cmp VERSION "$TEST_HOME/.local/share/cozy-kids-launcher/version"
 python3 - "$TEST_HOME/.config/cozy-kids-launcher/config.json" <<'PY'
 import json

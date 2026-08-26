@@ -23,6 +23,12 @@ from config_store import (
     migrate_config,
     read_config,
 )
+from runtime_diagnostics import (
+    build_diagnostics,
+    close_runtime_logging,
+    configure_runtime_logging,
+    log_runtime_event,
+)
 
 HOME = os.path.expanduser("~")
 APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
@@ -32,6 +38,7 @@ UPDATE_CHANNEL_FILE = os.path.join(APP_ROOT, "update-channel")
 LATEST_RELEASE_API = "https://api.github.com/repos/TrissyGE/cozy-kids-launcher/releases/latest"
 LEGACY_VERSION_URL = "https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION"
 CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
+LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
@@ -315,6 +322,10 @@ def load_cfg():
     )
     if migrated:
         save_cfg(data)
+        log_runtime_event(
+            "config.migrated",
+            configVersion=data.get("configVersion", CURRENT_CONFIG_VERSION),
+        )
     return data
 
 
@@ -419,6 +430,26 @@ def get_version():
             return fh.read().strip()
     except Exception:
         return "0.0.0"
+
+
+def diagnostics_payload():
+    """Return technical state without returning any family configuration values."""
+    config_readable = False
+    config_version = None
+    try:
+        data = read_config(CFG)
+    except (OSError, ValueError, json.JSONDecodeError):
+        pass
+    else:
+        if isinstance(data, dict):
+            config_readable = True
+            config_version = data.get("configVersion", 0)
+    return build_diagnostics(
+        LOG_FILE,
+        app_version=get_version(),
+        config_readable=config_readable,
+        config_version=config_version,
+    )
 
 
 def parse_semver(value):
@@ -802,9 +833,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response({"version": get_version()})
         if self.path == "/api/update/status":
             try:
-                return self.json_response(get_update_status())
+                status = get_update_status()
             except RuntimeError as exc:
+                log_runtime_event(
+                    "update.failed",
+                    level="warning",
+                    exceptionType=type(exc).__name__,
+                )
                 return self.json_response({"status": "error", "message": str(exc)}, 503)
+            log_runtime_event(
+                "update.checked",
+                source=status["source"],
+                updateAvailable=status["updateAvailable"],
+                version=status["latestVersion"],
+            )
+            return self.json_response(status)
         if self.path == "/api/features":
             shutdown_ok = bool(
                 shutil.which("systemctl") or shutil.which("loginctl")
@@ -829,10 +872,31 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(payload)
             return
+        if self.path == "/api/diagnostics":
+            data = load_cfg()
+            if not self.require_admin(data):
+                return
+            payload = json.dumps(
+                diagnostics_payload(),
+                ensure_ascii=False,
+                indent=2,
+            ).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header(
+                "Content-Disposition",
+                'attachment; filename="cozy-kids-diagnostics.json"',
+            )
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            log_runtime_event("diagnostics.exported")
+            return
         return super().do_GET()
 
     def do_POST(self):
         if not self.request_has_local_origin():
+            log_runtime_event("request.rejected", level="warning", statusCode=403)
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
@@ -857,10 +921,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         f.write(browser)
                 except Exception:
                     pass
+            log_runtime_event(
+                "config.saved",
+                configVersion=data.get("configVersion", CURRENT_CONFIG_VERSION),
+            )
             self.json_response({"status": "ok"})
             return
         if action == "api/verify-pin":
             if pin_attempt_blocked():
+                log_runtime_event("auth.throttled", level="warning")
                 self.json_response({"valid": False, "message": "Too many attempts"}, 429)
                 return
             data = self.read_json_body()
@@ -869,11 +938,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             cfg = load_cfg()
             pin_hash = cfg.get("pinHash", "")
             if not pin_hash:
+                log_runtime_event("auth.succeeded")
                 self.json_response({"valid": True, "pinConfigured": False})
                 return
             pin = data.get("pin", "")
             if not isinstance(pin, str) or not verify_pin(pin_hash, pin):
                 record_pin_failure()
+                log_runtime_event("auth.failed", level="warning")
                 self.json_response({"valid": False}, 403)
                 return
             clear_pin_failures()
@@ -881,6 +952,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 cfg["pinHash"] = hash_pin(pin)
                 save_cfg(cfg)
             token = create_admin_session()
+            log_runtime_event("auth.succeeded")
             self.json_response(
                 {"valid": True, "pinConfigured": True},
                 headers={"Set-Cookie": self.admin_cookie(token)},
@@ -901,6 +973,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             clear_admin_sessions()
             token = create_admin_session()
+            log_runtime_event("pin.changed")
             self.json_response(
                 {"status": "ok", "pinConfigured": True},
                 headers={"Set-Cookie": self.admin_cookie(token)},
@@ -913,6 +986,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             cfg["pinHash"] = ""
             save_cfg(cfg)
             clear_admin_sessions()
+            log_runtime_event("pin.removed")
             self.json_response(
                 {"status": "ok", "pinConfigured": False},
                 headers={"Set-Cookie": f"{ADMIN_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"},
@@ -937,6 +1011,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             if imported.get("pinHash", "") != cfg.get("pinHash", ""):
                 clear_admin_sessions()
+            log_runtime_event(
+                "config.imported",
+                configVersion=imported.get("configVersion", CURRENT_CONFIG_VERSION),
+            )
             self.json_response({"status": "ok"})
             return
         if action == "shutdown":
@@ -987,6 +1065,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             end_time = int(time.time()) + minutes * 60
             save_timer({"end_time": end_time, "totalMinutes": minutes})
+            log_runtime_event("timer.started")
             self.json_response({"valid": True, "endTime": end_time, "minutes": minutes})
             return
         if action == "api/timer/stop":
@@ -997,6 +1076,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if body is None:
                 return
             clear_timer()
+            log_runtime_event("timer.stopped")
             self.json_response({"valid": True})
             return
         if action == "api/timer/extend":
@@ -1021,6 +1101,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             end_time = int(time.time()) + minutes * 60
             save_timer({"end_time": end_time, "totalMinutes": minutes})
+            log_runtime_event("timer.extended")
             self.json_response({"valid": True, "endTime": end_time, "minutes": minutes})
             return
         if action == "api/update":
@@ -1042,6 +1123,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 with open(trigger_path, "w", encoding="utf-8") as fh:
                     fh.write(trigger_script)
                 os.chmod(trigger_path, 0o755)
+                log_runtime_event("update.triggered")
                 self.json_response({"status": "triggered"})
             except Exception as e:
                 self.json_response({"status": "error", "message": str(e)}, 500)
@@ -1078,11 +1160,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except ValueError as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
+            log_runtime_event("launch.started", actionType=launch["type"])
             stop_existing_overlay()
 
             if launch["type"] == "media":
                 locations = media_locations()
                 if not locations:
+                    log_runtime_event(
+                        "launch.failed",
+                        level="warning",
+                        actionType="media",
+                        result="missing",
+                    )
                     self.send_response(302)
                     self.send_header("Location", "/no-media.html")
                     self.end_headers()
@@ -1125,6 +1214,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 elif shutil.which("xdg-open"):
                     subprocess.Popen(["xdg-open", url], env=dict(os.environ))
                 else:
+                    log_runtime_event(
+                        "launch.failed",
+                        level="warning",
+                        actionType="web",
+                        result="missing",
+                    )
                     self.json_response({"status": "error", "message": "No supported browser found"}, 503)
                     return
                 self.send_response(204)
@@ -1167,11 +1262,27 @@ def create_server(host="127.0.0.1", port=PORT):
 
 
 def main():
-    with create_server() as httpd:
-        os.makedirs(os.path.dirname(PIDFILE), exist_ok=True)
-        with open(PIDFILE, "w", encoding="utf-8") as fh:
-            fh.write(str(os.getpid()))
-        httpd.serve_forever()
+    try:
+        configure_runtime_logging(LOG_FILE)
+    except OSError:
+        pass
+    log_runtime_event("server.started", version=get_version())
+    try:
+        with create_server() as httpd:
+            os.makedirs(os.path.dirname(PIDFILE), exist_ok=True)
+            with open(PIDFILE, "w", encoding="utf-8") as fh:
+                fh.write(str(os.getpid()))
+            httpd.serve_forever()
+    except Exception as exc:
+        log_runtime_event(
+            "server.crashed",
+            level="critical",
+            exceptionType=type(exc).__name__,
+        )
+        raise
+    finally:
+        log_runtime_event("server.stopped")
+        close_runtime_logging()
 
 
 if __name__ == "__main__":

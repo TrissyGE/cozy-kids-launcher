@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Reject configuration files from unsupported future versions instead of risking destructive rewrites
 - Extended normal CI and the release installer gate to verify the installed configuration schema
 - Extracted schema migration and atomic configuration storage into a dedicated runtime module
+- Added privacy-allowlisted JSON runtime events with bounded log rotation and private file permissions
+- Added an authenticated diagnostics download that excludes PINs, family settings, commands, URLs, usernames, and personal paths
 
 ## [0.4.1] - 2026-08-25
 

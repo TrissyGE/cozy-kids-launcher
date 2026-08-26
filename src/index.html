@@ -273,9 +273,10 @@
         <span class="muted"></span>
         <button class="smallbtn save" id="updateNowBtn" onclick="installUpdate()">{{UPDATE_NOW}}</button>
       </div>
-      <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
+      <div class="row2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:8px; align-items:center;">
         <button class="smallbtn" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
         <button class="smallbtn" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
+        <button class="smallbtn" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
         <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
       </div>
       <div id="importMsg" class="muted"></div>
@@ -1108,6 +1109,17 @@ async function exportConfig(){
   const a=document.createElement('a');
   a.href=url;
   a.download='cozy-kids-config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function exportDiagnostics(){
+  const r=await fetch('/api/diagnostics');
+  if(!r.ok) return;
+  const blob=await r.blob();
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='cozy-kids-diagnostics.json';
   a.click();
   URL.revokeObjectURL(url);
 }

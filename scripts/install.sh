@@ -281,6 +281,7 @@ text() {
     de:close) echo "Schließen" ;;
     de:export_config) echo "Konfiguration exportieren" ;;
     de:import_config) echo "Konfiguration importieren" ;;
+    de:export_diagnostics) echo "Diagnose herunterladen" ;;
     de:import_success) echo "Konfiguration importiert" ;;
     de:import_error) echo "Import fehlgeschlagen" ;;
     de:invalid_config) echo "Ungültige Konfigurationsdatei" ;;
@@ -297,6 +298,7 @@ text() {
     en:close) echo "Close" ;;
     en:export_config) echo "Export config" ;;
     en:import_config) echo "Import config" ;;
+    en:export_diagnostics) echo "Download diagnostics" ;;
     en:import_success) echo "Config imported" ;;
     en:import_error) echo "Import failed" ;;
     en:invalid_config) echo "Invalid config file" ;;
@@ -784,7 +786,7 @@ render_template() {
   export LABEL_VISIBLE LABEL_SPECIAL_MEDIA LABEL_NO_APP LABEL_CUSTOM_CMD
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
   export LABEL_COPY_COMMAND LABEL_CLOSE
-  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
+  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG LABEL_EXPORT_DIAGNOSTICS IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
   export JSON_BROWSER_PAGE JSON_WEB_MODE_EMBEDDED JSON_WEB_MODE_EXTERNAL
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
@@ -896,6 +898,7 @@ LABEL_INSTALL_MANUAL="$(text install_manual)"
 LABEL_CLOSE="$(text close)"
 LABEL_EXPORT_CONFIG="$(text export_config)"
 LABEL_IMPORT_CONFIG="$(text import_config)"
+LABEL_EXPORT_DIAGNOSTICS="$(text export_diagnostics)"
 IMPORT_SUCCESS="$(text import_success)"
 IMPORT_ERROR="$(text import_error)"
 INVALID_CONFIG="$(text invalid_config)"
@@ -1021,6 +1024,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
+install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755

@@ -9,6 +9,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 - The PIN hash is no longer returned by the public config endpoint. Authentication uses a short-lived, HTTP-only, same-site session cookie.
 - Cross-site browser POST requests are rejected, JSON request sizes are limited, imported configs are validated, and config writes are atomic.
 - User-controlled tile labels and emoji are rendered as text rather than executable HTML.
+- Runtime events use bounded rotation, private file permissions, and a fixed privacy allowlist. Parent diagnostics exclude configuration values, PIN data, commands, URLs, usernames, and personal paths.
 - Standard-library unit and HTTP integration tests run in CI on supported Python versions.
 
 ## Completed release foundation
@@ -19,13 +20,13 @@ This audit captures the modernization priorities identified in August 2026. The 
 - Legacy v0.3.x clients remain compatible through `main/VERSION`; current clients use that path only until their first verified release update.
 - Releases are published before their exact commit is fast-forwarded to `main`, keeping the legacy source equal to or older than the latest release. A scheduled workflow detects branch drift.
 - The server and frontend share the updater's release-first status model, and the launcher owns the update trigger exactly once.
+- A disposable v0.4.0 installation was upgraded through the published v0.4.1 release with checksum verification and byte-identical configuration preservation.
 
 ## Next: maintainability
 
-1. Complete a disposable real-device upgrade and rollback drill from v0.4.0 to the next published patch release.
-2. Split the large frontend template into focused CSS and JavaScript modules while keeping a dependency-free production build.
-3. Split server responsibilities into config, authentication, application discovery, process launching, update discovery, and timer modules.
-4. Add structured runtime logging and a small diagnostics export that excludes personal configuration and PIN data.
+1. Split the large frontend template into focused CSS and JavaScript modules while keeping a dependency-free production build.
+2. Continue splitting server responsibilities into authentication, application discovery, process launching, update discovery, and timer modules.
+3. Make launcher, server, browser, overlay, and child-process ownership explicit and recoverable.
 
 ## Then: platform confidence
 
