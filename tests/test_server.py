@@ -28,6 +28,7 @@ server_module = load_server_template()
 
 def base_config(pin_hash=""):
     return {
+        "configVersion": 1,
         "language": "en",
         "title": "Hello Kiddo",
         "theme": "rosa",
@@ -53,6 +54,61 @@ def base_config(pin_hash=""):
 
 
 class ConfigValidationTests(unittest.TestCase):
+    def test_legacy_config_is_upgraded_to_the_current_schema(self):
+        legacy = base_config("0123456789abcdef")
+        legacy.pop("configVersion")
+        legacy["futureCompatibleKey"] = {"kept": True}
+
+        migrated, changed = server_module.migrate_config(legacy)
+
+        self.assertTrue(changed)
+        self.assertEqual(
+            migrated["configVersion"],
+            server_module.CURRENT_CONFIG_VERSION,
+        )
+        self.assertEqual(migrated["futureCompatibleKey"], {"kept": True})
+        self.assertEqual(migrated["pinHash"], "0123456789abcdef")
+
+    def test_current_config_does_not_report_a_migration(self):
+        migrated, changed = server_module.migrate_config(base_config())
+        self.assertFalse(changed)
+        self.assertEqual(migrated["configVersion"], 1)
+
+    def test_future_config_version_is_rejected(self):
+        data = base_config()
+        data["configVersion"] = server_module.CURRENT_CONFIG_VERSION + 1
+        with self.assertRaisesRegex(ValueError, "newer than supported"):
+            server_module.validate_config(data)
+
+    def test_invalid_config_version_is_rejected(self):
+        for value in (True, -1, "1"):
+            with self.subTest(value=value):
+                data = base_config()
+                data["configVersion"] = value
+                with self.assertRaisesRegex(ValueError, "configVersion"):
+                    server_module.validate_config(data)
+
+    def test_loading_legacy_config_persists_the_schema_version_atomically(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.json"
+            legacy = base_config()
+            legacy.pop("configVersion")
+            config_path.write_text(
+                json.dumps(legacy, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(server_module, "CFG", str(config_path)):
+                loaded = server_module.load_cfg()
+
+            persisted = json.loads(config_path.read_text(encoding="utf-8"))
+            self.assertEqual(loaded["configVersion"], 1)
+            self.assertEqual(persisted["configVersion"], 1)
+            self.assertFalse(
+                list(config_path.parent.glob("config-*.json")),
+                "Atomic migration must not leave a temporary config behind",
+            )
+
     def test_public_config_does_not_expose_pin_hash(self):
         public = server_module.public_config(base_config("0123456789abcdef"))
         self.assertNotIn("pinHash", public)

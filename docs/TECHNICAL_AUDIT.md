@@ -31,7 +31,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 
 1. Test KDE Plasma, GNOME, and XFCE across Ubuntu, Linux Mint, and Zorin OS.
 2. Document Wayland and X11 behavior for overlays, focus recovery, and kiosk browsers.
-3. Add installer upgrade/rollback coverage and schema-versioned configuration migrations.
+3. Expand installer upgrade/rollback coverage as configuration schema migrations evolve.
 4. Exercise keyboard-only, touch, low-resolution, and screen-reader flows.
 
 ## Product work after the foundation

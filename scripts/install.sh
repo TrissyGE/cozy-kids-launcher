@@ -1040,6 +1040,7 @@ python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFA
 import json, sys, shutil, os
 path, lang, title, theme, layout, parent_label, exit_label, shutdown_label, tile_paint, tile_games, tile_music, tile_browser, browser_url, rec_path, recommended = sys.argv[1:16]
 config = {
+    "configVersion": 1,
     "language": lang,
     "title": title,
     "theme": theme,

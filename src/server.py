@@ -60,6 +60,7 @@ LEGACY_WEB_ACTION_MIGRATIONS = {
 TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
 MAX_JSON_BODY_BYTES = 512 * 1024
 MAX_TILES = 200
+CURRENT_CONFIG_VERSION = 1
 ADMIN_SESSION_TTL_SECONDS = 30 * 60
 PIN_FAILURE_WINDOW_SECONDS = 60
 PIN_FAILURE_LIMIT = 5
@@ -82,12 +83,36 @@ def _bounded_string(value, field, maximum, allow_empty=True):
     return value
 
 
-def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
-    """Validate untrusted config data while preserving future-compatible keys."""
+def migrate_config(data):
+    """Return a current config copy and whether a schema migration was applied."""
     if not isinstance(data, dict):
         raise ValueError("Config must be a JSON object")
 
     result = dict(data)
+    version = result.get("configVersion", 0)
+    if isinstance(version, bool) or not isinstance(version, int) or version < 0:
+        raise ValueError("configVersion must be a non-negative integer")
+    if version > CURRENT_CONFIG_VERSION:
+        raise ValueError(
+            f"Config version {version} is newer than supported version "
+            f"{CURRENT_CONFIG_VERSION}"
+        )
+
+    migrated = False
+    while version < CURRENT_CONFIG_VERSION:
+        if version == 0:
+            version = 1
+            result["configVersion"] = version
+            migrated = True
+            continue
+        raise ValueError(f"No migration path exists from config version {version}")
+
+    return result, migrated
+
+
+def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
+    """Validate untrusted config data while preserving future-compatible keys."""
+    result, _ = migrate_config(data)
     result.pop("pinConfigured", None)
     tiles = result.get("tiles")
     if not isinstance(tiles, list):
@@ -286,7 +311,7 @@ def has_media(path):
 def load_cfg():
     with open(CFG, "r", encoding="utf-8") as fh:
         data = json.load(fh)
-    migrated = False
+    data, migrated = migrate_config(data)
     recs = load_recommendations()
     rec_by_first_cmd = {}
     for rec in recs:
@@ -306,12 +331,18 @@ def load_cfg():
     if "autoScanDone" not in data:
         data["autoScanDone"] = True
         migrated = True
+    data = validate_config(
+        data,
+        existing_pin_hash=data.get("pinHash", ""),
+        allow_pin_hash=True,
+    )
     if migrated:
         save_cfg(data)
     return data
 
 
 def save_cfg(data):
+    data, _ = migrate_config(data)
     config_dir = os.path.dirname(CFG)
     os.makedirs(config_dir, exist_ok=True)
     fd, temp_path = tempfile.mkstemp(prefix="config-", suffix=".json", dir=config_dir)

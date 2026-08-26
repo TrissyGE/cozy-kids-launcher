@@ -57,6 +57,15 @@ bash scripts/install.sh \
 test -x "$TEST_HOME/.local/bin/cozy-kids-launcher"
 test -x "$TEST_HOME/.local/share/cozy-kids-launcher/update.sh"
 cmp VERSION "$TEST_HOME/.local/share/cozy-kids-launcher/version"
+python3 - "$TEST_HOME/.config/cozy-kids-launcher/config.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    config = json.load(handle)
+if config.get("configVersion") != 1:
+    raise SystemExit("Installed config does not use schema version 1")
+PY
 
 echo "[4/5] Archive dry run"
 PREFIX="cozy-kids-launcher-$VERSION/"
