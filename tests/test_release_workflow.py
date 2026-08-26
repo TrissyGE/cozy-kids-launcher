@@ -94,6 +94,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "config.json"
                 ).read_text(encoding="utf-8")
             )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
+                    / "config_store.py"
+                ).is_file()
+            )
         self.assertEqual(installed["configVersion"], 1)
 
 
