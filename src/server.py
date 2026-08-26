@@ -11,12 +11,18 @@ import shlex
 import shutil
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 from http.cookies import SimpleCookie
 from urllib.parse import quote, unquote, urlparse
 from urllib.request import Request, urlopen
+
+from config_store import (
+    CURRENT_CONFIG_VERSION,
+    atomic_write_config,
+    migrate_config,
+    read_config,
+)
 
 HOME = os.path.expanduser("~")
 APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
@@ -60,7 +66,6 @@ LEGACY_WEB_ACTION_MIGRATIONS = {
 TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
 MAX_JSON_BODY_BYTES = 512 * 1024
 MAX_TILES = 200
-CURRENT_CONFIG_VERSION = 1
 ADMIN_SESSION_TTL_SECONDS = 30 * 60
 PIN_FAILURE_WINDOW_SECONDS = 60
 PIN_FAILURE_LIMIT = 5
@@ -81,33 +86,6 @@ def _bounded_string(value, field, maximum, allow_empty=True):
     if len(value) > maximum:
         raise ValueError(f"{field} is too long")
     return value
-
-
-def migrate_config(data):
-    """Return a current config copy and whether a schema migration was applied."""
-    if not isinstance(data, dict):
-        raise ValueError("Config must be a JSON object")
-
-    result = dict(data)
-    version = result.get("configVersion", 0)
-    if isinstance(version, bool) or not isinstance(version, int) or version < 0:
-        raise ValueError("configVersion must be a non-negative integer")
-    if version > CURRENT_CONFIG_VERSION:
-        raise ValueError(
-            f"Config version {version} is newer than supported version "
-            f"{CURRENT_CONFIG_VERSION}"
-        )
-
-    migrated = False
-    while version < CURRENT_CONFIG_VERSION:
-        if version == 0:
-            version = 1
-            result["configVersion"] = version
-            migrated = True
-            continue
-        raise ValueError(f"No migration path exists from config version {version}")
-
-    return result, migrated
 
 
 def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
@@ -309,8 +287,7 @@ def has_media(path):
 
 
 def load_cfg():
-    with open(CFG, "r", encoding="utf-8") as fh:
-        data = json.load(fh)
+    data = read_config(CFG)
     data, migrated = migrate_config(data)
     recs = load_recommendations()
     rec_by_first_cmd = {}
@@ -343,22 +320,7 @@ def load_cfg():
 
 def save_cfg(data):
     data, _ = migrate_config(data)
-    config_dir = os.path.dirname(CFG)
-    os.makedirs(config_dir, exist_ok=True)
-    fd, temp_path = tempfile.mkstemp(prefix="config-", suffix=".json", dir=config_dir)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            json.dump(data, fh, ensure_ascii=False, indent=2)
-            fh.write("\n")
-            fh.flush()
-            os.fsync(fh.fileno())
-        os.replace(temp_path, CFG)
-    except Exception:
-        try:
-            os.unlink(temp_path)
-        except OSError:
-            pass
-        raise
+    atomic_write_config(CFG, data)
 
 
 def parse_desktop_file(path):

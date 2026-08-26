@@ -1020,6 +1020,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
+install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755

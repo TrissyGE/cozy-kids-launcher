@@ -1,5 +1,6 @@
 import copy
 import json
+import sys
 import tempfile
 import threading
 import types
@@ -11,6 +12,9 @@ from unittest import mock
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = REPOSITORY_ROOT / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
 
 
 def load_server_template():

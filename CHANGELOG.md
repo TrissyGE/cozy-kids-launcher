@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Added schema version 1 for launcher configuration with automatic atomic migration of legacy files
 - Reject configuration files from unsupported future versions instead of risking destructive rewrites
 - Extended normal CI and the release installer gate to verify the installed configuration schema
+- Extracted schema migration and atomic configuration storage into a dedicated runtime module
 
 ## [0.4.1] - 2026-08-25
 
