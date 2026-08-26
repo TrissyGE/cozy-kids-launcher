@@ -94,6 +94,18 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "config.json"
                 ).read_text(encoding="utf-8")
             )
+            config_path = (
+                Path(home)
+                / ".config"
+                / "cozy-kids-launcher"
+                / "config.json"
+            )
+            backup_root = (
+                Path(home)
+                / ".local"
+                / "share"
+                / "cozy-kids-launcher-backups"
+            )
             self.assertTrue(
                 (
                     Path(home)
@@ -101,6 +113,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "share"
                     / "cozy-kids-launcher"
                     / "config_store.py"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
+                    / "backup_store.py"
                 ).is_file()
             )
             self.assertTrue(
@@ -130,6 +151,9 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "process_supervisor.py"
                 ).is_file()
             )
+            self.assertEqual(config_path.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(backup_root.stat().st_mode & 0o777, 0o700)
+            self.assertEqual(len(list(backup_root.iterdir())), 1)
         self.assertEqual(installed["configVersion"], 1)
 
 

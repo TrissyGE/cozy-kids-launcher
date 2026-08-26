@@ -88,6 +88,9 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - migrations preserve unknown keys so newer optional data is not discarded accidentally
 - files from a schema newer than the installed launcher are rejected instead of being rewritten
 - imported and edited configurations pass through the same migration and validation boundary
+- Parent settings discover only timestamped `config.json` backups below the fixed local backup root; the API returns metadata, never filesystem paths or configuration values
+- restore requests accept a strict backup identifier rather than a path, reject symlinks and oversized or invalid files, and pass the result through the current schema validator
+- restores replace configuration only, never installed program code; the active Parent PIN is preserved and a private snapshot of the current configuration is written first
 
 ### 8. Runtime diagnostics
 

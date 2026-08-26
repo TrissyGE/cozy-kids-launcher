@@ -85,4 +85,6 @@ Never move an existing tag, replace release assets, or reuse a version number. I
 
 The updater snapshots the installed app, launcher, configuration, autostart entry, and desktop files immediately before installation and restores them automatically if the installer or post-install version check fails. The installer also creates timestamped backups under `~/.local/share/cozy-kids-launcher-backups/`.
 
+Parent settings can restore `config.json` from those timestamped directories. This is deliberately a configuration-only operation: it never rolls program files back, it validates the backup against the installed schema, preserves the active Parent PIN, and creates a private pre-restore snapshot first.
+
 Restoring an older *published* program version remains a deliberate manual recovery operation; user configuration should be backed up first.

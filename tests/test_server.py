@@ -353,6 +353,7 @@ class ServerApiTests(unittest.TestCase):
         server_module.UPDATE_SCRIPT = str(app_root / "update.sh")
         server_module.UPDATE_CHANNEL_FILE = str(app_root / "update-channel")
         server_module.RECOMMENDATIONS_FILE = str(app_root / "recommendations.json")
+        server_module.BACKUP_ROOT = str(root / "backups")
         server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
@@ -417,6 +418,15 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(data["valid"])
         return headers["Set-Cookie"].split(";", 1)[0]
+
+    def write_backup(self, backup_id, config):
+        directory = Path(server_module.BACKUP_ROOT) / backup_id
+        directory.mkdir(parents=True)
+        (directory / "config.json").write_text(
+            json.dumps(config),
+            encoding="utf-8",
+        )
+        return directory
 
     def test_config_endpoint_hides_hash_and_sends_security_headers(self):
         self.enable_pin()
@@ -487,9 +497,12 @@ class ServerApiTests(unittest.TestCase):
 
     def test_parent_actions_require_authenticated_session(self):
         self.enable_pin()
+        status, _, _ = self.request("/api/backups")
+        self.assertEqual(status, 403)
         for path, body in (
             ("/api/save-config", base_config()),
             ("/api/import-config", base_config()),
+            ("/api/backups/restore", {"backupId": "20260825-120000"}),
             ("/api/update", None),
             ("/shutdown", None),
         ):
@@ -500,6 +513,79 @@ class ServerApiTests(unittest.TestCase):
                 origin=self.base_url,
             )
             self.assertEqual(status, 403, path)
+
+    def test_backup_restore_preserves_pin_and_creates_safety_snapshot(self):
+        self.enable_pin("1234")
+        current = server_module.load_cfg()
+        current["title"] = "Current family settings"
+        server_module.save_cfg(current)
+        backup = base_config(server_module.hash_pin("5678", salt="22" * 16))
+        backup["title"] = "Restored family settings"
+        backup["browser"] = "firefox"
+        self.write_backup("20260825-120000", backup)
+        cookie = self.authenticate("1234")
+
+        status, listing, _ = self.request("/api/backups", cookie=cookie)
+        serialized = json.dumps(listing)
+        self.assertEqual(status, 200)
+        self.assertEqual(listing["backups"][0]["id"], "20260825-120000")
+        self.assertNotIn("Restored family settings", serialized)
+        self.assertNotIn("pinHash", serialized)
+        self.assertNotIn(self.temp_dir.name, serialized)
+
+        status, result, _ = self.request(
+            "/api/backups/restore",
+            method="POST",
+            body={"backupId": "20260825-120000"},
+            cookie=cookie,
+            origin=self.base_url,
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(result["status"], "ok")
+        restored = server_module.load_cfg()
+        self.assertEqual(restored["title"], "Restored family settings")
+        self.assertTrue(server_module.verify_pin(restored["pinHash"], "1234"))
+        self.assertFalse(server_module.verify_pin(restored["pinHash"], "5678"))
+        browser_override = Path(server_module.CFG).parent / "browser"
+        self.assertEqual(browser_override.read_text(encoding="utf-8"), "firefox")
+
+        safety_id = result["safetyBackupId"]
+        safety = server_module.read_config_backup(
+            server_module.BACKUP_ROOT,
+            safety_id,
+        )
+        self.assertEqual(safety["title"], "Current family settings")
+        self.assertTrue(server_module.verify_pin(safety["pinHash"], "1234"))
+        status, updated_listing, _ = self.request("/api/backups", cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertIn(
+            "pre-restore",
+            {item["source"] for item in updated_listing["backups"]},
+        )
+
+    def test_backup_restore_rejects_traversal_without_changing_config(self):
+        original = server_module.load_cfg()
+        status, data, _ = self.request(
+            "/api/backups/restore",
+            method="POST",
+            body={"backupId": "../20260825-120000"},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(data["status"], "error")
+        self.assertEqual(server_module.load_cfg(), original)
+
+    def test_backup_list_filters_corrupt_and_future_schema_configs(self):
+        self.write_backup("20260825-120000", {"configVersion": 999})
+        directory = Path(server_module.BACKUP_ROOT) / "20260826-120000"
+        directory.mkdir(parents=True)
+        (directory / "config.json").write_text("not json", encoding="utf-8")
+
+        status, data, _ = self.request("/api/backups")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(data["backups"], [])
 
     def test_login_allows_save_without_overwriting_pin(self):
         self.enable_pin()
@@ -634,6 +720,21 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("select.className='appSelect'", source)
         self.assertIn(".tileform.has-browser > .appSelect { display:none; }", source)
         self.assertNotIn(".tileform.has-browser select { display:none; }", source)
+
+    def test_backup_restore_ui_uses_local_api_and_text_content(self):
+        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        backup_functions = source[
+            source.index("function backupLabel"):source.index("// Keyboard navigation")
+        ]
+        self.assertIn("fetch('/api/backups'", backup_functions)
+        self.assertIn("fetch('/api/backups/restore'", backup_functions)
+        self.assertIn("option.textContent=backupLabel(backup)", backup_functions)
+        self.assertNotIn("innerHTML", backup_functions)
+        self.assertIn('de:backup_title) echo "Sicherungen"', installer)
+        self.assertIn('en:backup_title) echo "Backups"', installer)
 
 
 if __name__ == "__main__":

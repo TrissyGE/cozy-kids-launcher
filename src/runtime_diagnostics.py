@@ -21,6 +21,7 @@ _SAFE_EVENT_FIELDS = {
     "auth.throttled": set(),
     "config.imported": {"configVersion"},
     "config.migrated": {"configVersion"},
+    "config.restored": {"configVersion"},
     "config.saved": {"configVersion"},
     "diagnostics.exported": set(),
     "launcher.recovered": {"attempt"},

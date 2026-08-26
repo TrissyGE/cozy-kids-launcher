@@ -23,6 +23,11 @@ from config_store import (
     migrate_config,
     read_config,
 )
+from backup_store import (
+    create_pre_restore_backup,
+    discover_config_backups,
+    read_config_backup,
+)
 from process_state import (
     owned_process_alive,
     remove_process_record,
@@ -44,6 +49,7 @@ UPDATE_CHANNEL_FILE = os.path.join(APP_ROOT, "update-channel")
 LATEST_RELEASE_API = "https://api.github.com/repos/TrissyGE/cozy-kids-launcher/releases/latest"
 LEGACY_VERSION_URL = "https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION"
 CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
+BACKUP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}-backups")
 LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
@@ -342,6 +348,59 @@ def load_cfg():
 def save_cfg(data):
     data, _ = migrate_config(data)
     atomic_write_config(CFG, data)
+
+
+def write_browser_override(data):
+    browser_file = os.path.join(os.path.dirname(CFG), "browser")
+    browser = data.get("browser", "")
+    try:
+        if browser:
+            with open(browser_file, "w", encoding="utf-8") as handle:
+                handle.write(browser)
+        else:
+            os.unlink(browser_file)
+    except FileNotFoundError:
+        pass
+    except OSError:
+        pass
+
+
+def available_config_backups():
+    backups = []
+    for metadata in discover_config_backups(BACKUP_ROOT):
+        try:
+            raw = read_config_backup(BACKUP_ROOT, metadata["id"])
+            validated = validate_config(raw, existing_pin_hash="")
+        except (FileNotFoundError, OSError, ValueError):
+            continue
+        backups.append({
+            **metadata,
+            "configVersion": validated.get(
+                "configVersion",
+                CURRENT_CONFIG_VERSION,
+            ),
+        })
+    return backups
+
+
+def restore_config_backup(backup_id):
+    current = load_cfg()
+    raw = read_config_backup(BACKUP_ROOT, backup_id)
+    restored = validate_config(
+        raw,
+        existing_pin_hash=current.get("pinHash", ""),
+    )
+    safety_backup = create_pre_restore_backup(BACKUP_ROOT, current)
+    save_cfg(restored)
+    write_browser_override(restored)
+    log_runtime_event(
+        "config.restored",
+        configVersion=restored.get(
+            "configVersion",
+            CURRENT_CONFIG_VERSION,
+        ),
+    )
+    return restored, safety_backup
 
 
 def parse_desktop_file(path):
@@ -948,6 +1007,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             ])
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
+        if self.path == "/api/backups":
+            data = load_cfg()
+            if not self.require_admin(data):
+                return
+            return self.json_response({"backups": available_config_backups()})
         if self.path == "/api/export-config":
             data = load_cfg()
             if not self.require_admin(data):
@@ -1001,14 +1065,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
-            browser = data.get("browser", "")
-            if browser:
-                try:
-                    browser_file = os.path.join(os.path.dirname(CFG), "browser")
-                    with open(browser_file, "w", encoding="utf-8") as f:
-                        f.write(browser)
-                except Exception:
-                    pass
+            write_browser_override(data)
             log_runtime_event(
                 "config.saved",
                 configVersion=data.get("configVersion", CURRENT_CONFIG_VERSION),
@@ -1094,6 +1151,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     allow_pin_hash="pinHash" in data,
                 )
                 save_cfg(imported)
+                write_browser_override(imported)
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
@@ -1104,6 +1162,46 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 configVersion=imported.get("configVersion", CURRENT_CONFIG_VERSION),
             )
             self.json_response({"status": "ok"})
+            return
+        if action == "api/backups/restore":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            data = self.read_json_body()
+            if data is None:
+                return
+            backup_id = data.get("backupId")
+            if not isinstance(backup_id, str):
+                self.json_response(
+                    {"status": "error", "message": "Invalid backup identifier"},
+                    400,
+                )
+                return
+            try:
+                restored, safety_backup = restore_config_backup(backup_id)
+            except FileNotFoundError as exc:
+                self.json_response(
+                    {"status": "error", "message": str(exc)},
+                    404,
+                )
+                return
+            except ValueError as exc:
+                self.json_response(
+                    {"status": "error", "message": str(exc)},
+                    400,
+                )
+                return
+            except OSError:
+                self.json_response(
+                    {"status": "error", "message": "Backup could not be restored"},
+                    500,
+                )
+                return
+            self.json_response({
+                "status": "ok",
+                "config": public_config(restored),
+                "safetyBackupId": safety_backup["id"],
+            })
             return
         if action == "shutdown":
             if not self.require_admin():

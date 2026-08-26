@@ -13,6 +13,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 - A launcher file lock prevents duplicate runtime stacks. Process records bind PIDs to kernel start times and roles, so stale files cannot target reused PIDs or unrelated browsers.
 - The launcher supervises its local server, replaces a failed runtime stack atomically, and stops after a bounded retry window instead of leaving a blank or endlessly restarting kiosk.
 - Tile launches use an isolated process supervisor and Linux subreaper. Overlay, tile changes, updates, and launcher shutdown terminate only that recorded tree; command-name and active-window kill fallbacks are gone.
+- Parent settings list validated local configuration backups without exposing their contents or paths. Restores preserve the current PIN and create a private pre-restore snapshot.
 - Standard-library unit and HTTP integration tests run in CI on supported Python versions.
 
 ## Completed release foundation
