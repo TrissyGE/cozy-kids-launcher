@@ -207,6 +207,14 @@ class LaunchActionTests(unittest.TestCase):
             "argv": ["paint-app", "--title", "Kids mode"],
         })
 
+    def test_kde_wrapper_is_removed_before_process_supervision(self):
+        self.assertEqual(
+            server_module.direct_app_command(
+                ["kstart", "--fullscreen", "kturtle", "--demo"]
+            ),
+            ["kturtle", "--demo"],
+        )
+
     def test_invalid_special_web_url_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "Invalid browser URL"):
             server_module.resolve_tile_action({"cmd": ["special:browser:file:///etc/passwd"]})
@@ -349,7 +357,10 @@ class ServerApiTests(unittest.TestCase):
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
         server_module.BROWSER_PIDFILE = str(cache_dir / "browser.pid")
-        server_module.EXTERNAL_BROWSER_PIDFILE = str(cache_dir / "external-browser.pid")
+        server_module.TILE_PROCESS_PIDFILE = str(cache_dir / "tile-process.pid")
+        server_module.OVERLAY_PIDFILE = str(cache_dir / "overlay.pid")
+        server_module.PROCESS_SUPERVISOR = str(app_root / "process_supervisor.py")
+        server_module.OVERLAY_SCRIPT = str(app_root / "overlay.py")
         server_module.EXIT_FLAGFILE = str(cache_dir / "exit-requested")
         server_module.clear_admin_sessions()
         server_module.clear_pin_failures()

@@ -106,6 +106,7 @@ class LauncherLifecycleTests(unittest.TestCase):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+            tile_supervisor = None
             try:
                 deadline = time.monotonic() + 10
                 while time.monotonic() < deadline:
@@ -202,12 +203,46 @@ class LauncherLifecycleTests(unittest.TestCase):
                 else:
                     self.fail("Successful recovery was not recorded in diagnostics")
 
+                tile_record = cache / "tile-process.pid"
+                supervisor_script = app_root / "process_supervisor.py"
+                tile_supervisor = subprocess.Popen(
+                    [
+                        sys.executable,
+                        str(supervisor_script),
+                        "--record",
+                        str(tile_record),
+                        "--marker",
+                        str(supervisor_script),
+                        "--",
+                        sys.executable,
+                        "-c",
+                        "import time; time.sleep(30)",
+                    ],
+                    env=environment,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                tile_owned = lambda: process_state.owned_process_alive(
+                    str(tile_record),
+                    "tile-process",
+                    str(supervisor_script),
+                )
+                deadline = time.monotonic() + 5
+                while not tile_owned() and time.monotonic() < deadline:
+                    time.sleep(0.05)
+                self.assertTrue(tile_owned())
+
                 os.kill(recovered_server["pid"], signal.SIGKILL)
                 self.assertEqual(first.wait(timeout=10), 1)
+                self.assertEqual(tile_supervisor.wait(timeout=5), 0)
             finally:
                 if first.poll() is None:
                     first.terminate()
                 first.wait(timeout=10)
+                if tile_supervisor is not None and tile_supervisor.poll() is None:
+                    tile_supervisor.terminate()
+                    tile_supervisor.wait(timeout=5)
 
             self.assertFalse(
                 process_state.owned_process_alive(str(cache / "browser.pid"), "browser")

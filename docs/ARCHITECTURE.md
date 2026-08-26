@@ -69,10 +69,14 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - desktop shortcut reopens kids mode
 - shutdown listener allows safe local poweroff
 - the launcher holds a non-blocking file lock, so autostart and shortcut clicks cannot create duplicate browser/server stacks
-- server, main browser, external browser, and watchdog records combine PID, kernel start time, and a fixed role
+- server, main browser, active-tile supervisor, overlay, and watchdog records combine PID, kernel start time, and a fixed role
 - stale or forged records are discarded without signalling their numeric PID, preventing PID reuse from targeting an unrelated process
 - Firefox and Chromium use dedicated launcher profiles; ownership never falls back to a global browser `pgrep`
 - launcher cleanup and updates terminate only processes whose complete identity still matches their record
+- local apps, media players, and external browsers run below one active-tile supervisor instead of being found later by command name
+- the supervisor starts in an isolated session and acts as a Linux child subreaper, retaining ownership across normal forks and double-forks
+- the overlay closes the verified supervisor; it never kills every matching executable or falls back to closing whichever window happens to be active
+- launching another tile, exiting, updating, or stopping the launcher first terminates the previous tile's complete owned process tree
 - the launcher checks its local server while the kiosk is open; a failed server causes the owned browser and watchdog to close before the complete stack is restarted
 - runtime recovery is limited to three attempts within 60 seconds with a short increasing delay; exhausting the limit closes the stack and shows a localized error instead of looping or leaving a blank kiosk
 - the launcher's `EXIT` trap applies the same owned-process cleanup when the launcher itself fails or is stopped

@@ -1034,6 +1034,7 @@ render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
 install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"
+install -m 0755 "$SRC_DIR/process_supervisor.py" "$APP_ROOT/process_supervisor.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
