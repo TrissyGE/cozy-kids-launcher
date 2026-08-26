@@ -112,6 +112,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "runtime_diagnostics.py"
                 ).is_file()
             )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
+                    / "process_state.py"
+                ).is_file()
+            )
         self.assertEqual(installed["configVersion"], 1)
 
 

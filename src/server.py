@@ -23,6 +23,12 @@ from config_store import (
     migrate_config,
     read_config,
 )
+from process_state import (
+    owned_process_alive,
+    remove_process_record,
+    terminate_owned_process,
+    write_process_record,
+)
 from runtime_diagnostics import (
     build_diagnostics,
     close_runtime_logging,
@@ -1040,13 +1046,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     f.write("1")
             except Exception:
                 pass
-            if os.path.isfile(BROWSER_PIDFILE):
-                try:
-                    with open(BROWSER_PIDFILE, "r", encoding="utf-8") as f:
-                        pid = int(f.read().strip())
-                    os.kill(pid, 15)
-                except (ValueError, ProcessLookupError, PermissionError):
-                    pass
+            terminate_owned_process(BROWSER_PIDFILE, "browser")
             self.send_response(204)
             self.end_headers()
             # Shutdown the HTTP server so launcher.sh exits cleanly
@@ -1205,11 +1205,30 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         stderr=subprocess.DEVNULL,
                     )
                     try:
-                        os.makedirs(os.path.dirname(EXTERNAL_BROWSER_PIDFILE), exist_ok=True)
-                        with open(EXTERNAL_BROWSER_PIDFILE, "w", encoding="utf-8") as f:
-                            f.write(str(proc.pid))
+                        write_process_record(
+                            EXTERNAL_BROWSER_PIDFILE,
+                            proc.pid,
+                            "external-browser",
+                        )
                     except OSError:
-                        pass
+                        try:
+                            proc.terminate()
+                        except OSError:
+                            pass
+                        log_runtime_event(
+                            "launch.failed",
+                            level="warning",
+                            actionType="web",
+                            result="failure",
+                        )
+                        self.json_response(
+                            {
+                                "status": "error",
+                                "message": "Browser process ownership could not be established",
+                            },
+                            503,
+                        )
+                        return
                     start_overlay("external", url=url, process_pid=proc.pid)
                 elif shutil.which("xdg-open"):
                     subprocess.Popen(["xdg-open", url], env=dict(os.environ))
@@ -1266,12 +1285,20 @@ def main():
         configure_runtime_logging(LOG_FILE)
     except OSError:
         pass
-    log_runtime_event("server.started", version=get_version())
+    server_marker = os.path.abspath(__file__)
+    if owned_process_alive(PIDFILE, "server", server_marker):
+        log_runtime_event("server.duplicate", level="warning")
+        close_runtime_logging()
+        return
     try:
         with create_server() as httpd:
-            os.makedirs(os.path.dirname(PIDFILE), exist_ok=True)
-            with open(PIDFILE, "w", encoding="utf-8") as fh:
-                fh.write(str(os.getpid()))
+            write_process_record(
+                PIDFILE,
+                os.getpid(),
+                "server",
+                marker=server_marker,
+            )
+            log_runtime_event("server.started", version=get_version())
             httpd.serve_forever()
     except Exception as exc:
         log_runtime_event(
@@ -1281,6 +1308,7 @@ def main():
         )
         raise
     finally:
+        remove_process_record(PIDFILE, expected_pid=os.getpid())
         log_runtime_event("server.stopped")
         close_runtime_logging()
 

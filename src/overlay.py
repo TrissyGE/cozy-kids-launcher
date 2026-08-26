@@ -9,6 +9,12 @@ import time
 import tkinter as tk
 from urllib.request import Request, urlopen
 
+from process_state import (
+    owned_process,
+    owned_process_alive,
+    terminate_owned_process,
+)
+
 HOME = os.path.expanduser("~")
 APP_ID = "{{APP_ID}}"
 APP_NAME = "{{APP_NAME}}"
@@ -53,10 +59,11 @@ def focus_launcher():
     except Exception:
         pass
     try:
-        with open(BROWSER_PIDFILE, "r", encoding="utf-8") as f:
-            pid = int(f.read().strip())
+        record = owned_process(BROWSER_PIDFILE, "browser")
+        if not record:
+            return
         subprocess.run(
-            ["xdotool", "search", "--pid", str(pid), "windowactivate"],
+            ["xdotool", "search", "--pid", str(record["pid"]), "windowactivate"],
             capture_output=True, timeout=3, check=False,
         )
     except Exception:
@@ -65,24 +72,7 @@ def focus_launcher():
 
 def kill_browser_by_pidfile():
     try:
-        if os.path.isfile(EXTERNAL_BROWSER_PIDFILE):
-            with open(EXTERNAL_BROWSER_PIDFILE, "r", encoding="utf-8") as f:
-                pid = int(f.read().strip())
-            os.kill(pid, 15)
-            for _ in range(10):
-                try:
-                    os.kill(pid, 0)
-                    time.sleep(0.2)
-                except ProcessLookupError:
-                    break
-            try:
-                os.kill(pid, 9)
-            except ProcessLookupError:
-                pass
-    except Exception:
-        pass
-    try:
-        os.remove(EXTERNAL_BROWSER_PIDFILE)
+        terminate_owned_process(EXTERNAL_BROWSER_PIDFILE, "external-browser")
     except Exception:
         pass
 
@@ -191,7 +181,9 @@ class AppOverlay:
         self.reset_hide_timer()
 
     def on_close(self):
-        if self.browser_pid:
+        if self.mode == "external":
+            kill_browser_by_pidfile()
+        elif self.browser_pid:
             try:
                 os.kill(self.browser_pid, 15)
                 for _ in range(10):
@@ -206,8 +198,6 @@ class AppOverlay:
                     pass
             except Exception:
                 pass
-        if self.mode == "external":
-            kill_browser_by_pidfile()
         if self.mode == "local" and self.app_cmd and not self.browser_pid:
             kill_local_app(self.app_cmd)
         focus_launcher()
@@ -215,18 +205,17 @@ class AppOverlay:
         sys.exit(0)
 
     def poll_browser(self):
-        if self.browser_pid:
+        if self.mode == "external":
+            if not owned_process_alive(
+                EXTERNAL_BROWSER_PIDFILE,
+                "external-browser",
+            ):
+                self.on_close()
+                return
+        elif self.browser_pid:
             try:
                 os.kill(self.browser_pid, 0)
             except ProcessLookupError:
-                self.on_close()
-                return
-        if not self.browser_pid and os.path.isfile(EXTERNAL_BROWSER_PIDFILE):
-            try:
-                with open(EXTERNAL_BROWSER_PIDFILE, "r", encoding="utf-8") as f:
-                    pid = int(f.read().strip())
-                os.kill(pid, 0)
-            except (ProcessLookupError, ValueError, FileNotFoundError):
                 self.on_close()
                 return
         self.root.after(1000, self.poll_browser)

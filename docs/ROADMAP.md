@@ -26,7 +26,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 ### Runtime stability
 
-- [ ] Enforce a single launcher instance and make process ownership explicit
+- [x] Enforce a single launcher instance and make process ownership explicit
 - [ ] Detect server and launcher failures and recover without leaving a blank kiosk window
 - [ ] Track launched child processes reliably and close only the process tree owned by its tile
 - [ ] Make backup discovery and restoration available from Parent settings

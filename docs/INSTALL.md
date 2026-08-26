@@ -15,6 +15,7 @@ It downloads the launcher, installs it for your user, and sets everything up aut
 - A Linux computer (Ubuntu, Linux Mint, or similar)
 - Firefox or Chromium browser installed (usually already there)
 - Python 3 (usually already there)
+- `flock` from `util-linux` (preinstalled on Ubuntu, Linux Mint, and Zorin OS)
 - Internet connection for the download
 
 ## What Happens After Installing
