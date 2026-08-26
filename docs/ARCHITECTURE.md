@@ -73,6 +73,9 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - stale or forged records are discarded without signalling their numeric PID, preventing PID reuse from targeting an unrelated process
 - Firefox and Chromium use dedicated launcher profiles; ownership never falls back to a global browser `pgrep`
 - launcher cleanup and updates terminate only processes whose complete identity still matches their record
+- the launcher checks its local server while the kiosk is open; a failed server causes the owned browser and watchdog to close before the complete stack is restarted
+- runtime recovery is limited to three attempts within 60 seconds with a short increasing delay; exhausting the limit closes the stack and shows a localized error instead of looping or leaving a blank kiosk
+- the launcher's `EXIT` trap applies the same owned-process cleanup when the launcher itself fails or is stopped
 
 ### 7. Configuration lifecycle
 
@@ -87,6 +90,7 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - the server writes size-limited JSON-line event logs under `~/.local/state/cozy-kids-launcher/`
 - rotation retains three small backup files instead of allowing unbounded growth
 - event names and detail fields use a fixed privacy allowlist; arbitrary messages and configuration values are rejected
+- a successful automatic recovery records only its bounded attempt number, never process IDs or user data
 - the Parent settings download contains technical versions, configuration readability and schema version, and recent allowlisted events
 - diagnostics never include PIN data, titles, tile labels, commands, URLs, usernames, home paths, or browser-profile data
 - logs and diagnostics remain local unless a parent deliberately shares the downloaded file

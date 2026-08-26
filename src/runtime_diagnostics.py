@@ -23,6 +23,7 @@ _SAFE_EVENT_FIELDS = {
     "config.migrated": {"configVersion"},
     "config.saved": {"configVersion"},
     "diagnostics.exported": set(),
+    "launcher.recovered": {"attempt"},
     "launch.failed": {"actionType", "result"},
     "launch.started": {"actionType"},
     "pin.changed": set(),
@@ -94,6 +95,9 @@ def _safe_timestamp(value):
 def _safe_detail(name, value):
     if name == "actionType" and value in _SAFE_ACTION_TYPES:
         return value
+    if name == "attempt" and not isinstance(value, bool):
+        if isinstance(value, int) and 1 <= value <= 100:
+            return value
     if name == "configVersion" and not isinstance(value, bool):
         if isinstance(value, int) and 0 <= value <= 10_000:
             return value

@@ -11,6 +11,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 - User-controlled tile labels and emoji are rendered as text rather than executable HTML.
 - Runtime events use bounded rotation, private file permissions, and a fixed privacy allowlist. Parent diagnostics exclude configuration values, PIN data, commands, URLs, usernames, and personal paths.
 - A launcher file lock prevents duplicate runtime stacks. Process records bind PIDs to kernel start times and roles, so stale files cannot target reused PIDs or unrelated browsers.
+- The launcher supervises its local server, replaces a failed runtime stack atomically, and stops after a bounded retry window instead of leaving a blank or endlessly restarting kiosk.
 - Standard-library unit and HTTP integration tests run in CI on supported Python versions.
 
 ## Completed release foundation
@@ -27,7 +28,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 
 1. Split the large frontend template into focused CSS and JavaScript modules while keeping a dependency-free production build.
 2. Continue splitting server responsibilities into authentication, application discovery, process launching, update discovery, and timer modules.
-3. Extend explicit ownership from the core launcher stack to complete per-tile child process trees and crash recovery.
+3. Extend explicit ownership from the core launcher stack to complete per-tile child process trees.
 
 ## Then: platform confidence
 
