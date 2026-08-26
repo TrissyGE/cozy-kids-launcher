@@ -57,6 +57,20 @@ def base_config(pin_hash=""):
     }
 
 
+class ServerLifecycleTests(unittest.TestCase):
+    def test_main_refuses_a_second_owned_server_instance(self):
+        with mock.patch.object(server_module, "configure_runtime_logging"), \
+                mock.patch.object(server_module, "owned_process_alive", return_value=True), \
+                mock.patch.object(server_module, "create_server") as create_server, \
+                mock.patch.object(server_module, "log_runtime_event") as log_event, \
+                mock.patch.object(server_module, "close_runtime_logging") as close_logging:
+            server_module.main()
+
+        create_server.assert_not_called()
+        log_event.assert_called_once_with("server.duplicate", level="warning")
+        close_logging.assert_called_once_with()
+
+
 class ConfigValidationTests(unittest.TestCase):
     def test_legacy_config_is_upgraded_to_the_current_schema(self):
         legacy = base_config("0123456789abcdef")

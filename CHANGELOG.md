@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Extracted schema migration and atomic configuration storage into a dedicated runtime module
 - Added privacy-allowlisted JSON runtime events with bounded log rotation and private file permissions
 - Added an authenticated diagnostics download that excludes PINs, family settings, commands, URLs, usernames, and personal paths
+- Enforced a single launcher instance and replaced raw browser/server PID files with role-bound kernel process identities
+- Removed global browser process guessing and isolated both Chromium and Firefox launcher profiles
 
 ## [0.4.1] - 2026-08-25
 

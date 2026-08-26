@@ -29,6 +29,7 @@ _SAFE_EVENT_FIELDS = {
     "pin.removed": set(),
     "request.rejected": {"statusCode"},
     "server.crashed": {"exceptionType"},
+    "server.duplicate": set(),
     "server.started": {"version"},
     "server.stopped": set(),
     "timer.extended": set(),

@@ -68,6 +68,11 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - autostart launches kids mode after login
 - desktop shortcut reopens kids mode
 - shutdown listener allows safe local poweroff
+- the launcher holds a non-blocking file lock, so autostart and shortcut clicks cannot create duplicate browser/server stacks
+- server, main browser, external browser, and watchdog records combine PID, kernel start time, and a fixed role
+- stale or forged records are discarded without signalling their numeric PID, preventing PID reuse from targeting an unrelated process
+- Firefox and Chromium use dedicated launcher profiles; ownership never falls back to a global browser `pgrep`
+- launcher cleanup and updates terminate only processes whose complete identity still matches their record
 
 ### 7. Configuration lifecycle
 

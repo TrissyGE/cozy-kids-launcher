@@ -11,6 +11,8 @@ import tkinter as tk
 from tkinter import font as tkfont
 import urllib.request
 
+from process_state import terminate_owned_process
+
 HOME = os.path.expanduser("~")
 APP_ID = "{{APP_ID}}"
 APP_NAME = "{{APP_NAME}}"
@@ -55,20 +57,7 @@ def api(path, data=None):
 
 def kill_browser():
     try:
-        if os.path.isfile(BROWSER_PIDFILE):
-            with open(BROWSER_PIDFILE, "r", encoding="utf-8") as f:
-                pid = int(f.read().strip())
-            os.kill(pid, 15)
-            for _ in range(10):
-                try:
-                    os.kill(pid, 0)
-                    time.sleep(0.2)
-                except ProcessLookupError:
-                    break
-            try:
-                os.kill(pid, 9)
-            except ProcessLookupError:
-                pass
+        terminate_owned_process(BROWSER_PIDFILE, "browser")
     except Exception:
         pass
 

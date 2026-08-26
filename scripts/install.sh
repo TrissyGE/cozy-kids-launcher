@@ -696,6 +696,7 @@ find_browser() {
 BROWSER_CMD="$(find_browser)"
 command -v python3 >/dev/null 2>&1 || die "python3 is required"
 command -v install >/dev/null 2>&1 || die "install is required"
+command -v flock >/dev/null 2>&1 || die "flock is required (provided by util-linux)"
 
 # Summary
 echo ""
@@ -1025,6 +1026,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
+install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
