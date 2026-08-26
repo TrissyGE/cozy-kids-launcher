@@ -77,6 +77,15 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - files from a schema newer than the installed launcher are rejected instead of being rewritten
 - imported and edited configurations pass through the same migration and validation boundary
 
+### 8. Runtime diagnostics
+
+- the server writes size-limited JSON-line event logs under `~/.local/state/cozy-kids-launcher/`
+- rotation retains three small backup files instead of allowing unbounded growth
+- event names and detail fields use a fixed privacy allowlist; arbitrary messages and configuration values are rejected
+- the Parent settings download contains technical versions, configuration readability and schema version, and recent allowlisted events
+- diagnostics never include PIN data, titles, tile labels, commands, URLs, usernames, home paths, or browser-profile data
+- logs and diagnostics remain local unless a parent deliberately shares the downloaded file
+
 ## Why not do everything in Plasma directly?
 
 Because desktop-shell configuration becomes brittle fast:

@@ -331,6 +331,7 @@ class ServerApiTests(unittest.TestCase):
         server_module.UPDATE_SCRIPT = str(app_root / "update.sh")
         server_module.UPDATE_CHANNEL_FILE = str(app_root / "update-channel")
         server_module.RECOMMENDATIONS_FILE = str(app_root / "recommendations.json")
+        server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
         server_module.BROWSER_PIDFILE = str(cache_dir / "browser.pid")
@@ -427,6 +428,37 @@ class ServerApiTests(unittest.TestCase):
         trigger = Path(server_module.APP_ROOT) / "update-trigger.sh"
         self.assertIn(str(update_script), trigger.read_text(encoding="utf-8"))
         popen.assert_not_called()
+
+    def test_diagnostics_require_parent_access_and_exclude_family_values(self):
+        self.enable_pin()
+        status, _, _ = self.request("/api/diagnostics")
+        self.assertEqual(status, 403)
+
+        cookie = self.authenticate()
+        logger = server_module.configure_runtime_logging(server_module.LOG_FILE)
+        try:
+            server_module.log_runtime_event(
+                "server.started",
+                version="0.5.0",
+            )
+        finally:
+            server_module.close_runtime_logging()
+        status, data, headers = self.request(
+            "/api/diagnostics",
+            cookie=cookie,
+        )
+
+        serialized = json.dumps(data)
+        config = server_module.load_cfg()
+        self.assertEqual(status, 200)
+        self.assertIn("cozy-kids-diagnostics.json", headers["Content-Disposition"])
+        self.assertEqual(data["configuration"]["schemaVersion"], 1)
+        self.assertIn("server.started", serialized)
+        self.assertNotIn(config["title"], serialized)
+        self.assertNotIn(config["tiles"][0]["label"], serialized)
+        self.assertNotIn(config["tiles"][0]["cmd"][0], serialized)
+        self.assertNotIn(config["pinHash"], serialized)
+        self.assertNotIn(str(self.temp_dir.name), serialized)
 
     def test_parent_actions_require_authenticated_session(self):
         self.enable_pin()
@@ -554,6 +586,16 @@ class FrontendSafetyTests(unittest.TestCase):
         source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
         self.assertIn("fetch('/api/update/status'", source)
         self.assertNotIn("raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION", source)
+
+    def test_diagnostics_download_is_local_and_bilingual(self):
+        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("fetch('/api/diagnostics')", source)
+        self.assertIn("{{LABEL_EXPORT_DIAGNOSTICS}}", source)
+        self.assertIn('de:export_diagnostics) echo "Diagnose herunterladen"', installer)
+        self.assertIn('en:export_diagnostics) echo "Download diagnostics"', installer)
 
     def test_theme_and_browser_labels_follow_the_interface_language(self):
         source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")

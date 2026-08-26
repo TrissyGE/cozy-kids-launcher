@@ -13,6 +13,12 @@ The launcher is designed to run locally:
 
 No cloud backend is required.
 
+The launcher keeps small, rotating technical event logs locally. Parents can
+download a diagnostics JSON file from Parent settings when troubleshooting.
+Both the logs and the export use a fixed allowlist and exclude PIN data,
+personal labels, tile commands, URLs, usernames, and local paths. Nothing is
+uploaded automatically.
+
 ## What parents should review before using
 
 - which applications are visible to the child

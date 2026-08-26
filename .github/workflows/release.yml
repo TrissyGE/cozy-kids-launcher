@@ -69,7 +69,7 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Compile Python templates
-        run: python -m py_compile src/server.py src/config_store.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+        run: python -m py_compile src/server.py src/config_store.py src/runtime_diagnostics.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 
       - name: Validate data and shell syntax
         shell: bash
