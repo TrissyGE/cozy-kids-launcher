@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Added an authenticated diagnostics download that excludes PINs, family settings, commands, URLs, usernames, and personal paths
 - Enforced a single launcher instance and replaced raw browser/server PID files with role-bound kernel process identities
 - Removed global browser process guessing and isolated both Chromium and Firefox launcher profiles
+- Added bounded full-stack recovery when the local server fails, closing the owned kiosk before restarting instead of leaving a blank window
+- Added a localized terminal error state after repeated failures and privacy-safe recovery attempt diagnostics
 
 ## [0.4.1] - 2026-08-25
 

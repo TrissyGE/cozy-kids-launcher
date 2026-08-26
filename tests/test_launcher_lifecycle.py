@@ -1,5 +1,7 @@
 import getpass
+import json
 import os
+import signal
 import shutil
 import socket
 import subprocess
@@ -35,10 +37,12 @@ class LauncherLifecycleTests(unittest.TestCase):
         )
         self.assertIn("flock -n 9", source)
         self.assertIn('process_alive "$BROWSER_PIDFILE" browser', source)
+        self.assertIn('process_alive "$PIDFILE" server', source)
+        self.assertIn("RECOVERY_MAX_ATTEMPTS", source)
         self.assertNotIn("pgrep", source)
         self.assertNotIn('kill "$(cat "$PIDFILE"', source)
 
-    def test_second_launcher_exits_without_starting_another_browser(self):
+    def test_singleton_recovers_server_once_and_stops_after_retry_limit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             home = root / "home"
@@ -61,7 +65,12 @@ class LauncherLifecycleTests(unittest.TestCase):
             environment["PATH"] = f"{bin_dir}{os.pathsep}{environment['PATH']}"
             environment["HOME"] = str(home)
             environment["COZY_KIDS_PORT"] = str(free_port())
+            environment["COZY_KIDS_RECOVERY_MAX_ATTEMPTS"] = "1"
+            environment["COZY_KIDS_RECOVERY_BACKOFF_SECONDS"] = "0"
+            environment["COZY_KIDS_RECOVERY_WINDOW_SECONDS"] = "60"
             environment["FAKE_BROWSER_INVOCATIONS"] = str(invocations)
+            environment.pop("DISPLAY", None)
+            environment.pop("WAYLAND_DISPLAY", None)
 
             subprocess.run(
                 [
@@ -87,6 +96,9 @@ class LauncherLifecycleTests(unittest.TestCase):
             app_root = home / ".local" / "share" / "cozy-kids-launcher"
             (app_root / "timer_watchdog.py").unlink()
             launcher = home / ".local" / "bin" / "cozy-kids-launcher"
+            installed_launcher = launcher.read_text(encoding="utf-8")
+            self.assertIn("could not restart after several attempts", installed_launcher)
+            self.assertNotIn("{{RUNTIME_FAILURE_", installed_launcher)
             cache = home / ".cache" / "cozy-kids-launcher"
             first = subprocess.Popen(
                 [str(launcher)],
@@ -127,6 +139,71 @@ class LauncherLifecycleTests(unittest.TestCase):
                 )
                 self.assertFalse(Path(f"/proc/{server_record['pid']}/fd/9").exists())
                 self.assertFalse(Path(f"/proc/{browser_record['pid']}/fd/9").exists())
+
+                os.kill(server_record["pid"], signal.SIGKILL)
+                deadline = time.monotonic() + 10
+                while time.monotonic() < deadline:
+                    recovered_server = process_state.owned_process(
+                        str(cache / "server.pid"),
+                        "server",
+                    )
+                    recovered_browser = process_state.owned_process(
+                        str(cache / "browser.pid"),
+                        "browser",
+                    )
+                    invocation_lines = (
+                        invocations.read_text(encoding="utf-8").splitlines()
+                        if invocations.is_file()
+                        else []
+                    )
+                    if (
+                        recovered_server
+                        and recovered_server["startTime"] != server_record["startTime"]
+                        and recovered_browser
+                        and len(invocation_lines) == 2
+                    ):
+                        break
+                    if first.poll() is not None:
+                        self.fail("Launcher exited instead of recovering its server")
+                    time.sleep(0.1)
+                else:
+                    self.fail("Launcher did not recover its server and browser")
+
+                self.assertNotEqual(
+                    process_state.process_start_time(browser_record["pid"]),
+                    browser_record["startTime"],
+                )
+                self.assertEqual(
+                    invocation_lines,
+                    [str(browser_record["pid"]), str(recovered_browser["pid"])],
+                )
+                runtime_log = (
+                    home
+                    / ".local"
+                    / "state"
+                    / "cozy-kids-launcher"
+                    / "runtime.jsonl"
+                )
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline:
+                    events = [
+                        json.loads(line)
+                        for line in runtime_log.read_text(
+                            encoding="utf-8"
+                        ).splitlines()
+                    ]
+                    if any(
+                        event.get("event") == "launcher.recovered"
+                        and event.get("details", {}).get("attempt") == 1
+                        for event in events
+                    ):
+                        break
+                    time.sleep(0.1)
+                else:
+                    self.fail("Successful recovery was not recorded in diagnostics")
+
+                os.kill(recovered_server["pid"], signal.SIGKILL)
+                self.assertEqual(first.wait(timeout=10), 1)
             finally:
                 if first.poll() is None:
                     first.terminate()
@@ -137,6 +214,10 @@ class LauncherLifecycleTests(unittest.TestCase):
             )
             self.assertFalse(
                 process_state.owned_process_alive(str(cache / "server.pid"), "server")
+            )
+            self.assertEqual(
+                invocations.read_text(encoding="utf-8").splitlines(),
+                [str(browser_record["pid"]), str(recovered_browser["pid"])],
             )
 
 

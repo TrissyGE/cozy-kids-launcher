@@ -202,6 +202,8 @@ text() {
     de:update_now) echo "Jetzt aktualisieren" ;;
     de:update_progress) echo "Update wird installiert... bitte warten" ;;
     de:update_confirm) echo "Browser wird geschlossen und das Update installiert. Fortfahren?" ;;
+    de:runtime_failure_title) echo "Neustart fehlgeschlagen" ;;
+    de:runtime_failure_body) echo "Cozy Kids Launcher konnte nach mehreren Versuchen nicht neu gestartet werden. Bitte starte den Kindermodus erneut. Wenn das Problem wiederkehrt, lade nach einem erfolgreichen Start die Diagnose in den Eltern-Einstellungen herunter." ;;
     de:install_done) echo "Installation abgeschlossen." ;;
     de:next_steps) echo "Du kannst Cozy Kids Launcher jetzt über den Desktop-Shortcut oder nach dem nächsten Login starten." ;;
     de:recommended_title) echo "Empfohlene Apps" ;;
@@ -263,6 +265,8 @@ text() {
     en:update_now) echo "Update now" ;;
     en:update_progress) echo "Installing update... please wait" ;;
     en:update_confirm) echo "Close browser and install update now?" ;;
+    en:runtime_failure_title) echo "Restart failed" ;;
+    en:runtime_failure_body) echo "Cozy Kids Launcher could not restart after several attempts. Please start kids mode again. If the problem returns, download diagnostics from Parent settings after a successful start." ;;
     en:install_done) echo "Installation complete." ;;
     en:next_steps) echo "You can now launch Cozy Kids Launcher from the desktop shortcut or after the next login." ;;
     en:recommended_title) echo "Recommended apps" ;;
@@ -799,6 +803,7 @@ render_template() {
   export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
   export JSON_EXPORT_CONFIG JSON_IMPORT_CONFIG JSON_IMPORT_SUCCESS JSON_IMPORT_ERROR JSON_INVALID_CONFIG JSON_IMPORT_CONFIRM
   export UPDATE_CHECK UPDATE_AVAILABLE UPDATE_UP_TO_DATE UPDATE_ERROR VERSION_LABEL UPDATE_NOW UPDATE_PROGRESS UPDATE_CONFIRM
+  export RUNTIME_FAILURE_TITLE RUNTIME_FAILURE_BODY
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
@@ -875,6 +880,8 @@ VERSION_LABEL="$(text version_label)"
 UPDATE_NOW="$(text update_now)"
 UPDATE_PROGRESS="$(text update_progress)"
 UPDATE_CONFIRM="$(text update_confirm)"
+RUNTIME_FAILURE_TITLE="$(text runtime_failure_title)"
+RUNTIME_FAILURE_BODY="$(text runtime_failure_body)"
 DEFAULT_TILE_PAINT="$(text tile_paint)"
 DEFAULT_TILE_GAMES="$(text tile_games)"
 DEFAULT_TILE_MUSIC="$(text tile_music)"

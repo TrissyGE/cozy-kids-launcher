@@ -15,7 +15,7 @@ python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null
 ```
 
-The test suite renders the server template with test values, starts it on an ephemeral localhost port, and exercises the HTTP API against temporary config and cache directories. On Linux it also serves synthetic release and legacy archives from an ephemeral local HTTP server to test successful verification, checksum rejection, compatibility fallback, and fail-closed behavior. It does not touch an installed launcher.
+The test suite renders the server template with test values, starts it on an ephemeral localhost port, and exercises the HTTP API against temporary config and cache directories. On Linux it also serves synthetic release and legacy archives from an ephemeral local HTTP server to test successful verification, checksum rejection, compatibility fallback, and fail-closed behavior. The launcher lifecycle test performs an isolated installation, kills its temporary server, verifies a full-stack recovery, and confirms the retry limit cleans up every owned process. It does not touch an installed launcher.
 
 GitHub Actions runs the same checks on every pull request and on pushes to `main` and `develop` with the oldest and newest supported Python versions.
 

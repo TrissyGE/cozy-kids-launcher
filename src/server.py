@@ -1299,6 +1299,17 @@ def main():
                 marker=server_marker,
             )
             log_runtime_event("server.started", version=get_version())
+            try:
+                recovery_attempt = int(
+                    os.environ.get("COZY_KIDS_RECOVERY_ATTEMPT", "0")
+                )
+            except ValueError:
+                recovery_attempt = 0
+            if 1 <= recovery_attempt <= 100:
+                log_runtime_event(
+                    "launcher.recovered",
+                    attempt=recovery_attempt,
+                )
             httpd.serve_forever()
     except Exception as exc:
         log_runtime_event(

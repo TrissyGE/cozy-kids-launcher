@@ -63,6 +63,19 @@ class RuntimeDiagnosticsTests(unittest.TestCase):
             finally:
                 logger.close()
 
+    def test_recovery_attempt_is_bounded_and_privacy_safe(self):
+        event = runtime_diagnostics.sanitize_event(
+            "launcher.recovered",
+            details={"attempt": 2},
+        )
+
+        self.assertEqual(event["details"], {"attempt": 2})
+        with self.assertRaisesRegex(ValueError, "Unsafe runtime event detail"):
+            runtime_diagnostics.sanitize_event(
+                "launcher.recovered",
+                details={"attempt": "private"},
+            )
+
     def test_runtime_logging_failure_cannot_break_the_launcher(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             logger = runtime_diagnostics.configure_runtime_logging(
