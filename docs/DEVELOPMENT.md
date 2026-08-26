@@ -8,14 +8,14 @@ From the repository root:
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m py_compile src/server.py src/config_store.py src/runtime_diagnostics.py src/process_state.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py
+python3 -m py_compile src/server.py src/config_store.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py
 bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
 python3 -m py_compile scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null
 ```
 
-The test suite renders the server template with test values, starts it on an ephemeral localhost port, and exercises the HTTP API against temporary config and cache directories. On Linux it also serves synthetic release and legacy archives from an ephemeral local HTTP server to test successful verification, checksum rejection, compatibility fallback, and fail-closed behavior. The launcher lifecycle test performs an isolated installation, kills its temporary server, verifies a full-stack recovery, and confirms the retry limit cleans up every owned process. It does not touch an installed launcher.
+The test suite renders the server template with test values, starts it on an ephemeral localhost port, and exercises the HTTP API against temporary config and cache directories. On Linux it also serves synthetic release and legacy archives from an ephemeral local HTTP server to test successful verification, checksum rejection, compatibility fallback, and fail-closed behavior. The launcher lifecycle test performs an isolated installation, kills its temporary server, verifies a full-stack recovery, and confirms the retry limit cleans up every owned process. A separate process-supervisor test follows a forked child that ignores `SIGTERM` while proving an unrelated instance of the same executable remains alive. It does not touch an installed launcher.
 
 GitHub Actions runs the same checks on every pull request and on pushes to `main` and `develop` with the oldest and newest supported Python versions.
 

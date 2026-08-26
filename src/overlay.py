@@ -5,14 +5,15 @@ import json
 import os
 import subprocess
 import sys
-import time
 import tkinter as tk
 from urllib.request import Request, urlopen
 
 from process_state import (
     owned_process,
     owned_process_alive,
+    remove_process_record,
     terminate_owned_process,
+    write_process_record,
 )
 
 HOME = os.path.expanduser("~")
@@ -20,7 +21,16 @@ APP_ID = "{{APP_ID}}"
 APP_NAME = "{{APP_NAME}}"
 CACHE_DIR = os.path.join(HOME, ".cache", APP_ID)
 BROWSER_PIDFILE = os.path.join(CACHE_DIR, "browser.pid")
-EXTERNAL_BROWSER_PIDFILE = os.path.join(CACHE_DIR, "external-browser.pid")
+TILE_PROCESS_PIDFILE = os.path.join(CACHE_DIR, "tile-process.pid")
+OVERLAY_PIDFILE = os.path.join(CACHE_DIR, "overlay.pid")
+TILE_PROCESS_MARKER = os.path.join(
+    HOME,
+    ".local",
+    "share",
+    APP_ID,
+    "process_supervisor.py",
+)
+OVERLAY_MARKER = os.path.abspath(__file__)
 
 THEME = {
     "bg": "#ffffff",
@@ -70,47 +80,11 @@ def focus_launcher():
         pass
 
 
-def kill_browser_by_pidfile():
-    try:
-        terminate_owned_process(EXTERNAL_BROWSER_PIDFILE, "external-browser")
-    except Exception:
-        pass
-
-
-def kill_local_app(app_cmd):
-    """Kill a local app by command name or active window."""
-    killed = False
-    try:
-        result = subprocess.run(["pgrep", "-f", app_cmd], capture_output=True, text=True)
-        my_pid = os.getpid()
-        for pid_str in result.stdout.strip().split("\n"):
-            if pid_str:
-                try:
-                    pid = int(pid_str)
-                    if pid != my_pid:
-                        os.kill(pid, 15)
-                        killed = True
-                except Exception:
-                    pass
-    except Exception:
-        pass
-    if not killed:
-        try:
-            result = subprocess.run(["xdotool", "getactivewindow"], capture_output=True, text=True, timeout=2)
-            wid = result.stdout.strip()
-            if wid:
-                subprocess.run(["wmctrl", "-ic", wid], check=False)
-        except Exception:
-            pass
-
-
 class AppOverlay:
-    def __init__(self, mode, url, label, browser_pid, app_cmd):
+    def __init__(self, mode, url, label):
         self.mode = mode
         self.url = url
         self.label = label
-        self.browser_pid = browser_pid
-        self.app_cmd = app_cmd
         self.hide_after_ms = 2000
 
         self.root = tk.Tk()
@@ -149,9 +123,9 @@ class AppOverlay:
         self.hide_timer = None
         self.reset_hide_timer()
 
-        self.poll_browser()
-        self.poll_timer()
-        self.stay_on_top()
+        self.root.after(0, self.poll_process)
+        self.root.after(0, self.poll_timer)
+        self.root.after(0, self.stay_on_top)
 
     def stay_on_top(self):
         """Periodically force this window to the front so it stays visible over kiosk apps."""
@@ -181,44 +155,27 @@ class AppOverlay:
         self.reset_hide_timer()
 
     def on_close(self):
-        if self.mode == "external":
-            kill_browser_by_pidfile()
-        elif self.browser_pid:
-            try:
-                os.kill(self.browser_pid, 15)
-                for _ in range(10):
-                    try:
-                        os.kill(self.browser_pid, 0)
-                        time.sleep(0.2)
-                    except ProcessLookupError:
-                        break
-                try:
-                    os.kill(self.browser_pid, 9)
-                except ProcessLookupError:
-                    pass
-            except Exception:
-                pass
-        if self.mode == "local" and self.app_cmd and not self.browser_pid:
-            kill_local_app(self.app_cmd)
+        try:
+            terminate_owned_process(
+                TILE_PROCESS_PIDFILE,
+                "tile-process",
+                TILE_PROCESS_MARKER,
+            )
+        except Exception:
+            pass
         focus_launcher()
         self.root.destroy()
         sys.exit(0)
 
-    def poll_browser(self):
-        if self.mode == "external":
-            if not owned_process_alive(
-                EXTERNAL_BROWSER_PIDFILE,
-                "external-browser",
-            ):
-                self.on_close()
-                return
-        elif self.browser_pid:
-            try:
-                os.kill(self.browser_pid, 0)
-            except ProcessLookupError:
-                self.on_close()
-                return
-        self.root.after(1000, self.poll_browser)
+    def poll_process(self):
+        if not owned_process_alive(
+            TILE_PROCESS_PIDFILE,
+            "tile-process",
+            TILE_PROCESS_MARKER,
+        ):
+            self.on_close()
+            return
+        self.root.after(1000, self.poll_process)
 
     def poll_timer(self):
         data = api("/api/timer/status")
@@ -244,14 +201,19 @@ def main():
     parser.add_argument("--mode", default="external", choices=["external", "local"])
     parser.add_argument("--url", default="")
     parser.add_argument("--label", default="Home")
-    parser.add_argument("--browser-pid", type=int, default=None)
-    parser.add_argument("--app-pid", type=int, default=None)
-    parser.add_argument("--app-cmd", default="")
     args = parser.parse_args()
 
-    process_pid = args.app_pid or args.browser_pid
-    overlay = AppOverlay(args.mode, args.url, args.label, process_pid, args.app_cmd)
-    overlay.run()
+    overlay = AppOverlay(args.mode, args.url, args.label)
+    write_process_record(
+        OVERLAY_PIDFILE,
+        os.getpid(),
+        "overlay",
+        marker=OVERLAY_MARKER,
+    )
+    try:
+        overlay.run()
+    finally:
+        remove_process_record(OVERLAY_PIDFILE, expected_pid=os.getpid())
 
 
 if __name__ == "__main__":

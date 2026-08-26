@@ -61,12 +61,17 @@ mkdir -p "$TEST_HOME" "$ARTIFACTS" "$LOGS" "$MEDIA" "$TEST_HOME/Music"
 HEADLESS_PROFILES="$(mktemp -d "$TEST_ROOT/headless-profiles.XXXXXX")"
 
 cleanup() {
+  process_state="$TEST_HOME/.local/share/cozy-kids-launcher/process_state.py"
+  if [[ -f "$process_state" ]]; then
+    HOME="$TEST_HOME" python3 "$process_state" terminate \
+      "$TEST_HOME/.cache/cozy-kids-launcher/overlay.pid" overlay >/dev/null 2>&1 || true
+    HOME="$TEST_HOME" python3 "$process_state" terminate \
+      "$TEST_HOME/.cache/cozy-kids-launcher/tile-process.pid" tile-process >/dev/null 2>&1 || true
+  fi
   if [[ -n "$SERVER_PID" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
     kill "$SERVER_PID" 2>/dev/null || true
     wait "$SERVER_PID" 2>/dev/null || true
   fi
-  pkill -f -- "--user-data-dir=$TEST_HOME/.cache/cozy-kids-launcher/external-chromium-profile" 2>/dev/null || true
-  pkill -f -- "$TEST_HOME/.local/share/cozy-kids-launcher/overlay.py" 2>/dev/null || true
   pkill -f -- "--user-data-dir=$HEADLESS_PROFILES/" 2>/dev/null || true
   case "$HEADLESS_PROFILES" in
     "$TEST_ROOT"/headless-profiles.*)

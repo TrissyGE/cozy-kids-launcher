@@ -48,7 +48,10 @@ LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
-EXTERNAL_BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "external-browser.pid")
+TILE_PROCESS_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "tile-process.pid")
+OVERLAY_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "overlay.pid")
+PROCESS_SUPERVISOR = os.path.join(APP_ROOT, "process_supervisor.py")
+OVERLAY_SCRIPT = os.path.join(APP_ROOT, "overlay.py")
 EXIT_FLAGFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "exit-requested")
 RECOMMENDATIONS_FILE = os.path.join(APP_ROOT, "recommendations.json")
 VIDEOS = os.path.join(HOME, "Videos")
@@ -89,6 +92,7 @@ _admin_sessions = {}
 _admin_sessions_lock = threading.Lock()
 _pin_failures = []
 _pin_failures_lock = threading.Lock()
+_tile_launch_lock = threading.Lock()
 
 
 def _bounded_string(value, field, maximum, allow_empty=True):
@@ -663,37 +667,115 @@ def external_browser_command(browser, url):
 
 
 def stop_existing_overlay():
-    overlay_script = os.path.join(APP_ROOT, "overlay.py")
-    try:
-        result = subprocess.run(["pgrep", "-f", overlay_script], capture_output=True, text=True)
-        for pid_str in result.stdout.split():
-            try:
-                pid = int(pid_str)
-                if pid != os.getpid():
-                    os.kill(pid, 15)
-            except (ValueError, ProcessLookupError, PermissionError):
-                pass
-    except Exception:
-        pass
+    return terminate_owned_process(
+        OVERLAY_PIDFILE,
+        "overlay",
+        OVERLAY_SCRIPT,
+    )
 
 
-def start_overlay(mode, app_cmd="", url="", process_pid=None):
-    overlay_script = os.path.join(APP_ROOT, "overlay.py")
-    if not os.path.isfile(overlay_script):
-        return
-    command = [sys.executable, overlay_script, "--mode", mode, "--label", "Home"]
-    if app_cmd:
-        command.extend(["--app-cmd", app_cmd])
+def stop_active_tile():
+    return terminate_owned_process(
+        TILE_PROCESS_PIDFILE,
+        "tile-process",
+        PROCESS_SUPERVISOR,
+    )
+
+
+def _wait_for_owned_process(path, role, marker, process, timeout=1.5):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if owned_process_alive(path, role, marker):
+            return True
+        if process.poll() is not None:
+            break
+        time.sleep(0.05)
+    return owned_process_alive(path, role, marker)
+
+
+def start_overlay(mode, url=""):
+    if not os.path.isfile(OVERLAY_SCRIPT):
+        return False
+    command = [sys.executable, OVERLAY_SCRIPT, "--mode", mode, "--label", "Home"]
     if url:
         command.extend(["--url", url])
-    if process_pid:
-        command.extend(["--app-pid", str(process_pid)])
-    subprocess.Popen(
+    process = subprocess.Popen(
         command,
         env=dict(os.environ),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+    if _wait_for_owned_process(
+        OVERLAY_PIDFILE,
+        "overlay",
+        OVERLAY_SCRIPT,
+        process,
+        timeout=5,
+    ):
+        return True
+    try:
+        process.terminate()
+        process.wait(timeout=1)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return False
+
+
+def reset_active_tile():
+    with _tile_launch_lock:
+        stop_existing_overlay()
+        stop_active_tile()
+
+
+def launch_owned_tile(command, mode, url=""):
+    if not command or not os.path.isfile(PROCESS_SUPERVISOR):
+        raise OSError("Tile process supervisor is unavailable")
+    with _tile_launch_lock:
+        stop_existing_overlay()
+        stop_active_tile()
+        wrapped = [
+            sys.executable,
+            PROCESS_SUPERVISOR,
+            "--record",
+            TILE_PROCESS_PIDFILE,
+            "--marker",
+            PROCESS_SUPERVISOR,
+            "--",
+            *command,
+        ]
+        process = subprocess.Popen(
+            wrapped,
+            env=dict(os.environ),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=(os.name == "posix"),
+        )
+        if not _wait_for_owned_process(
+            TILE_PROCESS_PIDFILE,
+            "tile-process",
+            PROCESS_SUPERVISOR,
+            process,
+        ):
+            try:
+                process.terminate()
+                process.wait(timeout=1)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            raise OSError("Tile process ownership could not be established")
+        if not start_overlay(mode, url=url):
+            stop_active_tile()
+            raise OSError("Tile overlay could not be started")
+        return process
+
+
+def direct_app_command(command):
+    if (
+        len(command) >= 3
+        and command[0] in ("kstart5", "kstart")
+        and command[1] == "--fullscreen"
+    ):
+        return command[2:]
+    return command
 
 
 def load_timer():
@@ -1040,6 +1122,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if action == "exit-kids":
             if not self.require_admin():
                 return
+            reset_active_tile()
             # Signal launcher.sh to exit its while-true loop
             try:
                 with open(EXIT_FLAGFILE, "w", encoding="utf-8") as f:
@@ -1161,11 +1244,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
             log_runtime_event("launch.started", actionType=launch["type"])
-            stop_existing_overlay()
 
             if launch["type"] == "media":
                 locations = media_locations()
                 if not locations:
+                    reset_active_tile()
                     log_runtime_event(
                         "launch.failed",
                         level="warning",
@@ -1177,14 +1260,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.end_headers()
                     return
                 player = find_media_player()
-                if player:
-                    proc = subprocess.Popen(
-                        media_player_command(player, locations),
-                        env=dict(os.environ),
+                command = (
+                    media_player_command(player, locations)
+                    if player
+                    else ["xdg-open", locations[0]]
+                )
+                try:
+                    launch_owned_tile(command, "local")
+                except OSError:
+                    log_runtime_event(
+                        "launch.failed",
+                        level="warning",
+                        actionType="media",
+                        result="failure",
                     )
-                    start_overlay("local", app_cmd=os.path.basename(player), process_pid=proc.pid)
-                else:
-                    subprocess.Popen(["xdg-open", locations[0]], env=dict(os.environ))
+                    self.json_response(
+                        {"status": "error", "message": "Media process could not be started"},
+                        503,
+                    )
+                    return
                 self.send_response(204)
                 self.end_headers()
                 return
@@ -1192,47 +1286,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if launch["type"] == "web":
                 url = launch["url"]
                 if launch["mode"] == "embedded":
+                    reset_active_tile()
                     self.send_response(302)
                     self.send_header("Location", f"/browser.html?url={quote(url, safe='')}")
                     self.end_headers()
                     return
                 browser = find_browser(cfg)
+                command = None
                 if browser:
-                    proc = subprocess.Popen(
-                        external_browser_command(browser, url),
-                        env=dict(os.environ),
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    try:
-                        write_process_record(
-                            EXTERNAL_BROWSER_PIDFILE,
-                            proc.pid,
-                            "external-browser",
-                        )
-                    except OSError:
-                        try:
-                            proc.terminate()
-                        except OSError:
-                            pass
-                        log_runtime_event(
-                            "launch.failed",
-                            level="warning",
-                            actionType="web",
-                            result="failure",
-                        )
-                        self.json_response(
-                            {
-                                "status": "error",
-                                "message": "Browser process ownership could not be established",
-                            },
-                            503,
-                        )
-                        return
-                    start_overlay("external", url=url, process_pid=proc.pid)
+                    command = external_browser_command(browser, url)
                 elif shutil.which("xdg-open"):
-                    subprocess.Popen(["xdg-open", url], env=dict(os.environ))
+                    command = ["xdg-open", url]
                 else:
+                    reset_active_tile()
                     log_runtime_event(
                         "launch.failed",
                         level="warning",
@@ -1241,33 +1307,46 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     )
                     self.json_response({"status": "error", "message": "No supported browser found"}, 503)
                     return
+                try:
+                    launch_owned_tile(command, "external", url=url)
+                except OSError:
+                    log_runtime_event(
+                        "launch.failed",
+                        level="warning",
+                        actionType="web",
+                        result="failure",
+                    )
+                    self.json_response(
+                        {"status": "error", "message": "Browser process could not be started"},
+                        503,
+                    )
+                    return
                 self.send_response(204)
                 self.end_headers()
                 return
 
             clean = launch.get("argv", [])
             if launch["type"] == "none" or not clean:
+                reset_active_tile()
                 self.send_response(204)
                 self.end_headers()
                 return
-            # KDE wrapper fallback: if kstart5/kstart is missing, drop it and launch directly
-            if len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
-                if not shutil.which(clean[0]):
-                    clean = clean[2:]
-            # Determine primary app command for overlay tracking
-            app_cmd = ""
-            if len(clean) >= 3 and clean[0] in ("kstart5", "kstart") and clean[1] == "--fullscreen":
-                app_cmd = clean[2] if len(clean) > 2 else ""
-            else:
-                app_cmd = clean[0] if clean else ""
-
-            # Avoid shell=True to prevent command injection from user-editable configs
-            proc = subprocess.Popen(clean, env=dict(os.environ))
-
-            # Start overlay for local apps so the child can close them and see the timer
-            if app_cmd:
-                tracked_pid = None if clean[0] in ("kstart5", "kstart") else proc.pid
-                start_overlay("local", app_cmd=app_cmd, process_pid=tracked_pid)
+            clean = direct_app_command(clean)
+            try:
+                # The supervisor still launches argv directly and never invokes a shell.
+                launch_owned_tile(clean, "local")
+            except OSError:
+                log_runtime_event(
+                    "launch.failed",
+                    level="warning",
+                    actionType="app",
+                    result="failure",
+                )
+                self.json_response(
+                    {"status": "error", "message": "Application process could not be started"},
+                    503,
+                )
+                return
 
             self.send_response(204)
             self.end_headers()

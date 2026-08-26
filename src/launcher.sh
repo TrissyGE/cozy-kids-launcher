@@ -8,6 +8,8 @@ PORT="${COZY_KIDS_PORT:-{{DEFAULT_PORT}}}"
 CACHE_ROOT="$HOME/.cache/{{APP_ID}}"
 PIDFILE="$CACHE_ROOT/server.pid"
 BROWSER_PIDFILE="$CACHE_ROOT/browser.pid"
+TILE_PROCESS_PIDFILE="$CACHE_ROOT/tile-process.pid"
+OVERLAY_PIDFILE="$CACHE_ROOT/overlay.pid"
 EXIT_FLAGFILE="$CACHE_ROOT/exit-requested"
 WATCHDOG_PIDFILE="$CACHE_ROOT/watchdog.pid"
 LOCK_FILE="$CACHE_ROOT/launcher.lock"
@@ -94,6 +96,8 @@ wait_for_child() {
 }
 
 stop_runtime_children() {
+  terminate_process "$OVERLAY_PIDFILE" overlay
+  terminate_process "$TILE_PROCESS_PIDFILE" tile-process
   terminate_process "$BROWSER_PIDFILE" browser
   terminate_process "$WATCHDOG_PIDFILE" watchdog
   terminate_process "$PIDFILE" server
