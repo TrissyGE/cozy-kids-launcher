@@ -152,6 +152,7 @@ Then re-open the launcher.
 | `~/.local/bin/cozy-kids-launcher` | The command that starts kids mode |
 | `~/.local/share/cozy-kids-launcher/` | App files: server, UI, version, updater |
 | `~/.local/state/cozy-kids-launcher/runtime.jsonl` | Small rotating technical event log |
+| `~/.cache/cozy-kids-launcher/lifecycle.json` | Private current launcher lifecycle state |
 | `~/.config/cozy-kids-launcher/config.json` | Your tiles, colors, labels, PIN |
 | `~/.local/share/cozy-kids-launcher-backups/` | Private local configuration and installer backups |
 | `~/.config/autostart/...` | Auto-starts on login |

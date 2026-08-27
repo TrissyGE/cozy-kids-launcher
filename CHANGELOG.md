@@ -21,6 +21,9 @@ All notable changes to this project will be documented in this file.
 - Added authenticated backup discovery and one-click configuration restore to Parent settings in German and English
 - Preserve the current Parent PIN, validate the selected backup against the installed schema, and create a private safety snapshot before every restore
 - Restrict restores to timestamped configuration backups under the local backup root; reject paths, symlinks, oversized files, corrupt JSON, and unsupported future schemas
+- Added an explicit, atomically stored launcher lifecycle contract for starting, running, recovering, updating, stopping, stopped, and failed states
+- Distinguish logout from an authenticated shutdown request while guaranteeing the same owned-process cleanup path
+- Added real Linux integration coverage for clean startup, successful and failed updates, logout, shutdown, crash recovery, and exhausted recovery
 
 ## [0.4.1] - 2026-08-25
 

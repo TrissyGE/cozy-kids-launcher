@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import unittest
+import urllib.request
 from pathlib import Path
 
 
@@ -18,6 +19,7 @@ if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
 import process_state
+import lifecycle_state
 
 
 def free_port():
@@ -31,6 +33,24 @@ def free_port():
     "Linux flock integration required",
 )
 class LauncherLifecycleTests(unittest.TestCase):
+    def wait_for_lifecycle(self, path, state, reason=None, timeout=12):
+        deadline = time.monotonic() + timeout
+        last = None
+        while time.monotonic() < deadline:
+            try:
+                last = lifecycle_state.read_lifecycle_state(path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                time.sleep(0.05)
+                continue
+            if last["state"] == state and (
+                reason is None or last["reason"] == reason
+            ):
+                return last
+            time.sleep(0.05)
+        self.fail(
+            f"Lifecycle did not reach {state}/{reason}; last state was {last}"
+        )
+
     def test_launcher_does_not_guess_or_kill_global_browser_pids(self):
         source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
             encoding="utf-8"
@@ -66,7 +86,7 @@ class LauncherLifecycleTests(unittest.TestCase):
             environment["HOME"] = str(home)
             environment["COZY_KIDS_PORT"] = str(free_port())
             environment["COZY_KIDS_RECOVERY_MAX_ATTEMPTS"] = "1"
-            environment["COZY_KIDS_RECOVERY_BACKOFF_SECONDS"] = "0"
+            environment["COZY_KIDS_RECOVERY_BACKOFF_SECONDS"] = "1"
             environment["COZY_KIDS_RECOVERY_WINDOW_SECONDS"] = "60"
             environment["FAKE_BROWSER_INVOCATIONS"] = str(invocations)
             environment.pop("DISPLAY", None)
@@ -100,6 +120,7 @@ class LauncherLifecycleTests(unittest.TestCase):
             self.assertIn("could not restart after several attempts", installed_launcher)
             self.assertNotIn("{{RUNTIME_FAILURE_", installed_launcher)
             cache = home / ".cache" / "cozy-kids-launcher"
+            lifecycle_file = cache / "lifecycle.json"
             first = subprocess.Popen(
                 [str(launcher)],
                 env=environment,
@@ -120,6 +141,15 @@ class LauncherLifecycleTests(unittest.TestCase):
                     time.sleep(0.1)
                 else:
                     self.fail("First launcher did not become ready")
+
+                self.assertEqual(
+                    self.wait_for_lifecycle(
+                        lifecycle_file,
+                        "running",
+                        "ready",
+                    )["state"],
+                    "running",
+                )
 
                 second = subprocess.run(
                     [str(launcher)],
@@ -142,6 +172,12 @@ class LauncherLifecycleTests(unittest.TestCase):
                 self.assertFalse(Path(f"/proc/{browser_record['pid']}/fd/9").exists())
 
                 os.kill(server_record["pid"], signal.SIGKILL)
+                recovering = self.wait_for_lifecycle(
+                    lifecycle_file,
+                    "recovering",
+                    "server-failed",
+                )
+                self.assertEqual(recovering["attempt"], 1)
                 deadline = time.monotonic() + 10
                 while time.monotonic() < deadline:
                     recovered_server = process_state.owned_process(
@@ -169,6 +205,13 @@ class LauncherLifecycleTests(unittest.TestCase):
                     time.sleep(0.1)
                 else:
                     self.fail("Launcher did not recover its server and browser")
+
+                recovered = self.wait_for_lifecycle(
+                    lifecycle_file,
+                    "running",
+                    "recovered",
+                )
+                self.assertEqual(recovered["attempt"], 1)
 
                 self.assertNotEqual(
                     process_state.process_start_time(browser_record["pid"]),
@@ -235,6 +278,12 @@ class LauncherLifecycleTests(unittest.TestCase):
 
                 os.kill(recovered_server["pid"], signal.SIGKILL)
                 self.assertEqual(first.wait(timeout=10), 1)
+                failed = self.wait_for_lifecycle(
+                    lifecycle_file,
+                    "failed",
+                    "recovery-exhausted",
+                )
+                self.assertNotIn("attempt", failed)
                 self.assertEqual(tile_supervisor.wait(timeout=5), 0)
             finally:
                 if first.poll() is None:
@@ -254,6 +303,194 @@ class LauncherLifecycleTests(unittest.TestCase):
                 invocations.read_text(encoding="utf-8").splitlines(),
                 [str(browser_record["pid"]), str(recovered_browser["pid"])],
             )
+
+    def test_start_update_shutdown_and_logout_states_clean_up_runtime(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            home = root / "home"
+            bin_dir = root / "bin"
+            home.mkdir()
+            bin_dir.mkdir()
+            browser_invocations = root / "browser-invocations.txt"
+            poweroff_invocations = root / "poweroff-invocations.txt"
+            fake_browser = bin_dir / "fake-browser"
+            fake_browser.write_text(
+                "#!/usr/bin/env bash\n"
+                "set -eu\n"
+                "echo \"$$\" >> \"$FAKE_BROWSER_INVOCATIONS\"\n"
+                "trap 'exit 0' HUP INT TERM\n"
+                "while true; do sleep 1; done\n",
+                encoding="utf-8",
+            )
+            fake_browser.chmod(0o755)
+            fake_systemctl = bin_dir / "systemctl"
+            fake_systemctl.write_text(
+                "#!/usr/bin/env bash\n"
+                "set -eu\n"
+                "echo \"$*\" >> \"$FAKE_POWEROFF_INVOCATIONS\"\n",
+                encoding="utf-8",
+            )
+            fake_systemctl.chmod(0o755)
+            environment = dict(os.environ)
+            environment["PATH"] = f"{bin_dir}{os.pathsep}{environment['PATH']}"
+            environment["HOME"] = str(home)
+            environment["COZY_KIDS_PORT"] = str(free_port())
+            environment["FAKE_BROWSER_INVOCATIONS"] = str(browser_invocations)
+            environment["FAKE_POWEROFF_INVOCATIONS"] = str(poweroff_invocations)
+            environment.pop("DISPLAY", None)
+            environment.pop("WAYLAND_DISPLAY", None)
+
+            subprocess.run(
+                [
+                    "bash",
+                    str(REPOSITORY_ROOT / "scripts" / "install.sh"),
+                    "--user",
+                    getpass.getuser(),
+                    "--home",
+                    str(home),
+                    "--lang",
+                    "en",
+                    "--browser",
+                    "fake-browser",
+                    "--launch-mode",
+                    "window",
+                    "--force",
+                ],
+                cwd=REPOSITORY_ROOT,
+                env=environment,
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            app_root = home / ".local" / "share" / "cozy-kids-launcher"
+            (app_root / "timer_watchdog.py").unlink()
+            launcher_path = home / ".local" / "bin" / "cozy-kids-launcher"
+            cache = home / ".cache" / "cozy-kids-launcher"
+            lifecycle_file = cache / "lifecycle.json"
+            launcher = subprocess.Popen(
+                [str(launcher_path)],
+                env=environment,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            restarted = None
+            failed_update = None
+            try:
+                self.wait_for_lifecycle(lifecycle_file, "running", "ready")
+                self.assertTrue(
+                    process_state.owned_process_alive(
+                        str(cache / "server.pid"),
+                        "server",
+                    )
+                )
+                self.assertTrue(
+                    process_state.owned_process_alive(
+                        str(cache / "browser.pid"),
+                        "browser",
+                    )
+                )
+
+                update_gate = root / "continue-update"
+                update_invoked = root / "update-invoked"
+                trigger = app_root / "update-trigger.sh"
+                trigger.write_text(
+                    "#!/usr/bin/env bash\n"
+                    "set -eu\n"
+                    f"touch {update_invoked}\n"
+                    f"while [[ ! -f {update_gate} ]]; do sleep 0.05; done\n",
+                    encoding="utf-8",
+                )
+                updating = self.wait_for_lifecycle(
+                    lifecycle_file,
+                    "updating",
+                    "update-requested",
+                )
+                self.assertEqual(updating["reason"], "update-requested")
+                deadline = time.monotonic() + 5
+                while not update_invoked.is_file() and time.monotonic() < deadline:
+                    time.sleep(0.05)
+                self.assertTrue(update_invoked.is_file())
+                update_gate.touch()
+                self.wait_for_lifecycle(
+                    lifecycle_file,
+                    "running",
+                    "update-complete",
+                    timeout=15,
+                )
+                self.assertGreaterEqual(
+                    len(browser_invocations.read_text(encoding="utf-8").splitlines()),
+                    2,
+                )
+
+                request = urllib.request.Request(
+                    f"http://127.0.0.1:{environment['COZY_KIDS_PORT']}/shutdown",
+                    data=b"",
+                    method="POST",
+                )
+                with urllib.request.urlopen(request, timeout=5) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(
+                        json.loads(response.read().decode("utf-8"))["status"],
+                        "ok",
+                    )
+                os.kill(launcher.pid, signal.SIGTERM)
+                self.assertEqual(launcher.wait(timeout=10), 0)
+                self.wait_for_lifecycle(lifecycle_file, "stopped", "shutdown")
+                self.assertEqual(
+                    poweroff_invocations.read_text(encoding="utf-8").splitlines(),
+                    ["poweroff"],
+                )
+
+                restarted = subprocess.Popen(
+                    [str(launcher_path)],
+                    env=environment,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                self.wait_for_lifecycle(lifecycle_file, "running", "ready")
+                os.kill(restarted.pid, signal.SIGTERM)
+                self.assertEqual(restarted.wait(timeout=10), 0)
+                self.wait_for_lifecycle(lifecycle_file, "stopped", "logout")
+
+                failed_update = subprocess.Popen(
+                    [str(launcher_path)],
+                    env=environment,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                self.wait_for_lifecycle(lifecycle_file, "running", "ready")
+                trigger.write_text(
+                    "#!/usr/bin/env bash\nexit 7\n",
+                    encoding="utf-8",
+                )
+                self.wait_for_lifecycle(
+                    lifecycle_file,
+                    "failed",
+                    "update-failed",
+                )
+                self.assertEqual(failed_update.wait(timeout=10), 7)
+                self.assertFalse(trigger.exists())
+            finally:
+                if launcher.poll() is None:
+                    launcher.terminate()
+                    launcher.wait(timeout=10)
+                if restarted is not None and restarted.poll() is None:
+                    restarted.terminate()
+                    restarted.wait(timeout=10)
+                if failed_update is not None and failed_update.poll() is None:
+                    failed_update.terminate()
+                    failed_update.wait(timeout=10)
+
+            for record, role in (
+                ("server.pid", "server"),
+                ("browser.pid", "browser"),
+                ("tile-process.pid", "tile-process"),
+                ("overlay.pid", "overlay"),
+                ("watchdog.pid", "watchdog"),
+            ):
+                self.assertFalse(
+                    process_state.owned_process_alive(str(cache / record), role),
+                    record,
+                )
 
 
 if __name__ == "__main__":

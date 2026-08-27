@@ -28,6 +28,11 @@ from backup_store import (
     discover_config_backups,
     read_config_backup,
 )
+from lifecycle_state import (
+    clear_lifecycle_request,
+    read_lifecycle_state,
+    write_lifecycle_request,
+)
 from process_state import (
     owned_process_alive,
     remove_process_record,
@@ -59,6 +64,13 @@ OVERLAY_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "overlay.pid")
 PROCESS_SUPERVISOR = os.path.join(APP_ROOT, "process_supervisor.py")
 OVERLAY_SCRIPT = os.path.join(APP_ROOT, "overlay.py")
 EXIT_FLAGFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "exit-requested")
+LIFECYCLE_STATE_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "lifecycle.json")
+LIFECYCLE_REQUEST_FILE = os.path.join(
+    HOME,
+    ".cache",
+    "{{APP_ID}}",
+    "lifecycle-request.json",
+)
 RECOMMENDATIONS_FILE = os.path.join(APP_ROOT, "recommendations.json")
 VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
@@ -513,11 +525,16 @@ def diagnostics_payload():
         if isinstance(data, dict):
             config_readable = True
             config_version = data.get("configVersion", 0)
+    try:
+        lifecycle = read_lifecycle_state(LIFECYCLE_STATE_FILE)
+    except (OSError, ValueError, json.JSONDecodeError):
+        lifecycle = None
     return build_diagnostics(
         LOG_FILE,
         app_version=get_version(),
         config_readable=config_readable,
         config_version=config_version,
+        lifecycle=lifecycle,
     )
 
 
@@ -1207,6 +1224,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if not self.require_admin():
                 return
             shutdown_ok = False
+            try:
+                write_lifecycle_request(LIFECYCLE_REQUEST_FILE, "shutdown")
+            except (OSError, ValueError):
+                pass
             for cmd in (["systemctl", "poweroff"], ["loginctl", "poweroff"]):
                 if shutil.which(cmd[0]):
                     try:
@@ -1215,6 +1236,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         break
                     except Exception:
                         pass
+            if not shutdown_ok:
+                try:
+                    clear_lifecycle_request(LIFECYCLE_REQUEST_FILE)
+                except OSError:
+                    pass
             self.json_response({"status": "ok" if shutdown_ok else "error"})
             return
         if action == "exit-kids":
@@ -1223,9 +1249,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             reset_active_tile()
             # Signal launcher.sh to exit its while-true loop
             try:
+                write_lifecycle_request(LIFECYCLE_REQUEST_FILE, "parent-exit")
+            except (OSError, ValueError):
+                pass
+            try:
                 with open(EXIT_FLAGFILE, "w", encoding="utf-8") as f:
                     f.write("1")
-            except Exception:
+            except OSError:
                 pass
             terminate_owned_process(BROWSER_PIDFILE, "browser")
             self.send_response(204)

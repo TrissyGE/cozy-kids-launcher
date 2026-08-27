@@ -9,6 +9,8 @@ import re
 import threading
 from datetime import datetime, timezone
 
+from lifecycle_state import STATE_REASONS
+
 
 DEFAULT_MAX_BYTES = 512 * 1024
 DEFAULT_BACKUP_COUNT = 3
@@ -59,6 +61,7 @@ _SAFE_EXCEPTION_TYPES = {
 }
 _SAFE_RESULTS = {"blocked", "failure", "missing", "redirect", "success"}
 _SAFE_SOURCES = {"legacy-main", "release"}
+_SAFE_LIFECYCLE = STATE_REASONS
 _TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_.+-]{1,80}$")
 _VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
@@ -271,12 +274,32 @@ def build_diagnostics(
     config_version=None,
     backup_count=DEFAULT_BACKUP_COUNT,
     event_limit=DEFAULT_EVENT_LIMIT,
+    lifecycle=None,
 ):
     """Build diagnostics without accepting or exposing configuration values."""
     safe_config_version = None
     if not isinstance(config_version, bool) and isinstance(config_version, int):
         if 0 <= config_version <= 10_000:
             safe_config_version = config_version
+    safe_lifecycle = {"state": "unknown", "reason": "unknown", "attempt": None}
+    if isinstance(lifecycle, dict):
+        state = lifecycle.get("state")
+        reason = lifecycle.get("reason")
+        attempt = lifecycle.get("attempt")
+        if (
+            isinstance(state, str)
+            and isinstance(reason, str)
+            and state in _SAFE_LIFECYCLE
+            and reason in _SAFE_LIFECYCLE[state]
+        ):
+            safe_lifecycle["state"] = state
+            safe_lifecycle["reason"] = reason
+            if (
+                not isinstance(attempt, bool)
+                and isinstance(attempt, int)
+                and 1 <= attempt <= 10
+            ):
+                safe_lifecycle["attempt"] = attempt
     return {
         "diagnosticsVersion": DIAGNOSTICS_VERSION,
         "generatedAt": utc_timestamp(),
@@ -295,6 +318,7 @@ def build_diagnostics(
             "readable": bool(config_readable),
             "schemaVersion": safe_config_version,
         },
+        "lifecycle": safe_lifecycle,
         "privacy": {
             "includesConfigurationValues": False,
             "includesCredentials": False,

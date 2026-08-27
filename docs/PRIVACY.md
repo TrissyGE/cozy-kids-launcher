@@ -25,6 +25,11 @@ configuration, so their directories are restricted to the local user. Parent
 settings expose only a backup's date and origin, not paths or configuration
 values. A restore preserves the currently active Parent PIN.
 
+The launcher also keeps one private lifecycle status file in its cache. It
+contains only a fixed state and reason plus, during recovery, a bounded attempt
+number. It never contains process IDs, names, commands, paths, or family
+settings. Parent diagnostics apply the same fixed allowlist.
+
 ## What parents should review before using
 
 - which applications are visible to the child

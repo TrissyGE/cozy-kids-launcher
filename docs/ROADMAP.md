@@ -30,7 +30,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [x] Detect server and launcher failures and recover without leaving a blank kiosk window
 - [x] Track launched child processes reliably and close only the process tree owned by its tile
 - [x] Make backup discovery and restoration available from Parent settings
-- [ ] Define and test clean startup, logout, shutdown, update, and crash-recovery states
+- [x] Define and test clean startup, logout, shutdown, update, and crash-recovery states
 
 ### Test confidence
 

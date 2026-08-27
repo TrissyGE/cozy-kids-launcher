@@ -12,8 +12,11 @@ TILE_PROCESS_PIDFILE="$CACHE_ROOT/tile-process.pid"
 OVERLAY_PIDFILE="$CACHE_ROOT/overlay.pid"
 EXIT_FLAGFILE="$CACHE_ROOT/exit-requested"
 WATCHDOG_PIDFILE="$CACHE_ROOT/watchdog.pid"
+LIFECYCLE_STATE_FILE="$CACHE_ROOT/lifecycle.json"
+LIFECYCLE_REQUEST_FILE="$CACHE_ROOT/lifecycle-request.json"
 LOCK_FILE="$CACHE_ROOT/launcher.lock"
 PROCESS_STATE="$APP_ROOT/process_state.py"
+LIFECYCLE_STATE_SCRIPT="$APP_ROOT/lifecycle_state.py"
 URL="http://127.0.0.1:${PORT}/index.html"
 LAUNCH_MODE="{{DEFAULT_LAUNCH_MODE}}"
 BROWSER_CMD="{{BROWSER_CMD}}"
@@ -68,9 +71,39 @@ RECOVERY_BACKOFF_SECONDS="$(normalize_integer "$RECOVERY_BACKOFF_SECONDS" 1 0 60
 RECOVERY_ATTEMPTS=0
 RECOVERY_WINDOW_STARTED=0
 NEXT_RECOVERY_ATTEMPT=0
+ACTIVE_RECOVERY_ATTEMPT=0
 SERVER_CHILD_PID=""
 WATCHDOG_CHILD_PID=""
 BROWSER_CHILD_PID=""
+LIFECYCLE_STATE="starting"
+LIFECYCLE_STOP_REASON="session-ended"
+LIFECYCLE_FAILURE_REASON="unexpected-exit"
+RUNTIME_START_REASON="initial-start"
+
+lifecycle_begin() {
+  local reason="$1"
+  if python3 "$LIFECYCLE_STATE_SCRIPT" begin "$LIFECYCLE_STATE_FILE" "$reason" 9>&- >/dev/null 2>&1; then
+    LIFECYCLE_STATE="starting"
+  fi
+}
+
+lifecycle_transition() {
+  local state="$1"
+  local reason="$2"
+  local attempt="${3:-}"
+  if [[ -n "$attempt" ]]; then
+    if python3 "$LIFECYCLE_STATE_SCRIPT" transition "$LIFECYCLE_STATE_FILE" "$state" "$reason" --attempt "$attempt" 9>&- >/dev/null 2>&1; then
+      LIFECYCLE_STATE="$state"
+    fi
+  elif python3 "$LIFECYCLE_STATE_SCRIPT" transition "$LIFECYCLE_STATE_FILE" "$state" "$reason" 9>&- >/dev/null 2>&1; then
+    LIFECYCLE_STATE="$state"
+  fi
+  return 0
+}
+
+consume_lifecycle_request() {
+  python3 "$LIFECYCLE_STATE_SCRIPT" consume-request "$LIFECYCLE_REQUEST_FILE" 9>&- 2>/dev/null || true
+}
 
 process_alive() {
   python3 "$PROCESS_STATE" alive "$1" "$2" 9>&- >/dev/null 2>&1
@@ -110,7 +143,21 @@ stop_runtime_children() {
 }
 
 cleanup_runtime() {
+  local status=$?
   stop_runtime_children
+  if [[ "$status" -ne 0 ]]; then
+    if [[ "$LIFECYCLE_STATE" != "failed" ]]; then
+      lifecycle_transition failed "$LIFECYCLE_FAILURE_REASON"
+    fi
+  elif [[ "$LIFECYCLE_STATE" != "failed" ]]; then
+    if [[ "$LIFECYCLE_STATE" != "stopping" ]]; then
+      lifecycle_transition stopping "$LIFECYCLE_STOP_REASON"
+    fi
+    if [[ "$LIFECYCLE_STATE" == "stopping" ]]; then
+      lifecycle_transition stopped "$LIFECYCLE_STOP_REASON"
+    fi
+  fi
+  return 0
 }
 
 show_recovery_failure() {
@@ -121,6 +168,7 @@ show_recovery_failure() {
 }
 
 schedule_recovery() {
+  local failure_reason="$1"
   local now delay
   now="$(date +%s)"
   if (( RECOVERY_WINDOW_STARTED == 0 || now - RECOVERY_WINDOW_STARTED > RECOVERY_WINDOW_SECONDS )); then
@@ -128,26 +176,50 @@ schedule_recovery() {
     RECOVERY_ATTEMPTS=0
   fi
   RECOVERY_ATTEMPTS="$((RECOVERY_ATTEMPTS + 1))"
-  stop_runtime_children
   if (( RECOVERY_ATTEMPTS > RECOVERY_MAX_ATTEMPTS )); then
+    LIFECYCLE_FAILURE_REASON="recovery-exhausted"
+    lifecycle_transition failed recovery-exhausted
+    stop_runtime_children
     show_recovery_failure
     return 1
   fi
+  lifecycle_transition recovering "$failure_reason" "$RECOVERY_ATTEMPTS"
+  stop_runtime_children
   NEXT_RECOVERY_ATTEMPT="$RECOVERY_ATTEMPTS"
   delay="$((RECOVERY_BACKOFF_SECONDS * RECOVERY_ATTEMPTS))"
   echo "Cozy Kids Launcher is recovering the runtime (attempt ${RECOVERY_ATTEMPTS}/${RECOVERY_MAX_ATTEMPTS})." >&2
   if (( delay > 0 )); then
     sleep "$delay" 9>&-
   fi
+  lifecycle_transition starting recovery "$RECOVERY_ATTEMPTS"
+  RUNTIME_START_REASON="recovery"
   return 0
 }
 
 handle_signal() {
+  local signal_name="$1"
+  local requested_reason
+  requested_reason="$(consume_lifecycle_request)"
+  if [[ -n "$requested_reason" ]]; then
+    LIFECYCLE_STOP_REASON="$requested_reason"
+  elif [[ "$signal_name" == "HUP" || "$signal_name" == "TERM" ]]; then
+    LIFECYCLE_STOP_REASON="logout"
+  elif [[ "$signal_name" == "INT" ]]; then
+    LIFECYCLE_STOP_REASON="manual-stop"
+  else
+    LIFECYCLE_STOP_REASON="session-ended"
+  fi
+  lifecycle_transition stopping "$LIFECYCLE_STOP_REASON"
   exit 0
 }
 
 trap cleanup_runtime EXIT
-trap handle_signal HUP INT TERM
+trap 'handle_signal HUP' HUP
+trap 'handle_signal INT' INT
+trap 'handle_signal TERM' TERM
+
+rm -f "$LIFECYCLE_REQUEST_FILE"
+lifecycle_begin initial-start
 
 while true; do
   if ! process_alive "$PIDFILE" server; then
@@ -165,11 +237,12 @@ while true; do
     if ! process_alive "$PIDFILE" server; then
       wait_for_child "$SERVER_CHILD_PID"
       SERVER_CHILD_PID=""
-      if schedule_recovery; then
+      if schedule_recovery startup-failed; then
         continue
       fi
       exit 1
     fi
+    ACTIVE_RECOVERY_ATTEMPT="$NEXT_RECOVERY_ATTEMPT"
     NEXT_RECOVERY_ATTEMPT=0
   fi
   if [[ -f "$APP_ROOT/timer_watchdog.py" ]] && ! process_alive "$WATCHDOG_PIDFILE" watchdog; then
@@ -209,8 +282,17 @@ while true; do
     kill "$BROWSER_CHILD_PID" 2>/dev/null || true
     wait_for_child "$BROWSER_CHILD_PID"
     BROWSER_CHILD_PID=""
+    LIFECYCLE_FAILURE_REASON="browser-start-failed"
+    lifecycle_transition failed browser-start-failed
     show_recovery_failure
     exit 1
+  fi
+  if [[ "$RUNTIME_START_REASON" == "recovery" ]]; then
+    lifecycle_transition running recovered "$ACTIVE_RECOVERY_ATTEMPT"
+  elif [[ "$RUNTIME_START_REASON" == "update-complete" ]]; then
+    lifecycle_transition running update-complete
+  else
+    lifecycle_transition running ready
   fi
   RUNTIME_REASON=""
   # Poll until browser exits, update/exit is requested, or the server fails.
@@ -243,32 +325,46 @@ while true; do
   fi
 
   if [[ "$RUNTIME_REASON" == "exit" ]]; then
+    LIFECYCLE_STOP_REASON="$(consume_lifecycle_request)"
+    LIFECYCLE_STOP_REASON="${LIFECYCLE_STOP_REASON:-parent-exit}"
+    lifecycle_transition stopping "$LIFECYCLE_STOP_REASON"
     rm -f "$EXIT_FLAGFILE"
     break
   elif [[ "$RUNTIME_REASON" == "server-failed" ]]; then
-    if schedule_recovery; then
+    if schedule_recovery server-failed; then
       continue
     fi
     exit 1
   elif [[ "$RUNTIME_REASON" == "update" ]]; then
+    lifecycle_transition updating update-requested
+    LIFECYCLE_FAILURE_REASON="update-failed"
     stop_runtime_children
     ZENITY_PID=""
     if command -v zenity >/dev/null 2>&1; then
       (zenity --progress --pulsate --title="{{APP_NAME}}" --text="Updating... please wait" --no-cancel --auto-close) 9>&- >/dev/null 2>&1 &
       ZENITY_PID=$!
     fi
-    bash "$APP_ROOT/update-trigger.sh" 9>&-
+    UPDATE_STATUS=0
+    bash "$APP_ROOT/update-trigger.sh" 9>&- || UPDATE_STATUS=$?
     if [[ -n "$ZENITY_PID" ]]; then
       kill "$ZENITY_PID" 2>/dev/null || true
       wait "$ZENITY_PID" 2>/dev/null || true
     fi
     rm -f "$APP_ROOT/update-trigger.sh"
+    if [[ "$UPDATE_STATUS" -ne 0 ]]; then
+      exit "$UPDATE_STATUS"
+    fi
     # Wait for any lingering browser processes to release profile locks
     sleep 3 9>&-
     RECOVERY_ATTEMPTS=0
     RECOVERY_WINDOW_STARTED=0
+    lifecycle_transition starting update-complete
+    RUNTIME_START_REASON="update-complete"
+    LIFECYCLE_FAILURE_REASON="unexpected-exit"
     # loop back to restart with updated files
   else
+    LIFECYCLE_STOP_REASON="browser-exited"
+    lifecycle_transition stopping browser-exited
     remove_process_record "$BROWSER_PIDFILE" "$BROWSER_CHILD_PID"
     wait_for_child "$BROWSER_CHILD_PID"
     BROWSER_CHILD_PID=""

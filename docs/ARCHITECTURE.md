@@ -80,6 +80,8 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - the launcher checks its local server while the kiosk is open; a failed server causes the owned browser and watchdog to close before the complete stack is restarted
 - runtime recovery is limited to three attempts within 60 seconds with a short increasing delay; exhausting the limit closes the stack and shows a localized error instead of looping or leaving a blank kiosk
 - the launcher's `EXIT` trap applies the same owned-process cleanup when the launcher itself fails or is stopped
+- an atomic private lifecycle file records only allowlisted state, reason, and bounded recovery attempt; the complete transition contract is documented in [LIFECYCLE.md](LIFECYCLE.md)
+- authenticated shutdown and Parent exit actions write short-lived intents, allowing the cleanup trap to distinguish them from an ordinary session logout without trusting arbitrary signal metadata
 
 ### 7. Configuration lifecycle
 
@@ -99,6 +101,7 @@ Existing `special:` commands and older `xdg-open URL` browser tiles remain compa
 - event names and detail fields use a fixed privacy allowlist; arbitrary messages and configuration values are rejected
 - a successful automatic recovery records only its bounded attempt number, never process IDs or user data
 - the Parent settings download contains technical versions, configuration readability and schema version, and recent allowlisted events
+- diagnostics include only the allowlisted current lifecycle state, reason, and bounded recovery attempt
 - diagnostics never include PIN data, titles, tile labels, commands, URLs, usernames, home paths, or browser-profile data
 - logs and diagnostics remain local unless a parent deliberately shares the downloaded file
 

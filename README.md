@@ -68,6 +68,7 @@ The launcher is plain Python, HTML, CSS, JavaScript, and shell—there is no fra
 | [Installation](docs/INSTALL.md) | Install options, requirements, and troubleshooting |
 | [Privacy and safety](docs/PRIVACY.md) | Local-first behavior and parent considerations |
 | [Architecture](docs/ARCHITECTURE.md) | Components, data flow, and file locations |
+| [Lifecycle](docs/LIFECYCLE.md) | Startup, logout, shutdown, update, and recovery states |
 | [Development](docs/DEVELOPMENT.md) | Checks, WSLg testing, and manual smoke tests |
 | [Branching](docs/BRANCHING.md) | Branch responsibilities and pull-request flow |
 | [Releasing](docs/RELEASING.md) | Versioning, immutable artifacts, and updater compatibility |

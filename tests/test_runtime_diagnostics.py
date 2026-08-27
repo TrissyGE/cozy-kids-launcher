@@ -89,6 +89,31 @@ class RuntimeDiagnosticsTests(unittest.TestCase):
                 details={"title": "Private family title"},
             )
 
+    def test_lifecycle_diagnostics_accept_only_contract_values(self):
+        diagnostics = runtime_diagnostics.build_diagnostics(
+            "missing.log",
+            app_version="0.5.0",
+            config_readable=True,
+            lifecycle={"state": "recovering", "reason": "server-failed", "attempt": 2},
+        )
+        self.assertEqual(
+            diagnostics["lifecycle"],
+            {"state": "recovering", "reason": "server-failed", "attempt": 2},
+        )
+
+        private_value = "Family-Surname"
+        diagnostics = runtime_diagnostics.build_diagnostics(
+            "missing.log",
+            app_version="0.5.0",
+            config_readable=True,
+            lifecycle={"state": "running", "reason": private_value, "attempt": 99},
+        )
+        self.assertEqual(
+            diagnostics["lifecycle"],
+            {"state": "unknown", "reason": "unknown", "attempt": None},
+        )
+        self.assertNotIn(private_value, json.dumps(diagnostics))
+
     def test_runtime_logging_failure_cannot_break_the_launcher(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             logger = runtime_diagnostics.configure_runtime_logging(
