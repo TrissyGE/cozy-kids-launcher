@@ -69,7 +69,7 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Compile Python templates
-        run: python -m py_compile src/server.py src/backup_store.py src/config_store.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+        run: python -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 
       - name: Validate data and shell syntax
         shell: bash
@@ -95,6 +95,7 @@ jobs:
           test -x "$test_home/.local/bin/cozy-kids-launcher"
           test -x "$test_home/.local/share/cozy-kids-launcher/update.sh"
           test -f "$test_home/.local/share/cozy-kids-launcher/backup_store.py"
+          test -f "$test_home/.local/share/cozy-kids-launcher/lifecycle_state.py"
           cmp VERSION "$test_home/.local/share/cozy-kids-launcher/version"
 
       - name: Build release archives and checksums

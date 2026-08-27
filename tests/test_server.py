@@ -16,6 +16,8 @@ SOURCE_ROOT = REPOSITORY_ROOT / "src"
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
+import lifecycle_state
+
 
 def load_server_template():
     source = (REPOSITORY_ROOT / "src" / "server.py").read_text(encoding="utf-8")
@@ -363,6 +365,10 @@ class ServerApiTests(unittest.TestCase):
         server_module.PROCESS_SUPERVISOR = str(app_root / "process_supervisor.py")
         server_module.OVERLAY_SCRIPT = str(app_root / "overlay.py")
         server_module.EXIT_FLAGFILE = str(cache_dir / "exit-requested")
+        server_module.LIFECYCLE_STATE_FILE = str(cache_dir / "lifecycle.json")
+        server_module.LIFECYCLE_REQUEST_FILE = str(
+            cache_dir / "lifecycle-request.json"
+        )
         server_module.clear_admin_sessions()
         server_module.clear_pin_failures()
         server_module.Handler.log_message = lambda *args, **kwargs: None
@@ -470,6 +476,15 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 403)
 
         cookie = self.authenticate()
+        lifecycle_state.begin_lifecycle(
+            server_module.LIFECYCLE_STATE_FILE,
+            "initial-start",
+        )
+        lifecycle_state.transition_lifecycle(
+            server_module.LIFECYCLE_STATE_FILE,
+            "running",
+            "ready",
+        )
         logger = server_module.configure_runtime_logging(server_module.LOG_FILE)
         try:
             server_module.log_runtime_event(
@@ -488,6 +503,10 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("cozy-kids-diagnostics.json", headers["Content-Disposition"])
         self.assertEqual(data["configuration"]["schemaVersion"], 1)
+        self.assertEqual(
+            data["lifecycle"],
+            {"state": "running", "reason": "ready", "attempt": None},
+        )
         self.assertIn("server.started", serialized)
         self.assertNotIn(config["title"], serialized)
         self.assertNotIn(config["tiles"][0]["label"], serialized)
@@ -624,6 +643,43 @@ class ServerApiTests(unittest.TestCase):
         )
         self.assertEqual(status, 403)
         self.assertIn("Cross-site", data["message"])
+
+    def test_shutdown_records_a_short_lived_lifecycle_intent(self):
+        with mock.patch.object(
+            server_module.shutil,
+            "which",
+            side_effect=lambda name: f"/fake/{name}" if name == "systemctl" else None,
+        ), mock.patch.object(server_module.subprocess, "Popen") as popen:
+            status, data, _ = self.request(
+                "/shutdown",
+                method="POST",
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(data["status"], "ok")
+        popen.assert_called_once_with(
+            ["systemctl", "poweroff"],
+            env=mock.ANY,
+        )
+        self.assertEqual(
+            lifecycle_state.consume_lifecycle_request(
+                server_module.LIFECYCLE_REQUEST_FILE
+            ),
+            "shutdown",
+        )
+
+    def test_failed_shutdown_does_not_leave_a_stale_intent(self):
+        with mock.patch.object(server_module.shutil, "which", return_value=None):
+            status, data, _ = self.request(
+                "/shutdown",
+                method="POST",
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(data["status"], "error")
+        self.assertFalse(Path(server_module.LIFECYCLE_REQUEST_FILE).exists())
 
     def test_invalid_import_is_rejected(self):
         status, data, _ = self.request(
