@@ -42,7 +42,7 @@ python3 scripts/wsl/browser-e2e.py
 echo "[3/6] Python, JSON, and shell validation"
 python3 -m py_compile \
   src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py \
-  scripts/take-screenshots.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+  scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null
 bash -n \

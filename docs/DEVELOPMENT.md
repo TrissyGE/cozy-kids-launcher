@@ -9,7 +9,7 @@ From the repository root:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 scripts/wsl/browser-e2e.py
-python3 -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py
+python3 -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py
 bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
 python3 -m py_compile scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
@@ -52,6 +52,10 @@ bash scripts/wsl/run-gui-smoke.sh
 ```
 
 See [WSL_TESTING.md](WSL_TESTING.md) for isolation details, artifacts, DRM limitations, and the full desktop test matrix.
+
+## Full Linux desktop matrix
+
+GNOME, KDE Plasma, and XFCE release evidence must come from complete disposable VM sessions. The reusable harness, required environments, manual observations, and JSON report contract are documented in [DESKTOP_TESTING.md](DESKTOP_TESTING.md). WSLg results do not replace these compositor and login tests.
 
 ## Manual Linux smoke test
 

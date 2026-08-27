@@ -36,6 +36,8 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 - [x] Add browser end-to-end coverage for home, PIN, settings, timer, themes, and update states
 - [ ] Complete release smoke tests on GNOME, KDE Plasma, and XFCE
+  - [x] Add a repeatable in-session harness with machine-readable reports
+  - [ ] Record passing GNOME Wayland, KDE Plasma Wayland, and XFCE X11 VM reports
 - [ ] Document and test X11 and Wayland behavior for focus, overlays, and kiosk browsers
 - [ ] Exercise touch, keyboard-only, reduced-motion, high-contrast, and low-resolution flows
 

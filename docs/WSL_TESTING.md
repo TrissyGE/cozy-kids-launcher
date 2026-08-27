@@ -83,4 +83,6 @@ Before a release, repeat the manual smoke test in at least one full desktop VM:
 | KDE Plasma VM | KDE wrappers, fullscreen focus, overlay, and desktop shortcuts |
 | XFCE VM | Lightweight target behavior and generic X11 integration |
 
+Use the repeatable harness and evidence rules in [DESKTOP_TESTING.md](DESKTOP_TESTING.md). WSLg results must not be recorded as a GNOME, KDE Plasma, or XFCE matrix pass.
+
 Microsoft's WSLg documentation explicitly describes GUI application support and notes that it does not provide a full desktop experience: [Run Linux GUI apps with WSL](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps).
