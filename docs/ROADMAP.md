@@ -34,7 +34,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 ### Test confidence
 
-- [ ] Add browser end-to-end coverage for home, PIN, settings, timer, themes, and update states
+- [x] Add browser end-to-end coverage for home, PIN, settings, timer, themes, and update states
 - [ ] Complete release smoke tests on GNOME, KDE Plasma, and XFCE
 - [ ] Document and test X11 and Wayland behavior for focus, overlays, and kiosk browsers
 - [ ] Exercise touch, keyboard-only, reduced-motion, high-contrast, and low-resolution flows

@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 import sys
 import tempfile
 import threading
@@ -274,6 +275,24 @@ class RecommendationTests(unittest.TestCase):
 
 
 class UpdateStatusTests(unittest.TestCase):
+    def test_update_urls_share_the_updater_environment_overrides(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "COZY_KIDS_RELEASE_API_URL": "http://127.0.0.1:8000/releases/latest",
+                "COZY_KIDS_RAW_URL": "http://127.0.0.1:8000/raw/",
+            },
+        ):
+            isolated_module = load_server_template()
+        self.assertEqual(
+            isolated_module.LATEST_RELEASE_API,
+            "http://127.0.0.1:8000/releases/latest",
+        )
+        self.assertEqual(
+            isolated_module.LEGACY_VERSION_URL,
+            "http://127.0.0.1:8000/raw/VERSION",
+        )
+
     def test_semver_comparison_is_numeric_and_strict(self):
         self.assertTrue(server_module.version_is_newer("0.10.0", "0.9.9"))
         self.assertFalse(server_module.version_is_newer("0.3.4", "0.3.4"))

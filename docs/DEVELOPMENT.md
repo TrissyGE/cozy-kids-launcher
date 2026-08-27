@@ -8,7 +8,8 @@ From the repository root:
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py
+python3 scripts/wsl/browser-e2e.py
+python3 -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py
 bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
 python3 -m py_compile scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
@@ -17,7 +18,9 @@ python3 -m json.tool src/recommendations.json >/dev/null
 
 The test suite renders the server template with test values, starts it on an ephemeral localhost port, and exercises the HTTP API against temporary config and cache directories. On Linux it also serves synthetic release and legacy archives from an ephemeral local HTTP server to test successful verification, checksum rejection, compatibility fallback, and fail-closed behavior. The launcher lifecycle tests perform isolated installations and drive real startup, successful and failed update, shutdown, logout, server recovery, and exhausted-recovery flows while checking that every owned process is cleaned up. A separate process-supervisor test follows a forked child that ignores `SIGTERM` while proving an unrelated instance of the same executable remains alive. It does not touch an installed launcher.
 
-GitHub Actions runs the same checks on every pull request and on pushes to `main` and `develop` with the oldest and newest supported Python versions.
+`scripts/wsl/browser-e2e.py` creates another isolated installation and drives home, PIN, Parent settings, timer, theme, and update-state journeys through real Chromium. It needs a supported Chromium-family browser plus the Python `websocket-client` package (`python3-websocket` in the WSL test environment). Diagnostics and screenshots are written below `.test-artifacts/browser-e2e/`.
+
+GitHub Actions runs the API checks on every pull request and on pushes to `main` and `develop` with the oldest and newest supported Python versions. A separate Chromium job runs the browser journeys, and the release workflow repeats them before publishing.
 
 ## Branch model
 
