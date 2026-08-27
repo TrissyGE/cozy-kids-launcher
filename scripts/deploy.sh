@@ -12,6 +12,8 @@ die() {
 
 command -v git >/dev/null 2>&1 || die "git is required"
 command -v python3 >/dev/null 2>&1 || die "python3 is required"
+python3 -c 'import websocket' >/dev/null 2>&1 \
+  || die "Python package websocket-client is required for the browser release test"
 
 CURRENT_BRANCH="$(git branch --show-current)"
 [[ -n "$CURRENT_BRANCH" ]] || die "run the release check from a named release branch"
@@ -31,20 +33,23 @@ if [[ -n "$(git status --short)" ]]; then
   die "the working tree must be clean so checks match the commit that will be tagged"
 fi
 
-echo "[1/5] Unit and integration tests"
+echo "[1/6] Unit and integration tests"
 python3 -m unittest discover -s tests -v
 
-echo "[2/5] Python, JSON, and shell validation"
+echo "[2/6] Browser end-to-end test"
+python3 scripts/wsl/browser-e2e.py
+
+echo "[3/6] Python, JSON, and shell validation"
 python3 -m py_compile \
   src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py \
-  scripts/take-screenshots.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+  scripts/take-screenshots.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null
 bash -n \
   scripts/install.sh scripts/update.sh scripts/deploy.sh \
   scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
 
-echo "[3/5] Isolated installer smoke test"
+echo "[4/6] Isolated installer smoke test"
 TEST_HOME="$(mktemp -d)"
 trap 'rm -rf "$TEST_HOME"' EXIT
 bash scripts/install.sh \
@@ -73,7 +78,7 @@ if config.get("configVersion") != 1:
     raise SystemExit("Installed config does not use schema version 1")
 PY
 
-echo "[4/5] Archive dry run"
+echo "[5/6] Archive dry run"
 PREFIX="cozy-kids-launcher-$VERSION/"
 git archive --format=tar --prefix="$PREFIX" HEAD | gzip -n > "$TEST_HOME/release.tar.gz"
 tar -tzf "$TEST_HOME/release.tar.gz" > "$TEST_HOME/archive-contents.txt"
@@ -81,7 +86,7 @@ grep -Fxq "${PREFIX}VERSION" "$TEST_HOME/archive-contents.txt"
 grep -Fxq "${PREFIX}scripts/install.sh" "$TEST_HOME/archive-contents.txt"
 sha256sum "$TEST_HOME/release.tar.gz" >/dev/null
 
-echo "[5/5] Tag checks"
+echo "[6/6] Tag checks"
 if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
   die "tag v$VERSION already exists"
 fi

@@ -251,7 +251,7 @@
       <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
         <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
         <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">
-        <button class="smallbtn" onclick="savePin()">{{PIN_SET}}</button>
+        <button class="smallbtn" id="setPinBtn" onclick="savePin()">{{PIN_SET}}</button>
         <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
       </div>
       <div id="pinMsg" class="muted"></div>

@@ -51,8 +51,15 @@ APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
 VERSION_FILE = os.path.join(APP_ROOT, "version")
 UPDATE_SCRIPT = os.path.join(APP_ROOT, "update.sh")
 UPDATE_CHANNEL_FILE = os.path.join(APP_ROOT, "update-channel")
-LATEST_RELEASE_API = "https://api.github.com/repos/TrissyGE/cozy-kids-launcher/releases/latest"
-LEGACY_VERSION_URL = "https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION"
+LATEST_RELEASE_API = os.environ.get(
+    "COZY_KIDS_RELEASE_API_URL",
+    "https://api.github.com/repos/TrissyGE/cozy-kids-launcher/releases/latest",
+)
+LEGACY_RAW_URL = os.environ.get(
+    "COZY_KIDS_RAW_URL",
+    "https://raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main",
+).rstrip("/")
+LEGACY_VERSION_URL = f"{LEGACY_RAW_URL}/VERSION"
 CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 BACKUP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}-backups")
 LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")

@@ -16,6 +16,16 @@ This installs Tk, X11 diagnostics, Mesa diagnostics, PulseAudio tools, VLC, FFmp
 
 ## Run the smoke test
 
+The fast, headless browser journeys do not require a visible WSLg session:
+
+```bash
+python3 scripts/wsl/browser-e2e.py
+```
+
+They cover home rendering, PIN setup and rejection, saved settings, theme selection, timer start/stop, and current/available/error update states against local fixtures. Output is kept under `.test-artifacts/browser-e2e/`.
+
+For the full multimedia and WSLg integration test, run:
+
 ```bash
 bash scripts/wsl/run-gui-smoke.sh
 ```
