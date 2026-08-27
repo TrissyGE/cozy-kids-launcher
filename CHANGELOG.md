@@ -18,6 +18,9 @@ All notable changes to this project will be documented in this file.
 - Added a localized terminal error state after repeated failures and privacy-safe recovery attempt diagnostics
 - Added a per-tile Linux process supervisor that retains ownership across forks and stops only the launched app, media player, or external browser tree
 - Removed command-name and active-window kill fallbacks from the overlay, and made tile changes, updates, exits, and launcher cleanup close the verified active tile
+- Added authenticated backup discovery and one-click configuration restore to Parent settings in German and English
+- Preserve the current Parent PIN, validate the selected backup against the installed schema, and create a private safety snapshot before every restore
+- Restrict restores to timestamped configuration backups under the local backup root; reject paths, symlinks, oversized files, corrupt JSON, and unsupported future schemas
 
 ## [0.4.1] - 2026-08-25
 

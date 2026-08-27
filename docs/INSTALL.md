@@ -82,6 +82,11 @@ Backups of overwritten files are also kept at:
 ~/.local/share/cozy-kids-launcher-backups/<timestamp>/
 ```
 
+Valid configuration backups appear under **Parent → Backups**. Restoring one
+replaces launcher settings only; it does not downgrade the installed program.
+The current Parent PIN stays active, and the launcher creates a new safety
+snapshot immediately before the restore.
+
 ## How to Update
 
 Run the update script that was installed with the launcher:
@@ -148,6 +153,7 @@ Then re-open the launcher.
 | `~/.local/share/cozy-kids-launcher/` | App files: server, UI, version, updater |
 | `~/.local/state/cozy-kids-launcher/runtime.jsonl` | Small rotating technical event log |
 | `~/.config/cozy-kids-launcher/config.json` | Your tiles, colors, labels, PIN |
+| `~/.local/share/cozy-kids-launcher-backups/` | Private local configuration and installer backups |
 | `~/.config/autostart/...` | Auto-starts on login |
 | `~/Desktop/Kinder-Modus.desktop` | Desktop shortcut to reopen |
 

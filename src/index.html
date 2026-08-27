@@ -87,6 +87,10 @@
   .pinbox .hint { color:#888; font-size:.9rem; margin-top:12px; }
   .adminpagenav { display:flex; justify-content:center; gap:12px; margin-bottom:14px; }
   .muted { color:#888; font-size:.9rem; }
+  .backup-panel { margin:16px 0 20px; padding:16px; border:1px solid var(--input-border); border-radius:18px; background:var(--smallbtn-bg); }
+  .backup-panel h3 { margin:0 0 6px; }
+  .backup-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; margin-top:12px; }
+  .backup-message { min-height:20px; margin-top:8px; }
   .rec-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
   .rec-card { background:white; border-radius:18px; padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; box-shadow:0 4px 16px var(--rec-shadow); }
   .rec-card .emoji { font-size:2.4rem; }
@@ -280,6 +284,15 @@
         <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
       </div>
       <div id="importMsg" class="muted"></div>
+      <section class="backup-panel" aria-labelledby="backupTitle">
+        <h3 id="backupTitle">{{BACKUP_TITLE}}</h3>
+        <div class="muted">{{BACKUP_PIN_PRESERVED}}</div>
+        <div class="backup-actions">
+          <select id="backupSelect" aria-label="{{BACKUP_TITLE}}"></select>
+          <button id="restoreBackupBtn" class="smallbtn" onclick="restoreBackup()">{{BACKUP_RESTORE}}</button>
+        </div>
+        <div id="backupMsg" class="muted backup-message" aria-live="polite"></div>
+      </section>
       <div id="forms"></div>
       <div class="adminpagenav" id="adminPageNav"></div>
       <div id="recommendations" style="margin-top:18px;"></div>
@@ -291,7 +304,7 @@
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script>
-let cfg=null, appOptions=[], recommendations=[], adminPage=0, pinCallback=null;
+let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, pinCallback=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
@@ -373,7 +386,19 @@ const uiText = {
   timerExtend: {{JSON_TIMER_EXTEND}},
   timerExit: {{JSON_TIMER_EXIT}},
   timerWrongPin: {{JSON_TIMER_WRONG_PIN}},
-  timerExtended: {{JSON_TIMER_EXTENDED}}
+  timerExtended: {{JSON_TIMER_EXTENDED}},
+  backupTitle: {{JSON_BACKUP_TITLE}},
+  backupRestore: {{JSON_BACKUP_RESTORE}},
+  backupEmpty: {{JSON_BACKUP_EMPTY}},
+  backupLoading: {{JSON_BACKUP_LOADING}},
+  backupLoadError: {{JSON_BACKUP_LOAD_ERROR}},
+  backupRestoring: {{JSON_BACKUP_RESTORING}},
+  backupConfirm: {{JSON_BACKUP_CONFIRM}},
+  backupSuccess: {{JSON_BACKUP_SUCCESS}},
+  backupError: {{JSON_BACKUP_ERROR}},
+  backupInstaller: {{JSON_BACKUP_INSTALLER}},
+  backupPreRestore: {{JSON_BACKUP_PRE_RESTORE}},
+  backupPinPreserved: {{JSON_BACKUP_PIN_PRESERVED}}
 };
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
@@ -492,7 +517,7 @@ function showPin(){ document.getElementById('pin').classList.remove('hidden'); d
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
 function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; }
 async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
-function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); }
+function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); loadBackups(); }
 function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); }
 function shutdownNow(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
 function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
@@ -798,6 +823,7 @@ function renderAdmin(){
     row.append(dragHandle,emoji,label,visibleWrap,select,browserWrap,del);
     forms.appendChild(row);
   });
+  renderBackupOptions();
   renderAdminPageNav();
   renderRecommendations();
 }
@@ -1148,6 +1174,81 @@ async function importConfig(input){
     msg.style.color='#c00';
   }
   input.value='';
+}
+function backupLabel(backup){
+  const date=new Date(backup.createdAt);
+  const locale=interfaceLanguage()==='de'?'de-DE':'en-US';
+  const created=Number.isNaN(date.getTime())?backup.createdAt:date.toLocaleString(locale);
+  const source=backup.source==='pre-restore'?uiText.backupPreRestore:uiText.backupInstaller;
+  return source+' · '+created;
+}
+function renderBackupOptions(){
+  const select=document.getElementById('backupSelect');
+  const button=document.getElementById('restoreBackupBtn');
+  if(!select||!button) return;
+  select.replaceChildren();
+  button.textContent=uiText.backupRestore;
+  if(!backups.length){
+    const empty=document.createElement('option');
+    empty.value='';
+    empty.textContent=uiText.backupEmpty;
+    select.appendChild(empty);
+    button.disabled=true;
+    return;
+  }
+  for(const backup of backups){
+    const option=document.createElement('option');
+    option.value=backup.id;
+    option.textContent=backupLabel(backup);
+    select.appendChild(option);
+  }
+  button.disabled=false;
+}
+async function loadBackups(){
+  const msg=document.getElementById('backupMsg');
+  msg.textContent=uiText.backupLoading;
+  msg.style.color='';
+  try{
+    const response=await fetch('/api/backups',{cache:'no-store'});
+    if(!response.ok) throw new Error('backup list failed');
+    const result=await response.json();
+    backups=Array.isArray(result.backups)?result.backups:[];
+    renderBackupOptions();
+    msg.textContent='';
+  }catch(e){
+    backups=[];
+    renderBackupOptions();
+    msg.textContent=uiText.backupLoadError;
+    msg.style.color='#c00';
+  }
+}
+async function restoreBackup(){
+  const select=document.getElementById('backupSelect');
+  const button=document.getElementById('restoreBackupBtn');
+  const msg=document.getElementById('backupMsg');
+  const backupId=select.value;
+  if(!backupId||!window.confirm(uiText.backupConfirm)) return;
+  button.disabled=true;
+  msg.textContent=uiText.backupRestoring;
+  msg.style.color='';
+  try{
+    const response=await fetch('/api/backups/restore',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({backupId:backupId})
+    });
+    const result=await response.json();
+    if(!response.ok||result.status!=='ok') throw new Error('backup restore failed');
+    await loadConfig();
+    await loadBackups();
+    msg.textContent=uiText.backupSuccess;
+    msg.style.color='green';
+  }catch(e){
+    msg.textContent=uiText.backupError;
+    msg.style.color='#c00';
+  }finally{
+    button.disabled=backups.length===0;
+  }
 }
 // Keyboard navigation
 let focusedTileIndex=0;

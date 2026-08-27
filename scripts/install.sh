@@ -290,6 +290,18 @@ text() {
     de:import_error) echo "Import fehlgeschlagen" ;;
     de:invalid_config) echo "Ungültige Konfigurationsdatei" ;;
     de:import_confirm) echo "Dies überschreibt die gesamte Konfiguration. Fortfahren?" ;;
+    de:backup_title) echo "Sicherungen" ;;
+    de:backup_restore) echo "Wiederherstellen" ;;
+    de:backup_empty) echo "Keine gültigen Sicherungen gefunden." ;;
+    de:backup_loading) echo "Sicherungen werden geladen..." ;;
+    de:backup_load_error) echo "Sicherungen konnten nicht geladen werden." ;;
+    de:backup_restoring) echo "Sicherung wird wiederhergestellt..." ;;
+    de:backup_confirm) echo "Diese Sicherung ersetzt die aktuellen Einstellungen. Der Eltern-PIN bleibt erhalten und vorher wird automatisch eine neue Sicherung erstellt. Fortfahren?" ;;
+    de:backup_success) echo "Sicherung wiederhergestellt." ;;
+    de:backup_error) echo "Sicherung konnte nicht wiederhergestellt werden." ;;
+    de:backup_installer) echo "Vor Installation oder Update" ;;
+    de:backup_pre_restore) echo "Vor Wiederherstellung" ;;
+    de:backup_pin_preserved) echo "Der aktuelle Eltern-PIN bleibt bei einer Wiederherstellung unverändert." ;;
     en:app_browser_title) echo "App Browser" ;;
     en:install) echo "Install" ;;
     en:added) echo "Added" ;;
@@ -307,6 +319,18 @@ text() {
     en:import_error) echo "Import failed" ;;
     en:invalid_config) echo "Invalid config file" ;;
     en:import_confirm) echo "This will overwrite all settings. Continue?" ;;
+    en:backup_title) echo "Backups" ;;
+    en:backup_restore) echo "Restore" ;;
+    en:backup_empty) echo "No valid backups found." ;;
+    en:backup_loading) echo "Loading backups..." ;;
+    en:backup_load_error) echo "Backups could not be loaded." ;;
+    en:backup_restoring) echo "Restoring backup..." ;;
+    en:backup_confirm) echo "This backup will replace the current settings. The Parent PIN will be preserved and a new safety backup will be created first. Continue?" ;;
+    en:backup_success) echo "Backup restored." ;;
+    en:backup_error) echo "Backup could not be restored." ;;
+    en:backup_installer) echo "Before installation or update" ;;
+    en:backup_pre_restore) echo "Before restore" ;;
+    en:backup_pin_preserved) echo "The current Parent PIN is preserved when restoring a backup." ;;
     de:timer_label) echo "Bildschirmzeit" ;;
     en:timer_label) echo "Screen time" ;;
     de:timer_off) echo "Aus" ;;
@@ -747,9 +771,13 @@ AUTOSTART_FILE="$AUTOSTART_DIR/$AUTOSTART_FILE_ID"
 DESKTOP_FILE="$DESKTOP_DIR/$DESKTOP_SHORTCUT_ID"
 APP_DESKTOP_FILE="$TARGET_HOME/.local/share/applications/$DESKTOP_FILE_ID"
 UNINSTALL_FILE="$APP_ROOT/uninstall.txt"
-BACKUP_DIR="$TARGET_HOME/.local/share/$APP_DIR_NAME-backups/$(date +%Y%m%d-%H%M%S)"
+BACKUP_ROOT="$TARGET_HOME/.local/share/$APP_DIR_NAME-backups"
+BACKUP_DIR="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)"
 
-mkdir -p "$APP_ROOT" "$BIN_DIR" "$CFG_DIR" "$AUTOSTART_DIR" "$DESKTOP_DIR" "$CACHE_DIR" "$(dirname "$APP_DESKTOP_FILE")" "$BACKUP_DIR"
+mkdir -p "$APP_ROOT" "$BIN_DIR" "$CFG_DIR" "$AUTOSTART_DIR" "$DESKTOP_DIR" "$CACHE_DIR" "$(dirname "$APP_DESKTOP_FILE")" "$BACKUP_ROOT"
+[[ ! -L "$BACKUP_ROOT" ]] || die "Backup root must not be a symbolic link: $BACKUP_ROOT"
+mkdir "$BACKUP_DIR" || die "Could not create a unique backup directory: $BACKUP_DIR"
+chmod 0700 "$CFG_DIR" "$CACHE_DIR" "$BACKUP_ROOT" "$BACKUP_DIR"
 
 backup_if_exists() {
   local path="$1"
@@ -792,6 +820,7 @@ render_template() {
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
   export LABEL_COPY_COMMAND LABEL_CLOSE
   export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG LABEL_EXPORT_DIAGNOSTICS IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
+  export BACKUP_TITLE BACKUP_RESTORE BACKUP_EMPTY BACKUP_LOADING BACKUP_LOAD_ERROR BACKUP_RESTORING BACKUP_CONFIRM BACKUP_SUCCESS BACKUP_ERROR BACKUP_INSTALLER BACKUP_PRE_RESTORE BACKUP_PIN_PRESERVED
   export JSON_BROWSER_PAGE JSON_WEB_MODE_EMBEDDED JSON_WEB_MODE_EXTERNAL
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
@@ -802,6 +831,7 @@ render_template() {
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
   export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
   export JSON_EXPORT_CONFIG JSON_IMPORT_CONFIG JSON_IMPORT_SUCCESS JSON_IMPORT_ERROR JSON_INVALID_CONFIG JSON_IMPORT_CONFIRM
+  export JSON_BACKUP_TITLE JSON_BACKUP_RESTORE JSON_BACKUP_EMPTY JSON_BACKUP_LOADING JSON_BACKUP_LOAD_ERROR JSON_BACKUP_RESTORING JSON_BACKUP_CONFIRM JSON_BACKUP_SUCCESS JSON_BACKUP_ERROR JSON_BACKUP_INSTALLER JSON_BACKUP_PRE_RESTORE JSON_BACKUP_PIN_PRESERVED
   export UPDATE_CHECK UPDATE_AVAILABLE UPDATE_UP_TO_DATE UPDATE_ERROR VERSION_LABEL UPDATE_NOW UPDATE_PROGRESS UPDATE_CONFIRM
   export RUNTIME_FAILURE_TITLE RUNTIME_FAILURE_BODY
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
@@ -911,6 +941,18 @@ IMPORT_SUCCESS="$(text import_success)"
 IMPORT_ERROR="$(text import_error)"
 INVALID_CONFIG="$(text invalid_config)"
 IMPORT_CONFIRM="$(text import_confirm)"
+BACKUP_TITLE="$(text backup_title)"
+BACKUP_RESTORE="$(text backup_restore)"
+BACKUP_EMPTY="$(text backup_empty)"
+BACKUP_LOADING="$(text backup_loading)"
+BACKUP_LOAD_ERROR="$(text backup_load_error)"
+BACKUP_RESTORING="$(text backup_restoring)"
+BACKUP_CONFIRM="$(text backup_confirm)"
+BACKUP_SUCCESS="$(text backup_success)"
+BACKUP_ERROR="$(text backup_error)"
+BACKUP_INSTALLER="$(text backup_installer)"
+BACKUP_PRE_RESTORE="$(text backup_pre_restore)"
+BACKUP_PIN_PRESERVED="$(text backup_pin_preserved)"
 TIMER_LABEL="$(text timer_label)"
 TIMER_OFF="$(text timer_off)"
 TIMER_15="$(text timer_15)"
@@ -996,6 +1038,18 @@ JSON_IMPORT_SUCCESS="$(json_text "$IMPORT_SUCCESS")"
 JSON_IMPORT_ERROR="$(json_text "$IMPORT_ERROR")"
 JSON_INVALID_CONFIG="$(json_text "$INVALID_CONFIG")"
 JSON_IMPORT_CONFIRM="$(json_text "$IMPORT_CONFIRM")"
+JSON_BACKUP_TITLE="$(json_text "$BACKUP_TITLE")"
+JSON_BACKUP_RESTORE="$(json_text "$BACKUP_RESTORE")"
+JSON_BACKUP_EMPTY="$(json_text "$BACKUP_EMPTY")"
+JSON_BACKUP_LOADING="$(json_text "$BACKUP_LOADING")"
+JSON_BACKUP_LOAD_ERROR="$(json_text "$BACKUP_LOAD_ERROR")"
+JSON_BACKUP_RESTORING="$(json_text "$BACKUP_RESTORING")"
+JSON_BACKUP_CONFIRM="$(json_text "$BACKUP_CONFIRM")"
+JSON_BACKUP_SUCCESS="$(json_text "$BACKUP_SUCCESS")"
+JSON_BACKUP_ERROR="$(json_text "$BACKUP_ERROR")"
+JSON_BACKUP_INSTALLER="$(json_text "$BACKUP_INSTALLER")"
+JSON_BACKUP_PRE_RESTORE="$(json_text "$BACKUP_PRE_RESTORE")"
+JSON_BACKUP_PIN_PRESERVED="$(json_text "$BACKUP_PIN_PRESERVED")"
 JSON_TIMER_LABEL="$(json_text "$TIMER_LABEL")"
 JSON_TIMER_OFF="$(json_text "$TIMER_OFF")"
 JSON_TIMER_15="$(json_text "$TIMER_15")"
@@ -1031,6 +1085,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
+install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
 install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"
@@ -1118,6 +1173,7 @@ with open(path, 'w', encoding='utf-8') as f:
     json.dump(config, f, ensure_ascii=False, indent=2)
     f.write('\n')
 PY
+chmod 0600 "$CONFIG_FILE"
 
 # Copy recommendations data for runtime use
 if [[ -f "$SRC_DIR/recommendations.json" ]]; then
@@ -1175,7 +1231,7 @@ if [[ -f "$REPO_DIR/VERSION" ]]; then
   install -m 0644 "$REPO_DIR/VERSION" "$APP_ROOT/version"
 fi
 
-chown -R "$TARGET_USER":"$TARGET_USER" "$APP_ROOT" "$CFG_DIR" "$CACHE_DIR"
+chown -R "$TARGET_USER":"$TARGET_USER" "$APP_ROOT" "$CFG_DIR" "$CACHE_DIR" "$BACKUP_ROOT"
 chown "$TARGET_USER":"$TARGET_USER" "$RUNTIME_BIN" "$AUTOSTART_FILE" "$DESKTOP_FILE" "$APP_DESKTOP_FILE"
 
 if command -v update-desktop-database >/dev/null 2>&1; then

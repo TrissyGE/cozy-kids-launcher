@@ -19,6 +19,12 @@ Both the logs and the export use a fixed allowlist and exclude PIN data,
 personal labels, tile commands, URLs, usernames, and local paths. Nothing is
 uploaded automatically.
 
+Installer and pre-restore backups remain under the user's local data directory.
+They can contain the same family settings and hashed Parent PIN as the active
+configuration, so their directories are restricted to the local user. Parent
+settings expose only a backup's date and origin, not paths or configuration
+values. A restore preserves the currently active Parent PIN.
+
 ## What parents should review before using
 
 - which applications are visible to the child

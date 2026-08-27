@@ -76,6 +76,19 @@ class RuntimeDiagnosticsTests(unittest.TestCase):
                 details={"attempt": "private"},
             )
 
+    def test_config_restore_event_contains_only_the_schema_version(self):
+        event = runtime_diagnostics.sanitize_event(
+            "config.restored",
+            details={"configVersion": 1},
+        )
+
+        self.assertEqual(event["details"], {"configVersion": 1})
+        with self.assertRaisesRegex(ValueError, "privacy contract"):
+            runtime_diagnostics.sanitize_event(
+                "config.restored",
+                details={"title": "Private family title"},
+            )
+
     def test_runtime_logging_failure_cannot_break_the_launcher(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             logger = runtime_diagnostics.configure_runtime_logging(

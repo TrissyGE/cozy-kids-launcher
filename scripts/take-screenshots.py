@@ -234,14 +234,14 @@ def main():
                     url,
                     output_dir / "screenshot-admin-general.png",
                     root / "chrome-admin",
-                    "(async () => { enterAdmin(); await checkUpdate(); return true; })()",
+                    "(async () => { enterAdmin(); await checkUpdate(); await loadBackups(); return true; })()",
                 )
                 capture(
                     browser,
                     url,
                     output_dir / "screenshot-theme-picker.png",
                     root / "chrome-theme-picker",
-                    "(async () => { enterAdmin(); await checkUpdate(); openThemePicker(); return true; })()",
+                    "(async () => { enterAdmin(); await checkUpdate(); await loadBackups(); openThemePicker(); return true; })()",
                 )
                 write_config(launcher_home, "ocean")
                 capture(
