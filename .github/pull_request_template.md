@@ -8,6 +8,7 @@
 
 - [ ] `python3 -m unittest discover -s tests -v`
 - [ ] Relevant manual or WSLg smoke test
+- [ ] Relevant desktop-matrix row when compositor or login behavior changes
 
 ## User-facing changes
 

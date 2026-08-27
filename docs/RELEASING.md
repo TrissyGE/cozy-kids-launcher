@@ -41,6 +41,8 @@ The release workflow checks this credential against the repository before it run
    bash scripts/deploy.sh
    ```
 
+   For a release claiming the v0.5 desktop matrix, also attach passing GNOME Wayland, KDE Plasma Wayland, and XFCE X11 reports produced according to [DESKTOP_TESTING.md](DESKTOP_TESTING.md). Automated-only reports with pending manual checks are not sufficient.
+
 5. Create and push an annotated tag pointing at that release-branch commit. Push the tag, **not the development branch to `main`**:
 
    ```bash

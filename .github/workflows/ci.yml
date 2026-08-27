@@ -28,7 +28,7 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Compile Python templates
-        run: python -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+        run: python -m py_compile src/server.py src/backup_store.py src/config_store.py src/lifecycle_state.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_watchdog.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 
       - name: Validate JSON data
         run: |

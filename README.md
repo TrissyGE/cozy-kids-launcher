@@ -70,6 +70,7 @@ The launcher is plain Python, HTML, CSS, JavaScript, and shell—there is no fra
 | [Architecture](docs/ARCHITECTURE.md) | Components, data flow, and file locations |
 | [Lifecycle](docs/LIFECYCLE.md) | Startup, logout, shutdown, update, and recovery states |
 | [Development](docs/DEVELOPMENT.md) | Checks, WSLg testing, and manual smoke tests |
+| [Desktop testing](docs/DESKTOP_TESTING.md) | Repeatable GNOME, KDE Plasma, and XFCE release matrix |
 | [Branching](docs/BRANCHING.md) | Branch responsibilities and pull-request flow |
 | [Releasing](docs/RELEASING.md) | Versioning, immutable artifacts, and updater compatibility |
 | [Roadmap](docs/ROADMAP.md) | Completed work and future ideas |
