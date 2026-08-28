@@ -475,6 +475,43 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
 
+    def test_app_discovery_endpoint_preserves_public_payload(self):
+        expected = [{"name": "Paint", "exec": "paint-app --kids"}]
+        with mock.patch.object(
+            server_module,
+            "discover_apps",
+            return_value=expected,
+        ) as discover_apps:
+            status, data, _ = self.request("/api/apps")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(data, expected)
+        discover_apps.assert_called_once_with(server_module.HOME)
+
+    def test_browser_endpoint_preserves_candidate_order_and_status(self):
+        candidates = ("firefox", "chromium")
+        with mock.patch.object(
+            server_module,
+            "BROWSER_CANDIDATES",
+            candidates,
+        ), mock.patch.object(
+            server_module.shutil,
+            "which",
+            side_effect=lambda name: "/usr/bin/firefox"
+            if name == "firefox"
+            else None,
+        ):
+            status, data, _ = self.request("/api/browsers")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            data,
+            [
+                {"name": "firefox", "installed": True},
+                {"name": "chromium", "installed": False},
+            ],
+        )
+
     def test_update_status_comes_from_the_local_release_resolver(self):
         expected = {
             "installedVersion": "0.3.4",

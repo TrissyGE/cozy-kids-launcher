@@ -1096,6 +1096,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
+install -m 0644 "$SRC_DIR/app_detection.py" "$APP_ROOT/app_detection.py"
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/lifecycle_state.py" "$APP_ROOT/lifecycle_state.py"
