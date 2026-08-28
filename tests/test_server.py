@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 import os
 import sys
@@ -179,7 +180,7 @@ class PinTests(unittest.TestCase):
         self.assertFalse(server_module.verify_pin(pin_hash, "9999"))
 
     def test_legacy_pin_hash_remains_supported(self):
-        legacy = server_module.hashlib.sha256(b"1234").hexdigest()[:16]
+        legacy = hashlib.sha256(b"1234").hexdigest()[:16]
         self.assertTrue(server_module.verify_pin(legacy, "1234"))
         self.assertFalse(server_module.verify_pin(legacy, "5678"))
 
@@ -696,7 +697,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertTrue(server_module.verify_pin(saved["pinHash"], "1234"))
 
     def test_successful_login_upgrades_legacy_pin_hash(self):
-        legacy = server_module.hashlib.sha256(b"1234").hexdigest()[:16]
+        legacy = hashlib.sha256(b"1234").hexdigest()[:16]
         server_module.save_cfg(base_config(legacy))
         self.authenticate()
         upgraded = server_module.load_cfg()["pinHash"]
@@ -773,8 +774,15 @@ class ServerApiTests(unittest.TestCase):
         self.assertTrue(stored.startswith("pbkdf2_sha256$"))
         self.assertTrue(server_module.verify_pin(stored, "2468"))
 
-        cookie = headers["Set-Cookie"].split(";", 1)[0]
-        status, data, _ = self.request(
+        set_cookie = headers["Set-Cookie"]
+        self.assertTrue(set_cookie.startswith("cozy_admin="))
+        self.assertTrue(
+            set_cookie.endswith(
+                "; Path=/; HttpOnly; SameSite=Strict; Max-Age=1800"
+            )
+        )
+        cookie = set_cookie.split(";", 1)[0]
+        status, data, headers = self.request(
             "/api/pin/remove",
             method="POST",
             cookie=cookie,
@@ -783,6 +791,10 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertFalse(data["pinConfigured"])
         self.assertEqual(server_module.load_cfg()["pinHash"], "")
+        self.assertEqual(
+            headers["Set-Cookie"],
+            "cozy_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+        )
 
     def test_pin_attempts_are_throttled_across_pin_protected_endpoints(self):
         self.enable_pin()
