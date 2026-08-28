@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -41,7 +41,7 @@ jobs:
           git config core.sshCommand "ssh -i $key_path -o IdentitiesOnly=yes"
           git ls-remote "git@github.com:$GITHUB_REPOSITORY.git" refs/heads/main >/dev/null
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload browser diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-browser-e2e
           path: .test-artifacts/browser-e2e/

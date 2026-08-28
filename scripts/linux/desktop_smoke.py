@@ -278,8 +278,20 @@ def x11_window_titles():
 
 def x11_window_present(title):
     try:
-        return title in x11_window_titles()
+        if title in x11_window_titles():
+            return True
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        pass
+    try:
+        result = subprocess.run(
+            ["xdotool", "search", "--name", title],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return result.returncode == 0 and bool(result.stdout.strip())
+    except (OSError, subprocess.TimeoutExpired):
         return False
 
 

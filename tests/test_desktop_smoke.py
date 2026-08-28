@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -13,6 +14,15 @@ MODULE_PATH = REPOSITORY_ROOT / "scripts" / "linux" / "desktop_smoke.py"
 SPEC = importlib.util.spec_from_file_location("desktop_smoke", MODULE_PATH)
 desktop_smoke = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(desktop_smoke)
+
+
+def subprocess_result(returncode=0, stdout="", stderr=""):
+    return desktop_smoke.subprocess.CompletedProcess(
+        args=(),
+        returncode=returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
 
 
 class DesktopDetectionTests(unittest.TestCase):
@@ -110,6 +120,39 @@ class DesktopDetectionTests(unittest.TestCase):
                 desktop_smoke.distribution_identity(release),
                 {"id": "example", "version": "42"},
             )
+
+
+class X11WindowDetectionTests(unittest.TestCase):
+    def test_ewmh_window_is_detected_with_wmctrl(self):
+        result = subprocess_result(stdout="0x01 host Cozy Kids Launcher\n")
+        with patch.object(desktop_smoke.subprocess, "run", return_value=result) as run:
+            self.assertTrue(desktop_smoke.x11_window_present("Cozy Kids Launcher"))
+        run.assert_called_once_with(
+            ["wmctrl", "-l"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+    def test_override_redirect_window_falls_back_to_xdotool(self):
+        wmctrl = subprocess_result(stdout="0x01 host Cozy Kids Launcher\n")
+        xdotool = subprocess_result(stdout="4194307\n")
+        with patch.object(
+            desktop_smoke.subprocess,
+            "run",
+            side_effect=(wmctrl, xdotool),
+        ):
+            self.assertTrue(desktop_smoke.x11_window_present("App Overlay"))
+
+    def test_missing_window_is_reported(self):
+        missing = subprocess_result(returncode=1)
+        with patch.object(
+            desktop_smoke.subprocess,
+            "run",
+            side_effect=(subprocess_result(), missing),
+        ):
+            self.assertFalse(desktop_smoke.x11_window_present("App Overlay"))
 
 
 class DesktopReportTests(unittest.TestCase):
