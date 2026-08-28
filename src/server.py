@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import glob
 import http.server
 import json
 import os
@@ -41,6 +40,13 @@ from lifecycle_state import (
     clear_lifecycle_request,
     read_lifecycle_state,
     write_lifecycle_request,
+)
+from media_library import (
+    SUPPORTED_MEDIA_PATTERNS,
+    find_media_player as detect_media_player,
+    has_media as path_has_media,
+    media_locations as discover_media_locations,
+    media_player_command,
 )
 from parent_auth import (
     ADMIN_COOKIE_NAME,
@@ -110,7 +116,7 @@ RECOMMENDATIONS_FILE = os.path.join(APP_ROOT, "recommendations.json")
 VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
 ALT_MUSIC = os.path.join(HOME, "Musik")
-EXTS = ("*.mp4", "*.mkv", "*.webm", "*.avi", "*.mov", "*.mp3", "*.ogg", "*.wav", "*.flac", "*.m4a")
+EXTS = SUPPORTED_MEDIA_PATTERNS
 LEGACY_WEB_ACTION_MIGRATIONS = {
     "special:external-browser:https://www.netflix.com/browse/kids":
         "special:external-browser:https://www.netflix.com/browse/genre/27346",
@@ -125,12 +131,7 @@ _tile_launch_lock = threading.Lock()
 
 
 def has_media(path):
-    if not os.path.isdir(path):
-        return False
-    for ext in EXTS:
-        if glob.glob(os.path.join(path, "**", ext), recursive=True):
-            return True
-    return False
+    return path_has_media(path, patterns=EXTS)
 
 
 def load_cfg():
@@ -238,29 +239,14 @@ def media_location():
 
 def media_locations():
     """Return every configured media directory that contains supported files."""
-    result = []
-    seen = set()
-    for location in (VIDEOS, MUSIC, ALT_MUSIC):
-        normalized = os.path.realpath(location)
-        if normalized not in seen and has_media(location):
-            result.append(location)
-            seen.add(normalized)
-    return result
+    return discover_media_locations(
+        (VIDEOS, MUSIC, ALT_MUSIC),
+        has_media_fn=has_media,
+    )
 
 
 def find_media_player():
-    for candidate in ("vlc", "mpv", "celluloid", "totem"):
-        if shutil.which(candidate):
-            return candidate
-    return None
-
-
-def media_player_command(player, locations):
-    if player == "vlc":
-        return [player, "--fullscreen", "--play-and-exit", "--no-video-title-show", *locations]
-    if player == "mpv":
-        return [player, "--fullscreen", *locations]
-    return [player, *locations]
+    return detect_media_player(which=shutil.which)
 
 
 def get_version():
