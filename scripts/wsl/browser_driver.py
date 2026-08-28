@@ -4,6 +4,7 @@
 import base64
 import json
 import os
+import signal
 import shutil
 import subprocess
 import time
@@ -62,15 +63,40 @@ def page_websocket_url(port, timeout):
     raise TimeoutError("Chrome page target did not become ready")
 
 
-def stop_process(process):
-    if process.poll() is not None:
+def stop_process(process, process_group=False):
+    if process.poll() is not None and not process_group:
         return
-    process.terminate()
+    if process_group and os.name == "posix":
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    else:
+        process.terminate()
     try:
         process.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        process.kill()
+        if process_group and os.name == "posix":
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        else:
+            process.kill()
         process.wait(timeout=5)
+
+    if process_group and os.name == "posix":
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                return
+            time.sleep(0.05)
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
 
 
 class DevTools:
@@ -159,6 +185,7 @@ class BrowserSession:
             env=environment,
             stdout=self._log_handle,
             stderr=subprocess.STDOUT,
+            start_new_session=(os.name == "posix"),
         )
         port = wait_for_debug_port(self.profile, self.process, self.timeout)
         socket_url = page_websocket_url(port, self.timeout)
@@ -175,12 +202,16 @@ class BrowserSession:
     def close(self):
         if self.devtools:
             try:
+                self.devtools.call("Browser.close")
+            except Exception:
+                pass
+            try:
                 self.devtools.close()
             except Exception:
                 pass
             self.devtools = None
         if self.process:
-            stop_process(self.process)
+            stop_process(self.process, process_group=True)
             self.process = None
         if self._log_handle:
             self._log_handle.close()
