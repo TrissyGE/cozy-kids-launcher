@@ -540,6 +540,22 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn(str(update_script), trigger.read_text(encoding="utf-8"))
         popen.assert_not_called()
 
+    def test_update_request_reports_a_missing_installed_updater(self):
+        status, data, _ = self.request(
+            "/api/update",
+            method="POST",
+            origin=self.base_url,
+        )
+
+        self.assertEqual(status, 503)
+        self.assertEqual(
+            data,
+            {"status": "error", "message": "Installed updater is missing"},
+        )
+        self.assertFalse(
+            (Path(server_module.APP_ROOT) / "update-trigger.sh").exists()
+        )
+
     def test_timer_start_status_and_stop_contract(self):
         with mock.patch.object(server_module.time, "time", return_value=1000):
             status, data, _ = self.request(

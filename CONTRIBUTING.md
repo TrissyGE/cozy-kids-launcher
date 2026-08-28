@@ -18,7 +18,7 @@ The project has no application dependency-install step. Development requires Pyt
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m py_compile src/server.py src/app_detection.py src/config_store.py src/config_validation.py src/media_library.py src/parent_auth.py src/runtime_diagnostics.py src/process_state.py src/overlay.py src/timer_state.py src/timer_watchdog.py scripts/take-screenshots.py
+python3 -m py_compile src/server.py src/app_detection.py src/config_store.py src/config_validation.py src/media_library.py src/parent_auth.py src/runtime_diagnostics.py src/process_state.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/take-screenshots.py
 bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh src/launcher.sh
 python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null

@@ -10,7 +10,6 @@ import sys
 import threading
 import time
 from urllib.parse import quote, unquote, urlparse
-from urllib.request import Request, urlopen
 
 from app_detection import (
     BROWSER_CANDIDATES,
@@ -84,6 +83,16 @@ from timer_state import (
     load_timer as read_timer_state,
     save_timer as write_timer_state,
     timer_status as calculate_timer_status,
+)
+from update_manager import (
+    MissingUpdaterError,
+    fetch_remote_json as fetch_update_json,
+    fetch_remote_text as fetch_update_text,
+    parse_semver,
+    read_version,
+    resolve_update_status,
+    version_is_newer,
+    write_update_trigger,
 )
 
 HOME = os.path.expanduser("~")
@@ -256,11 +265,7 @@ def find_media_player():
 
 
 def get_version():
-    try:
-        with open(VERSION_FILE, "r", encoding="utf-8") as fh:
-            return fh.read().strip()
-    except Exception:
-        return "0.0.0"
+    return read_version(VERSION_FILE)
 
 
 def diagnostics_payload():
@@ -288,86 +293,24 @@ def diagnostics_payload():
     )
 
 
-def parse_semver(value):
-    """Return a comparable three-part version tuple, or None."""
-    if not isinstance(value, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", value):
-        return None
-    return tuple(int(part) for part in value.split("."))
-
-
-def version_is_newer(candidate, installed):
-    candidate_parts = parse_semver(candidate)
-    installed_parts = parse_semver(installed)
-    return bool(candidate_parts and installed_parts and candidate_parts > installed_parts)
-
-
 def _fetch_remote_json(url, timeout=5):
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "cozy-kids-launcher",
-        },
-    )
-    with urlopen(request, timeout=timeout) as response:
-        return json.load(response)
+    return fetch_update_json(url, timeout=timeout)
 
 
 def _fetch_remote_text(url, timeout=5):
-    request = Request(url, headers={"User-Agent": "cozy-kids-launcher"})
-    with urlopen(request, timeout=timeout) as response:
-        return response.read().decode("utf-8").strip()
+    return fetch_update_text(url, timeout=timeout)
 
 
 def get_update_status(timeout=5):
-    """Prefer a complete stable release, retaining legacy updater compatibility."""
-    installed = get_version()
-    release_error = None
-    try:
-        release = _fetch_remote_json(LATEST_RELEASE_API, timeout=timeout)
-    except Exception as exc:
-        release_error = exc
-    else:
-        try:
-            tag = release.get("tag_name", "")
-            latest = tag[1:] if tag.startswith("v") else tag
-            archive_name = f"cozy-kids-launcher-{latest}.tar.gz"
-            asset_names = {
-                asset.get("name") for asset in release.get("assets", [])
-                if isinstance(asset, dict)
-            }
-            if release.get("draft") or release.get("prerelease"):
-                raise ValueError("Latest release is not stable")
-            if not parse_semver(latest):
-                raise ValueError("Release tag is not a supported semantic version")
-            if archive_name not in asset_names or "SHA256SUMS" not in asset_names:
-                raise ValueError("Release is missing verified update assets")
-        except (AttributeError, TypeError, ValueError) as exc:
-            raise RuntimeError("Update check failed: invalid release metadata") from exc
-        return {
-            "installedVersion": installed,
-            "latestVersion": latest,
-            "source": "release",
-            "tag": tag,
-            "updateAvailable": version_is_newer(latest, installed),
-        }
-
-    try:
-        if os.path.isfile(UPDATE_CHANNEL_FILE):
-            with open(UPDATE_CHANNEL_FILE, "r", encoding="utf-8") as handle:
-                if handle.read().strip() == "release":
-                    raise RuntimeError("Verified release channel is temporarily unavailable") from release_error
-        latest = _fetch_remote_text(LEGACY_VERSION_URL, timeout=timeout)
-        if not parse_semver(latest):
-            raise ValueError("Legacy VERSION is invalid")
-        return {
-            "installedVersion": installed,
-            "latestVersion": latest,
-            "source": "legacy-main",
-            "updateAvailable": version_is_newer(latest, installed),
-        }
-    except Exception as legacy_error:
-        raise RuntimeError("Update check failed") from legacy_error
+    return resolve_update_status(
+        get_version(),
+        LATEST_RELEASE_API,
+        LEGACY_VERSION_URL,
+        UPDATE_CHANNEL_FILE,
+        timeout=timeout,
+        fetch_json=_fetch_remote_json,
+        fetch_text=_fetch_remote_text,
+    )
 
 
 def load_recommendations():
@@ -1007,24 +950,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if action == "api/update":
             if not self.require_admin():
                 return
-            trigger_path = os.path.join(APP_ROOT, "update-trigger.sh")
             try:
-                if not os.path.isfile(UPDATE_SCRIPT):
-                    self.json_response(
-                        {"status": "error", "message": "Installed updater is missing"},
-                        503,
-                    )
-                    return
-                trigger_script = (
-                    "#!/usr/bin/env bash\n"
-                    "set -euo pipefail\n"
-                    f"exec bash {shlex.quote(UPDATE_SCRIPT)}\n"
-                )
-                with open(trigger_path, "w", encoding="utf-8") as fh:
-                    fh.write(trigger_script)
-                os.chmod(trigger_path, 0o755)
+                write_update_trigger(APP_ROOT, UPDATE_SCRIPT)
                 log_runtime_event("update.triggered")
                 self.json_response({"status": "triggered"})
+            except MissingUpdaterError as exc:
+                self.json_response(
+                    {"status": "error", "message": str(exc)},
+                    503,
+                )
             except Exception as e:
                 self.json_response({"status": "error", "message": str(e)}, 500)
             return
