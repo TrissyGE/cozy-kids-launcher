@@ -130,6 +130,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / ".local"
                     / "share"
                     / "cozy-kids-launcher"
+                    / "config_validation.py"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
                     / "backup_store.py"
                 ).is_file()
             )
