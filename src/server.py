@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 import glob
-import hashlib
-import hmac
 import http.server
 import json
 import os
 import re
-import secrets
 import shlex
 import shutil
 import subprocess
 import sys
 import threading
 import time
-from http.cookies import SimpleCookie
 from urllib.parse import quote, unquote, urlparse
 from urllib.request import Request, urlopen
 
@@ -40,6 +36,25 @@ from lifecycle_state import (
     clear_lifecycle_request,
     read_lifecycle_state,
     write_lifecycle_request,
+)
+from parent_auth import (
+    ADMIN_COOKIE_NAME,
+    ADMIN_SESSION_TTL_SECONDS,
+    PIN_FAILURE_LIMIT,
+    PIN_FAILURE_WINDOW_SECONDS,
+    PIN_KDF_ITERATIONS,
+    admin_session_cookie,
+    clear_admin_sessions,
+    clear_pin_failures,
+    create_admin_session,
+    expired_admin_session_cookie,
+    hash_pin,
+    is_legacy_pin_hash,
+    is_supported_pin_hash,
+    pin_attempt_blocked,
+    record_pin_failure,
+    valid_admin_session,
+    verify_pin,
 )
 from process_state import (
     owned_process_alive,
@@ -102,16 +117,6 @@ LEGACY_WEB_ACTION_MIGRATIONS = {
 TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
 MAX_JSON_BODY_BYTES = 512 * 1024
 MAX_TILES = 200
-ADMIN_SESSION_TTL_SECONDS = 30 * 60
-PIN_FAILURE_WINDOW_SECONDS = 60
-PIN_FAILURE_LIMIT = 5
-PIN_KDF_ITERATIONS = 200_000
-ADMIN_COOKIE_NAME = "cozy_admin"
-
-_admin_sessions = {}
-_admin_sessions_lock = threading.Lock()
-_pin_failures = []
-_pin_failures_lock = threading.Lock()
 _tile_launch_lock = threading.Lock()
 
 
@@ -226,92 +231,6 @@ def public_config(data):
     result = dict(data)
     result["pinConfigured"] = bool(result.pop("pinHash", ""))
     return result
-
-
-def is_supported_pin_hash(pin_hash):
-    if not isinstance(pin_hash, str):
-        return False
-    if re.fullmatch(r"[0-9a-f]{16}", pin_hash):
-        return True
-    parts = pin_hash.split("$")
-    return (
-        len(parts) == 4
-        and parts[0] == "pbkdf2_sha256"
-        and parts[1].isdigit()
-        and 50_000 <= int(parts[1]) <= 1_000_000
-        and bool(re.fullmatch(r"[0-9a-f]{32}", parts[2]))
-        and bool(re.fullmatch(r"[0-9a-f]{64}", parts[3]))
-    )
-
-
-def hash_pin(pin, salt=None):
-    if not isinstance(pin, str) or not re.fullmatch(r"\d{4,6}", pin):
-        raise ValueError("PIN must contain 4 to 6 digits")
-    salt = salt or secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac(
-        "sha256",
-        pin.encode("utf-8"),
-        bytes.fromhex(salt),
-        PIN_KDF_ITERATIONS,
-    ).hex()
-    return f"pbkdf2_sha256${PIN_KDF_ITERATIONS}${salt}${digest}"
-
-
-def create_admin_session(now=None):
-    now = time.time() if now is None else now
-    token = secrets.token_urlsafe(32)
-    with _admin_sessions_lock:
-        expired = [key for key, expiry in _admin_sessions.items() if expiry <= now]
-        for key in expired:
-            _admin_sessions.pop(key, None)
-        _admin_sessions[token] = now + ADMIN_SESSION_TTL_SECONDS
-    return token
-
-
-def clear_admin_sessions():
-    with _admin_sessions_lock:
-        _admin_sessions.clear()
-
-
-def valid_admin_session(cookie_header, now=None):
-    if not cookie_header:
-        return False
-    try:
-        cookie = SimpleCookie()
-        cookie.load(cookie_header)
-        morsel = cookie.get(ADMIN_COOKIE_NAME)
-        token = morsel.value if morsel else ""
-    except Exception:
-        return False
-    if not token:
-        return False
-    now = time.time() if now is None else now
-    with _admin_sessions_lock:
-        expiry = _admin_sessions.get(token, 0)
-        if expiry <= now:
-            _admin_sessions.pop(token, None)
-            return False
-        _admin_sessions[token] = now + ADMIN_SESSION_TTL_SECONDS
-    return True
-
-
-def pin_attempt_blocked(now=None):
-    now = time.time() if now is None else now
-    cutoff = now - PIN_FAILURE_WINDOW_SECONDS
-    with _pin_failures_lock:
-        _pin_failures[:] = [stamp for stamp in _pin_failures if stamp > cutoff]
-        return len(_pin_failures) >= PIN_FAILURE_LIMIT
-
-
-def record_pin_failure(now=None):
-    now = time.time() if now is None else now
-    with _pin_failures_lock:
-        _pin_failures.append(now)
-
-
-def clear_pin_failures():
-    with _pin_failures_lock:
-        _pin_failures.clear()
 
 
 def has_media(path):
@@ -599,24 +518,6 @@ def load_recommendations():
             installed = True
         result.append({**rec, "installed": installed})
     return result
-
-
-def verify_pin(pin_hash, pin):
-    if not pin_hash or not pin:
-        return False
-    if re.fullmatch(r"[0-9a-f]{16}", pin_hash):
-        computed = hashlib.sha256(pin.encode("utf-8")).hexdigest()[:16]
-        return hmac.compare_digest(computed, pin_hash)
-    if not is_supported_pin_hash(pin_hash):
-        return False
-    _, iterations, salt, expected = pin_hash.split("$")
-    computed = hashlib.pbkdf2_hmac(
-        "sha256",
-        pin.encode("utf-8"),
-        bytes.fromhex(salt),
-        int(iterations),
-    ).hex()
-    return hmac.compare_digest(computed, expected)
 
 
 def is_safe_web_url(url):
@@ -919,10 +820,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     @staticmethod
     def admin_cookie(token):
-        return (
-            f"{ADMIN_COOKIE_NAME}={token}; Path=/; HttpOnly; "
-            f"SameSite=Strict; Max-Age={ADMIN_SESSION_TTL_SECONDS}"
-        )
+        return admin_session_cookie(token)
 
     def do_GET(self):
         if self.path == "/api/config":
@@ -1047,7 +945,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.json_response({"valid": False}, 403)
                 return
             clear_pin_failures()
-            if re.fullmatch(r"[0-9a-f]{16}", pin_hash):
+            if is_legacy_pin_hash(pin_hash):
                 cfg["pinHash"] = hash_pin(pin)
                 save_cfg(cfg)
             token = create_admin_session()
@@ -1088,7 +986,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             log_runtime_event("pin.removed")
             self.json_response(
                 {"status": "ok", "pinConfigured": False},
-                headers={"Set-Cookie": f"{ADMIN_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"},
+                headers={"Set-Cookie": expired_admin_session_cookie()},
             )
             return
         if action == "api/import-config":
