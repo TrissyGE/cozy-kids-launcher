@@ -24,6 +24,17 @@ A local HTML/CSS/JS app renders:
 - parent settings
 - shutdown / exit controls
 
+The frontend stays dependency-free and is split by responsibility:
+
+- `src/index.html` contains the document structure and template-provided labels
+- `src/frontend/styles.css` contains all visual rules and responsive layout
+- `src/frontend/state.js` contains shared state and localized UI strings
+- `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
+- `src/frontend/parent-settings.js` owns Parent settings, tile editing, recommendations, and updates
+- `src/frontend/runtime-controls.js` owns timer flows, device status, import/export, backups, and keyboard control
+
+The installer renders template values into these files and installs them below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager, bundler, or generated files in the repository.
+
 ### 2. Local HTTP server
 
 A tiny Python HTTP server:

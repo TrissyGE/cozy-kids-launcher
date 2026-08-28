@@ -18,7 +18,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 ### Maintainability
 
-- [ ] Split the frontend into focused style and JavaScript modules without adding a production build dependency
+- [x] Split the frontend into focused style and JavaScript modules without adding a production build dependency
 - [ ] Split server responsibilities into configuration, authentication, discovery, launching, media, timer, and update modules
 - [x] Add a versioned configuration schema with tested, automatic migrations
 - [x] Add structured runtime logging with safe rotation

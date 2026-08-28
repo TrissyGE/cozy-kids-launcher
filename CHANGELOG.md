@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Solid Core
 
+- Split the frontend into focused CSS, shared state, launcher UI, Parent settings, and runtime-control modules without adding a build dependency
 - Added schema version 1 for launcher configuration with automatic atomic migration of legacy files
 - Reject configuration files from unsupported future versions instead of risking destructive rewrites
 - Extended normal CI and the release installer gate to verify the installed configuration schema
