@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Added real Linux integration coverage for clean startup, successful and failed updates, logout, shutdown, crash recovery, and exhausted recovery
 - Keep the external-app close control above fullscreen applications on KDE Wayland by applying the compositor's dock-layer hint with a portable fallback
 - Start Chromium fullscreen mode with its F11-equivalent switch and suppress keyring, crash-restore, and translation prompts in the launcher's isolated profile
+- Updated the reusable GitHub workflow actions to their Node 24-based v7 releases
 
 ## [0.4.1] - 2026-08-25
 
