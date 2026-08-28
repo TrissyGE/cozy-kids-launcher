@@ -20,6 +20,19 @@ if str(SOURCE_ROOT) not in sys.path:
 import lifecycle_state
 
 
+def frontend_source():
+    frontend_root = REPOSITORY_ROOT / "src" / "frontend"
+    paths = [
+        REPOSITORY_ROOT / "src" / "index.html",
+        frontend_root / "state.js",
+        frontend_root / "launcher-ui.js",
+        frontend_root / "parent-settings.js",
+        frontend_root / "runtime-controls.js",
+        frontend_root / "styles.css",
+    ]
+    return "\n".join(path.read_text(encoding="utf-8") for path in paths)
+
+
 def load_server_template():
     source = (REPOSITORY_ROOT / "src" / "server.py").read_text(encoding="utf-8")
     source = source.replace("{{APP_ID}}", "cozy-kids-launcher-test")
@@ -755,26 +768,46 @@ class ServerApiTests(unittest.TestCase):
 
 
 class FrontendSafetyTests(unittest.TestCase):
-    def test_tile_content_is_rendered_as_text(self):
+    def test_frontend_uses_focused_external_assets(self):
         source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        expected_assets = (
+            "/frontend/styles.css",
+            "/frontend/state.js",
+            "/frontend/launcher-ui.js",
+            "/frontend/parent-settings.js",
+            "/frontend/runtime-controls.js",
+        )
+        for asset in expected_assets:
+            self.assertIn(asset, source)
+        self.assertNotIn("<style", source)
+        self.assertNotRegex(source, r"<script(?![^>]*\bsrc=)[^>]*>")
+
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        for asset in ("styles.css", "state.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
+            self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
+
+    def test_tile_content_is_rendered_as_text(self):
+        source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)
         self.assertIn("tileEmoji.textContent=tile.emoji||'✨'", source)
         self.assertNotIn("btn.innerHTML=html", source)
 
     def test_every_tile_uses_the_same_launch_endpoint(self):
-        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        source = frontend_source()
         launch_function = source[source.index("function launchTile"):source.index("// PIN handling")]
         self.assertIn("fetch('/launch/'", launch_function)
         self.assertNotIn("special:browser:", launch_function)
         self.assertNotIn("special:external-browser:", launch_function)
 
     def test_frontend_uses_the_local_update_status_endpoint(self):
-        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        source = frontend_source()
         self.assertIn("fetch('/api/update/status'", source)
         self.assertNotIn("raw.githubusercontent.com/TrissyGE/cozy-kids-launcher/main/VERSION", source)
 
     def test_diagnostics_download_is_local_and_bilingual(self):
-        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        source = frontend_source()
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
@@ -784,20 +817,20 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('en:export_diagnostics) echo "Download diagnostics"', installer)
 
     def test_theme_and_browser_labels_follow_the_interface_language(self):
-        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        source = frontend_source()
         self.assertIn("const THEME_LABELS=", source)
         self.assertIn("function interfaceLanguage()", source)
         self.assertIn("themeLabel(t.id)", source)
         self.assertIn("Changes take effect after the next login.", source)
 
     def test_browser_tile_fields_do_not_hide_their_mode_selector(self):
-        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        source = frontend_source()
         self.assertIn("select.className='appSelect'", source)
         self.assertIn(".tileform.has-browser > .appSelect { display:none; }", source)
         self.assertNotIn(".tileform.has-browser select { display:none; }", source)
 
     def test_backup_restore_ui_uses_local_api_and_text_content(self):
-        source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        source = frontend_source()
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )

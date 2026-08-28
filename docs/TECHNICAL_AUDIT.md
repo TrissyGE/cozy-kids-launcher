@@ -16,6 +16,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 - Parent settings list validated local configuration backups without exposing their contents or paths. Restores preserve the current PIN and create a private pre-restore snapshot.
 - Startup, logout, authenticated shutdown, update, and crash recovery follow an explicit private lifecycle-state contract with real Linux integration coverage.
 - Standard-library unit and HTTP integration tests run in CI on supported Python versions.
+- The frontend is split into focused CSS, shared state, launcher UI, Parent settings, and runtime-control modules while retaining the dependency-free installer and runtime.
 
 ## Completed release foundation
 
@@ -29,8 +30,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 
 ## Next: maintainability
 
-1. Split the large frontend template into focused CSS and JavaScript modules while keeping a dependency-free production build.
-2. Continue splitting server responsibilities into authentication, application discovery, process launching, update discovery, and timer modules.
+1. Continue splitting server responsibilities into authentication, application discovery, process launching, update discovery, and timer modules.
 
 ## Then: platform confidence
 

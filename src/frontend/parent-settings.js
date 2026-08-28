@@ -1,0 +1,375 @@
+// PIN setup
+async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1||p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const r=await fetch('/api/pin/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p1})}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht gespeichert werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=true; msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
+async function removePin(){ if(!cfg.pinConfigured) return; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; const r=await fetch('/api/pin/remove',{method:'POST'}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht entfernt werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=false; msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
+function updatePinButton(){ const btn=document.getElementById('removePinBtn'); btn.textContent=uiText.pinRemove; btn.disabled=!cfg.pinConfigured; btn.style.opacity=cfg.pinConfigured?1:.5; }
+
+// Update check
+let installedVersion='0.0.0';
+async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'); const msg=document.getElementById('updateMsg'); const updateRow=document.getElementById('updateRow'); msg.textContent=''; msg.style.color=''; updateRow.style.display='none'; btn.disabled=true; try{ const statusR=await fetch('/api/update/status',{cache:'no-store'}); if(!statusR.ok) throw new Error('fetch failed'); const status=await statusR.json(); installedVersion=status.installedVersion||'0.0.0'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; if(status.updateAvailable){ msg.textContent=(uiText.updateAvailable||'Update available')+': '+status.latestVersion; msg.style.color='green'; updateRow.style.display='grid'; } else { msg.textContent=uiText.updateUpToDate||'Up to date'; msg.style.color='green'; } } catch(e){ msg.textContent=uiText.updateError||'Update check failed'; msg.style.color='#c00'; } finally { btn.disabled=false; } }
+async function startupUpdateCheck(){
+  try{
+    const statusR=await fetch('/api/update/status',{cache:'no-store'});
+    if(!statusR.ok) return;
+    const status=await statusR.json();
+    installedVersion=status.installedVersion||'0.0.0';
+    if(status.updateAvailable){
+      updateAvailable=true;
+      renderAll();
+    }
+  }catch(e){}
+}
+async function installUpdate(){ if(!window.confirm(uiText.updateConfirm||'Close browser and install update now?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
+
+function renderAdmin(){
+  document.getElementById('adminTitle').textContent=uiText.adminTitle;
+  document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle;
+  document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel;
+  document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel;
+  document.getElementById('addTileBtn').textContent=uiText.addTile;
+  document.getElementById('backBtn').textContent=uiText.back;
+  document.getElementById('saveBtn').textContent=uiText.save;
+  document.getElementById('cfgTitle').value=cfg.title||'';
+  document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}';
+  updateThemeDisplay();
+  // Custom theme controls
+  const ctp=document.getElementById('customThemePanel');
+  const isCustom=(cfg.theme||'')==='custom';
+  ctp.style.display=isCustom?'grid':'none';
+  if(isCustom){
+    const c=cfg.customColors||{};
+    document.getElementById('cfgCustomBg1').value=c.bg1||'#ffd6e8';
+    document.getElementById('cfgCustomBg2').value=c.bg2||'#ffeef6';
+    document.getElementById('cfgCustomText').value=c.text||'#5f2148';
+    document.getElementById('cfgCustomBtn').value=c.btn||'#e85a9c';
+    document.getElementById('cfgCustomCard').value=c.card||'#ffffff';
+    document.getElementById('cfgCustomBg').value=cfg.customBackground||'';
+  }
+  document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}';
+  // Browser dropdown
+  const browserSel=document.getElementById('cfgBrowser');
+  browserSel.innerHTML='';
+  const installedBrowsers=browserOptions.filter(b=>b.installed);
+  if(installedBrowsers.length===0){
+    const opt=document.createElement('option');
+    opt.value=''; opt.textContent='Kein Browser gefunden';
+    browserSel.appendChild(opt);
+  }else{
+    for(const b of installedBrowsers){
+      const opt=document.createElement('option');
+      opt.value=b.name; opt.textContent=b.name;
+      browserSel.appendChild(opt);
+    }
+  }
+  const currentBrowser=cfg.browser||'{{BROWSER_CMD}}';
+  if(Array.from(browserSel.options).some(option=>option.value===currentBrowser)){
+    browserSel.value=currentBrowser;
+  }else if(installedBrowsers.length>0){
+    browserSel.value=installedBrowsers[0].name;
+  }
+  document.getElementById('browserHint').textContent=interfaceLanguage()==='de'
+    ? 'Änderung wirkt erst nach erneutem Login.'
+    : 'Changes take effect after the next login.';
+  document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
+  document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
+  document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates';
+  document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
+  document.getElementById('updateMsg').textContent='';
+  updatePinButton();
+  // Timer admin
+  document.getElementById('timerLabel').textContent=uiText.timerLabel||'Bildschirmzeit';
+  const timerSel=document.getElementById('cfgTimerMinutes');
+  const timerCustom=document.getElementById('cfgTimerCustom');
+  const minutes=cfg.timerMinutes||0;
+  if([15,30,60].includes(minutes)){
+    timerSel.value=String(minutes);
+    timerCustom.style.display='none';
+  }else if(minutes>0){
+    timerSel.value='custom';
+    timerCustom.value=String(minutes);
+    timerCustom.style.display='';
+  }else{
+    timerSel.value='0';
+    timerCustom.style.display='none';
+  }
+  timerSel.onchange=function(){
+    timerCustom.style.display=timerSel.value==='custom'?'':'none';
+  };
+  const timerBtn=document.getElementById('timerToggleBtn');
+  if(lastTimerStatus.active&&!lastTimerStatus.expired){
+    timerBtn.textContent=uiText.timerStop||'Stop';
+    document.getElementById('timerStatus').textContent=(uiText.timerRemaining||'Noch {time}').replace('{time}',formatTime(lastTimerStatus.remainingSeconds));
+  }else{
+    timerBtn.textContent=uiText.timerStart||'Start';
+    document.getElementById('timerStatus').textContent='';
+  }
+  const forms=document.getElementById('forms');
+  forms.innerHTML='';
+  cfg.tiles.forEach((tile, idx)=>{
+    const row=document.createElement('div');
+    row.className='tileform';
+    row.style.display = tilePageIndex(idx) === adminPage ? 'grid' : 'none';
+    const emoji=document.createElement('input');
+    emoji.value=tile.emoji||'';
+    emoji.onchange=e=>tile.emoji=e.target.value;
+    const label=document.createElement('input');
+    label.value=tile.label||'';
+    label.onchange=e=>tile.label=e.target.value;
+    const visibleWrap=document.createElement('label');
+    visibleWrap.className='chk';
+    const visible=document.createElement('input');
+    visible.type='checkbox';
+    visible.checked=!!tile.visible;
+    visible.onchange=e=>tile.visible=e.target.checked;
+    visibleWrap.append(visible,' '+uiText.visible);
+    const select=document.createElement('select');
+    select.className='appSelect';
+    const special=document.createElement('option');
+    special.value='special:filme-musik';
+    special.textContent=uiText.specialMedia;
+    select.appendChild(special);
+    const browserOpt=document.createElement('option');
+    browserOpt.value='__BROWSER__';
+    browserOpt.textContent='🌐 '+uiText.browserPage;
+    select.appendChild(browserOpt);
+    const empty=document.createElement('option');
+    empty.value='';
+    empty.textContent=uiText.noApp;
+    select.appendChild(empty);
+    for(const app of appOptions){
+      const opt=document.createElement('option');
+      opt.value=app.exec;
+      opt.textContent=app.name;
+      select.appendChild(opt);
+    }
+
+    const browserWrap=document.createElement('div');
+    browserWrap.className='browserWrap';
+    const urlInput=document.createElement('input');
+    urlInput.placeholder='https://...';
+    const typeSelect=document.createElement('select');
+    const optEmb=document.createElement('option');
+    optEmb.value='embedded';
+    optEmb.textContent=uiText.webModeEmbedded;
+    const optExt=document.createElement('option');
+    optExt.value='external';
+    optExt.textContent=uiText.webModeExternal;
+    typeSelect.appendChild(optEmb);
+    typeSelect.appendChild(optExt);
+    browserWrap.appendChild(urlInput);
+    browserWrap.appendChild(typeSelect);
+
+    let currentExec=Array.isArray(tile.cmd)?tile.cmd.join(' '):'';
+    let isBrowser=false, browserUrl='', browserType='embedded';
+    if(currentExec.startsWith('special:browser:')){
+      isBrowser=true;
+      browserUrl=currentExec.substring('special:browser:'.length);
+      currentExec='__BROWSER__';
+    }else if(currentExec.startsWith('special:external-browser:')){
+      isBrowser=true;
+      browserUrl=currentExec.substring('special:external-browser:'.length);
+      currentExec='__BROWSER__';
+      browserType='external';
+    }
+    select.value=currentExec;
+    if(isBrowser){
+      row.classList.add('has-browser');
+      urlInput.value=browserUrl;
+      typeSelect.value=browserType;
+    }
+    if(select.value!==currentExec){
+      const opt=document.createElement('option');
+      opt.value=currentExec;
+      opt.textContent=currentExec||uiText.customCmd;
+      opt.selected=true;
+      select.appendChild(opt);
+    }
+
+    select.onchange=e=>{
+      if(e.target.value==='__BROWSER__'){
+        row.classList.add('has-browser');
+        urlInput.value='';
+        typeSelect.value='embedded';
+      }else{
+        row.classList.remove('has-browser');
+        tile.cmd=[e.target.value];
+      }
+    };
+
+    function updateBrowserCmd(){
+      const u=urlInput.value.trim();
+      if(!u) return;
+      if(typeSelect.value==='external'){
+        tile.cmd=['special:external-browser:'+u];
+      }else{
+        tile.cmd=['special:browser:'+u];
+      }
+    }
+    urlInput.onchange=updateBrowserCmd;
+    typeSelect.onchange=updateBrowserCmd;
+
+    const dragHandle=document.createElement('div');
+    dragHandle.className='dragHandle';
+    dragHandle.textContent='⋮⋮';
+    const del=document.createElement('button');
+    del.className='smallbtn';
+    del.textContent=uiText.delete;
+    del.onclick=()=>deleteTile(idx);
+
+    row.draggable=true;
+    row.dataset.index=String(idx);
+    row.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',String(idx));
+      e.dataTransfer.effectAllowed='move';
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend',()=>{
+      row.classList.remove('dragging');
+      document.querySelectorAll('.tileform').forEach(r=>r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      const target=e.currentTarget;
+      if(!target.classList.contains('drag-over')){
+        document.querySelectorAll('.tileform').forEach(r=>r.classList.remove('drag-over'));
+        target.classList.add('drag-over');
+      }
+    });
+    row.addEventListener('dragleave',e=>{
+      if(e.currentTarget===e.target) e.currentTarget.classList.remove('drag-over');
+    });
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      const from=parseInt(e.dataTransfer.getData('text/plain'),10);
+      const to=parseInt(e.currentTarget.dataset.index,10);
+      document.querySelectorAll('.tileform').forEach(r=>r.classList.remove('drag-over'));
+      reorderTile(from,to);
+    });
+
+    row.append(dragHandle,emoji,label,visibleWrap,select,browserWrap,del);
+    forms.appendChild(row);
+  });
+  renderBackupOptions();
+  renderAdminPageNav();
+  renderRecommendations();
+}
+function reorderTile(from,to){
+  if(from===to||from<0||to<0||from>=cfg.tiles.length||to>=cfg.tiles.length) return;
+  const[tile]=cfg.tiles.splice(from,1);
+  cfg.tiles.splice(to,0,tile);
+  adminPage=tilePageIndex(to);
+  renderAdmin();
+}
+function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
+function addTile(){ cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); renderAll(); adminPage=pageCount()-1; renderAdmin(); }
+function renderAdminPageNav(){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1, Math.ceil(cfg.tiles.length / pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
+function renderRecommendations(){
+  const container=document.getElementById('recommendations');
+  container.innerHTML='';
+  if(!recommendations.length) return;
+  const existingIds=new Set(cfg.tiles.map(t=>t.id));
+  const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
+  const panel=document.createElement('div'); panel.className='panel';
+  const headerRow=document.createElement('div'); headerRow.style.display='flex'; headerRow.style.justifyContent='space-between'; headerRow.style.alignItems='center'; headerRow.style.marginBottom='12px';
+  const h2=document.createElement('h2'); h2.style.margin='0'; h2.textContent=uiText.appBrowserTitle||'App Browser';
+  const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; refreshBtn.textContent='↻'; refreshBtn.title='Refresh'; refreshBtn.onclick=async()=>{ await loadRecommendations(); renderRecommendations(); };
+  headerRow.appendChild(h2); headerRow.appendChild(refreshBtn);
+  panel.appendChild(headerRow);
+  const grid=document.createElement('div'); grid.className='rec-grid';
+  const sorted=[...recommendations].sort((a,b)=>{
+    const aAdded=existingIds.has(a.id)||existingCmds.has(JSON.stringify(a.cmd||[]));
+    const bAdded=existingIds.has(b.id)||existingCmds.has(JSON.stringify(b.cmd||[]));
+    if(aAdded!==bAdded) return aAdded?1:-1;
+    if(a.installed!==b.installed) return a.installed?-1:1;
+    return 0;
+  });
+  for(const rec of sorted){
+    const card=document.createElement('div'); card.className='rec-card';
+    const em=document.createElement('div'); em.className='emoji'; em.textContent=rec.emoji||'✨';
+    const nm=document.createElement('div'); nm.className='name';
+    nm.textContent=(cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id;
+    const desc=document.createElement('div'); desc.className='desc';
+    desc.textContent=(cfg.language==='de'?rec.desc_de:rec.desc_en)||'';
+    const st=document.createElement('div'); st.className='status '+(rec.installed?'installed':'missing');
+    st.textContent=rec.installed?(uiText.installed||'installed'):(uiText.notInstalled||'not installed');
+    const actions=document.createElement('div'); actions.className='actions';
+    const added=existingIds.has(rec.id)||existingCmds.has(JSON.stringify(rec.cmd||[]));
+    if(added){
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.disabled=true; btn.textContent=uiText.added||'Added';
+      actions.appendChild(btn);
+    } else if(rec.installed){
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.addTile||'Add tile';
+      btn.onclick=()=>{ cfg.tiles.push({ id:rec.id, label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true }); renderAll(); persistConfig(); };
+      actions.appendChild(btn);
+    } else {
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.install||'Install';
+      btn.onclick=()=>{ triggerInstall(rec); };
+      actions.appendChild(btn);
+    }
+    card.append(em,nm,desc,st,actions);
+    grid.appendChild(card);
+  }
+  panel.appendChild(grid);
+  const disclaimer=document.createElement('div'); disclaimer.className='muted'; disclaimer.style.marginTop='14px'; disclaimer.style.fontSize='.85rem'; disclaimer.textContent=cfg.language==='de'?'Diese Programme stammen aus externen Quellen und stehen in keiner Verbindung zum Cozy Kids Launcher Projekt.':'This software comes from external sources and is not affiliated with the Cozy Kids Launcher project.';
+  panel.appendChild(disclaimer);
+  container.appendChild(panel);
+}
+let pendingInstallCommand='';
+function triggerInstall(rec){
+  pendingInstallCommand='sudo apt install -y '+rec.package;
+  document.getElementById('installTitle').textContent=(uiText.install||'Install')+' '+((cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id);
+  fetch('/api/install-package',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:rec.package})})
+    .then(r=>r.json()).then(data=>{
+      const msg=document.getElementById('installMessage');
+      if(data.status==='started'){
+        msg.textContent=uiText.installStarted||'Installation started. Watch for a password dialog, or run the command below:';
+      } else {
+        msg.textContent=uiText.installManual||'Please run this command in a terminal:';
+      }
+      if(data.command) pendingInstallCommand=data.command;
+      document.getElementById('installCommand').textContent=pendingInstallCommand;
+      const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
+      const hintEl=document.getElementById('installHint');
+      hintEl.textContent=hint||'';
+      hintEl.style.display=hint?'block':'none';
+      document.getElementById('installOverlay').classList.remove('hidden');
+    }).catch(()=>{
+      document.getElementById('installMessage').textContent=uiText.installManual||'Please run this command in a terminal:';
+      document.getElementById('installCommand').textContent=pendingInstallCommand;
+      const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
+      const hintEl=document.getElementById('installHint');
+      hintEl.textContent=hint||'';
+      hintEl.style.display=hint?'block':'none';
+      document.getElementById('installOverlay').classList.remove('hidden');
+    });
+}
+function closeInstallOverlay(){ document.getElementById('installOverlay').classList.add('hidden'); }
+async function copyInstallCommand(){
+  try{
+    await navigator.clipboard.writeText(pendingInstallCommand);
+    const btn=document.querySelector('#installOverlay .command-box .smallbtn');
+    btn.textContent=uiText.commandCopied||'Copied!';
+    setTimeout(()=>btn.textContent=uiText.copyCommand||'Copy',2000);
+  }catch(e){}
+}
+async function autoScanRecommendations(){
+  if(cfg.autoScanDone) return;
+  if(cfg.pinConfigured) return;
+  const existingIds=new Set(cfg.tiles.map(t=>t.id));
+  const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
+  let added=false;
+  for(const rec of recommendations){
+    if(existingIds.has(rec.id)) continue;
+    if(rec.installed && !existingCmds.has(JSON.stringify(rec.cmd||[]))){
+      cfg.tiles.push({ id:rec.id, label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true });
+      added=true;
+    }
+  }
+  cfg.autoScanDone=true;
+  await persistConfig();
+  if(added){ renderAll(); }
+}
+async function persistConfig(){
+  const r=await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
+  if(!r.ok) throw new Error('Config could not be saved');
+}

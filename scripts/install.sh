@@ -753,6 +753,7 @@ if is_interactive; then
 fi
 
 APP_ROOT="$TARGET_HOME/.local/share/$APP_DIR_NAME"
+FRONTEND_DIR="$APP_ROOT/frontend"
 BIN_DIR="$TARGET_HOME/.local/bin"
 CFG_DIR="$TARGET_HOME/.config/$APP_DIR_NAME"
 AUTOSTART_DIR="$TARGET_HOME/.config/autostart"
@@ -765,6 +766,11 @@ RUNTIME_BIN="$BIN_DIR/$APP_BIN_NAME"
 CONFIG_FILE="$CFG_DIR/config.json"
 SERVER_FILE="$APP_ROOT/server.py"
 INDEX_FILE="$APP_ROOT/index.html"
+FRONTEND_STYLES_FILE="$FRONTEND_DIR/styles.css"
+FRONTEND_STATE_FILE="$FRONTEND_DIR/state.js"
+FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
+FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
+FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
 MEDIA_FILE="$APP_ROOT/no-media.html"
 UPDATE_SCRIPT="$APP_ROOT/update.sh"
 AUTOSTART_FILE="$AUTOSTART_DIR/$AUTOSTART_FILE_ID"
@@ -774,7 +780,7 @@ UNINSTALL_FILE="$APP_ROOT/uninstall.txt"
 BACKUP_ROOT="$TARGET_HOME/.local/share/$APP_DIR_NAME-backups"
 BACKUP_DIR="$BACKUP_ROOT/$(date +%Y%m%d-%H%M%S)"
 
-mkdir -p "$APP_ROOT" "$BIN_DIR" "$CFG_DIR" "$AUTOSTART_DIR" "$DESKTOP_DIR" "$CACHE_DIR" "$(dirname "$APP_DESKTOP_FILE")" "$BACKUP_ROOT"
+mkdir -p "$APP_ROOT" "$FRONTEND_DIR" "$BIN_DIR" "$CFG_DIR" "$AUTOSTART_DIR" "$DESKTOP_DIR" "$CACHE_DIR" "$(dirname "$APP_DESKTOP_FILE")" "$BACKUP_ROOT"
 [[ ! -L "$BACKUP_ROOT" ]] || die "Backup root must not be a symbolic link: $BACKUP_ROOT"
 mkdir "$BACKUP_DIR" || die "Could not create a unique backup directory: $BACKUP_DIR"
 chmod 0700 "$CFG_DIR" "$CACHE_DIR" "$BACKUP_ROOT" "$BACKUP_DIR"
@@ -1076,6 +1082,11 @@ JSON_PREVIEW_TITLE="$(json_text "$PREVIEW_TITLE")"
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
 backup_if_exists "$INDEX_FILE"
+backup_if_exists "$FRONTEND_STYLES_FILE"
+backup_if_exists "$FRONTEND_STATE_FILE"
+backup_if_exists "$FRONTEND_LAUNCHER_FILE"
+backup_if_exists "$FRONTEND_SETTINGS_FILE"
+backup_if_exists "$FRONTEND_RUNTIME_FILE"
 backup_if_exists "$MEDIA_FILE"
 backup_if_exists "$UPDATE_SCRIPT"
 backup_if_exists "$CONFIG_FILE"
@@ -1092,6 +1103,11 @@ install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics
 install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"
 install -m 0755 "$SRC_DIR/process_supervisor.py" "$APP_ROOT/process_supervisor.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
+render_template "$SRC_DIR/frontend/styles.css" "$FRONTEND_STYLES_FILE" 0644
+render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
+render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
+render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
+render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
 render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644

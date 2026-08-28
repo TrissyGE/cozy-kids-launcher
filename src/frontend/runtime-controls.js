@@ -1,0 +1,343 @@
+// Timer logic
+let timerWarningShown=false;
+function formatTime(sec){
+  const m=Math.max(0,Math.floor(sec/60));
+  return m+' {{TIMER_MINUTES}}';
+}
+async function pollTimer(){
+  try{
+    const r=await fetch('/api/timer/status');
+    const data=await r.json();
+    lastTimerStatus=data;
+    const badge=document.getElementById('timerBadge');
+    if(data.active){
+      badge.style.display='block';
+      badge.textContent='⏱️ '+formatTime(data.remainingSeconds);
+      if(data.expired){
+        badge.className='expired';
+        badge.textContent='⏰ '+uiText.timerExpired;
+        showTimerBlock();
+      }else if(data.warning && !timerWarningShown){
+        badge.className='warning';
+        timerWarningShown=true;
+        showTimerWarning(data.remainingSeconds);
+      }else if(!data.warning){
+        badge.className='';
+        hideTimerWarning();
+      }
+    }else{
+      timerWarningShown=false;
+      badge.style.display='none';
+      hideTimerWarning();
+      hideTimerBlock();
+    }
+  }catch(e){}
+}
+function showTimerWarning(remaining){
+  const el=document.getElementById('timerWarning');
+  if(!el.classList.contains('hidden')) return;
+  document.getElementById('timerWarningTitle').textContent=uiText.timerWarningTitle||'Noch 5 Minuten!';
+  document.getElementById('timerWarningText').textContent=(uiText.timerWarningText||'').replace('{time}',formatTime(remaining));
+  el.classList.remove('hidden');
+  setTimeout(hideTimerWarning,6000);
+}
+function hideTimerWarning(){
+  document.getElementById('timerWarning').classList.add('hidden');
+}
+function showTimerBlock(){
+  document.getElementById('timerBlock').classList.remove('hidden');
+}
+function hideTimerBlock(){
+  document.getElementById('timerBlock').classList.add('hidden');
+  document.getElementById('timerBlockPin').value='';
+  document.getElementById('timerBlockErr').textContent='';
+}
+async function toggleTimer(){
+  const btn=document.getElementById('timerToggleBtn');
+  if(lastTimerStatus.active && !lastTimerStatus.expired){
+    // Stop timer
+    const r=await fetch('/api/timer/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const data=await r.json();
+    if(data.valid){
+      timerWarningShown=false;
+      btn.textContent=uiText.timerStart;
+      document.getElementById('timerStatus').textContent='';
+      pollTimer();
+    }
+  }else{
+    // Start timer
+    let minutes=parseInt(document.getElementById('cfgTimerMinutes').value,10);
+    if(isNaN(minutes)||minutes<=0){
+      minutes=parseInt(document.getElementById('cfgTimerCustom').value,10);
+    }
+    if(isNaN(minutes)||minutes<=0) return;
+    cfg.timerMinutes=minutes;
+    await persistConfig();
+    timerWarningShown=false;
+    const r=await fetch('/api/timer/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minutes:minutes})});
+    const data=await r.json();
+    if(data.valid){
+      btn.textContent=uiText.timerStop;
+      document.getElementById('timerStatus').textContent=uiText.timerActive;
+      pollTimer();
+    }
+  }
+}
+async function extendFromBlock(minutes){
+  const pin=document.getElementById('timerBlockPin').value;
+  const r=await fetch('/api/timer/extend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin,minutes:minutes})});
+  const data=await r.json();
+  if(data.valid){
+    timerWarningShown=false;
+    hideTimerBlock();
+    pollTimer();
+  }else{
+    document.getElementById('timerBlockErr').textContent=uiText.timerWrongPin||'Falscher PIN';
+    document.getElementById('timerBlockPin').value='';
+    document.getElementById('timerBlockPin').focus();
+  }
+}
+
+// Touch swipe
+let touchStartX=0, touchStartY=0;
+document.addEventListener('touchstart',function(e){
+  if(e.touches.length!==1) return;
+  touchStartX=e.touches[0].clientX;
+  touchStartY=e.touches[0].clientY;
+},false);
+document.addEventListener('touchend',function(e){
+  if(!touchStartX && !touchStartY) return;
+  const dx=e.changedTouches[0].clientX-touchStartX;
+  const dy=e.changedTouches[0].clientY-touchStartY;
+  touchStartX=0; touchStartY=0;
+  if(Math.abs(dx)<50 || Math.abs(dy)>Math.abs(dx)) return;
+  if(document.getElementById('admin').classList.contains('hidden') && !document.getElementById('pin').classList.contains('hidden')) return;
+  if(dx>0) changePage(-1); else changePage(1);
+},false);
+
+// Clock
+function clockEmoji(h){
+  if(h>=5 && h<11) return '🌅';
+  if(h>=11 && h<17) return '☀️';
+  if(h>=17 && h<21) return '🌇';
+  return '🌙';
+}
+function updateClock(){
+  const now=new Date();
+  const h=now.getHours();
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const badge=document.getElementById('clockBadge');
+  badge.textContent=clockEmoji(h)+' '+h+':'+m;
+}
+setInterval(updateClock,30000);
+updateClock();
+
+// Battery
+async function updateBattery(){
+  const badge=document.getElementById('batteryBadge');
+  if(!navigator.getBattery) return;
+  try{
+    const bat=await navigator.getBattery();
+    const pct=Math.round(bat.level*100);
+    let icon='🔋';
+    if(bat.charging) icon='⚡';
+    else if(pct<=20) icon='🪫';
+    badge.style.display='flex';
+    badge.textContent=icon+' '+pct+'%';
+    bat.addEventListener('levelchange',updateBattery);
+    bat.addEventListener('chargingchange',updateBattery);
+  }catch(e){}
+}
+updateBattery();
+
+async function saveConfig(){
+  cfg.title=document.getElementById('cfgTitle').value;
+  cfg.theme=document.getElementById('cfgTheme').value;
+  cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
+  cfg.parentLabel=document.getElementById('cfgParentLabel').value;
+  cfg.exitLabel=document.getElementById('cfgExitLabel').value;
+  let minutes=parseInt(document.getElementById('cfgTimerMinutes').value,10);
+  if(isNaN(minutes)||minutes<=0){
+    minutes=parseInt(document.getElementById('cfgTimerCustom').value,10)||0;
+  }
+  cfg.timerMinutes=minutes;
+  cfg.timerWarningMinutes=cfg.timerWarningMinutes||5;
+  if(cfg.theme==='custom'){
+    cfg.customColors={
+      bg1:document.getElementById('cfgCustomBg1').value,
+      bg2:document.getElementById('cfgCustomBg2').value,
+      text:document.getElementById('cfgCustomText').value,
+      btn:document.getElementById('cfgCustomBtn').value,
+      card:document.getElementById('cfgCustomCard').value,
+    };
+    cfg.customBackground=document.getElementById('cfgCustomBg').value;
+  }
+  cfg.browser=document.getElementById('cfgBrowser').value;
+  cfg.currentPage=0;
+  await persistConfig();
+  renderAll();
+  closeAdmin();
+}
+async function exportConfig(){
+  const r=await fetch('/api/export-config');
+  const blob=await r.blob();
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='cozy-kids-config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function exportDiagnostics(){
+  const r=await fetch('/api/diagnostics');
+  if(!r.ok) return;
+  const blob=await r.blob();
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='cozy-kids-diagnostics.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function importConfig(input){
+  const msg=document.getElementById('importMsg');
+  msg.textContent='';
+  msg.style.color='';
+  if(!input.files||!input.files[0]) return;
+  if(!window.confirm(uiText.importConfirm||'This will overwrite all settings. Continue?')){ input.value=''; return; }
+  try{
+    const text=await input.files[0].text();
+    const data=JSON.parse(text);
+    const r=await fetch('/api/import-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const result=await r.json();
+    if(result.status==='ok'){
+      msg.textContent=uiText.importSuccess||'Config imported';
+      msg.style.color='green';
+      await loadConfig();
+      renderAll();
+    }else{
+      msg.textContent=result.message||(uiText.importError||'Import failed');
+      msg.style.color='#c00';
+    }
+  }catch(e){
+    msg.textContent=uiText.invalidConfig||'Invalid config file';
+    msg.style.color='#c00';
+  }
+  input.value='';
+}
+function backupLabel(backup){
+  const date=new Date(backup.createdAt);
+  const locale=interfaceLanguage()==='de'?'de-DE':'en-US';
+  const created=Number.isNaN(date.getTime())?backup.createdAt:date.toLocaleString(locale);
+  const source=backup.source==='pre-restore'?uiText.backupPreRestore:uiText.backupInstaller;
+  return source+' · '+created;
+}
+function renderBackupOptions(){
+  const select=document.getElementById('backupSelect');
+  const button=document.getElementById('restoreBackupBtn');
+  if(!select||!button) return;
+  select.replaceChildren();
+  button.textContent=uiText.backupRestore;
+  if(!backups.length){
+    const empty=document.createElement('option');
+    empty.value='';
+    empty.textContent=uiText.backupEmpty;
+    select.appendChild(empty);
+    button.disabled=true;
+    return;
+  }
+  for(const backup of backups){
+    const option=document.createElement('option');
+    option.value=backup.id;
+    option.textContent=backupLabel(backup);
+    select.appendChild(option);
+  }
+  button.disabled=false;
+}
+async function loadBackups(){
+  const msg=document.getElementById('backupMsg');
+  msg.textContent=uiText.backupLoading;
+  msg.style.color='';
+  try{
+    const response=await fetch('/api/backups',{cache:'no-store'});
+    if(!response.ok) throw new Error('backup list failed');
+    const result=await response.json();
+    backups=Array.isArray(result.backups)?result.backups:[];
+    renderBackupOptions();
+    msg.textContent='';
+  }catch(e){
+    backups=[];
+    renderBackupOptions();
+    msg.textContent=uiText.backupLoadError;
+    msg.style.color='#c00';
+  }
+}
+async function restoreBackup(){
+  const select=document.getElementById('backupSelect');
+  const button=document.getElementById('restoreBackupBtn');
+  const msg=document.getElementById('backupMsg');
+  const backupId=select.value;
+  if(!backupId||!window.confirm(uiText.backupConfirm)) return;
+  button.disabled=true;
+  msg.textContent=uiText.backupRestoring;
+  msg.style.color='';
+  try{
+    const response=await fetch('/api/backups/restore',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({backupId:backupId})
+    });
+    const result=await response.json();
+    if(!response.ok||result.status!=='ok') throw new Error('backup restore failed');
+    await loadConfig();
+    await loadBackups();
+    msg.textContent=uiText.backupSuccess;
+    msg.style.color='green';
+  }catch(e){
+    msg.textContent=uiText.backupError;
+    msg.style.color='#c00';
+  }finally{
+    button.disabled=backups.length===0;
+  }
+}
+// Keyboard navigation
+let focusedTileIndex=0;
+function updateTileFocus(){
+  const allBtns=document.querySelectorAll('#grid .tile:not(.placeholder)');
+  allBtns.forEach((btn,idx)=>{ btn.classList.toggle('focused',idx===focusedTileIndex); });
+}
+function focusTileByDir(dir){
+  const tiles=tilesForPage(cfg.currentPage);
+  const cols=cfg.layoutMode==='klein'?3:2;
+  if(dir==='right'){
+    if((focusedTileIndex+1)%cols!==0&&focusedTileIndex+1<tiles.length) focusedTileIndex++;
+  }else if(dir==='left'){
+    if(focusedTileIndex%cols!==0) focusedTileIndex--;
+  }else if(dir==='down'){
+    if(focusedTileIndex+cols<tiles.length) focusedTileIndex+=cols;
+  }else if(dir==='up'){
+    if(focusedTileIndex-cols>=0) focusedTileIndex-=cols;
+  }
+  updateTileFocus();
+}
+document.addEventListener('keydown',function(e){
+  if(!document.getElementById('admin').classList.contains('hidden')) return;
+  if(!document.getElementById('pin').classList.contains('hidden')) return;
+  if(!document.getElementById('timerBlock').classList.contains('hidden')) return;
+  if(!document.getElementById('timerWarning').classList.contains('hidden')) return;
+  if(!document.getElementById('startOverlay').classList.contains('hidden')) return;
+  const tiles=tilesForPage(cfg.currentPage);
+  if(tiles.length===0) return;
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='Enter'||e.key===' '||e.key==='Escape'){
+    e.preventDefault();
+  }
+  if(e.key==='ArrowRight') focusTileByDir('right');
+  else if(e.key==='ArrowLeft') focusTileByDir('left');
+  else if(e.key==='ArrowDown') focusTileByDir('down');
+  else if(e.key==='ArrowUp') focusTileByDir('up');
+  else if(e.key==='Enter'||e.key===' '){
+    if(focusedTileIndex>=0&&focusedTileIndex<tiles.length) launchTile(tiles[focusedTileIndex].id);
+  }else if(e.key==='Escape') exitKids();
+});
+
+(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadBrowsers(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); await startupUpdateCheck(); })();
