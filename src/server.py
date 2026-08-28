@@ -17,6 +17,14 @@ from http.cookies import SimpleCookie
 from urllib.parse import quote, unquote, urlparse
 from urllib.request import Request, urlopen
 
+from app_detection import (
+    BROWSER_CANDIDATES,
+    browser_family,
+    browser_statuses,
+    find_browser as detect_browser,
+    parse_desktop_file,
+    scan_apps as discover_apps,
+)
 from config_store import (
     CURRENT_CONFIG_VERSION,
     atomic_write_config,
@@ -83,19 +91,6 @@ VIDEOS = os.path.join(HOME, "Videos")
 MUSIC = os.path.join(HOME, "Music")
 ALT_MUSIC = os.path.join(HOME, "Musik")
 EXTS = ("*.mp4", "*.mkv", "*.webm", "*.avi", "*.mov", "*.mp3", "*.ogg", "*.wav", "*.flac", "*.m4a")
-BROWSER_CANDIDATES = (
-    "firefox", "firefox-esr", "librewolf",
-    "chromium", "chromium-browser", "google-chrome", "google-chrome-stable",
-    "brave", "brave-browser", "opera", "opera-stable",
-    "vivaldi", "vivaldi-stable", "microsoft-edge", "microsoft-edge-stable",
-    "edge", "cachy-browser",
-)
-CHROMIUM_BROWSER_NAMES = {
-    "chromium", "chromium-browser", "google-chrome", "google-chrome-stable",
-    "brave", "brave-browser", "opera", "opera-stable",
-    "vivaldi", "vivaldi-stable", "microsoft-edge", "microsoft-edge-stable",
-    "edge", "cachy-browser",
-}
 LEGACY_WEB_ACTION_MIGRATIONS = {
     "special:external-browser:https://www.netflix.com/browse/kids":
         "special:external-browser:https://www.netflix.com/browse/genre/27346",
@@ -422,62 +417,8 @@ def restore_config_backup(backup_id):
     return restored, safety_backup
 
 
-def parse_desktop_file(path):
-    try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as fh:
-            txt = fh.read()
-    except Exception:
-        return None
-    if "NoDisplay=true" in txt:
-        return None
-    if "TryExec=" in txt:
-        for line in txt.splitlines():
-            if line.startswith("TryExec="):
-                try_cmd = line[8:].strip().split()[0]
-                if not any(os.path.exists(os.path.join(p, try_cmd)) for p in os.environ.get("PATH", "/usr/bin").split(":")):
-                    if not os.path.isabs(try_cmd) or not os.path.exists(try_cmd):
-                        return None
-                break
-
-    app_name = None
-    exec_cmd = None
-    for line in txt.splitlines():
-        if line.startswith("Name=") and app_name is None:
-            app_name = line[5:].strip()
-        elif line.startswith("Exec=") and exec_cmd is None:
-            exec_cmd = line[5:].strip()
-    if not app_name or not exec_cmd:
-        return None
-    # Strip field codes like %U %F %u %f %c %i %m %k %v %d %D %n %N %t %T %r %R
-    clean_exec = re.sub(r'%[UuFfCcIiMmKkVvDdNnTtRr]', '', exec_cmd).strip()
-    if not clean_exec:
-        return None
-    return {"name": app_name, "exec": clean_exec}
-
-
 def scan_apps():
-    apps = []
-    seen = set()
-    bases = [
-        os.path.join(HOME, ".local/share/applications"),
-        "/usr/share/applications",
-        "/var/lib/snapd/desktop/applications",
-    ]
-    for base in bases:
-        if not os.path.isdir(base):
-            continue
-        for name in sorted(os.listdir(base)):
-            if not name.endswith(".desktop"):
-                continue
-            path = os.path.join(base, name)
-            app = parse_desktop_file(path)
-            if not app:
-                continue
-            if app["exec"] in seen:
-                continue
-            seen.add(app["exec"])
-            apps.append(app)
-    return apps[:300]
+    return discover_apps(HOME)
 
 
 def media_location():
@@ -714,22 +655,12 @@ def resolve_tile_action(tile):
     return {"type": "app", "argv": clean} if clean else {"type": "none"}
 
 
-def browser_family(browser):
-    return "chromium" if os.path.basename(browser) in CHROMIUM_BROWSER_NAMES else "firefox"
-
-
 def find_browser(config=None):
-    config = config or {}
-    preferred = config.get("browser", "")
-    candidates = ([preferred] if preferred else []) + list(BROWSER_CANDIDATES)
-    seen = set()
-    for candidate in candidates:
-        if not candidate or candidate in seen:
-            continue
-        seen.add(candidate)
-        if shutil.which(candidate):
-            return candidate
-    return None
+    return detect_browser(
+        config,
+        candidates=BROWSER_CANDIDATES,
+        which=shutil.which,
+    )
 
 
 def external_browser_command(browser, url):
@@ -1025,10 +956,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
             return self.json_response({"shutdownAvailable": shutdown_ok})
         if self.path == "/api/browsers":
-            return self.json_response([
-                {"name": browser, "installed": bool(shutil.which(browser))}
-                for browser in BROWSER_CANDIDATES
-            ])
+            return self.json_response(
+                browser_statuses(BROWSER_CANDIDATES, which=shutil.which)
+            )
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
         if self.path == "/api/backups":
