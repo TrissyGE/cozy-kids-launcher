@@ -43,6 +43,15 @@ esac
 
 CHROMIUM_PROFILE="$HOME/.cache/{{APP_ID}}/chromium-profile"
 FIREFOX_PROFILE="$HOME/.cache/{{APP_ID}}/firefox-profile"
+CHROMIUM_FLAGS=(
+  --user-data-dir="$CHROMIUM_PROFILE"
+  --no-first-run
+  --password-store=basic
+  --hide-crash-restore-bubble
+  --disable-session-crashed-bubble
+  --disable-translate
+  --disable-features=Translate
+)
 mkdir -p "$CACHE_ROOT" "$CHROMIUM_PROFILE" "$FIREFOX_PROFILE"
 
 exec 9>"$LOCK_FILE"
@@ -126,6 +135,44 @@ wait_for_child() {
   if [[ -n "$pid" ]]; then
     wait "$pid" 2>/dev/null || true
   fi
+}
+
+configure_chromium_profile() {
+  local preferences="$CHROMIUM_PROFILE/Default/Preferences"
+  mkdir -p "$(dirname "$preferences")"
+  python3 - "$preferences" 9>&- <<'PY' >/dev/null 2>&1 || true
+import json
+import os
+import sys
+import tempfile
+
+path = sys.argv[1]
+preferences = {}
+if os.path.exists(path):
+    try:
+        with open(path, encoding="utf-8") as source:
+            preferences = json.load(source)
+    except (OSError, ValueError):
+        raise SystemExit(0)
+
+translate = preferences.setdefault("translate", {})
+if not isinstance(translate, dict):
+    translate = {}
+    preferences["translate"] = translate
+translate["enabled"] = False
+
+fd, temporary = tempfile.mkstemp(prefix="Preferences.", dir=os.path.dirname(path))
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as destination:
+        json.dump(preferences, destination, separators=(",", ":"))
+        destination.write("\n")
+        destination.flush()
+        os.fsync(destination.fileno())
+    os.replace(temporary, path)
+finally:
+    if os.path.exists(temporary):
+        os.unlink(temporary)
+PY
 }
 
 stop_runtime_children() {
@@ -254,24 +301,27 @@ while true; do
       WATCHDOG_CHILD_PID=""
     fi
   fi
+  if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
+    configure_chromium_profile
+  fi
   case "$LAUNCH_MODE" in
     kiosk)
       if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
-        "$BROWSER_CMD" --user-data-dir="$CHROMIUM_PROFILE" --no-first-run --disable-session-crashed-bubble --kiosk "$URL" 9>&- >/dev/null 2>&1 &
+        "$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" --kiosk "$URL" 9>&- >/dev/null 2>&1 &
       else
         "$BROWSER_CMD" --no-remote --profile "$FIREFOX_PROFILE" --new-window --kiosk "$URL" 9>&- >/dev/null 2>&1 &
       fi
       ;;
     fullscreen)
       if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
-        "$BROWSER_CMD" --user-data-dir="$CHROMIUM_PROFILE" --no-first-run --disable-session-crashed-bubble --fullscreen "$URL" 9>&- >/dev/null 2>&1 &
+        "$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" --start-fullscreen "$URL" 9>&- >/dev/null 2>&1 &
       else
         "$BROWSER_CMD" --no-remote --profile "$FIREFOX_PROFILE" --new-window --fullscreen "$URL" 9>&- >/dev/null 2>&1 &
       fi
       ;;
     window|*)
       if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
-        "$BROWSER_CMD" --user-data-dir="$CHROMIUM_PROFILE" --no-first-run --disable-session-crashed-bubble "$URL" 9>&- >/dev/null 2>&1 &
+        "$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" "$URL" 9>&- >/dev/null 2>&1 &
       else
         "$BROWSER_CMD" --no-remote --profile "$FIREFOX_PROFILE" --new-window "$URL" 9>&- >/dev/null 2>&1 &
       fi

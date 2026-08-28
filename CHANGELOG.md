@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Added an explicit, atomically stored launcher lifecycle contract for starting, running, recovering, updating, stopping, stopped, and failed states
 - Distinguish logout from an authenticated shutdown request while guaranteeing the same owned-process cleanup path
 - Added real Linux integration coverage for clean startup, successful and failed updates, logout, shutdown, crash recovery, and exhausted recovery
+- Keep the external-app close control above fullscreen applications on KDE Wayland by applying the compositor's dock-layer hint with a portable fallback
+- Start Chromium fullscreen mode with its F11-equivalent switch and suppress keyring, crash-restore, and translation prompts in the launcher's isolated profile
 
 ## [0.4.1] - 2026-08-25
 

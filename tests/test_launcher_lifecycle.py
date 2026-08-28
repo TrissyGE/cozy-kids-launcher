@@ -62,6 +62,34 @@ class LauncherLifecycleTests(unittest.TestCase):
         self.assertNotIn("pgrep", source)
         self.assertNotIn('kill "$(cat "$PIDFILE"', source)
 
+    def test_chromium_fullscreen_mode_uses_the_f11_startup_switch(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            '"$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" '
+            '--start-fullscreen "$URL"',
+            source,
+        )
+        self.assertNotIn(
+            '--disable-session-crashed-bubble --fullscreen "$URL"',
+            source,
+        )
+
+    def test_chromium_launches_without_keyring_or_crash_restore_prompts(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("CHROMIUM_FLAGS=(", source)
+        self.assertEqual(source.count("--password-store=basic"), 1)
+        self.assertEqual(source.count("--hide-crash-restore-bubble"), 1)
+        self.assertEqual(source.count("--disable-translate"), 1)
+        self.assertEqual(source.count("--disable-features=Translate"), 1)
+        self.assertEqual(source.count('"${CHROMIUM_FLAGS[@]}"'), 3)
+        self.assertIn("configure_chromium_profile()", source)
+        self.assertIn('translate["enabled"] = False', source)
+        self.assertIn("os.replace(temporary, path)", source)
+
     def test_singleton_recovers_server_once_and_stops_after_retry_limit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

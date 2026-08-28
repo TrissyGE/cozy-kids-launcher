@@ -41,6 +41,23 @@ THEME = {
 }
 
 
+def configure_overlay_window(window):
+    """Apply compositor hints that keep the control above fullscreen apps."""
+    try:
+        # Tk runs through XWayland in the supported Wayland sessions. KWin can
+        # place a plain topmost XWayland window behind an app after that app
+        # enters fullscreen. The EWMH dock type keeps this small control on the
+        # panel layer without reserving screen space.
+        window.attributes("-type", "dock")
+    except tk.TclError:
+        pass
+    try:
+        window.attributes("-topmost", True)
+    except tk.TclError:
+        pass
+    window.lift()
+
+
 def api(path, data=None):
     port = os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}")
     url = f"http://127.0.0.1:{port}{path}"
@@ -92,11 +109,7 @@ class AppOverlay:
         self.root.overrideredirect(True)
         self.root.geometry("220x70+24+24")
         self.root.resizable(False, False)
-        try:
-            self.root.attributes("-topmost", True)
-        except tk.TclError:
-            pass
-        self.root.lift()
+        configure_overlay_window(self.root)
         self.root.focus_force()
 
         self.frame = tk.Frame(self.root, bg=THEME["bg"], bd=0)
