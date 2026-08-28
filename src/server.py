@@ -3,21 +3,24 @@ import http.server
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
-import sys
 import threading
 import time
 from urllib.parse import quote, unquote, urlparse
 
 from app_detection import (
     BROWSER_CANDIDATES,
-    browser_family,
     browser_statuses,
     find_browser as detect_browser,
     parse_desktop_file,
     scan_apps as discover_apps,
+)
+from application_launcher import (
+    ApplicationLauncher,
+    direct_app_command,
+    external_browser_command as build_external_browser_command,
+    resolve_tile_action,
 )
 from config_store import (
     CURRENT_CONFIG_VERSION,
@@ -346,42 +349,6 @@ def load_recommendations():
     return result
 
 
-def is_safe_web_url(url):
-    if not isinstance(url, str) or len(url) > 2048:
-        return False
-    parsed = urlparse(url)
-    return parsed.scheme in ("http", "https") and bool(parsed.hostname)
-
-
-def resolve_tile_action(tile):
-    """Normalize legacy tile commands into one launch action model."""
-    command = tile.get("cmd", []) if isinstance(tile, dict) else []
-    if not isinstance(command, list):
-        return {"type": "none"}
-    clean = [part for part in command if isinstance(part, str) and part]
-    if clean == ["special:filme-musik"]:
-        return {"type": "media"}
-    if len(clean) == 1:
-        for prefix, mode in (
-            ("special:browser:", "embedded"),
-            ("special:external-browser:", "external"),
-        ):
-            if clean[0].startswith(prefix):
-                url = clean[0][len(prefix):]
-                if not is_safe_web_url(url):
-                    raise ValueError("Invalid browser URL")
-                return {"type": "web", "mode": mode, "url": url}
-    # Older installer versions created browser tiles as `xdg-open URL`.
-    if len(clean) == 2 and clean[0] == "xdg-open" and is_safe_web_url(clean[1]):
-        return {"type": "web", "mode": "external", "url": clean[1]}
-    if len(clean) == 1:
-        try:
-            clean = shlex.split(clean[0])
-        except ValueError:
-            clean = []
-    return {"type": "app", "argv": clean} if clean else {"type": "none"}
-
-
 def find_browser(config=None):
     return detect_browser(
         config,
@@ -392,131 +359,37 @@ def find_browser(config=None):
 
 def external_browser_command(browser, url):
     cache_root = os.path.join(HOME, ".cache", "{{APP_ID}}")
-    if browser_family(browser) == "chromium":
-        profile = os.path.join(cache_root, "external-chromium-profile")
-        return [
-            browser,
-            f"--user-data-dir={profile}",
-            "--no-first-run",
-            "--disable-session-crashed-bubble",
-            "--kiosk",
-            f"--app={url}",
-        ]
-    profile = os.path.join(cache_root, "external-firefox-profile")
-    os.makedirs(profile, exist_ok=True)
-    return [browser, "--no-remote", "--profile", profile, "--kiosk", url]
+    return build_external_browser_command(browser, url, cache_root)
+
+
+def application_launcher():
+    return ApplicationLauncher(
+        TILE_PROCESS_PIDFILE,
+        OVERLAY_PIDFILE,
+        PROCESS_SUPERVISOR,
+        OVERLAY_SCRIPT,
+        lock=_tile_launch_lock,
+    )
 
 
 def stop_existing_overlay():
-    return terminate_owned_process(
-        OVERLAY_PIDFILE,
-        "overlay",
-        OVERLAY_SCRIPT,
-    )
+    return application_launcher().stop_existing_overlay()
 
 
 def stop_active_tile():
-    return terminate_owned_process(
-        TILE_PROCESS_PIDFILE,
-        "tile-process",
-        PROCESS_SUPERVISOR,
-    )
-
-
-def _wait_for_owned_process(path, role, marker, process, timeout=1.5):
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if owned_process_alive(path, role, marker):
-            return True
-        if process.poll() is not None:
-            break
-        time.sleep(0.05)
-    return owned_process_alive(path, role, marker)
+    return application_launcher().stop_active_tile()
 
 
 def start_overlay(mode, url=""):
-    if not os.path.isfile(OVERLAY_SCRIPT):
-        return False
-    command = [sys.executable, OVERLAY_SCRIPT, "--mode", mode, "--label", "Home"]
-    if url:
-        command.extend(["--url", url])
-    process = subprocess.Popen(
-        command,
-        env=dict(os.environ),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    if _wait_for_owned_process(
-        OVERLAY_PIDFILE,
-        "overlay",
-        OVERLAY_SCRIPT,
-        process,
-        timeout=5,
-    ):
-        return True
-    try:
-        process.terminate()
-        process.wait(timeout=1)
-    except (OSError, subprocess.TimeoutExpired):
-        pass
-    return False
+    return application_launcher().start_overlay(mode, url=url)
 
 
 def reset_active_tile():
-    with _tile_launch_lock:
-        stop_existing_overlay()
-        stop_active_tile()
+    application_launcher().reset_active_tile()
 
 
 def launch_owned_tile(command, mode, url=""):
-    if not command or not os.path.isfile(PROCESS_SUPERVISOR):
-        raise OSError("Tile process supervisor is unavailable")
-    with _tile_launch_lock:
-        stop_existing_overlay()
-        stop_active_tile()
-        wrapped = [
-            sys.executable,
-            PROCESS_SUPERVISOR,
-            "--record",
-            TILE_PROCESS_PIDFILE,
-            "--marker",
-            PROCESS_SUPERVISOR,
-            "--",
-            *command,
-        ]
-        process = subprocess.Popen(
-            wrapped,
-            env=dict(os.environ),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=(os.name == "posix"),
-        )
-        if not _wait_for_owned_process(
-            TILE_PROCESS_PIDFILE,
-            "tile-process",
-            PROCESS_SUPERVISOR,
-            process,
-        ):
-            try:
-                process.terminate()
-                process.wait(timeout=1)
-            except (OSError, subprocess.TimeoutExpired):
-                pass
-            raise OSError("Tile process ownership could not be established")
-        if not start_overlay(mode, url=url):
-            stop_active_tile()
-            raise OSError("Tile overlay could not be started")
-        return process
-
-
-def direct_app_command(command):
-    if (
-        len(command) >= 3
-        and command[0] in ("kstart5", "kstart")
-        and command[1] == "--fullscreen"
-    ):
-        return command[2:]
-    return command
+    return application_launcher().launch_owned_tile(command, mode, url=url)
 
 
 def load_timer():

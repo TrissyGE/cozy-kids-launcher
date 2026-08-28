@@ -47,6 +47,14 @@ A tiny Python HTTP server:
 - launches configured programs with a shared overlay lifecycle
 - handles shutdown and exit actions
 
+`src/server.py` remains the localhost HTTP composition root. Domain behavior is
+kept in focused standard-library modules: configuration storage and validation,
+Parent authentication, app/browser discovery, application launching, media
+discovery, timer state, update discovery/triggering, lifecycle state, process
+ownership, backups, and privacy-safe diagnostics. The server supplies installed
+paths and turns module results into the existing HTTP responses; the modules do
+not depend on the HTTP handler.
+
 ### 3. Launch adapters
 
 Every tile is posted to `/launch/<tile-id>`. The server normalizes the existing command formats into one of three actions:
@@ -56,6 +64,11 @@ Every tile is posted to `/launch/<tile-id>`. The server normalizes the existing 
 - **app** — starts an argument vector directly without a shell
 
 Existing `special:` commands and older `xdg-open URL` browser tiles remain compatible. Recommended public media sites use external mode because framing policies, login flows, and DRM make third-party iframe behavior unreliable.
+
+`application_launcher.py` owns action normalization and orchestration. It starts
+argument vectors below `process_supervisor.py`, waits for a verified process
+record, and only then starts `overlay.py`. Missing ownership or overlay startup
+fails closed and tears down the newly owned process tree.
 
 ### 4. Parent security boundary
 
