@@ -1106,6 +1106,7 @@ install -m 0644 "$SRC_DIR/parent_auth.py" "$APP_ROOT/parent_auth.py"
 install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
 install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"
 install -m 0755 "$SRC_DIR/process_supervisor.py" "$APP_ROOT/process_supervisor.py"
+install -m 0644 "$SRC_DIR/timer_state.py" "$APP_ROOT/timer_state.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/frontend/styles.css" "$FRONTEND_STYLES_FILE" 0644
 render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
