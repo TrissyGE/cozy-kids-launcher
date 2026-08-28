@@ -513,6 +513,18 @@ class ServerApiTests(unittest.TestCase):
             ],
         )
 
+    def test_app_launch_preserves_argv_and_uses_owned_supervision(self):
+        with mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, data, _ = self.request(
+                "/launch/paint",
+                method="POST",
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 204)
+        self.assertIsNone(data)
+        launch.assert_called_once_with(["tuxpaint"], "local")
+
     def test_update_status_comes_from_the_local_release_resolver(self):
         expected = {
             "installedVersion": "0.3.4",
