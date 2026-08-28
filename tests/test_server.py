@@ -540,6 +540,55 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn(str(update_script), trigger.read_text(encoding="utf-8"))
         popen.assert_not_called()
 
+    def test_timer_start_status_and_stop_contract(self):
+        with mock.patch.object(server_module.time, "time", return_value=1000):
+            status, data, _ = self.request(
+                "/api/timer/start",
+                method="POST",
+                body={"minutes": 15},
+                origin=self.base_url,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(
+                data,
+                {"valid": True, "endTime": 1900, "minutes": 15},
+            )
+
+            status, data, _ = self.request("/api/timer/status")
+            self.assertEqual(status, 200)
+            self.assertEqual(
+                data,
+                {
+                    "active": True,
+                    "expired": False,
+                    "warning": False,
+                    "remainingSeconds": 900,
+                    "totalMinutes": 15,
+                },
+            )
+
+            status, data, _ = self.request(
+                "/api/timer/stop",
+                method="POST",
+                body={},
+                origin=self.base_url,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(data, {"valid": True})
+
+            status, data, _ = self.request("/api/timer/status")
+            self.assertEqual(status, 200)
+            self.assertEqual(
+                data,
+                {
+                    "active": False,
+                    "expired": False,
+                    "warning": False,
+                    "remainingSeconds": 0,
+                    "totalMinutes": 0,
+                },
+            )
+
     def test_diagnostics_require_parent_access_and_exclude_family_values(self):
         self.enable_pin()
         status, _, _ = self.request("/api/diagnostics")

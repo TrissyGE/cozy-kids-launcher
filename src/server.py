@@ -79,6 +79,12 @@ from runtime_diagnostics import (
     configure_runtime_logging,
     log_runtime_event,
 )
+from timer_state import (
+    clear_timer as remove_timer_state,
+    load_timer as read_timer_state,
+    save_timer as write_timer_state,
+    timer_status as calculate_timer_status,
+)
 
 HOME = os.path.expanduser("~")
 APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
@@ -571,48 +577,19 @@ def direct_app_command(command):
 
 
 def load_timer():
-    if not os.path.isfile(TIMER_FILE):
-        return None
-    try:
-        with open(TIMER_FILE, "r", encoding="utf-8") as fh:
-            return json.load(fh)
-    except Exception:
-        return None
+    return read_timer_state(TIMER_FILE)
 
 
 def save_timer(data):
-    os.makedirs(os.path.dirname(TIMER_FILE), exist_ok=True)
-    with open(TIMER_FILE, "w", encoding="utf-8") as fh:
-        json.dump(data, fh, ensure_ascii=False, indent=2)
+    write_timer_state(TIMER_FILE, data)
 
 
 def clear_timer():
-    try:
-        if os.path.isfile(TIMER_FILE):
-            os.remove(TIMER_FILE)
-    except Exception:
-        pass
+    remove_timer_state(TIMER_FILE)
 
 
 def timer_status(cfg):
-    data = load_timer()
-    if not data or not isinstance(data, dict):
-        return {"active": False, "expired": False, "warning": False, "remainingSeconds": 0, "totalMinutes": 0}
-    end_time = data.get("end_time", 0)
-    total_minutes = data.get("totalMinutes", 0)
-    warning_minutes = cfg.get("timerWarningMinutes", 5)
-    now = time.time()
-    remaining = int(end_time - now)
-    if remaining <= 0:
-        return {"active": True, "expired": True, "warning": False, "remainingSeconds": 0, "totalMinutes": total_minutes}
-    warning_seconds = warning_minutes * 60
-    return {
-        "active": True,
-        "expired": False,
-        "warning": remaining <= warning_seconds,
-        "remainingSeconds": remaining,
-        "totalMinutes": total_minutes,
-    }
+    return calculate_timer_status(load_timer(), cfg, now=time.time())
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
