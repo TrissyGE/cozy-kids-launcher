@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """App overlay: always-on-top close button + timer for external browser and local apps."""
 import argparse
+import ctypes
 import json
 import os
 import subprocess
@@ -41,6 +42,41 @@ THEME = {
 }
 
 
+class X11WindowRaiser:
+    """Raise one owned X11/XWayland window without a command dependency."""
+
+    def __init__(self, loader=ctypes.CDLL):
+        self.library = None
+        self.display = None
+        if not os.environ.get("DISPLAY"):
+            return
+        try:
+            library = loader("libX11.so.6")
+            library.XOpenDisplay.argtypes = [ctypes.c_char_p]
+            library.XOpenDisplay.restype = ctypes.c_void_p
+            library.XRaiseWindow.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
+            library.XFlush.argtypes = [ctypes.c_void_p]
+            library.XCloseDisplay.argtypes = [ctypes.c_void_p]
+            display = library.XOpenDisplay(None)
+        except (AttributeError, OSError):
+            return
+        if display:
+            self.library = library
+            self.display = display
+
+    def raise_window(self, window_id):
+        if not self.library or not self.display:
+            return False
+        self.library.XRaiseWindow(self.display, ctypes.c_ulong(int(window_id)))
+        self.library.XFlush(self.display)
+        return True
+
+    def close(self):
+        if self.library and self.display:
+            self.library.XCloseDisplay(self.display)
+            self.display = None
+
+
 def configure_overlay_window(window):
     """Apply compositor hints that keep the control above fullscreen apps."""
     try:
@@ -56,6 +92,15 @@ def configure_overlay_window(window):
     except tk.TclError:
         pass
     window.lift()
+
+
+def x11_toplevel_id(window):
+    """Return the outer X11 frame that the compositor actually stacks."""
+    try:
+        frame = window.tk.call("wm", "frame", window._w)
+        return int(str(frame), 0)
+    except (AttributeError, tk.TclError, TypeError, ValueError):
+        return int(window.winfo_id())
 
 
 def api(path, data=None):
@@ -111,6 +156,7 @@ class AppOverlay:
         self.root.resizable(False, False)
         configure_overlay_window(self.root)
         self.root.focus_force()
+        self.x11_raiser = X11WindowRaiser()
 
         self.frame = tk.Frame(self.root, bg=THEME["bg"], bd=0)
         self.frame.pack(fill=tk.BOTH, expand=True)
@@ -145,6 +191,10 @@ class AppOverlay:
         try:
             self.root.lift()
             self.root.attributes("-topmost", True)
+            # Mutter can restack a fullscreen XWayland app above Tk even though
+            # Tk still reports the topmost attribute. Raise only this overlay's
+            # own XID directly; no global window lookup or extra tool is needed.
+            self.x11_raiser.raise_window(x11_toplevel_id(self.root))
         except tk.TclError:
             pass
         self.root.after(500, self.stay_on_top)
@@ -206,7 +256,10 @@ class AppOverlay:
         self.root.after(10000, self.poll_timer)
 
     def run(self):
-        self.root.mainloop()
+        try:
+            self.root.mainloop()
+        finally:
+            self.x11_raiser.close()
 
 
 def main():
