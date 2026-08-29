@@ -140,13 +140,14 @@ wait_for_child() {
 configure_chromium_profile() {
   local preferences="$CHROMIUM_PROFILE/Default/Preferences"
   mkdir -p "$(dirname "$preferences")"
-  python3 - "$preferences" 9>&- <<'PY' >/dev/null 2>&1 || true
+  python3 - "$preferences" "$LAUNCH_MODE" 9>&- <<'PY' >/dev/null 2>&1 || true
 import json
 import os
 import sys
 import tempfile
 
 path = sys.argv[1]
+launch_mode = sys.argv[2]
 preferences = {}
 if os.path.exists(path):
     try:
@@ -160,6 +161,14 @@ if not isinstance(translate, dict):
     translate = {}
     preferences["translate"] = translate
 translate["enabled"] = False
+
+# Chromium can prefer a cached maximized/windowed placement over a later
+# --start-fullscreen or --kiosk request. Remove only that placement when an
+# explicit display mode is selected; ordinary window mode keeps user geometry.
+if launch_mode in ("fullscreen", "kiosk"):
+    browser = preferences.get("browser")
+    if isinstance(browser, dict):
+        browser.pop("window_placement", None)
 
 fd, temporary = tempfile.mkstemp(prefix="Preferences.", dir=os.path.dirname(path))
 try:

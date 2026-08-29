@@ -90,6 +90,21 @@ class LauncherLifecycleTests(unittest.TestCase):
         self.assertIn('translate["enabled"] = False', source)
         self.assertIn("os.replace(temporary, path)", source)
 
+    def test_explicit_chromium_display_modes_drop_cached_window_placement(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            'python3 - "$preferences" "$LAUNCH_MODE"',
+            source,
+        )
+        self.assertIn(
+            'if launch_mode in ("fullscreen", "kiosk"):',
+            source,
+        )
+        self.assertIn('browser.pop("window_placement", None)', source)
+        self.assertIn("ordinary window mode keeps user geometry", source)
+
     def test_singleton_recovers_server_once_and_stops_after_retry_limit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
