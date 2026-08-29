@@ -2,6 +2,7 @@ import importlib.util
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -49,6 +50,73 @@ class OverlayWindowHintTests(unittest.TestCase):
 
         self.assertIn(("attributes", "-topmost", True), window.calls)
         self.assertEqual(window.calls[-1], ("lift",))
+
+
+class LauncherFocusTests(unittest.TestCase):
+    def test_ewmh_launcher_window_is_raised_and_activated(self):
+        listing = mock.Mock(
+            returncode=0,
+            stdout="0x03 host Cozy Kids Launcher\n",
+        )
+        raised = mock.Mock(returncode=0)
+        activated = mock.Mock(returncode=0)
+        with mock.patch.object(
+            overlay.subprocess,
+            "run",
+            side_effect=(listing, raised, activated),
+        ) as run, mock.patch.object(overlay, "owned_process") as owned:
+            overlay.focus_launcher()
+
+        self.assertEqual(
+            run.call_args_list,
+            [
+                mock.call(
+                    ["wmctrl", "-l"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                ),
+                mock.call(
+                    ["wmctrl", "-i", "-r", "0x03", "-b", "add,above"],
+                    check=False,
+                ),
+                mock.call(
+                    ["wmctrl", "-i", "-a", "0x03"],
+                    check=False,
+                ),
+            ],
+        )
+        owned.assert_not_called()
+
+    def test_pid_scoped_xdotool_is_the_x11_fallback(self):
+        listing = mock.Mock(returncode=1, stdout="")
+        activation = mock.Mock(returncode=0)
+        with mock.patch.object(
+            overlay.subprocess,
+            "run",
+            side_effect=(listing, activation),
+        ) as run, mock.patch.object(
+            overlay,
+            "owned_process",
+            return_value={"pid": 1234},
+        ):
+            overlay.focus_launcher()
+
+        self.assertEqual(
+            run.call_args_list[1],
+            mock.call(
+                [
+                    "xdotool",
+                    "search",
+                    "--pid",
+                    "1234",
+                    "windowactivate",
+                ],
+                capture_output=True,
+                timeout=3,
+                check=False,
+            ),
+        )
 
 
 if __name__ == "__main__":

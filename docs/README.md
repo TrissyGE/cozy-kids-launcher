@@ -14,4 +14,5 @@ Welcome to the Cozy Kids Launcher documentation.
 | [RELEASING.md](RELEASING.md) | Versioned artifacts, updater compatibility, and release recovery |
 | [WSL_TESTING.md](WSL_TESTING.md) | Reproducible graphical browser and multimedia testing on Windows |
 | [DESKTOP_TESTING.md](DESKTOP_TESTING.md) | GNOME, KDE Plasma, and XFCE VM smoke matrix |
+| [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md) | X11/Wayland focus, overlay, and browser-mode guarantees |
 | [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) | Modernization status and remaining priorities |
