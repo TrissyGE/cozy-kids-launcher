@@ -20,6 +20,16 @@ BROWSER_CANDIDATES = (
     "chromium",
     "chromium-browser",
 )
+KEY_DEFINITIONS = {
+    "Tab": ("Tab", 9, ""),
+    "Enter": ("Enter", 13, "\r"),
+    "Escape": ("Escape", 27, ""),
+    " ": ("Space", 32, " "),
+    "ArrowLeft": ("ArrowLeft", 37, ""),
+    "ArrowUp": ("ArrowUp", 38, ""),
+    "ArrowRight": ("ArrowRight", 39, ""),
+    "ArrowDown": ("ArrowDown", 40, ""),
+}
 
 
 def find_browser(preferred=None):
@@ -192,12 +202,7 @@ class BrowserSession:
         self.devtools = DevTools(socket_url, timeout=self.timeout)
         self.devtools.call("Page.enable")
         self.devtools.call("Runtime.enable")
-        self.devtools.call("Emulation.setDeviceMetricsOverride", {
-            "width": self.width,
-            "height": self.height,
-            "deviceScaleFactor": 1,
-            "mobile": False,
-        })
+        self.set_device_metrics(self.width, self.height)
 
     def close(self):
         if self.devtools:
@@ -262,6 +267,66 @@ class BrowserSession:
         )
         if changed is not True:
             raise AssertionError(f"Browser element not found: {selector}")
+
+    def set_device_metrics(self, width, height, mobile=False, device_scale_factor=1):
+        self.width = int(width)
+        self.height = int(height)
+        self.devtools.call("Emulation.setDeviceMetricsOverride", {
+            "width": self.width,
+            "height": self.height,
+            "deviceScaleFactor": device_scale_factor,
+            "mobile": bool(mobile),
+        })
+
+    def set_emulated_media(self, features=None):
+        self.devtools.call("Emulation.setEmulatedMedia", {
+            "media": "",
+            "features": [
+                {"name": name, "value": value}
+                for name, value in (features or [])
+            ],
+        })
+
+    def key_press(self, key):
+        try:
+            code, virtual_key, text = KEY_DEFINITIONS[key]
+        except KeyError as exc:
+            raise ValueError(f"Unsupported test key: {key}") from exc
+        event = {
+            "key": key,
+            "code": code,
+            "windowsVirtualKeyCode": virtual_key,
+            "nativeVirtualKeyCode": virtual_key,
+        }
+        if text:
+            event["text"] = text
+            event["unmodifiedText"] = text
+        self.devtools.call("Input.dispatchKeyEvent", {"type": "keyDown", **event})
+        self.devtools.call("Input.dispatchKeyEvent", {"type": "keyUp", **event})
+
+    def insert_text(self, value):
+        self.devtools.call("Input.insertText", {"text": str(value)})
+
+    def touch_swipe(self, start_x, start_y, end_x, end_y):
+        self.devtools.call("Emulation.setTouchEmulationEnabled", {
+            "enabled": True,
+            "maxTouchPoints": 1,
+        })
+        self.devtools.call("Input.dispatchTouchEvent", {
+            "type": "touchStart",
+            "touchPoints": [{"x": start_x, "y": start_y}],
+        })
+        self.devtools.call("Input.dispatchTouchEvent", {
+            "type": "touchMove",
+            "touchPoints": [{"x": end_x, "y": end_y}],
+        })
+        self.devtools.call("Input.dispatchTouchEvent", {
+            "type": "touchEnd",
+            "touchPoints": [],
+        })
+
+    def disable_touch_emulation(self):
+        self.devtools.call("Emulation.setTouchEmulationEnabled", {"enabled": False})
 
     def screenshot(self, output):
         output = Path(output)

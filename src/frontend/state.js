@@ -1,4 +1,4 @@
-let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, pinCallback=null;
+let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, pinCallback=null, pinReturnFocus=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';

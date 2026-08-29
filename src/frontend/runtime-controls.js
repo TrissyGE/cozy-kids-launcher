@@ -99,19 +99,31 @@ async function extendFromBlock(minutes){
 }
 
 // Touch swipe
-let touchStartX=0, touchStartY=0;
+let touchStartX=null, touchStartY=null;
+function homeGestureAllowed(){
+  return !document.getElementById('kids').classList.contains('hidden') &&
+    document.getElementById('pin').classList.contains('hidden') &&
+    document.getElementById('themeOverlay').classList.contains('hidden') &&
+    document.getElementById('installOverlay').classList.contains('hidden') &&
+    document.getElementById('timerBlock').classList.contains('hidden') &&
+    document.getElementById('timerWarning').classList.contains('hidden') &&
+    document.getElementById('startOverlay').classList.contains('hidden');
+}
 document.addEventListener('touchstart',function(e){
-  if(e.touches.length!==1) return;
+  if(e.touches.length!==1||!homeGestureAllowed()){
+    touchStartX=null; touchStartY=null; return;
+  }
   touchStartX=e.touches[0].clientX;
   touchStartY=e.touches[0].clientY;
 },false);
 document.addEventListener('touchend',function(e){
-  if(!touchStartX && !touchStartY) return;
-  const dx=e.changedTouches[0].clientX-touchStartX;
-  const dy=e.changedTouches[0].clientY-touchStartY;
-  touchStartX=0; touchStartY=0;
+  if(touchStartX===null||touchStartY===null) return;
+  const startX=touchStartX, startY=touchStartY;
+  touchStartX=null; touchStartY=null;
+  if(!homeGestureAllowed()||e.changedTouches.length===0) return;
+  const dx=e.changedTouches[0].clientX-startX;
+  const dy=e.changedTouches[0].clientY-startY;
   if(Math.abs(dx)<50 || Math.abs(dy)>Math.abs(dx)) return;
-  if(document.getElementById('admin').classList.contains('hidden') && !document.getElementById('pin').classList.contains('hidden')) return;
   if(dx>0) changePage(-1); else changePage(1);
 },false);
 
@@ -302,9 +314,13 @@ async function restoreBackup(){
 }
 // Keyboard navigation
 let focusedTileIndex=0;
-function updateTileFocus(){
+function updateTileFocus(moveFocus=true){
   const allBtns=document.querySelectorAll('#grid .tile:not(.placeholder)');
-  allBtns.forEach((btn,idx)=>{ btn.classList.toggle('focused',idx===focusedTileIndex); });
+  allBtns.forEach((btn,idx)=>{
+    const focused=idx===focusedTileIndex;
+    btn.classList.toggle('focused',focused);
+    if(focused&&moveFocus) btn.focus({preventScroll:true});
+  });
 }
 function focusTileByDir(dir){
   const tiles=tilesForPage(cfg.currentPage);
@@ -321,6 +337,12 @@ function focusTileByDir(dir){
   updateTileFocus();
 }
 document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    if(!document.getElementById('themeOverlay').classList.contains('hidden')){ e.preventDefault(); closeThemePicker(); return; }
+    if(!document.getElementById('installOverlay').classList.contains('hidden')){ e.preventDefault(); closeInstallOverlay(); return; }
+    if(!document.getElementById('pin').classList.contains('hidden')){ e.preventDefault(); cancelPin(); return; }
+    if(!document.getElementById('admin').classList.contains('hidden')){ e.preventDefault(); closeAdmin(); return; }
+  }
   if(!document.getElementById('admin').classList.contains('hidden')) return;
   if(!document.getElementById('pin').classList.contains('hidden')) return;
   if(!document.getElementById('timerBlock').classList.contains('hidden')) return;
@@ -328,16 +350,16 @@ document.addEventListener('keydown',function(e){
   if(!document.getElementById('startOverlay').classList.contains('hidden')) return;
   const tiles=tilesForPage(cfg.currentPage);
   if(tiles.length===0) return;
-  if(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='Enter'||e.key===' '||e.key==='Escape'){
+  const tileFocused=document.activeElement&&document.activeElement.matches('#grid .tile:not(.placeholder)');
+  const tileKey=tileFocused&&(e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key==='ArrowDown'||e.key==='ArrowUp');
+  if(tileKey||e.key==='Escape'){
     e.preventDefault();
   }
-  if(e.key==='ArrowRight') focusTileByDir('right');
-  else if(e.key==='ArrowLeft') focusTileByDir('left');
-  else if(e.key==='ArrowDown') focusTileByDir('down');
-  else if(e.key==='ArrowUp') focusTileByDir('up');
-  else if(e.key==='Enter'||e.key===' '){
-    if(focusedTileIndex>=0&&focusedTileIndex<tiles.length) launchTile(tiles[focusedTileIndex].id);
-  }else if(e.key==='Escape') exitKids();
+  if(tileFocused&&e.key==='ArrowRight') focusTileByDir('right');
+  else if(tileFocused&&e.key==='ArrowLeft') focusTileByDir('left');
+  else if(tileFocused&&e.key==='ArrowDown') focusTileByDir('down');
+  else if(tileFocused&&e.key==='ArrowUp') focusTileByDir('up');
+  else if(e.key==='Escape') exitKids();
 });
 
 (async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadBrowsers(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); await startupUpdateCheck(); })();

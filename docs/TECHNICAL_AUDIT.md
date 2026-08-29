@@ -20,6 +20,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 - The local server delegates authentication, configuration, application discovery, process launching, media, timer, and update responsibilities to focused standard-library modules while preserving its API contract.
 - X11 and Wayland display boundaries are documented and tested: X11 automation verifies the overlay close path and launcher focus recovery, while Wayland reports keep compositor-controlled stacking and focus as explicit manual observations.
 - The primary Ubuntu 24.04 desktop matrix passed on commit `2947605`: GNOME 46/Wayland with Firefox 154 kiosk, Plasma 5.27/Wayland with Chrome 152 fullscreen, and XFCE 4.18/X11 with Chrome 152 kiosk. Each machine-readable report records `outcome: passed`, and every row includes fresh-login, display, overlay, focus, singleton-shortcut, and clean-poweroff observations.
+- Chromium journeys exercise real keyboard and touch input, reduced-motion and forced-colors preferences, and the 800x600 home and Parent layouts. Focus and gesture handling stop at dialog and Parent-settings boundaries.
 
 ## Completed release foundation
 
@@ -35,7 +36,7 @@ This audit captures the modernization priorities identified in August 2026. The 
 
 1. Extend the passing Ubuntu desktop matrix to Linux Mint and Zorin OS, plus optional X11 rows where the distribution still supports them.
 2. Expand installer upgrade/rollback coverage as configuration schema migrations evolve.
-3. Exercise keyboard-only, touch, low-resolution, and screen-reader flows.
+3. Add manual screen-reader coverage on the supported Linux desktops.
 
 ## Product work after the foundation
 
