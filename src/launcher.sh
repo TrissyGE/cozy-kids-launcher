@@ -59,9 +59,10 @@ if ! flock -n 9; then
   exit 0
 fi
 if [[ "${1:-}" == "--autostart" ]]; then
-  # GNOME can reach graphical-session.target before Mutter applies browser
-  # fullscreen requests reliably. Desktop/manual launches stay immediate.
-  sleep 12
+  # A cold GNOME boot can reach graphical-session.target well before Mutter
+  # applies browser fullscreen requests reliably. Desktop/manual launches stay
+  # immediate; only login autostart waits for the compositor to settle.
+  sleep 30
 fi
 
 normalize_integer() {

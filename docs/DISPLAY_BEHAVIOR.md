@@ -26,9 +26,9 @@ This prevents geometry saved by an earlier windowed session from overriding an
 explicit display-mode change. Ordinary `window` launches retain their saved
 geometry.
 
-The generated desktop autostart entry uses a short compositor-settling delay
-after acquiring the single-instance lock. This keeps early GNOME session startup
-from downgrading a valid fullscreen request to an ordinary maximized window;
+The generated desktop autostart entry uses a 30-second compositor-settling delay
+after acquiring the single-instance lock. Cold GNOME boots can expose the user
+session well before Mutter consistently honors Chromium's fullscreen request;
 manual and desktop-shortcut launches remain immediate.
 
 ## X11 contract

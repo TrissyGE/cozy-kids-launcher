@@ -115,7 +115,7 @@ class LauncherLifecycleTests(unittest.TestCase):
         lock_index = source.index("flock -n 9")
         delay_index = source.index('if [[ "${1:-}" == "--autostart" ]]')
         self.assertLess(lock_index, delay_index)
-        self.assertIn("sleep 12", source[delay_index:delay_index + 240])
+        self.assertIn("sleep 30", source[delay_index:delay_index + 320])
         self.assertIn("Exec=$RUNTIME_BIN --autostart", installer)
 
     def test_singleton_recovers_server_once_and_stops_after_retry_limit(self):
