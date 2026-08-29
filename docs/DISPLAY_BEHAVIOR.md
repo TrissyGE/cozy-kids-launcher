@@ -64,6 +64,8 @@ hatch around compositor security:
   ownership, tile shutdown, overlay process startup, and final cleanup are
   automated;
 - the Tk overlay runs through XWayland and requests `dock` and topmost hints;
+- the overlay periodically raises only its own XWayland window ID so a
+  fullscreen XWayland child cannot cover its close control;
 - GNOME and KDE decide final stacking, focus, and fullscreen placement;
 - overlay reachability above a fullscreen child and focus after closing that
   child require a visual observation in the exact compositor session.
