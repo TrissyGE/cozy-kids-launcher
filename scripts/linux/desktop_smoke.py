@@ -230,15 +230,24 @@ def browser_command_ready(command, browser_name):
     """Return whether the owned PID has completed exec into its browser."""
     if not command:
         return False
-    executable = Path(command[0]).name.lower()
+    tokens = browser_command_tokens(command)
+    if not tokens:
+        return False
+    executable = Path(tokens[0]).name.lower()
     configured = Path(browser_name).name.lower()
     if configured in ("firefox", "firefox-esr"):
         return "firefox" in executable
     return "chrome" in executable or "chromium" in executable
 
 
+def browser_command_tokens(command):
+    """Normalize browser argv after Chromium rewrites it as one process title."""
+    return [token for argument in command for token in argument.split()]
+
+
 def verify_browser_mode(command, browser_name, launch_mode):
     """Fail if the owned browser argv does not match the selected mode."""
+    command = browser_command_tokens(command)
     expected = expected_browser_mode_flag(browser_name, launch_mode)
     mode_flags = {"--kiosk", "--fullscreen", "--start-fullscreen"}
     present = mode_flags.intersection(command)

@@ -220,6 +220,23 @@ class BrowserModeTests(unittest.TestCase):
             )
         )
 
+    def test_chromium_rewritten_process_title_keeps_mode_contract(self):
+        command = [
+            "/opt/google/chrome/chrome --user-data-dir=/tmp/profile "
+            "--kiosk http://127.0.0.1:1234/index.html"
+        ]
+        self.assertTrue(
+            desktop_smoke.browser_command_ready(command, "google-chrome")
+        )
+        self.assertEqual(
+            desktop_smoke.verify_browser_mode(
+                command,
+                "google-chrome",
+                "kiosk",
+            ),
+            "kiosk (--kiosk)",
+        )
+
     def test_chromium_and_firefox_use_their_existing_mode_switches(self):
         examples = (
             ("google-chrome", "window", ["google-chrome"], "window"),
