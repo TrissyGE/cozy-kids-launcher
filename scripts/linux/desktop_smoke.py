@@ -405,6 +405,12 @@ def x11_active_window_id():
     return None
 
 
+def x11_window_is_active(title):
+    """Return whether the active window currently matches the expected title."""
+    active_window = x11_active_window_id()
+    return active_window is not None and active_window in x11_window_ids(title)
+
+
 def x11_click_overlay_close(window_id):
     """Click the fixed close control in the test overlay."""
     subprocess.run(
@@ -667,7 +673,7 @@ def run_smoke(args, browser_path, report):
                     message="app overlay is not visible to the X11 window manager",
                 )
                 report.pass_check("X11 overlay window visibility")
-                launcher_windows = wait_until(
+                wait_until(
                     lambda: x11_window_ids("Cozy Kids Launcher"),
                     timeout=15,
                     message="launcher window ID is unavailable",
@@ -687,7 +693,7 @@ def run_smoke(args, browser_path, report):
                     message="overlay close did not stop the owned tile",
                 )
                 wait_until(
-                    lambda: x11_active_window_id() in launcher_windows,
+                    lambda: x11_window_is_active("Cozy Kids Launcher"),
                     timeout=15,
                     message="overlay close did not restore launcher focus",
                 )

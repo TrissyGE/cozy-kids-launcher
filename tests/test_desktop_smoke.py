@@ -198,6 +198,42 @@ class X11WindowDetectionTests(unittest.TestCase):
             ],
         )
 
+    def test_active_window_match_refreshes_window_ids(self):
+        with (
+            patch.object(
+                desktop_smoke,
+                "x11_active_window_id",
+                return_value=0x3A00004,
+            ),
+            patch.object(
+                desktop_smoke,
+                "x11_window_ids",
+                return_value=[0x3A00004],
+            ) as window_ids,
+        ):
+            self.assertTrue(
+                desktop_smoke.x11_window_is_active("Cozy Kids Launcher")
+            )
+
+        window_ids.assert_called_once_with("Cozy Kids Launcher")
+
+    def test_active_window_match_rejects_a_replaced_nonmatching_window(self):
+        with (
+            patch.object(
+                desktop_smoke,
+                "x11_active_window_id",
+                return_value=0x3A00004,
+            ),
+            patch.object(
+                desktop_smoke,
+                "x11_window_ids",
+                return_value=[0x3800004],
+            ),
+        ):
+            self.assertFalse(
+                desktop_smoke.x11_window_is_active("Cozy Kids Launcher")
+            )
+
 
 class BrowserModeTests(unittest.TestCase):
     def test_browser_command_waits_for_wrapper_exec(self):
