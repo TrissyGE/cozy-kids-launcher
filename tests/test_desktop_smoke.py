@@ -200,6 +200,26 @@ class X11WindowDetectionTests(unittest.TestCase):
 
 
 class BrowserModeTests(unittest.TestCase):
+    def test_browser_command_waits_for_wrapper_exec(self):
+        self.assertFalse(
+            desktop_smoke.browser_command_ready(
+                ["bash", "/usr/local/bin/google-chrome", "--kiosk"],
+                "google-chrome",
+            )
+        )
+        self.assertTrue(
+            desktop_smoke.browser_command_ready(
+                ["/opt/google/chrome/chrome", "--kiosk"],
+                "google-chrome",
+            )
+        )
+        self.assertTrue(
+            desktop_smoke.browser_command_ready(
+                ["/usr/lib/firefox/firefox-bin", "--fullscreen"],
+                "firefox",
+            )
+        )
+
     def test_chromium_and_firefox_use_their_existing_mode_switches(self):
         examples = (
             ("google-chrome", "window", ["google-chrome"], "window"),

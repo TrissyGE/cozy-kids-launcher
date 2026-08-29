@@ -226,6 +226,17 @@ def expected_browser_mode_flag(browser_name, launch_mode):
     raise ValueError(f"unsupported launch mode: {launch_mode}")
 
 
+def browser_command_ready(command, browser_name):
+    """Return whether the owned PID has completed exec into its browser."""
+    if not command:
+        return False
+    executable = Path(command[0]).name.lower()
+    configured = Path(browser_name).name.lower()
+    if configured in ("firefox", "firefox-esr"):
+        return "firefox" in executable
+    return "chrome" in executable or "chromium" in executable
+
+
 def verify_browser_mode(command, browser_name, launch_mode):
     """Fail if the owned browser argv does not match the selected mode."""
     expected = expected_browser_mode_flag(browser_name, launch_mode)
@@ -574,9 +585,17 @@ def run_smoke(args, browser_path, report):
                 "launcher server and owned browser",
                 f"browser pid {browser_record['pid']}",
             )
-            browser_command = process_command(browser_record["pid"])
-            if not browser_command:
-                raise RuntimeError("owned browser command line is unavailable")
+            browser_command = wait_until(
+                lambda: (
+                    command
+                    if browser_command_ready(command, browser_name)
+                    else None
+                )
+                if (command := process_command(browser_record["pid"]))
+                else None,
+                timeout=10,
+                message="owned PID did not exec into the configured browser",
+            )
             mode_details = verify_browser_mode(
                 browser_command,
                 browser_name,
