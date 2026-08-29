@@ -58,6 +58,11 @@ exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   exit 0
 fi
+if [[ "${1:-}" == "--autostart" ]]; then
+  # GNOME can reach graphical-session.target before Mutter applies browser
+  # fullscreen requests reliably. Desktop/manual launches stay immediate.
+  sleep 3
+fi
 
 normalize_integer() {
   local value="$1"
