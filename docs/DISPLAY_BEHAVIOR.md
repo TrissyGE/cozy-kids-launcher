@@ -20,6 +20,17 @@ These checks prove that the requested mode reached the owned browser process.
 They cannot prove compositor placement, screen coverage, or the absence of a
 black frame; those remain visual checks in the VM matrix.
 
+When Chromium starts in `fullscreen` or `kiosk`, the launcher removes only its
+cached `browser.window_placement` preference before applying the mode switch.
+This prevents geometry saved by an earlier windowed session from overriding an
+explicit display-mode change. Ordinary `window` launches retain their saved
+geometry.
+
+The generated desktop autostart entry uses a short compositor-settling delay
+after acquiring the single-instance lock. This keeps early GNOME session startup
+from downgrading a valid fullscreen request to an ordinary maximized window;
+manual and desktop-shortcut launches remain immediate.
+
 ## X11 contract
 
 X11 allows the smoke harness and overlay to use standard window-management

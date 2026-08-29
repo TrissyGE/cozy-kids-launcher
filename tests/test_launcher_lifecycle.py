@@ -90,6 +90,34 @@ class LauncherLifecycleTests(unittest.TestCase):
         self.assertIn('translate["enabled"] = False', source)
         self.assertIn("os.replace(temporary, path)", source)
 
+    def test_explicit_chromium_display_modes_drop_cached_window_placement(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            'python3 - "$preferences" "$LAUNCH_MODE"',
+            source,
+        )
+        self.assertIn(
+            'if launch_mode in ("fullscreen", "kiosk"):',
+            source,
+        )
+        self.assertIn('browser.pop("window_placement", None)', source)
+        self.assertIn("ordinary window mode keeps user geometry", source)
+
+    def test_desktop_autostart_waits_for_the_compositor_after_locking(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        lock_index = source.index("flock -n 9")
+        delay_index = source.index('if [[ "${1:-}" == "--autostart" ]]')
+        self.assertLess(lock_index, delay_index)
+        self.assertIn("sleep 12", source[delay_index:delay_index + 240])
+        self.assertIn("Exec=$RUNTIME_BIN --autostart", installer)
+
     def test_singleton_recovers_server_once_and_stops_after_retry_limit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

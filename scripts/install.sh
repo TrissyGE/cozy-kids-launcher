@@ -1209,7 +1209,7 @@ write_file "$AUTOSTART_FILE" 0644 <<EOF
 Type=Application
 Version=1.0
 Name=$AUTOSTART_NAME
-Exec=$RUNTIME_BIN
+Exec=$RUNTIME_BIN --autostart
 Terminal=false
 NoDisplay=true
 X-KDE-autostart-phase=2
