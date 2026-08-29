@@ -320,6 +320,12 @@ class BrowserModeTests(unittest.TestCase):
 
 
 class DesktopReportTests(unittest.TestCase):
+    def test_manual_display_check_covers_the_reported_launch_mode(self):
+        self.assertEqual(
+            desktop_smoke.MANUAL_CHECKS[1],
+            "The selected browser mode fits the display without a black screen",
+        )
+
     def test_report_keeps_manual_checks_pending_after_automation(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             report = desktop_smoke.SmokeReport("xfce", "x11", temp_dir)
