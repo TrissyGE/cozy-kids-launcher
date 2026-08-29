@@ -1,0 +1,104 @@
+:root {
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-6:24px;
+  --space-8:32px;
+  --radius-field:12px;
+  --radius-control:18px;
+  --radius-surface:24px;
+  --radius-tile:32px;
+  --touch-target-min:44px;
+  --touch-target-comfortable:48px;
+  --control-height:54px;
+  --control-min-width:110px;
+  --control-inline-padding:18px;
+  --focus-ring-width:4px;
+  --focus-ring-offset:4px;
+  --motion-fast:.15s;
+  --motion-normal:.2s;
+  --motion-slow:.6s;
+  --surface-solid:#fff;
+  --surface-panel:rgba(255,255,255,.96);
+}
+
+.smallbtn {
+  min-height:var(--control-height);
+  min-width:var(--control-min-width);
+  padding:0 var(--control-inline-padding);
+  border:0;
+  border-radius:var(--radius-control);
+  background:var(--smallbtn-bg);
+  box-shadow:var(--shadow);
+  color:var(--text);
+  cursor:pointer;
+  font-family:inherit;
+  font-size:1rem;
+  font-weight:700;
+}
+
+.nav {
+  position:fixed;
+  top:50%;
+  width:56px;
+  height:120px;
+  transform:translateY(-50%);
+  border:0;
+  border-radius:22px;
+  background:rgba(255,255,255,.88);
+  box-shadow:var(--shadow);
+  color:var(--text);
+  cursor:pointer;
+  font-family:inherit;
+  font-size:2rem;
+  font-weight:700;
+}
+
+input, select {
+  width:100%;
+  padding:var(--space-3) 14px;
+  border:1px solid var(--input-border);
+  border-radius:var(--radius-field);
+  background:var(--surface-solid);
+  color:var(--text);
+  font-family:inherit;
+  font-size:1rem;
+}
+
+label.chk {
+  display:flex;
+  align-items:center;
+  gap:var(--space-2);
+  padding:var(--space-3) 14px;
+  border:1px solid var(--input-border);
+  border-radius:var(--radius-field);
+  background:var(--surface-solid);
+  font-weight:600;
+}
+
+.panel {
+  padding:var(--space-6);
+  border-radius:var(--radius-surface);
+  background:var(--surface-panel);
+  box-shadow:var(--shadow);
+}
+
+.pinbox, .install-box, .timerbox {
+  width:90%;
+  padding:var(--space-8);
+  border-radius:var(--radius-surface);
+  background:var(--surface-solid);
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+
+.pinbox, .timerbox { max-width:420px; }
+.install-box { max-width:480px; }
+.save { background:var(--btn); color:var(--btn-text); }
+
+button:focus-visible, input:focus-visible, select:focus-visible,
+.theme-thumb:focus-visible {
+  outline:var(--focus-ring-width) solid var(--btn);
+  outline-offset:var(--focus-ring-offset);
+}
