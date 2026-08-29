@@ -200,6 +200,76 @@ def live_process_record(path, role):
     return data
 
 
+def process_command(pid):
+    """Return the exact argv for a live Linux process."""
+    try:
+        raw = Path(f"/proc/{int(pid)}/cmdline").read_bytes()
+    except (OSError, TypeError, ValueError):
+        return []
+    return [
+        part.decode("utf-8", errors="replace")
+        for part in raw.split(b"\0")
+        if part
+    ]
+
+
+def expected_browser_mode_flag(browser_name, launch_mode):
+    """Return the browser switch that proves the requested launch mode."""
+    if launch_mode == "window":
+        return None
+    if launch_mode == "kiosk":
+        return "--kiosk"
+    if launch_mode == "fullscreen":
+        if Path(browser_name).name in ("firefox", "firefox-esr"):
+            return "--fullscreen"
+        return "--start-fullscreen"
+    raise ValueError(f"unsupported launch mode: {launch_mode}")
+
+
+def browser_command_ready(command, browser_name):
+    """Return whether the owned PID has completed exec into its browser."""
+    if not command:
+        return False
+    tokens = browser_command_tokens(command)
+    if not tokens:
+        return False
+    executable = Path(tokens[0]).name.lower()
+    configured = Path(browser_name).name.lower()
+    if configured in ("firefox", "firefox-esr"):
+        return "firefox" in executable
+    return "chrome" in executable or "chromium" in executable
+
+
+def browser_command_tokens(command):
+    """Normalize browser argv after Chromium rewrites it as one process title."""
+    return [token for argument in command for token in argument.split()]
+
+
+def verify_browser_mode(command, browser_name, launch_mode):
+    """Fail if the owned browser argv does not match the selected mode."""
+    command = browser_command_tokens(command)
+    expected = expected_browser_mode_flag(browser_name, launch_mode)
+    mode_flags = {"--kiosk", "--fullscreen", "--start-fullscreen"}
+    present = mode_flags.intersection(command)
+    if expected is None:
+        if present:
+            raise RuntimeError(
+                f"window mode unexpectedly uses browser flags: {sorted(present)!r}"
+            )
+        return "window (no fullscreen or kiosk switch)"
+    if expected not in command:
+        raise RuntimeError(
+            f"{launch_mode} mode is missing browser switch {expected}"
+        )
+    unexpected = present - {expected}
+    if unexpected:
+        raise RuntimeError(
+            f"{launch_mode} mode has conflicting browser flags: "
+            f"{sorted(unexpected)!r}"
+        )
+    return f"{launch_mode} ({expected})"
+
+
 def wait_until(predicate, timeout=30, interval=0.2, message="condition timed out"):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -295,8 +365,68 @@ def x11_window_present(title):
         return False
 
 
+def x11_window_ids(title):
+    """Return X11 window IDs matched by title through xdotool."""
+    try:
+        result = subprocess.run(
+            ["xdotool", "search", "--name", title],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    window_ids = []
+    for value in result.stdout.splitlines():
+        try:
+            window_ids.append(int(value.strip(), 0))
+        except ValueError:
+            continue
+    return window_ids
+
+
+def x11_active_window_id():
+    """Return the currently active X11 window ID, or None."""
+    try:
+        result = subprocess.run(
+            ["xdotool", "getactivewindow"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            return int(result.stdout.strip(), 0)
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        pass
+    return None
+
+
+def x11_click_overlay_close(window_id):
+    """Click the fixed close control in the test overlay."""
+    subprocess.run(
+        [
+            "xdotool",
+            "mousemove",
+            "--window",
+            str(int(window_id)),
+            "28",
+            "32",
+            "click",
+            "1",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+
+
 class SmokeReport:
-    def __init__(self, desktop, session, artifacts):
+    def __init__(self, desktop, session, artifacts, launch_mode="window"):
         self.path = Path(artifacts) / "report.json"
         self.data = {
             "schemaVersion": 1,
@@ -307,6 +437,7 @@ class SmokeReport:
             ),
             "expectedSession": session,
             "detectedSession": detected_session(),
+            "launchMode": launch_mode,
             "repositoryCommit": repository_commit(),
             "distribution": distribution_identity(),
             "desktopVersion": command_version({
@@ -415,7 +546,7 @@ def run_smoke(args, browser_path, report):
                         "--browser",
                         browser_name,
                         "--launch-mode",
-                        "window",
+                        args.launch_mode,
                         "--force",
                     ],
                     cwd=REPOSITORY_ROOT,
@@ -463,6 +594,23 @@ def run_smoke(args, browser_path, report):
                 "launcher server and owned browser",
                 f"browser pid {browser_record['pid']}",
             )
+            browser_command = wait_until(
+                lambda: (
+                    command
+                    if browser_command_ready(command, browser_name)
+                    else None
+                )
+                if (command := process_command(browser_record["pid"]))
+                else None,
+                timeout=30,
+                message="owned PID did not exec into the configured browser",
+            )
+            mode_details = verify_browser_mode(
+                browser_command,
+                browser_name,
+                args.launch_mode,
+            )
+            report.pass_check("browser launch mode", mode_details)
 
             second = subprocess.run(
                 [str(runtime)],
@@ -519,6 +667,31 @@ def run_smoke(args, browser_path, report):
                     message="app overlay is not visible to the X11 window manager",
                 )
                 report.pass_check("X11 overlay window visibility")
+                launcher_windows = wait_until(
+                    lambda: x11_window_ids("Cozy Kids Launcher"),
+                    timeout=15,
+                    message="launcher window ID is unavailable",
+                )
+                overlay_windows = wait_until(
+                    lambda: x11_window_ids("App Overlay"),
+                    timeout=15,
+                    message="overlay window ID is unavailable",
+                )
+                x11_click_overlay_close(overlay_windows[-1])
+                wait_until(
+                    lambda: not live_process_record(
+                        cache / "tile-process.pid",
+                        "tile-process",
+                    ),
+                    timeout=15,
+                    message="overlay close did not stop the owned tile",
+                )
+                wait_until(
+                    lambda: x11_active_window_id() in launcher_windows,
+                    timeout=15,
+                    message="overlay close did not restore launcher focus",
+                )
+                report.pass_check("X11 overlay close and launcher focus recovery")
             else:
                 report.manual_check(
                     "Wayland overlay stacking and focus",
@@ -581,6 +754,12 @@ def main():
     parser.add_argument("--session", choices=("x11", "wayland"), required=True)
     parser.add_argument("--browser", help="Browser executable name")
     parser.add_argument(
+        "--launch-mode",
+        choices=("window", "fullscreen", "kiosk"),
+        default="window",
+        help="Installed browser launch mode to verify (default: window)",
+    )
+    parser.add_argument(
         "--interactive",
         action="store_true",
         help="Record the six manual VM observations in the JSON report",
@@ -588,14 +767,17 @@ def main():
     parser.add_argument(
         "--artifacts",
         type=Path,
-        help="Output directory (default: .test-artifacts/desktop-matrix/<desktop>-<session>)",
+        help=(
+            "Output directory (default: .test-artifacts/desktop-matrix/"
+            "<desktop>-<session>-<launch-mode>)"
+        ),
     )
     args = parser.parse_args()
     args.artifacts = args.artifacts or (
         REPOSITORY_ROOT
         / ".test-artifacts"
         / "desktop-matrix"
-        / f"{args.desktop}-{args.session}"
+        / f"{args.desktop}-{args.session}-{args.launch_mode}"
     )
 
     errors = environment_errors(args.desktop, args.session)
@@ -615,7 +797,12 @@ def main():
     except RuntimeError as exc:
         raise SystemExit(str(exc)) from exc
 
-    report = SmokeReport(args.desktop, args.session, args.artifacts)
+    report = SmokeReport(
+        args.desktop,
+        args.session,
+        args.artifacts,
+        launch_mode=args.launch_mode,
+    )
     print(
         f"Desktop smoke: {args.desktop}/{args.session} with {browser_path}",
         flush=True,

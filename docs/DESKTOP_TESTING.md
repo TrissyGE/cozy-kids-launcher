@@ -35,20 +35,30 @@ python3 scripts/linux/desktop_smoke.py --desktop kde --session wayland
 python3 scripts/linux/desktop_smoke.py --desktop xfce --session x11
 ```
 
+Pass `--launch-mode window`, `--launch-mode fullscreen`, or
+`--launch-mode kiosk` to install and verify that exact browser mode. The default
+is `window`. See [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md) for the assertions
+that are automated on X11 and the compositor observations that remain manual on
+Wayland.
+
 The script uses a temporary home directory and does not modify the VM user's normal launcher profile. It checks:
 
 1. an isolated install of the current checkout;
 2. syntax and presence of autostart, application-menu, and desktop entries;
 3. startup of the local server and its owned browser;
 4. rejection of a duplicate launcher instance;
-5. X11 launcher-window visibility where the window manager exposes it;
-6. launch of an owned child process and the Tk overlay;
-7. a clean Parent exit, final lifecycle state, and complete process cleanup.
+5. the owned browser command uses exactly the selected window, fullscreen, or
+   kiosk switch;
+6. X11 launcher-window visibility where the window manager exposes it;
+7. launch of an owned child process and the Tk overlay;
+8. on X11, overlay-close termination and focus recovery to the known launcher
+   window;
+9. a clean Parent exit, final lifecycle state, and complete process cleanup.
 
 Logs, lifecycle evidence, and the privacy-safe report are written below:
 
 ```text
-.test-artifacts/desktop-matrix/<desktop>-<session>/
+.test-artifacts/desktop-matrix/<desktop>-<session>-<launch-mode>/
 ```
 
 An automated run ends with `automation-passed-manual-pending`. That is useful diagnostic evidence, but it is not a completed desktop result.

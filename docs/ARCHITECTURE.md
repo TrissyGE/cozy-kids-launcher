@@ -107,6 +107,9 @@ fails closed and tears down the newly owned process tree.
 - an atomic private lifecycle file records only allowlisted state, reason, and bounded recovery attempt; the complete transition contract is documented in [LIFECYCLE.md](LIFECYCLE.md)
 - authenticated shutdown and Parent exit actions write short-lived intents, allowing the cleanup trap to distinguish them from an ordinary session logout without trusting arbitrary signal metadata
 
+The precise X11 and Wayland guarantees for browser modes, overlay stacking, and
+focus recovery are documented in [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md).
+
 ### 7. Configuration lifecycle
 
 - every current configuration carries an integer `configVersion`

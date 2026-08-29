@@ -55,7 +55,7 @@ See [WSL_TESTING.md](WSL_TESTING.md) for isolation details, artifacts, DRM limit
 
 ## Full Linux desktop matrix
 
-GNOME, KDE Plasma, and XFCE release evidence must come from complete disposable VM sessions. The reusable harness, required environments, manual observations, and JSON report contract are documented in [DESKTOP_TESTING.md](DESKTOP_TESTING.md). WSLg results do not replace these compositor and login tests.
+GNOME, KDE Plasma, and XFCE release evidence must come from complete disposable VM sessions. The reusable harness, required environments, manual observations, and JSON report contract are documented in [DESKTOP_TESTING.md](DESKTOP_TESTING.md). The different automated and manual guarantees for X11 and Wayland are documented in [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md). WSLg results do not replace these compositor and login tests.
 
 ## Manual Linux smoke test
 

@@ -154,6 +154,134 @@ class X11WindowDetectionTests(unittest.TestCase):
         ):
             self.assertFalse(desktop_smoke.x11_window_present("App Overlay"))
 
+    def test_window_ids_ignore_invalid_xdotool_output(self):
+        result = subprocess_result(stdout="4194307\nnot-a-window\n0x400004\n")
+        with patch.object(
+            desktop_smoke.subprocess,
+            "run",
+            return_value=result,
+        ) as run:
+            self.assertEqual(
+                desktop_smoke.x11_window_ids("App Overlay"),
+                [4194307, 0x400004],
+            )
+        run.assert_called_once_with(
+            ["xdotool", "search", "--name", "App Overlay"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+    def test_active_window_and_overlay_click_use_explicit_ids(self):
+        active = subprocess_result(stdout="4194307\n")
+        clicked = subprocess_result()
+        with patch.object(
+            desktop_smoke.subprocess,
+            "run",
+            side_effect=(active, clicked),
+        ) as run:
+            self.assertEqual(desktop_smoke.x11_active_window_id(), 4194307)
+            desktop_smoke.x11_click_overlay_close(0x400004)
+
+        self.assertEqual(
+            run.call_args_list[1].args[0],
+            [
+                "xdotool",
+                "mousemove",
+                "--window",
+                str(0x400004),
+                "28",
+                "32",
+                "click",
+                "1",
+            ],
+        )
+
+
+class BrowserModeTests(unittest.TestCase):
+    def test_browser_command_waits_for_wrapper_exec(self):
+        self.assertFalse(
+            desktop_smoke.browser_command_ready(
+                ["bash", "/usr/local/bin/google-chrome", "--kiosk"],
+                "google-chrome",
+            )
+        )
+        self.assertTrue(
+            desktop_smoke.browser_command_ready(
+                ["/opt/google/chrome/chrome", "--kiosk"],
+                "google-chrome",
+            )
+        )
+        self.assertTrue(
+            desktop_smoke.browser_command_ready(
+                ["/usr/lib/firefox/firefox-bin", "--fullscreen"],
+                "firefox",
+            )
+        )
+
+    def test_chromium_rewritten_process_title_keeps_mode_contract(self):
+        command = [
+            "/opt/google/chrome/chrome --user-data-dir=/tmp/profile "
+            "--kiosk http://127.0.0.1:1234/index.html"
+        ]
+        self.assertTrue(
+            desktop_smoke.browser_command_ready(command, "google-chrome")
+        )
+        self.assertEqual(
+            desktop_smoke.verify_browser_mode(
+                command,
+                "google-chrome",
+                "kiosk",
+            ),
+            "kiosk (--kiosk)",
+        )
+
+    def test_chromium_and_firefox_use_their_existing_mode_switches(self):
+        examples = (
+            ("google-chrome", "window", ["google-chrome"], "window"),
+            (
+                "google-chrome",
+                "fullscreen",
+                ["google-chrome", "--start-fullscreen"],
+                "fullscreen (--start-fullscreen)",
+            ),
+            (
+                "firefox",
+                "fullscreen",
+                ["firefox", "--fullscreen"],
+                "fullscreen (--fullscreen)",
+            ),
+            (
+                "firefox",
+                "kiosk",
+                ["firefox", "--kiosk"],
+                "kiosk (--kiosk)",
+            ),
+        )
+        for browser, mode, command, expected in examples:
+            with self.subTest(browser=browser, mode=mode):
+                details = desktop_smoke.verify_browser_mode(
+                    command,
+                    browser,
+                    mode,
+                )
+                self.assertIn(expected, details)
+
+    def test_missing_or_conflicting_mode_switches_fail(self):
+        with self.assertRaisesRegex(RuntimeError, "missing browser switch"):
+            desktop_smoke.verify_browser_mode(
+                ["google-chrome"],
+                "google-chrome",
+                "kiosk",
+            )
+        with self.assertRaisesRegex(RuntimeError, "conflicting browser flags"):
+            desktop_smoke.verify_browser_mode(
+                ["google-chrome", "--kiosk", "--start-fullscreen"],
+                "google-chrome",
+                "kiosk",
+            )
+
 
 class DesktopReportTests(unittest.TestCase):
     def test_report_keeps_manual_checks_pending_after_automation(self):
@@ -165,6 +293,7 @@ class DesktopReportTests(unittest.TestCase):
 
             data = json.loads(report.path.read_text(encoding="utf-8"))
             self.assertEqual(data["schemaVersion"], 1)
+            self.assertEqual(data["launchMode"], "window")
             self.assertEqual(data["outcome"], "automation-passed-manual-pending")
             self.assertTrue(data["manualChecks"])
             self.assertTrue(
