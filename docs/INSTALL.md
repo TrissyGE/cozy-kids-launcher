@@ -66,6 +66,12 @@ bash scripts/install.sh \
 | `--install-shutdown-helper` | Allow child to shut down the computer |
 | `--force` | Re-install even if already installed |
 
+Ubuntu's confined Firefox snap stores the launcher's dedicated browser profile
+under `~/snap/firefox/common`. Native Firefox packages continue to use the
+launcher cache under `~/.cache`; existing browser profiles are not reused.
+The dedicated profile opts out of Firefox's remote survey messages so that
+browser prompts cannot cover the child-facing launcher.
+
 ## How to Remove
 
 The installer creates an uninstall note at:
