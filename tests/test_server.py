@@ -970,6 +970,29 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('de:backup_title) echo "Sicherungen"', installer)
         self.assertIn('en:backup_title) echo "Backups"', installer)
 
+    def test_accessibility_preferences_and_compact_layout_are_explicit(self):
+        styles = (REPOSITORY_ROOT / "src" / "frontend" / "styles.css").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("@media (prefers-reduced-motion: reduce)", styles)
+        self.assertIn("animation-duration:.01ms !important", styles)
+        self.assertIn("@media (forced-colors: active)", styles)
+        self.assertIn("border:2px solid ButtonText", styles)
+        self.assertIn("@media (max-width:900px), (max-height:700px)", styles)
+        self.assertIn("#admin .wrap { max-height:calc(100vh - 76px)", styles)
+
+    def test_keyboard_and_touch_navigation_respect_ui_boundaries(self):
+        source = frontend_source()
+        self.assertIn("const el=document.createElement('button')", source)
+        self.assertIn("el.setAttribute('aria-pressed'", source)
+        self.assertIn("btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); }", source)
+        self.assertIn("btn.focus({preventScroll:true})", source)
+        self.assertIn("pinReturnFocus.focus()", source)
+        self.assertIn("const tileFocused=document.activeElement", source)
+        self.assertIn("function homeGestureAllowed()", source)
+        self.assertIn("touchStartX===null||touchStartY===null", source)
+        self.assertIn("homeHidden||cfg.currentPage<=0", source)
+
 
 if __name__ == "__main__":
     unittest.main()

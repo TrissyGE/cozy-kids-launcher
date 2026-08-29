@@ -39,7 +39,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
   - [x] Add a repeatable in-session harness with machine-readable reports
   - [x] Record passing GNOME Wayland, KDE Plasma Wayland, and XFCE X11 VM reports
 - [x] Document and test X11 and Wayland behavior for focus, overlays, and kiosk browsers
-- [ ] Exercise touch, keyboard-only, reduced-motion, high-contrast, and low-resolution flows
+- [x] Exercise touch, keyboard-only, reduced-motion, high-contrast, and low-resolution flows
 
 ### Design foundation
 

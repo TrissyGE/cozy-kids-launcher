@@ -291,6 +291,180 @@ def run_scenarios(browser, release_fixture, installed_version):
     log_scenario("update check renders current, available, and error states")
 
 
+def run_accessibility_scenarios(browser, artifacts):
+    prepared = browser.evaluate(
+        "(() => {"
+        " if(!document.getElementById('admin').classList.contains('hidden')) closeAdmin();"
+        " cfg.layoutMode='gross'; cfg.currentPage=0;"
+        " cfg.tiles=cfg.tiles.slice(0,2).concat(["
+        "  {id:'reading',label:'Reading',emoji:'📚',cmd:['true'],visible:true},"
+        "  {id:'puzzles',label:'Puzzles',emoji:'🧩',cmd:['true'],visible:true},"
+        "  {id:'drawing',label:'Drawing',emoji:'✏️',cmd:['true'],visible:true}"
+        " ]); focusedTileIndex=0; renderAll();"
+        " return visibleTiles().length===5 && pageCount()===2 && "
+        "document.querySelectorAll('#grid .tile:not(.placeholder)').length===4;"
+        "})()"
+    )
+    if prepared is not True:
+        raise AssertionError("Accessibility fixture did not create a second page")
+
+    assert_js(
+        browser,
+        "document.activeElement===document.querySelector('#grid .tile:not(.placeholder)')",
+        "Home keyboard focus did not start on the first tile",
+    )
+    browser.key_press("ArrowRight")
+    assert_js(
+        browser,
+        "document.activeElement===document.querySelectorAll('#grid .tile:not(.placeholder)')[1] && "
+        "document.activeElement.classList.contains('focused')",
+        "Arrow navigation did not move real focus to the next tile",
+    )
+    browser.key_press("ArrowLeft")
+    browser.key_press("Tab")
+    assert_js(
+        browser,
+        "document.activeElement===document.querySelectorAll('#grid .tile:not(.placeholder)')[1] && "
+        "document.activeElement.classList.contains('focused') && focusedTileIndex===1",
+        "Tab navigation did not synchronize real and visual tile focus",
+    )
+    browser.key_press("Enter")
+    browser.wait_for(
+        "!document.getElementById('startOverlay').classList.contains('hidden') && "
+        "document.getElementById('startText').textContent.includes('Music')",
+        message="Keyboard activation did not launch the focused tile",
+    )
+    browser.wait_for(
+        "document.getElementById('startOverlay').classList.contains('hidden')",
+        timeout=3,
+    )
+    for _ in range(10):
+        if browser.evaluate("document.activeElement.id==='parentBtn'") is True:
+            break
+        browser.key_press("Tab")
+    else:
+        raise AssertionError("Tab navigation did not reach Parent settings")
+    browser.key_press("Enter")
+    browser.wait_for(
+        "!document.getElementById('pin').classList.contains('hidden') && "
+        "document.activeElement.id==='pinInput'",
+        message="Keyboard activation did not focus the PIN dialog",
+    )
+    browser.insert_text(PIN)
+    browser.key_press("Enter")
+    browser.wait_for(
+        "!document.getElementById('admin').classList.contains('hidden') && "
+        "document.activeElement.id==='cfgTitle'",
+        message="Keyboard PIN submission did not focus Parent settings",
+    )
+    browser.key_press("Tab")
+    assert_js(
+        browser,
+        "document.activeElement.id==='openThemeBtn'",
+        "Parent settings tab order did not reach the theme picker",
+    )
+    browser.key_press("Enter")
+    browser.wait_for(
+        "!document.getElementById('themeOverlay').classList.contains('hidden') && "
+        "document.activeElement.matches('#themeChooser .theme-thumb')",
+        message="Theme picker did not focus its first semantic button",
+    )
+    assert_js(
+        browser,
+        "Array.from(document.querySelectorAll('#themeChooser .theme-thumb')).every(button => "
+        "button.tagName==='BUTTON' && button.type==='button' && button.getAttribute('aria-label'))",
+        "Theme choices are not exposed as labelled buttons",
+    )
+    browser.key_press("Tab")
+    browser.key_press("Enter")
+    browser.wait_for(
+        "document.getElementById('themeOverlay').classList.contains('hidden') && "
+        "document.getElementById('cfgTheme').value==='lila' && "
+        "document.activeElement.id==='openThemeBtn'",
+        message="Keyboard theme selection did not return focus to its trigger",
+    )
+    browser.key_press("Escape")
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "document.activeElement.matches('#grid .tile:not(.placeholder)')",
+        message="Escape did not return from Parent settings to the tile grid",
+    )
+    log_scenario("keyboard-only flow keeps real focus and operates Parent settings")
+
+    browser.evaluate("cfg.currentPage=0; focusedTileIndex=0; renderAll()")
+    browser.touch_swipe(700, 400, 100, 400)
+    browser.wait_for("cfg.currentPage===1", message="Left swipe did not advance the page")
+    browser.touch_swipe(100, 400, 700, 400)
+    browser.wait_for("cfg.currentPage===0", message="Right swipe did not return the page")
+    browser.evaluate("showPin()")
+    browser.touch_swipe(700, 400, 100, 400)
+    assert_js(
+        browser,
+        "cfg.currentPage===0",
+        "Touch navigation changed the hidden home page behind a modal",
+    )
+    browser.key_press("Escape")
+    browser.disable_touch_emulation()
+    assert_js(
+        browser,
+        "document.getElementById('pin').classList.contains('hidden') && "
+        "document.activeElement.matches('#grid .tile:not(.placeholder)')",
+        "Closing the PIN dialog did not restore home focus",
+    )
+    log_scenario("touch swipes navigate pages and stop at modal boundaries")
+
+    browser.set_emulated_media([("prefers-reduced-motion", "reduce")])
+    assert_js(
+        browser,
+        "matchMedia('(prefers-reduced-motion: reduce)').matches && "
+        "parseFloat(getComputedStyle(document.querySelector('.tile')).transitionDuration)<=0.001 && "
+        "parseFloat(getComputedStyle(document.querySelector('.startbox .emoji')).animationDuration)<=0.001",
+        "Reduced-motion preference did not suppress launcher movement",
+    )
+    log_scenario("reduced-motion preference suppresses transitions and animations")
+
+    browser.set_emulated_media([("forced-colors", "active")])
+    assert_js(
+        browser,
+        "matchMedia('(forced-colors: active)').matches && "
+        "getComputedStyle(document.querySelector('.tile')).borderTopStyle==='solid' && "
+        "parseFloat(getComputedStyle(document.querySelector('.tile')).borderTopWidth)>=2 && "
+        "getComputedStyle(document.querySelector('.tile')).boxShadow==='none'",
+        "Forced-colors mode did not expose bounded high-contrast controls",
+    )
+    browser.screenshot(artifacts / "forced-colors.png")
+    log_scenario("forced-colors mode keeps controls bounded and visible")
+
+    browser.set_emulated_media()
+    browser.set_device_metrics(800, 600)
+    browser.evaluate("cfg.currentPage=0; focusedTileIndex=0; renderAll()")
+    assert_js(
+        browser,
+        "window.innerWidth===800 && window.innerHeight===600 && "
+        "document.documentElement.scrollWidth<=window.innerWidth && "
+        "Array.from(document.querySelectorAll('#kids .tile:not(.placeholder),.cornerbar button,.nav:not(.hidden)'))"
+        ".every(element => { const r=element.getBoundingClientRect(); return r.width>=44 && "
+        "r.height>=44 && r.left>=0 && r.right<=window.innerWidth && r.top>=0 && r.bottom<=window.innerHeight; })",
+        "The 800x600 home layout clipped content or touch targets",
+    )
+    browser.screenshot(artifacts / "low-resolution-home.png")
+    browser.evaluate("enterAdmin()")
+    assert_js(
+        browser,
+        "document.documentElement.scrollWidth<=window.innerWidth && "
+        "document.querySelector('#admin .wrap').scrollWidth<=document.querySelector('#admin .wrap').clientWidth+1 && "
+        "getComputedStyle(document.querySelector('#admin .wrap')).overflowY==='auto' && "
+        "document.getElementById('adminTitle').getBoundingClientRect().top>=64 && "
+        "document.getElementById('navLeft').classList.contains('hidden') && "
+        "document.getElementById('navRight').classList.contains('hidden')",
+        "The 800x600 Parent layout requires horizontal scrolling",
+    )
+    browser.screenshot(artifacts / "low-resolution-parent.png")
+    browser.key_press("Escape")
+    browser.set_device_metrics(1440, 900)
+    log_scenario("800x600 home and Parent flows avoid clipping and horizontal scroll")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--browser", help="Chromium-family executable name")
@@ -385,6 +559,7 @@ def main():
             ) as browser:
                 try:
                     run_scenarios(browser, ReleaseFixtureHandler, installed_version)
+                    run_accessibility_scenarios(browser, args.artifacts)
                     browser.screenshot(args.artifacts / "final-state.png")
                 except Exception:
                     browser.screenshot(args.artifacts / "failure.png")
@@ -398,7 +573,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 6 core journeys, 10 UI states", flush=True)
+    print("Browser E2E passed: 11 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

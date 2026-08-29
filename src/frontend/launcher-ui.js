@@ -62,6 +62,7 @@ function renderKids(){
       btn.className='tile'+(tile.id===lastLaunched?' last-launched':'');
       btn.style.position='relative';
       btn.onclick=()=>launchTile(tile.id);
+      btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); };
       const tileEmoji=document.createElement('div');
       tileEmoji.className='emoji';
       tileEmoji.textContent=tile.emoji||'✨';
@@ -88,7 +89,7 @@ function renderKids(){
   if(focusedTileIndex>=tiles.length) focusedTileIndex=0;
   updateTileFocus();
 }
-function renderNav(){ document.getElementById('navLeft').classList.toggle('hidden', cfg.currentPage<=0); document.getElementById('navRight').classList.toggle('hidden', cfg.currentPage>=pageCount()-1); }
+function renderNav(){ const homeHidden=document.getElementById('kids').classList.contains('hidden'); document.getElementById('navLeft').classList.toggle('hidden', homeHidden||cfg.currentPage<=0); document.getElementById('navRight').classList.toggle('hidden', homeHidden||cfg.currentPage>=pageCount()-1); }
 function changePage(dir){ cfg.currentPage=Math.max(0,Math.min(pageCount()-1,cfg.currentPage+dir)); focusedTileIndex=0; renderAll(); }
 function showStartFeedback(tile){
   const overlay=document.getElementById('startOverlay');
@@ -111,11 +112,11 @@ function launchTile(id){
 function handleParentClick(){ if(document.getElementById('admin').classList.contains('hidden')){ openAdmin(); } else { closeAdmin(); } }
 function requestPin(callback){ pinCallback=callback; showPin(); }
 function openAdmin(){ if(cfg.pinConfigured){ requestPin(enterAdmin); return; } enterAdmin(); }
-function showPin(){ document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
+function showPin(){ pinReturnFocus=document.activeElement; document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
-function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; }
-async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
-function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); loadBackups(); }
+function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; if(pinReturnFocus&&pinReturnFocus.isConnected) pinReturnFocus.focus(); pinReturnFocus=null; }
+async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); pinReturnFocus=null; if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
+function enterAdmin(){ adminPage=cfg.currentPage; document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); renderNav(); document.getElementById('cfgTitle').focus(); loadBackups(); }
 function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); }
 function shutdownNow(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
 function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
@@ -144,13 +145,14 @@ const THEME_LABELS={
 };
 function interfaceLanguage(){ return ((cfg&&cfg.language)||'{{ACTIVE_LANG}}')==='de'?'de':'en'; }
 function themeLabel(id){ return THEME_LABELS[interfaceLanguage()][id]||id; }
-function openThemePicker(){ document.getElementById('themeOverlay').classList.remove('hidden'); renderThemeChooser(); }
+function openThemePicker(){ document.getElementById('themeOverlay').classList.remove('hidden'); renderThemeChooser(); requestAnimationFrame(()=>{ const first=document.querySelector('#themeChooser .theme-thumb'); if(first) first.focus(); }); }
 function closeThemePicker(){
   document.getElementById('themeOverlay').classList.add('hidden');
   updateThemeDisplay();
   const ctp=document.getElementById('customThemePanel');
   const isCustom=(document.getElementById('cfgTheme').value||'')==='custom';
   ctp.style.display=isCustom?'grid':'none';
+  document.getElementById('openThemeBtn').focus();
 }
 function updateThemeDisplay(){ const id=document.getElementById('cfgTheme').value; document.getElementById('themeDisplay').textContent=themeLabel(id); }
 function renderThemeChooser(){
@@ -158,8 +160,11 @@ function renderThemeChooser(){
   const current=document.getElementById('cfgTheme').value;
   container.innerHTML='';
   for(const t of ALL_THEMES){
-    const el=document.createElement('div');
+    const el=document.createElement('button');
+    el.type='button';
     el.className='theme-thumb'+(t.id===current?' active':'');
+    el.setAttribute('aria-label',themeLabel(t.id));
+    el.setAttribute('aria-pressed',t.id===current?'true':'false');
     el.style.background=t.type==='color'?t.gradient:'url('+t.img+') center/cover no-repeat';
     el.onclick=()=>{ document.getElementById('cfgTheme').value=t.id; renderThemeChooser(); closeThemePicker(); };
     const lbl=document.createElement('div');
