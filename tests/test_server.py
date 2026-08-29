@@ -25,6 +25,7 @@ def frontend_source():
     frontend_root = REPOSITORY_ROOT / "src" / "frontend"
     paths = [
         REPOSITORY_ROOT / "src" / "index.html",
+        frontend_root / "design-system.css",
         frontend_root / "state.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "parent-settings.js",
@@ -897,6 +898,7 @@ class FrontendSafetyTests(unittest.TestCase):
     def test_frontend_uses_focused_external_assets(self):
         source = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
         expected_assets = (
+            "/frontend/design-system.css",
             "/frontend/styles.css",
             "/frontend/state.js",
             "/frontend/launcher-ui.js",
@@ -905,14 +907,35 @@ class FrontendSafetyTests(unittest.TestCase):
         )
         for asset in expected_assets:
             self.assertIn(asset, source)
+        self.assertLess(
+            source.index("/frontend/design-system.css"),
+            source.index("/frontend/styles.css"),
+        )
         self.assertNotIn("<style", source)
         self.assertNotRegex(source, r"<script(?![^>]*\bsrc=)[^>]*>")
 
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("styles.css", "state.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
+
+    def test_design_system_defines_shared_tokens_and_controls(self):
+        source = (
+            REPOSITORY_ROOT / "src" / "frontend" / "design-system.css"
+        ).read_text(encoding="utf-8")
+        for token in (
+            "--space-2",
+            "--radius-control",
+            "--touch-target-min",
+            "--focus-ring-width",
+            "--motion-fast",
+        ):
+            self.assertIn(token, source)
+        for control in (".smallbtn", ".nav", "input, select", ".panel"):
+            self.assertIn(control, source)
+        self.assertIn(".pinbox, .install-box, .timerbox", source)
 
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()

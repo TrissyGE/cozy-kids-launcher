@@ -767,6 +767,7 @@ CONFIG_FILE="$CFG_DIR/config.json"
 SERVER_FILE="$APP_ROOT/server.py"
 INDEX_FILE="$APP_ROOT/index.html"
 FRONTEND_STYLES_FILE="$FRONTEND_DIR/styles.css"
+FRONTEND_DESIGN_SYSTEM_FILE="$FRONTEND_DIR/design-system.css"
 FRONTEND_STATE_FILE="$FRONTEND_DIR/state.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
@@ -1083,6 +1084,7 @@ backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
 backup_if_exists "$INDEX_FILE"
 backup_if_exists "$FRONTEND_STYLES_FILE"
+backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"
 backup_if_exists "$FRONTEND_STATE_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
@@ -1110,6 +1112,7 @@ install -m 0755 "$SRC_DIR/process_supervisor.py" "$APP_ROOT/process_supervisor.p
 install -m 0644 "$SRC_DIR/timer_state.py" "$APP_ROOT/timer_state.py"
 install -m 0644 "$SRC_DIR/update_manager.py" "$APP_ROOT/update_manager.py"
 render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
+render_template "$SRC_DIR/frontend/design-system.css" "$FRONTEND_DESIGN_SYSTEM_FILE" 0644
 render_template "$SRC_DIR/frontend/styles.css" "$FRONTEND_STYLES_FILE" 0644
 render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
