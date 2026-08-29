@@ -17,6 +17,8 @@ This audit captures the modernization priorities identified in August 2026. The 
 - Startup, logout, authenticated shutdown, update, and crash recovery follow an explicit private lifecycle-state contract with real Linux integration coverage.
 - Standard-library unit and HTTP integration tests run in CI on supported Python versions.
 - The frontend is split into focused CSS, shared state, launcher UI, Parent settings, and runtime-control modules while retaining the dependency-free installer and runtime.
+- The local server delegates authentication, configuration, application discovery, process launching, media, timer, and update responsibilities to focused standard-library modules while preserving its API contract.
+- X11 and Wayland display boundaries are documented and tested: X11 automation verifies the overlay close path and launcher focus recovery, while Wayland reports keep compositor-controlled stacking and focus as explicit manual observations.
 
 ## Completed release foundation
 
@@ -28,16 +30,11 @@ This audit captures the modernization priorities identified in August 2026. The 
 - The server and frontend share the updater's release-first status model, and the launcher owns the update trigger exactly once.
 - A disposable v0.4.0 installation was upgraded through the published v0.4.1 release with checksum verification and byte-identical configuration preservation.
 
-## Next: maintainability
-
-1. Continue splitting server responsibilities into authentication, application discovery, process launching, update discovery, and timer modules.
-
-## Then: platform confidence
+## Next: platform confidence
 
 1. Test KDE Plasma, GNOME, and XFCE across Ubuntu, Linux Mint, and Zorin OS.
-2. Document Wayland and X11 behavior for overlays, focus recovery, and kiosk browsers.
-3. Expand installer upgrade/rollback coverage as configuration schema migrations evolve.
-4. Exercise keyboard-only, touch, low-resolution, and screen-reader flows.
+2. Expand installer upgrade/rollback coverage as configuration schema migrations evolve.
+3. Exercise keyboard-only, touch, low-resolution, and screen-reader flows.
 
 ## Product work after the foundation
 
