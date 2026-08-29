@@ -76,6 +76,39 @@ class LauncherLifecycleTests(unittest.TestCase):
             source,
         )
 
+    def test_snap_firefox_uses_its_confined_common_profile(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('command -v snap >/dev/null 2>&1', source)
+        self.assertIn('snap list firefox >/dev/null 2>&1', source)
+        self.assertIn(
+            'FIREFOX_PROFILE="$HOME/snap/firefox/common/{{APP_ID}}-profile"',
+            source,
+        )
+        self.assertIn(
+            'FIREFOX_PROFILE="$HOME/.cache/{{APP_ID}}/firefox-profile"',
+            source,
+        )
+        self.assertIn('if [[ "$BROWSER_BIN" == "firefox" ]]', source)
+        self.assertNotIn('if [[ "$BROWSER_FAMILY" == "firefox" ]] \\\n+  && command -v snap', source)
+
+    def test_firefox_profile_suppresses_remote_survey_messages(self):
+        source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("configure_firefox_profile()", source)
+        self.assertIn(
+            "managed_preference = "
+            "'user_pref(\"app.normandy.enabled\", false);'",
+            source,
+        )
+        self.assertIn(
+            'else\n    configure_firefox_profile\n  fi\n  case "$LAUNCH_MODE"',
+            source,
+        )
+        self.assertIn("os.replace(temporary, path)", source)
+
     def test_chromium_launches_without_keyring_or_crash_restore_prompts(self):
         source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
             encoding="utf-8"
@@ -176,6 +209,14 @@ class LauncherLifecycleTests(unittest.TestCase):
             self.assertIn("could not restart after several attempts", installed_launcher)
             self.assertNotIn("{{RUNTIME_FAILURE_", installed_launcher)
             cache = home / ".cache" / "cozy-kids-launcher"
+            firefox_profile = cache / "firefox-profile"
+            firefox_profile.mkdir(parents=True)
+            firefox_preferences = firefox_profile / "user.js"
+            firefox_preferences.write_text(
+                'user_pref("browser.shell.checkDefaultBrowser", false);\n'
+                'user_pref("app.normandy.enabled", true);\n',
+                encoding="utf-8",
+            )
             lifecycle_file = cache / "lifecycle.json"
             first = subprocess.Popen(
                 [str(launcher)],
@@ -205,6 +246,13 @@ class LauncherLifecycleTests(unittest.TestCase):
                         "ready",
                     )["state"],
                     "running",
+                )
+                self.assertEqual(
+                    firefox_preferences.read_text(encoding="utf-8").splitlines(),
+                    [
+                        'user_pref("browser.shell.checkDefaultBrowser", false);',
+                        'user_pref("app.normandy.enabled", false);',
+                    ],
                 )
 
                 second = subprocess.run(

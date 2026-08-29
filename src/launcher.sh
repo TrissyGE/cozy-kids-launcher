@@ -43,6 +43,12 @@ esac
 
 CHROMIUM_PROFILE="$HOME/.cache/{{APP_ID}}/chromium-profile"
 FIREFOX_PROFILE="$HOME/.cache/{{APP_ID}}/firefox-profile"
+if [[ "$BROWSER_BIN" == "firefox" ]] \
+  && command -v snap >/dev/null 2>&1 \
+  && snap list firefox >/dev/null 2>&1; then
+  # Strictly confined Firefox snaps cannot use hidden profiles below ~/.cache.
+  FIREFOX_PROFILE="$HOME/snap/firefox/common/{{APP_ID}}-profile"
+fi
 CHROMIUM_FLAGS=(
   --user-data-dir="$CHROMIUM_PROFILE"
   --no-first-run
@@ -189,6 +195,44 @@ finally:
 PY
 }
 
+configure_firefox_profile() {
+  local user_preferences="$FIREFOX_PROFILE/user.js"
+  python3 - "$user_preferences" 9>&- <<'PY' >/dev/null 2>&1 || true
+import os
+import sys
+import tempfile
+
+path = sys.argv[1]
+managed_preference = 'user_pref("app.normandy.enabled", false);'
+existing = ""
+if os.path.exists(path):
+    try:
+        with open(path, encoding="utf-8") as source:
+            existing = source.read()
+    except OSError:
+        raise SystemExit(0)
+
+lines = [
+    line
+    for line in existing.splitlines()
+    if not line.strip().startswith('user_pref("app.normandy.enabled",')
+]
+lines.append(managed_preference)
+contents = "\n".join(lines) + "\n"
+
+fd, temporary = tempfile.mkstemp(prefix="user.js.", dir=os.path.dirname(path))
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as destination:
+        destination.write(contents)
+        destination.flush()
+        os.fsync(destination.fileno())
+    os.replace(temporary, path)
+finally:
+    if os.path.exists(temporary):
+        os.unlink(temporary)
+PY
+}
+
 stop_runtime_children() {
   terminate_process "$OVERLAY_PIDFILE" overlay
   terminate_process "$TILE_PROCESS_PIDFILE" tile-process
@@ -317,6 +361,8 @@ while true; do
   fi
   if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
     configure_chromium_profile
+  else
+    configure_firefox_profile
   fi
   case "$LAUNCH_MODE" in
     kiosk)
