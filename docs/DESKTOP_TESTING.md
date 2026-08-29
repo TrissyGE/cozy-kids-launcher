@@ -6,11 +6,11 @@ The release desktop matrix must be run in complete Linux desktop sessions. WSLg,
 
 Use disposable virtual machines or dedicated test devices. The minimum v0.5.0 evidence is one passing report from each primary row:
 
-| Desktop | Primary session | Additional coverage |
-| --- | --- | --- |
-| Ubuntu GNOME | Wayland | Repeat on X11 before claiming full X11 support |
-| KDE Plasma | Wayland | Repeat on X11 before claiming full X11 support |
-| XFCE | X11 | Wayland is not part of the current XFCE release target |
+| Desktop | Primary session | Browser and launch mode | Additional coverage |
+| --- | --- | --- | --- |
+| Ubuntu GNOME | Wayland | Firefox snap, `kiosk` | Repeat on X11 before claiming full X11 support |
+| KDE Plasma | Wayland | Chromium family, `fullscreen` | Repeat on X11 before claiming full X11 support |
+| XFCE | X11 | Chromium family, `kiosk` | Wayland is not part of the current XFCE release target |
 
 The desktop and session must match the values passed to the harness. The script deliberately refuses WSL and mismatched `XDG_CURRENT_DESKTOP` or `XDG_SESSION_TYPE` values.
 
@@ -65,16 +65,21 @@ An automated run ends with `automation-passed-manual-pending`. That is useful di
 
 ## Manual desktop checks
 
-Restore the VM snapshot and install normally into the disposable user's actual home:
+Restore the VM snapshot and install normally into the disposable user's actual
+home with the browser and launch mode assigned to that primary row:
 
 ```bash
-bash scripts/install.sh --lang en --launch-mode kiosk --force
+bash scripts/install.sh --lang en --browser firefox --launch-mode kiosk --force
 ```
 
-Reinstall with `--launch-mode fullscreen` for the fullscreen observation. Enable `--install-shutdown-helper` only in a disposable VM snapshot where a real poweroff is safe. Verify all six observations:
+The three primary rows collectively cover both kiosk and fullscreen behavior.
+An individual report verifies only its recorded `launchMode`; it is not evidence
+for a second mode that was not used during that run. Enable
+`--install-shutdown-helper` only in a disposable VM snapshot where a real
+poweroff is safe. Verify all six observations:
 
 1. a fresh login starts exactly one launcher;
-2. kiosk and fullscreen modes fit the display without a black screen;
+2. the selected browser mode fits the display without a black screen;
 3. the close overlay remains reachable above a launched child app;
 4. closing the child app returns focus to the launcher;
 5. the desktop shortcut reopens the launcher without creating a duplicate instance;
@@ -86,6 +91,7 @@ Then repeat the isolated harness with `--interactive` and record the observation
 python3 scripts/linux/desktop_smoke.py \
   --desktop gnome \
   --session wayland \
+  --launch-mode kiosk \
   --interactive
 ```
 

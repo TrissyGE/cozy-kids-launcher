@@ -32,7 +32,7 @@ BROWSER_CANDIDATES = (
 )
 MANUAL_CHECKS = (
     "Autostart opens exactly one launcher after a fresh login",
-    "Kiosk and fullscreen modes fit the display without a black screen",
+    "The selected browser mode fits the display without a black screen",
     "The app overlay stays reachable above a launched child app",
     "Closing a child app returns focus to the launcher",
     "The desktop shortcut reopens the launcher without a duplicate instance",

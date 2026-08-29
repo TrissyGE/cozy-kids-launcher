@@ -13,12 +13,19 @@ argument vector matches the selected mode.
 | Mode | Chromium family | Firefox family | Intended behavior |
 | --- | --- | --- | --- |
 | `window` | no kiosk/fullscreen switch | no kiosk/fullscreen switch | ordinary desktop window |
-| `fullscreen` | `--start-fullscreen` | `--fullscreen` | fullscreen UI that still follows normal browser policies |
+| `fullscreen` | `--start-fullscreen` | compatibility passthrough; no upstream-supported switch | fullscreen UI that still follows normal browser policies |
 | `kiosk` | `--kiosk` | `--kiosk` | strict browser chrome suppression |
 
 These checks prove that the requested mode reached the owned browser process.
 They cannot prove compositor placement, screen coverage, or the absence of a
 black frame; those remain visual checks in the VM matrix.
+
+Firefox's upstream
+[command-line reference](https://firefox-source-docs.mozilla.org/browser/CommandLineParameters.html)
+documents `--kiosk`, but not a separate fullscreen command-line mode. Its
+retained `--fullscreen` argument is a compatibility passthrough and is not used
+for a primary release-matrix row. Use Firefox kiosk when browser chrome must be
+suppressed, and use a Chromium-family browser for the primary fullscreen row.
 
 When Chromium starts in `fullscreen` or `kiosk`, the launcher removes only its
 cached `browser.window_placement` preference before applying the mode switch.
