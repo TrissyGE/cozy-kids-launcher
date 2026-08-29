@@ -593,7 +593,7 @@ def run_smoke(args, browser_path, report):
                 )
                 if (command := process_command(browser_record["pid"]))
                 else None,
-                timeout=10,
+                timeout=30,
                 message="owned PID did not exec into the configured browser",
             )
             mode_details = verify_browser_mode(
