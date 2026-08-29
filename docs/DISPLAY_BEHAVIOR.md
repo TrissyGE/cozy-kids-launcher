@@ -21,14 +21,14 @@ They cannot prove compositor placement, screen coverage, or the absence of a
 black frame; those remain visual checks in the VM matrix.
 
 When Chromium starts in `fullscreen` or `kiosk`, the launcher removes only its
-cached `browser.window_placement` preference before applying the mode switch.
-This prevents geometry saved by an earlier windowed session from overriding an
-explicit display-mode change. Ordinary `window` launches retain their saved
-geometry.
+cached `browser.window_placement` preference and normalizes the dedicated
+profile's crash-exit marker before applying the mode switch. This prevents a
+saved or crash-restored maximized window from overriding an explicit display-
+mode change. Ordinary `window` launches retain their saved geometry.
 
-The generated desktop autostart entry uses a 30-second compositor-settling delay
-after acquiring the single-instance lock. Cold GNOME boots can expose the user
-session well before Mutter consistently honors Chromium's fullscreen request;
+The generated desktop autostart entry uses a short compositor-settling delay
+after acquiring the single-instance lock. This keeps early GNOME session startup
+from downgrading a valid fullscreen request to an ordinary maximized window;
 manual and desktop-shortcut launches remain immediate.
 
 ## X11 contract

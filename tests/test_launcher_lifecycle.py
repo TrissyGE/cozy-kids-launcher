@@ -90,7 +90,7 @@ class LauncherLifecycleTests(unittest.TestCase):
         self.assertIn('translate["enabled"] = False', source)
         self.assertIn("os.replace(temporary, path)", source)
 
-    def test_explicit_chromium_display_modes_drop_cached_window_placement(self):
+    def test_explicit_chromium_display_modes_drop_cached_restore_state(self):
         source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
             encoding="utf-8"
         )
@@ -102,8 +102,9 @@ class LauncherLifecycleTests(unittest.TestCase):
             'if launch_mode in ("fullscreen", "kiosk"):',
             source,
         )
+        self.assertIn('profile["exit_type"] = "Normal"', source)
         self.assertIn('browser.pop("window_placement", None)', source)
-        self.assertIn("ordinary window mode keeps user geometry", source)
+        self.assertIn("Ordinary window mode keeps user geometry", source)
 
     def test_desktop_autostart_waits_for_the_compositor_after_locking(self):
         source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
@@ -115,7 +116,7 @@ class LauncherLifecycleTests(unittest.TestCase):
         lock_index = source.index("flock -n 9")
         delay_index = source.index('if [[ "${1:-}" == "--autostart" ]]')
         self.assertLess(lock_index, delay_index)
-        self.assertIn("sleep 30", source[delay_index:delay_index + 320])
+        self.assertIn("sleep 12", source[delay_index:delay_index + 240])
         self.assertIn("Exec=$RUNTIME_BIN --autostart", installer)
 
     def test_singleton_recovers_server_once_and_stops_after_retry_limit(self):

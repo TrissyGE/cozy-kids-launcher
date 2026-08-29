@@ -59,10 +59,9 @@ if ! flock -n 9; then
   exit 0
 fi
 if [[ "${1:-}" == "--autostart" ]]; then
-  # A cold GNOME boot can reach graphical-session.target well before Mutter
-  # applies browser fullscreen requests reliably. Desktop/manual launches stay
-  # immediate; only login autostart waits for the compositor to settle.
-  sleep 30
+  # GNOME can reach graphical-session.target before Mutter applies browser
+  # fullscreen requests reliably. Desktop/manual launches stay immediate.
+  sleep 12
 fi
 
 normalize_integer() {
@@ -168,10 +167,14 @@ if not isinstance(translate, dict):
     preferences["translate"] = translate
 translate["enabled"] = False
 
-# Chromium can prefer a cached maximized/windowed placement over a later
-# --start-fullscreen or --kiosk request. Remove only that placement when an
-# explicit display mode is selected; ordinary window mode keeps user geometry.
+# Chromium can restore a crashed maximized window after initially honoring a
+# fullscreen request. Its dedicated launcher profile always opens the local
+# launcher URL, so mark that profile clean and remove only its cached placement
+# for explicit display modes. Ordinary window mode keeps user geometry.
 if launch_mode in ("fullscreen", "kiosk"):
+    profile = preferences.setdefault("profile", {})
+    if isinstance(profile, dict):
+        profile["exit_type"] = "Normal"
     browser = preferences.get("browser")
     if isinstance(browser, dict):
         browser.pop("window_placement", None)
