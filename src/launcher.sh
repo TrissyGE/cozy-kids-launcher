@@ -61,7 +61,7 @@ fi
 if [[ "${1:-}" == "--autostart" ]]; then
   # GNOME can reach graphical-session.target before Mutter applies browser
   # fullscreen requests reliably. Desktop/manual launches stay immediate.
-  sleep 3
+  sleep 12
 fi
 
 normalize_integer() {
