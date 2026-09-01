@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Family profiles
+
+- Added configuration schema 2 with bounded local child profiles for separate names, avatars, themes, tiles, favorites, and per-app limits
+- Added an atomic schema-1 migration that preserves the existing launcher as the default profile while keeping the public launcher configuration API backward compatible
+- Added Parent-authenticated profile creation, selection, and deletion APIs; profile switches clear active timer state and protected deletion rules keep one valid active profile
+- Extended configuration export, import, backup, restore, installer, diagnostics, and privacy documentation for complete multi-profile data
+
 ## [0.5.0] - 2026-09-01
 
 ### Maintainability and configuration

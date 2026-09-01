@@ -19,6 +19,13 @@ Both the logs and the export use a fixed allowlist and exclude PIN data,
 personal labels, tile commands, URLs, usernames, and local paths. Nothing is
 uploaded automatically.
 
+Child profiles, including names, avatars, themes, tiles, favorites, and limits,
+are stored together in the same private local configuration. Creating,
+selecting, and deleting profiles uses the existing Parent-authentication
+boundary. Configuration exports and backups contain every profile so they can
+be restored together; deleting a profile removes it from the active
+configuration and later backup rotation determines how long older copies remain.
+
 Installer and pre-restore backups remain under the user's local data directory.
 They can contain the same family settings and hashed Parent PIN as the active
 configuration, so their directories are restricted to the local user. Parent

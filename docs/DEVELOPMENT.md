@@ -9,7 +9,7 @@ From the repository root:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 scripts/wsl/browser-e2e.py
-python3 -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/backup_store.py src/config_store.py src/config_validation.py src/lifecycle_state.py src/media_library.py src/parent_auth.py src/process_state.py src/process_supervisor.py src/runtime_diagnostics.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py
+python3 -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/backup_store.py src/config_store.py src/config_validation.py src/profile_config.py src/lifecycle_state.py src/media_library.py src/parent_auth.py src/process_state.py src/process_supervisor.py src/runtime_diagnostics.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py
 bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
 python3 -m py_compile scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null

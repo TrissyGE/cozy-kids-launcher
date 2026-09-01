@@ -85,17 +85,19 @@ def write_demo_config(config_path, browser_name):
         config = json.load(handle)
     config.update({
         "language": "en",
-        "title": "E2E Home",
-        "theme": "rosa",
-        "layoutMode": "gross",
         "parentLabel": "Parent",
         "exitLabel": "Exit kids mode",
         "pinHash": "",
-        "currentPage": 0,
         "autoScanDone": True,
+        "browser": browser_name,
+    })
+    config["profiles"][0].update({
+        "title": "E2E Home",
+        "theme": "rosa",
+        "layoutMode": "gross",
+        "currentPage": 0,
         "timerMinutes": 0,
         "timerWarningMinutes": 5,
-        "browser": browser_name,
         "tiles": [
             {
                 "id": "paint",

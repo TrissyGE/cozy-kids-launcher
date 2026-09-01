@@ -130,6 +130,10 @@ focus recovery are documented in [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md).
 
 - every current configuration carries an integer `configVersion`
 - files without a version are treated as legacy schema 0 and migrated atomically
+- schema 2 stores child-specific appearance, tiles, favorites, and limits in a bounded `profiles` collection while keeping language, Parent authentication, browser choice, and system controls global
+- schema 0 and 1 configurations become a `default` profile without losing their existing child-facing settings
+- the runtime and `/api/config` retain the original flat active-profile view so existing frontend code and API clients continue to work during the incremental v0.6.0 rollout
+- profile creation, selection, and deletion use dedicated Parent-authenticated endpoints; the active profile and the final remaining profile cannot be deleted
 - migrations preserve unknown keys so newer optional data is not discarded accidentally
 - files from a schema newer than the installed launcher are rejected instead of being rewritten
 - imported and edited configurations pass through the same migration and validation boundary

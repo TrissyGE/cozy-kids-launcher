@@ -108,9 +108,10 @@ class ConfigValidationTests(unittest.TestCase):
         self.assertEqual(migrated["pinHash"], "0123456789abcdef")
 
     def test_current_config_does_not_report_a_migration(self):
-        migrated, changed = server_module.migrate_config(base_config())
+        current, _ = server_module.migrate_config(base_config())
+        migrated, changed = server_module.migrate_config(current)
         self.assertFalse(changed)
-        self.assertEqual(migrated["configVersion"], 1)
+        self.assertEqual(migrated["configVersion"], 2)
 
     def test_future_config_version_is_rejected(self):
         data = base_config()
@@ -140,8 +141,10 @@ class ConfigValidationTests(unittest.TestCase):
                 loaded = server_module.load_cfg()
 
             persisted = json.loads(config_path.read_text(encoding="utf-8"))
-            self.assertEqual(loaded["configVersion"], 1)
-            self.assertEqual(persisted["configVersion"], 1)
+            self.assertEqual(loaded["configVersion"], 2)
+            self.assertEqual(persisted["configVersion"], 2)
+            self.assertEqual(persisted["activeProfileId"], "default")
+            self.assertEqual(persisted["profiles"][0]["title"], "Hello Kiddo")
             self.assertFalse(
                 list(config_path.parent.glob("config-*.json")),
                 "Atomic migration must not leave a temporary config behind",
@@ -652,7 +655,7 @@ class ServerApiTests(unittest.TestCase):
         config = server_module.load_cfg()
         self.assertEqual(status, 200)
         self.assertIn("cozy-kids-diagnostics.json", headers["Content-Disposition"])
-        self.assertEqual(data["configuration"]["schemaVersion"], 1)
+        self.assertEqual(data["configuration"]["schemaVersion"], 2)
         self.assertEqual(
             data["lifecycle"],
             {"state": "running", "reason": "ready", "attempt": None},
@@ -672,6 +675,9 @@ class ServerApiTests(unittest.TestCase):
             ("/api/save-config", base_config()),
             ("/api/import-config", base_config()),
             ("/api/backups/restore", {"backupId": "20260825-120000"}),
+            ("/api/profiles/create", {"name": "Alex", "avatar": "🚀"}),
+            ("/api/profiles/select", {"profileId": "default"}),
+            ("/api/profiles/delete", {"profileId": "default"}),
             ("/api/update", None),
             ("/shutdown", None),
         ):
@@ -724,7 +730,10 @@ class ServerApiTests(unittest.TestCase):
             server_module.BACKUP_ROOT,
             safety_id,
         )
-        self.assertEqual(safety["title"], "Current family settings")
+        self.assertEqual(
+            server_module.active_config(safety)["title"],
+            "Current family settings",
+        )
         self.assertTrue(server_module.verify_pin(safety["pinHash"], "1234"))
         status, updated_listing, _ = self.request("/api/backups", cookie=cookie)
         self.assertEqual(status, 200)
@@ -775,6 +784,85 @@ class ServerApiTests(unittest.TestCase):
         saved = server_module.load_cfg()
         self.assertEqual(saved["title"], "Updated")
         self.assertTrue(server_module.verify_pin(saved["pinHash"], "1234"))
+
+    def test_profile_api_keeps_child_settings_separate_and_resets_runtime_timer(self):
+        status, listing, _ = self.request("/api/profiles")
+        self.assertEqual(status, 200)
+        self.assertEqual(listing["activeProfileId"], "default")
+        self.assertEqual(len(listing["profiles"]), 1)
+
+        status, created, _ = self.request(
+            "/api/profiles/create",
+            method="POST",
+            body={"name": "Alex", "avatar": "🚀"},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        profile_id = created["profileId"]
+        self.assertNotEqual(profile_id, "default")
+
+        status, public, _ = self.request("/api/config")
+        self.assertEqual(status, 200)
+        self.assertEqual(len(public["profiles"]), 2)
+        self.assertNotIn("tiles", public["profiles"][1])
+        status, exported, _ = self.request("/api/export-config")
+        self.assertEqual(status, 200)
+        self.assertEqual(len(exported["profiles"]), 2)
+        self.assertIn("tiles", exported["profiles"][1])
+
+        server_module.save_timer({"end_time": 9999999999, "totalMinutes": 30})
+        status, selected, _ = self.request(
+            "/api/profiles/select",
+            method="POST",
+            body={"profileId": profile_id},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(selected["config"]["activeProfileId"], profile_id)
+        self.assertEqual(selected["config"]["name"], "Alex")
+        self.assertFalse(Path(server_module.TIMER_FILE).exists())
+
+        alex = selected["config"]
+        alex["title"] = "Alex's space"
+        alex["theme"] = "blau"
+        alex["tiles"][0]["label"] = "Alex Paint"
+        status, _, _ = self.request(
+            "/api/save-config",
+            method="POST",
+            body=alex,
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+
+        status, selected, _ = self.request(
+            "/api/profiles/select",
+            method="POST",
+            body={"profileId": "default"},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(selected["config"]["title"], "Hello Kiddo")
+        self.assertEqual(selected["config"]["theme"], "rosa")
+        self.assertEqual(selected["config"]["tiles"][0]["label"], "Paint")
+
+        status, deleted, _ = self.request(
+            "/api/profiles/delete",
+            method="POST",
+            body={"profileId": profile_id},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(len(deleted["profiles"]), 1)
+
+    def test_profile_api_rejects_deleting_the_active_profile(self):
+        status, data, _ = self.request(
+            "/api/profiles/delete",
+            method="POST",
+            body={"profileId": "default"},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("active profile", data["message"])
 
     def test_successful_login_upgrades_legacy_pin_hash(self):
         legacy = hashlib.sha256(b"1234").hexdigest()[:16]

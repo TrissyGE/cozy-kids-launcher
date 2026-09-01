@@ -1,9 +1,17 @@
 """Validation and public projection for launcher configuration data."""
 
+import copy
 import re
 
 from config_store import migrate_config
 from parent_auth import is_supported_pin_hash
+from profile_config import (
+    MAX_PROFILES,
+    PROFILE_FIELDS,
+    PROFILE_ID_PATTERN,
+    active_config,
+    profile_summaries,
+)
 
 
 MAX_TILES = 200
@@ -19,9 +27,11 @@ def _bounded_string(value, field, maximum, allow_empty=True):
     return value
 
 
-def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
-    """Validate untrusted config data while preserving future-compatible keys."""
-    result, _ = migrate_config(data)
+def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
+    """Validate the flat active-profile view used by the runtime and web UI."""
+    if not isinstance(data, dict):
+        raise ValueError("Config must be a JSON object")
+    result = copy.deepcopy(data)
     result.pop("pinConfigured", None)
     tiles = result.get("tiles")
     if not isinstance(tiles, list):
@@ -71,9 +81,13 @@ def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
         ("shutdownLabel", 100),
         ("customBackground", 2048),
         ("browser", 128),
+        ("name", 80),
+        ("avatar", 32),
     ):
         if field in result:
             result[field] = _bounded_string(result[field], field, maximum)
+    if "name" in result and not result["name"]:
+        raise ValueError("name must not be empty")
 
     if "language" in result and result["language"] not in ("de", "en"):
         raise ValueError("language must be 'de' or 'en'")
@@ -112,6 +126,42 @@ def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
             for key, value in colors.items()
         }
 
+    if "favorites" in result:
+        favorites = result["favorites"]
+        if not isinstance(favorites, list) or len(favorites) > MAX_TILES:
+            raise ValueError("favorites must be a short list")
+        clean_favorites = []
+        for index, tile_id in enumerate(favorites):
+            tile_id = _bounded_string(
+                tile_id,
+                f"favorites[{index}]",
+                80,
+                False,
+            )
+            if not PROFILE_ID_PATTERN.fullmatch(tile_id):
+                raise ValueError(f"favorites[{index}] contains invalid characters")
+            if tile_id in clean_favorites:
+                raise ValueError(f"Duplicate favorite id: {tile_id}")
+            clean_favorites.append(tile_id)
+        result["favorites"] = clean_favorites
+
+    if "appLimits" in result:
+        limits = result["appLimits"]
+        if not isinstance(limits, dict) or len(limits) > MAX_TILES:
+            raise ValueError("appLimits must be an object with a bounded size")
+        clean_limits = {}
+        for tile_id, minutes in limits.items():
+            if not isinstance(tile_id, str) or not PROFILE_ID_PATTERN.fullmatch(tile_id):
+                raise ValueError("appLimits contains an invalid tile id")
+            if (
+                isinstance(minutes, bool)
+                or not isinstance(minutes, int)
+                or not 0 <= minutes <= 180
+            ):
+                raise ValueError(f"appLimits.{tile_id} must be between 0 and 180")
+            clean_limits[tile_id] = minutes
+        result["appLimits"] = clean_limits
+
     if allow_pin_hash:
         pin_hash = result.get("pinHash", "")
         if pin_hash and not is_supported_pin_hash(pin_hash):
@@ -122,8 +172,90 @@ def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
     return result
 
 
+def validate_stored_config(data, existing_pin_hash="", allow_pin_hash=False):
+    """Validate the complete persisted configuration, including every profile."""
+    result, _ = migrate_config(data)
+    misplaced_fields = sorted(set(PROFILE_FIELDS).intersection(result))
+    if misplaced_fields:
+        raise ValueError(
+            "Profile fields must be stored inside profiles: "
+            + ", ".join(misplaced_fields)
+        )
+    profiles = result.get("profiles")
+    if not isinstance(profiles, list) or not 1 <= len(profiles) <= MAX_PROFILES:
+        raise ValueError(f"profiles must contain between 1 and {MAX_PROFILES} entries")
+
+    active_profile_id = result.get("activeProfileId")
+    if (
+        not isinstance(active_profile_id, str)
+        or not PROFILE_ID_PATTERN.fullmatch(active_profile_id)
+    ):
+        raise ValueError("activeProfileId contains invalid characters")
+
+    global_candidate = {
+        key: copy.deepcopy(value)
+        for key, value in result.items()
+        if key not in ("profiles", "activeProfileId")
+    }
+    global_candidate["tiles"] = []
+    validated_global = _validate_flat_config(
+        global_candidate,
+        existing_pin_hash=existing_pin_hash,
+        allow_pin_hash=allow_pin_hash,
+    )
+    validated_global.pop("tiles", None)
+
+    validated_profiles = []
+    seen_ids = set()
+    for index, profile in enumerate(profiles):
+        if not isinstance(profile, dict):
+            raise ValueError(f"profiles[{index}] must be an object")
+        profile_id = profile.get("id")
+        if (
+            not isinstance(profile_id, str)
+            or not PROFILE_ID_PATTERN.fullmatch(profile_id)
+        ):
+            raise ValueError(f"profiles[{index}].id contains invalid characters")
+        if profile_id in seen_ids:
+            raise ValueError(f"Duplicate profile id: {profile_id}")
+        seen_ids.add(profile_id)
+
+        candidate = copy.deepcopy(profile)
+        candidate["configVersion"] = result["configVersion"]
+        candidate.setdefault("tiles", [])
+        candidate.setdefault("favorites", [])
+        candidate.setdefault("appLimits", {})
+        validated = _validate_flat_config(candidate)
+        validated.pop("configVersion", None)
+        validated.pop("pinHash", None)
+        validated["id"] = profile_id
+        if not validated.get("name"):
+            raise ValueError(f"profiles[{index}].name must not be empty")
+        validated_profiles.append(validated)
+
+    if active_profile_id not in seen_ids:
+        raise ValueError("activeProfileId does not reference an existing profile")
+
+    validated_global["activeProfileId"] = active_profile_id
+    validated_global["profiles"] = validated_profiles
+    return validated_global
+
+
+def validate_config(data, existing_pin_hash="", allow_pin_hash=False):
+    """Validate untrusted data and return its legacy-compatible active view."""
+    if isinstance(data, dict) and "tiles" in data and data.get("configVersion") == 2:
+        return _validate_flat_config(data, existing_pin_hash, allow_pin_hash)
+    stored = validate_stored_config(data, existing_pin_hash, allow_pin_hash)
+    return active_config(stored)
+
+
 def public_config(data):
     """Return configuration data without exposing the stored PIN hash."""
-    result = dict(data)
+    result = active_config(data) if "tiles" not in data else copy.deepcopy(data)
+    if "profiles" in result and any(
+        isinstance(profile, dict) and "tiles" in profile
+        for profile in result["profiles"]
+    ):
+        result["profiles"] = profile_summaries(data)
     result["pinConfigured"] = bool(result.pop("pinHash", ""))
     return result
