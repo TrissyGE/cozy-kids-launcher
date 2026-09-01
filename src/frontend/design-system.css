@@ -38,6 +38,12 @@
   font-weight:700;
 }
 
+.smallbtn:disabled {
+  opacity:.55;
+  box-shadow:none;
+  cursor:not-allowed;
+}
+
 .nav {
   position:fixed;
   top:50%;

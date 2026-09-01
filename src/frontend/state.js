@@ -1,4 +1,4 @@
-let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', adminTileQuery='', adminTileVisibility='all', pinCallback=null, pinReturnFocus=null;
+let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', adminTileQuery='', adminTileVisibility='all', adminSelectedTileIds=new Set(), pinCallback=null, pinReturnFocus=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
@@ -19,6 +19,14 @@ const uiText = {
   appFilterHidden: {{JSON_APP_FILTER_HIDDEN}},
   appFilterEmpty: {{JSON_APP_FILTER_EMPTY}},
   appFilterCount: {{JSON_APP_FILTER_COUNT}},
+  appBulkActions: {{JSON_APP_BULK_ACTIONS}},
+  appBulkSelectAll: {{JSON_APP_BULK_SELECT_ALL}},
+  appBulkSelected: {{JSON_APP_BULK_SELECTED}},
+  appBulkShow: {{JSON_APP_BULK_SHOW}},
+  appBulkHide: {{JSON_APP_BULK_HIDE}},
+  appBulkDelete: {{JSON_APP_BULK_DELETE}},
+  appBulkDeleteConfirm: {{JSON_APP_BULK_DELETE_CONFIRM}},
+  appSelectTile: {{JSON_APP_SELECT_TILE}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
   placeholderParentLabel: {{JSON_PLACEHOLDER_PARENT_LABEL}},
   placeholderExitLabel: {{JSON_PLACEHOLDER_EXIT_LABEL}},

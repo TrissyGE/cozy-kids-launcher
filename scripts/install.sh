@@ -172,6 +172,14 @@ text() {
     de:app_filter_hidden) echo "Ausgeblendet" ;;
     de:app_filter_empty) echo "Keine Kacheln passen zu Suche und Filter." ;;
     de:app_filter_count) echo "{shown} von {total} Kacheln" ;;
+    de:app_bulk_actions) echo "Mehrfachaktionen" ;;
+    de:app_bulk_select_all) echo "Treffer auswählen" ;;
+    de:app_bulk_selected) echo "{count} ausgewählt" ;;
+    de:app_bulk_show) echo "Einblenden" ;;
+    de:app_bulk_hide) echo "Ausblenden" ;;
+    de:app_bulk_delete) echo "Auswahl löschen" ;;
+    de:app_bulk_delete_confirm) echo "{count} ausgewählte Kacheln löschen?" ;;
+    de:app_select_tile) echo "{tile} auswählen" ;;
     de:placeholder_title) echo "Überschrift" ;;
     de:placeholder_parent_label) echo "Eltern-Button" ;;
     de:placeholder_exit_label) echo "Beenden-Button" ;;
@@ -249,6 +257,14 @@ text() {
     en:app_filter_hidden) echo "Hidden" ;;
     en:app_filter_empty) echo "No tiles match your search and filter." ;;
     en:app_filter_count) echo "{shown} of {total} tiles" ;;
+    en:app_bulk_actions) echo "Bulk actions" ;;
+    en:app_bulk_select_all) echo "Select results" ;;
+    en:app_bulk_selected) echo "{count} selected" ;;
+    en:app_bulk_show) echo "Show" ;;
+    en:app_bulk_hide) echo "Hide" ;;
+    en:app_bulk_delete) echo "Delete selection" ;;
+    en:app_bulk_delete_confirm) echo "Delete {count} selected tiles?" ;;
+    en:app_select_tile) echo "Select {tile}" ;;
     en:placeholder_title) echo "Title" ;;
     en:placeholder_parent_label) echo "Parent button" ;;
     en:placeholder_exit_label) echo "Exit button" ;;
@@ -862,6 +878,7 @@ render_template() {
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
   export JSON_ADMIN_TITLE JSON_ADMIN_NAV_LABEL JSON_ADMIN_OVERVIEW JSON_ADMIN_CHILDREN JSON_ADMIN_APPS_MEDIA JSON_ADMIN_SCREEN_TIME JSON_ADMIN_APPEARANCE JSON_ADMIN_SYSTEM
   export JSON_APP_SEARCH_LABEL JSON_APP_FILTER_LABEL JSON_APP_FILTER_ALL JSON_APP_FILTER_VISIBLE JSON_APP_FILTER_HIDDEN JSON_APP_FILTER_EMPTY JSON_APP_FILTER_COUNT
+  export JSON_APP_BULK_ACTIONS JSON_APP_BULK_SELECT_ALL JSON_APP_BULK_SELECTED JSON_APP_BULK_SHOW JSON_APP_BULK_HIDE JSON_APP_BULK_DELETE JSON_APP_BULK_DELETE_CONFIRM JSON_APP_SELECT_TILE
   export JSON_PLACEHOLDER_TITLE JSON_PLACEHOLDER_PARENT_LABEL JSON_PLACEHOLDER_EXIT_LABEL
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
@@ -925,6 +942,14 @@ APP_FILTER_VISIBLE="$(text app_filter_visible)"
 APP_FILTER_HIDDEN="$(text app_filter_hidden)"
 APP_FILTER_EMPTY="$(text app_filter_empty)"
 APP_FILTER_COUNT="$(text app_filter_count)"
+APP_BULK_ACTIONS="$(text app_bulk_actions)"
+APP_BULK_SELECT_ALL="$(text app_bulk_select_all)"
+APP_BULK_SELECTED="$(text app_bulk_selected)"
+APP_BULK_SHOW="$(text app_bulk_show)"
+APP_BULK_HIDE="$(text app_bulk_hide)"
+APP_BULK_DELETE="$(text app_bulk_delete)"
+APP_BULK_DELETE_CONFIRM="$(text app_bulk_delete_confirm)"
+APP_SELECT_TILE="$(text app_select_tile)"
 PLACEHOLDER_TITLE="$(text placeholder_title)"
 PLACEHOLDER_PARENT_LABEL="$(text placeholder_parent_label)"
 PLACEHOLDER_EXIT_LABEL="$(text placeholder_exit_label)"
@@ -1046,6 +1071,14 @@ JSON_APP_FILTER_VISIBLE="$(json_text "$APP_FILTER_VISIBLE")"
 JSON_APP_FILTER_HIDDEN="$(json_text "$APP_FILTER_HIDDEN")"
 JSON_APP_FILTER_EMPTY="$(json_text "$APP_FILTER_EMPTY")"
 JSON_APP_FILTER_COUNT="$(json_text "$APP_FILTER_COUNT")"
+JSON_APP_BULK_ACTIONS="$(json_text "$APP_BULK_ACTIONS")"
+JSON_APP_BULK_SELECT_ALL="$(json_text "$APP_BULK_SELECT_ALL")"
+JSON_APP_BULK_SELECTED="$(json_text "$APP_BULK_SELECTED")"
+JSON_APP_BULK_SHOW="$(json_text "$APP_BULK_SHOW")"
+JSON_APP_BULK_HIDE="$(json_text "$APP_BULK_HIDE")"
+JSON_APP_BULK_DELETE="$(json_text "$APP_BULK_DELETE")"
+JSON_APP_BULK_DELETE_CONFIRM="$(json_text "$APP_BULK_DELETE_CONFIRM")"
+JSON_APP_SELECT_TILE="$(json_text "$APP_SELECT_TILE")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
 JSON_PLACEHOLDER_PARENT_LABEL="$(json_text "$PLACEHOLDER_PARENT_LABEL")"
 JSON_PLACEHOLDER_EXIT_LABEL="$(json_text "$PLACEHOLDER_EXIT_LABEL")"

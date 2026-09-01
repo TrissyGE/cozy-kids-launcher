@@ -146,13 +146,78 @@ function filteredAdminTileIndexes(){
 }
 function setAdminTileSearch(value){
   adminTileQuery=String(value||'');
+  adminSelectedTileIds.clear();
   adminPage=0;
   renderAdmin();
 }
 function setAdminTileVisibility(value){
   adminTileVisibility=['all','visible','hidden'].includes(value)?value:'all';
+  adminSelectedTileIds.clear();
   adminPage=0;
   renderAdmin();
+}
+function renderAdminBulkActions(filteredTileIndexes){
+  const validIds=new Set(cfg.tiles.map(tile=>tile.id));
+  for(const id of adminSelectedTileIds){
+    if(!validIds.has(id)) adminSelectedTileIds.delete(id);
+  }
+  const filteredIds=filteredTileIndexes.map(index=>cfg.tiles[index].id);
+  const selectedFiltered=filteredIds.filter(id=>adminSelectedTileIds.has(id)).length;
+  const selectAll=document.getElementById('bulkSelectFiltered');
+  document.getElementById('adminBulkToolbar').setAttribute('aria-label',uiText.appBulkActions);
+  selectAll.checked=filteredIds.length>0&&selectedFiltered===filteredIds.length;
+  selectAll.indeterminate=selectedFiltered>0&&selectedFiltered<filteredIds.length;
+  selectAll.disabled=filteredIds.length===0;
+  selectAll.closest('label').classList.toggle('disabled',selectAll.disabled);
+  document.getElementById('bulkSelectFilteredLabel').textContent=uiText.appBulkSelectAll;
+  document.getElementById('bulkSelectionCount').textContent=uiText.appBulkSelected
+    .replace('{count}',String(adminSelectedTileIds.size));
+  const disabled=adminSelectedTileIds.size===0;
+  const showButton=document.getElementById('bulkShowTilesBtn');
+  const hideButton=document.getElementById('bulkHideTilesBtn');
+  const deleteButton=document.getElementById('bulkDeleteTilesBtn');
+  showButton.textContent=uiText.appBulkShow;
+  hideButton.textContent=uiText.appBulkHide;
+  deleteButton.textContent=uiText.appBulkDelete;
+  showButton.disabled=disabled;
+  hideButton.disabled=disabled;
+  deleteButton.disabled=disabled;
+}
+function setAdminTileSelected(tileId,selected){
+  if(selected) adminSelectedTileIds.add(tileId); else adminSelectedTileIds.delete(tileId);
+  renderAdminBulkActions(filteredAdminTileIndexes());
+}
+function toggleFilteredTileSelection(selected){
+  for(const index of filteredAdminTileIndexes()){
+    const tileId=cfg.tiles[index].id;
+    if(selected) adminSelectedTileIds.add(tileId); else adminSelectedTileIds.delete(tileId);
+  }
+  renderAdmin();
+}
+function setSelectedTilesVisible(visible){
+  if(!adminSelectedTileIds.size) return;
+  for(const tile of cfg.tiles){
+    if(adminSelectedTileIds.has(tile.id)) tile.visible=visible;
+  }
+  adminSelectedTileIds.clear();
+  adminPage=0;
+  renderAdmin();
+}
+function createAdminTile(){
+  return {id:'tile-'+Date.now(),label:uiText.newTile,emoji:'✨',cmd:[''],visible:true};
+}
+function deleteSelectedTiles(){
+  const count=adminSelectedTileIds.size;
+  if(!count||!window.confirm(uiText.appBulkDeleteConfirm.replace('{count}',String(count)))) return;
+  cfg.tiles=cfg.tiles.filter(tile=>!adminSelectedTileIds.has(tile.id));
+  adminSelectedTileIds.clear();
+  if(!cfg.tiles.length){
+    adminTileQuery='';
+    adminTileVisibility='all';
+    cfg.tiles.push(createAdminTile());
+  }
+  adminPage=0;
+  renderAll();
 }
 
 function renderAdmin(){
@@ -368,6 +433,17 @@ function renderAdmin(){
     const dragHandle=document.createElement('div');
     dragHandle.className='dragHandle';
     dragHandle.textContent='⋮⋮';
+    const leading=document.createElement('div');
+    leading.className='tile-row-leading';
+    const selected=document.createElement('input');
+    selected.type='checkbox';
+    selected.checked=adminSelectedTileIds.has(tile.id);
+    selected.setAttribute('aria-label',uiText.appSelectTile.replace('{tile}',tile.label||uiText.newTile));
+    selected.onchange=e=>setAdminTileSelected(tile.id,e.target.checked);
+    const selectLabel=document.createElement('label');
+    selectLabel.className='tile-select-toggle';
+    selectLabel.appendChild(selected);
+    leading.append(selectLabel,dragHandle);
     const del=document.createElement('button');
     del.className='smallbtn';
     del.textContent=uiText.delete;
@@ -404,9 +480,10 @@ function renderAdmin(){
       reorderTile(from,to);
     });
 
-    row.append(dragHandle,emoji,label,visibleWrap,select,browserWrap,del);
+    row.append(leading,emoji,label,visibleWrap,select,browserWrap,del);
     forms.appendChild(row);
   });
+  renderAdminBulkActions(filteredTileIndexes);
   renderBackupOptions();
   renderAdminPageNav(filteredTileIndexes.length);
   renderRecommendations();
@@ -422,7 +499,7 @@ function reorderTile(from,to){
   renderAdmin();
 }
 function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
-function addTile(){ adminTileQuery=''; adminTileVisibility='all'; cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); adminPage=Math.max(0,Math.ceil(cfg.tiles.length/pageSize())-1); renderAll(); }
+function addTile(){ adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); cfg.tiles.push(createAdminTile()); adminPage=Math.max(0,Math.ceil(cfg.tiles.length/pageSize())-1); renderAll(); }
 function renderAdminPageNav(tileCount){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1,Math.ceil(tileCount/pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
 function renderRecommendations(){
   const container=document.getElementById('recommendations');
