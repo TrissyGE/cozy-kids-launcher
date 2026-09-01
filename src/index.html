@@ -151,6 +151,18 @@
               <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
             </div>
             <div id="adminTileResultCount" class="muted admin-result-count" aria-live="polite"></div>
+            <div id="adminBulkToolbar" class="admin-bulk-toolbar" role="toolbar">
+              <label class="bulk-select-all" for="bulkSelectFiltered">
+                <input id="bulkSelectFiltered" type="checkbox" onchange="toggleFilteredTileSelection(this.checked)">
+                <span id="bulkSelectFilteredLabel"></span>
+              </label>
+              <span id="bulkSelectionCount" class="muted" aria-live="polite"></span>
+              <div class="admin-bulk-actions">
+                <button id="bulkShowTilesBtn" type="button" class="smallbtn" onclick="setSelectedTilesVisible(true)"></button>
+                <button id="bulkHideTilesBtn" type="button" class="smallbtn" onclick="setSelectedTilesVisible(false)"></button>
+                <button id="bulkDeleteTilesBtn" type="button" class="smallbtn" onclick="deleteSelectedTiles()"></button>
+              </div>
+            </div>
             <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
               <label style="font-weight:700; color:var(--text);">Browser</label>
               <select id="cfgBrowser"></select>

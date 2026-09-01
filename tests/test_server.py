@@ -1017,6 +1017,35 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('de:preview_title) echo "Vorschau"', installer)
         self.assertIn('en:preview_title) echo "Preview"', installer)
 
+    def test_app_editor_bulk_actions_use_stable_tile_ids(self):
+        source = frontend_source()
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("adminSelectedTileIds=new Set()", source)
+        self.assertIn('id="bulkSelectFiltered"', source)
+        self.assertIn('id="bulkShowTilesBtn"', source)
+        self.assertIn('id="bulkHideTilesBtn"', source)
+        self.assertIn('id="bulkDeleteTilesBtn"', source)
+        self.assertIn("function toggleFilteredTileSelection(selected)", source)
+        self.assertIn("function setSelectedTilesVisible(visible)", source)
+        self.assertIn("function deleteSelectedTiles()", source)
+        self.assertIn("adminSelectedTileIds.has(tile.id)", source)
+        self.assertIn("window.confirm(uiText.appBulkDeleteConfirm", source)
+        design_system = (
+            REPOSITORY_ROOT / "src" / "frontend" / "design-system.css"
+        ).read_text(encoding="utf-8")
+        self.assertIn(".smallbtn:disabled", design_system)
+        for label in (
+            "Mehrfachaktionen",
+            "Treffer auswählen",
+            "Auswahl löschen",
+            "Bulk actions",
+            "Select results",
+            "Delete selection",
+        ):
+            self.assertIn(label, installer)
+
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)

@@ -271,6 +271,34 @@ def run_scenarios(browser, release_fixture, installed_version):
         "document.getElementById('adminPageNav').children.length===0",
         message="App search did not narrow the editor list",
     )
+    browser.click("#bulkSelectFiltered")
+    assert_js(
+        browser,
+        "adminSelectedTileIds.size===1 && "
+        "document.getElementById('bulkHideTilesBtn').disabled===false",
+        "Selecting filtered app results did not enable bulk actions",
+    )
+    browser.click("#bulkHideTilesBtn")
+    browser.wait_for(
+        "cfg.tiles[0].visible===false && adminSelectedTileIds.size===0",
+        message="Bulk hide did not update the selected tile",
+    )
+    browser.set_value("#tileVisibilityFilter", "hidden")
+    browser.wait_for(
+        "filteredAdminTileIndexes().length===1 && "
+        "document.querySelector('#forms .tileform input:nth-of-type(2)').value==='Paint'",
+        message="Visibility filter did not isolate the bulk-hidden tile",
+    )
+    browser.click(
+        "#forms .tileform[style*='display: grid'] .tile-select-toggle input"
+    )
+    browser.click("#bulkShowTilesBtn")
+    browser.wait_for(
+        "cfg.tiles[0].visible===true && "
+        "!document.getElementById('adminTileEmptyState').hidden",
+        message="Bulk show did not refresh the active hidden filter",
+    )
+    browser.set_value("#tileVisibilityFilter", "all")
     browser.set_value("#tileSearch", "no matching tile")
     browser.wait_for(
         "!document.getElementById('adminTileEmptyState').hidden && "
@@ -278,26 +306,27 @@ def run_scenarios(browser, release_fixture, installed_version):
         ".every(row => getComputedStyle(row).display==='none')",
         message="Empty search results did not expose their status",
     )
-    browser.set_value("#tileSearch", "")
-    browser.evaluate("cfg.tiles[0].visible=false; renderAdmin()")
-    browser.set_value("#tileVisibilityFilter", "hidden")
+    browser.set_value("#tileSearch", "Drawing")
     browser.wait_for(
-        "Array.from(document.querySelectorAll('#forms .tileform'))"
-        ".filter(row => getComputedStyle(row).display!=='none').length===1 && "
-        "document.querySelector('#forms .tileform input:nth-of-type(2)').value==='Paint'",
-        message="Visibility filter did not isolate hidden tiles",
+        "filteredAdminTileIndexes().length===1",
+        message="Synthetic tile was not available for bulk deletion",
     )
-    browser.click("#forms .tileform input[type='checkbox']")
+    browser.click(
+        "#forms .tileform[style*='display: grid'] .tile-select-toggle input"
+    )
+    browser.evaluate("window.confirm=()=>true")
+    browser.click("#bulkDeleteTilesBtn")
     browser.wait_for(
+        "cfg.tiles.length===4 && !cfg.tiles.some(tile => tile.id==='drawing-filter') && "
         "!document.getElementById('adminTileEmptyState').hidden && "
         "filteredAdminTileIndexes().length===0",
-        message="Changing a hidden tile to visible did not refresh the active filter",
+        message="Bulk delete did not remove the selected tile or refresh results",
     )
     browser.evaluate(
         "cfg.tiles=cfg.tiles.slice(0,2); cfg.layoutMode='klein'; "
-        "adminTileVisibility='all'; adminPage=0; renderAdmin()"
+        "adminTileQuery=''; adminTileVisibility='all'; adminPage=0; renderAdmin()"
     )
-    log_scenario("app search, visibility filtering, and empty results stay local")
+    log_scenario("app search, filtering, bulk actions, and empty results stay local")
 
     browser.click("[data-admin-section='screen-time']")
     browser.set_value("#cfgTimerMinutes", "15")
