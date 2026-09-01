@@ -182,6 +182,38 @@
                 <span id="overviewAppearanceValue" class="overview-value"></span>
               </button>
             </div>
+            <section class="activity-panel" aria-labelledby="activityTitle">
+              <div class="activity-header">
+                <div>
+                  <h4 id="activityTitle"></h4>
+                  <p id="activityHint" class="muted"></p>
+                </div>
+                <label class="chk activity-toggle" for="cfgActivityTracking">
+                  <input id="cfgActivityTracking" type="checkbox" onchange="setActivityTrackingEnabled(this.checked)">
+                  <span id="activityEnabledLabel"></span>
+                </label>
+              </div>
+              <p id="activityTrackingStatus" class="muted"></p>
+              <div class="activity-metrics">
+                <div class="activity-metric">
+                  <span id="activityTimeLabel" class="overview-label"></span>
+                  <strong id="activityTimeValue" class="overview-value"></strong>
+                </div>
+                <div class="activity-metric">
+                  <span id="activityLaunchesLabel" class="overview-label"></span>
+                  <strong id="activityLaunchesValue" class="overview-value"></strong>
+                </div>
+              </div>
+              <div class="activity-list-header">
+                <h5 id="activityRecentTitle"></h5>
+                <div class="activity-actions">
+                  <button id="activityExportBtn" class="smallbtn" type="button" onclick="exportActivity()"></button>
+                  <button id="activityClearBtn" class="smallbtn" type="button" onclick="clearActivity()"></button>
+                </div>
+              </div>
+              <div id="activityMessage" class="ui-state" aria-live="polite" hidden></div>
+              <ol id="activityRecentList" class="activity-list"></ol>
+            </section>
           </section>
 
           <section id="adminSectionChildren" class="admin-section" data-admin-panel="children" aria-labelledby="adminNavChildren" hidden>
@@ -383,6 +415,7 @@
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>
 <script defer src="/frontend/schedule-controls.js"></script>
+<script defer src="/frontend/activity-dashboard.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
 <script defer src="/frontend/first-run.js"></script>
 <script defer src="/frontend/runtime-controls.js"></script>

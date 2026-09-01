@@ -127,6 +127,21 @@
   .overview-card:hover { box-shadow:0 8px 24px var(--rec-shadow); }
   .overview-label { font-weight:700; }
   .overview-value { font-size:1.4rem; font-weight:800; }
+  .activity-panel { margin-top:var(--space-4); padding:var(--space-4); border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--smallbtn-bg); }
+  .activity-header, .activity-list-header { display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-3); }
+  .activity-header h4, .activity-list-header h5 { margin:0 0 var(--space-1); }
+  .activity-header p { margin:0; }
+  .activity-toggle { flex:none; max-width:320px; }
+  .activity-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); margin:var(--space-4) 0; }
+  .activity-metric { min-height:92px; padding:var(--space-3); border-radius:var(--radius-field); background:var(--card); display:flex; flex-direction:column; justify-content:space-between; }
+  .activity-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:var(--space-2); }
+  .activity-list { display:grid; gap:var(--space-2); margin:var(--space-3) 0 0; padding:0; list-style:none; }
+  .activity-item { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:var(--space-3); padding:var(--space-3); border:1px solid var(--input-border); border-radius:var(--radius-field); background:var(--card); }
+  .activity-item-emoji { width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; }
+  .activity-item-emoji .local-icon { width:30px; height:30px; }
+  .activity-item-content { min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .activity-item-content strong, .activity-item-content span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .activity-item-duration { white-space:nowrap; }
   .panel h2 { margin-top:0; margin-bottom:18px; font-size:1.7rem; }
   .row2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
   .tileform { display:grid; grid-template-columns:44px 66px 1fr 120px 1.2fr 120px 70px; gap:10px; align-items:center; margin-bottom:12px; cursor:grab; }
@@ -263,7 +278,7 @@
   @media (forced-colors: active) {
     #themeBg { display:none; }
     .tile, .smallbtn, .nav, .theme-thumb, .admin-tab, .overview-card, .admin-bulk-toolbar, .launcher-preview, .preview-tile, .panel, .pinbox, .install-box, .timerbox, .confirm-box,
-    .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, .schedule-panel, .schedule-day, input, select, label.chk {
+    .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, .schedule-panel, .schedule-day, .activity-panel, .activity-metric, .activity-item, input, select, label.chk {
       background:Canvas;
       color:CanvasText;
       border:2px solid ButtonText;
@@ -304,6 +319,9 @@
     .admin-nav { position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
     .admin-tab { justify-content:center; text-align:center; }
     .overview-card { min-height:96px; }
+    .activity-header, .activity-list-header { flex-direction:column; }
+    .activity-toggle { max-width:none; }
+    .activity-actions { width:100%; justify-content:flex-start; }
     .app-list-tools { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .app-list-tools #addTileBtn { grid-column:1 / -1; }
     .admin-bulk-toolbar { align-items:flex-start; flex-wrap:wrap; }

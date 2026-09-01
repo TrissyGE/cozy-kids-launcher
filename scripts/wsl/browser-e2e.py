@@ -385,6 +385,101 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     log_scenario("settings and theme selection persist and re-render")
 
     enter_parent_settings(browser)
+    browser.wait_for(
+        "activityState==='empty' && "
+        "document.getElementById('cfgActivityTracking').checked===false && "
+        "document.getElementById('activityExportBtn').disabled && "
+        "document.getElementById('activityClearBtn').disabled",
+        message="The disabled empty activity dashboard did not finish loading",
+    )
+    browser.click("#cfgActivityTracking")
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "cfg.activityTrackingEnabled===true",
+        message="Opting in to local activity tracking was not persisted",
+    )
+    prepared_activity = browser.evaluate(
+        "(async()=>{cfg.tiles[0].cmd=['special:browser:'+location.origin+"
+        "'/no-media.html'];await persistConfig();return cfg.tiles[0].id;})()",
+        await_promise=True,
+    )
+    if prepared_activity != "paint":
+        raise AssertionError("The activity test tile could not be prepared")
+    embedded_finished = browser.evaluate(
+        "(async()=>{const response=await fetch('/launch/paint',{method:'POST'});"
+        "const target=new URL(response.url);"
+        "const token=target.searchParams.get('activity')||'';"
+        "if(!response.redirected||target.pathname!=='/browser.html'||token.length<16)"
+        "return false;"
+        "const finish=await fetch('/api/activity/finish',{method:'POST',"
+        "headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});"
+        "return finish.status===204;})()",
+        await_promise=True,
+    )
+    if embedded_finished is not True:
+        raise AssertionError(
+            "The tracked embedded app did not issue and finish an opaque token"
+        )
+    recorded = browser.evaluate(
+        "(async()=>{for(let attempt=0;attempt<30;attempt++){"
+        "const data=await fetch('/api/activity',{cache:'no-store'}).then(r=>r.json());"
+        "if(data.recordCount===1)return true;"
+        "await new Promise(resolve=>setTimeout(resolve,100));}return false;})()",
+        await_promise=True,
+    )
+    if recorded is not True:
+        raise AssertionError("Completed embedded usage was not recorded")
+    restored_activity_tile = browser.evaluate(
+        "(async()=>{cfg.tiles[0].cmd=['tuxpaint'];await persistConfig();return true;})()",
+        await_promise=True,
+    )
+    if restored_activity_tile is not True:
+        raise AssertionError("The activity test tile was not restored")
+    enter_parent_settings(browser)
+    browser.wait_for(
+        "activityState==='ready' && activityData.recordCount===1 && "
+        "document.querySelectorAll('#activityRecentList .activity-item').length===1 && "
+        "document.getElementById('activityExportBtn').disabled===false && "
+        "document.getElementById('activityClearBtn').disabled===false",
+        message="Recorded usage did not render in the Parent dashboard",
+    )
+    browser.screenshot(artifacts / "activity-dashboard.png")
+    activity_export = browser.evaluate(
+        "fetch('/api/activity/export').then(response=>response.json())",
+        await_promise=True,
+    )
+    if (
+        activity_export.get("activityVersion") != 1
+        or len(activity_export.get("records", [])) != 1
+        or "profiles" in activity_export
+    ):
+        raise AssertionError(
+            f"The local activity export exposed an unexpected shape: {activity_export!r}"
+        )
+    browser.click("#activityClearBtn")
+    browser.wait_for(
+        "!document.getElementById('confirmOverlay').classList.contains('hidden')",
+        message="Clearing activity did not use the shared confirmation dialog",
+    )
+    browser.click("#confirmActionBtn")
+    browser.wait_for(
+        "activityState==='empty' && activityData.recordCount===0 && "
+        "document.getElementById('activityMessage').textContent===uiText.activityClearSuccess && "
+        "document.getElementById('activityExportBtn').disabled && "
+        "document.getElementById('activityClearBtn').disabled",
+        message="Clearing activity did not remove and re-render the local records",
+    )
+    browser.click("#cfgActivityTracking")
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "cfg.activityTrackingEnabled===false",
+        message="Opting out of local activity tracking was not persisted",
+    )
+    log_scenario("opt-in local activity dashboard exports and clears completed usage")
+
+    enter_parent_settings(browser)
     browser.click("[data-admin-section='children']")
     browser.set_value("#newProfileName", "Alex")
     browser.set_value("#newProfileAvatar", "🚀")
@@ -1088,7 +1183,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 17 core and accessibility journeys", flush=True)
+    print("Browser E2E passed: 18 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

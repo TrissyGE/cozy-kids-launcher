@@ -124,6 +124,7 @@ async function activateProfile(profileId,options={}){
     if(message) clearUiState(message);
     if(options.picker) closeProfilePicker();
     await pollAvailability();
+    if(options.admin) await loadActivityDashboard();
     renderAll();
     pollTimer();
   }catch(e){
@@ -165,6 +166,7 @@ async function deleteProfileFromAdmin(profileId){
     const result=await profileApi('/api/profiles/delete',{profileId:profileId});
     cfg.profiles=result.profiles;
     clearUiState(message);
+    await loadActivityDashboard();
     renderProfileAdmin();
     renderProfileButton();
   }catch(e){

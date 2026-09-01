@@ -23,6 +23,7 @@ from application_launcher import (
     resolve_tile_action,
 )
 from activity_store import (
+    ACTIVITY_VERSION,
     EmbeddedActivitySessions,
     activity_payload,
     remove_profile_activity,
@@ -351,6 +352,26 @@ def diagnostics_payload():
     )
 
 
+def activity_catalog(data):
+    """Return current display labels without copying them into activity storage."""
+    return [
+        {
+            "id": profile["id"],
+            "name": profile.get("name", ""),
+            "avatar": profile.get("avatar", ""),
+            "tiles": [
+                {
+                    "id": tile["id"],
+                    "label": tile.get("label", ""),
+                    "emoji": tile.get("emoji", ""),
+                }
+                for tile in profile.get("tiles", [])
+            ],
+        }
+        for profile in data.get("profiles", [])
+    ]
+
+
 def _fetch_remote_json(url, timeout=5):
     return fetch_update_json(url, timeout=timeout)
 
@@ -619,12 +640,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path == "/api/availability/status":
             return self.json_response(availability_summary(load_cfg()))
         if self.path == "/api/activity":
-            data = load_cfg()
+            stored = load_stored_cfg()
+            data = active_config(stored)
             if not self.require_admin(data):
                 return
             payload = activity_payload(ACTIVITY_FILE)
             payload["enabled"] = bool(data.get("activityTrackingEnabled", False))
+            payload["profiles"] = activity_catalog(stored)
             return self.json_response(payload)
+        if self.path == "/api/activity/export":
+            data = load_cfg()
+            if not self.require_admin(data):
+                return
+            activity = activity_payload(ACTIVITY_FILE)
+            payload = json.dumps({
+                "activityVersion": ACTIVITY_VERSION,
+                "exportedAt": int(time.time()),
+                "records": list(reversed(activity["records"])),
+            }, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header(
+                "Content-Disposition",
+                'attachment; filename="cozy-kids-activity.json"',
+            )
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
         if self.path == "/api/backups":
             data = load_cfg()
             if not self.require_admin(data):
