@@ -62,8 +62,10 @@ class StableMainReleaseContractTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertIn('"configVersion": 1', installer)
-        self.assertEqual(example["configVersion"], 1)
+        self.assertIn('"configVersion": 2', installer)
+        self.assertEqual(example["configVersion"], 2)
+        self.assertEqual(example["activeProfileId"], "default")
+        self.assertEqual(len(example["profiles"]), 1)
 
     @unittest.skipUnless(os.name == "posix", "Installer smoke test requires Linux")
     def test_isolated_installer_writes_the_current_config_schema(self):
@@ -141,6 +143,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "share"
                     / "cozy-kids-launcher"
                     / "config_validation.py"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
+                    / "profile_config.py"
                 ).is_file()
             )
             self.assertTrue(
@@ -237,7 +248,9 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertEqual(config_path.stat().st_mode & 0o777, 0o600)
             self.assertEqual(backup_root.stat().st_mode & 0o777, 0o700)
             self.assertEqual(len(list(backup_root.iterdir())), 1)
-        self.assertEqual(installed["configVersion"], 1)
+            self.assertEqual(installed["configVersion"], 2)
+            self.assertEqual(installed["activeProfileId"], "default")
+            self.assertEqual(len(installed["profiles"]), 1)
 
 
 if __name__ == "__main__":

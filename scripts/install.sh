@@ -1280,6 +1280,7 @@ install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launch
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/config_validation.py" "$APP_ROOT/config_validation.py"
+install -m 0644 "$SRC_DIR/profile_config.py" "$APP_ROOT/profile_config.py"
 install -m 0644 "$SRC_DIR/lifecycle_state.py" "$APP_ROOT/lifecycle_state.py"
 install -m 0644 "$SRC_DIR/media_library.py" "$APP_ROOT/media_library.py"
 install -m 0644 "$SRC_DIR/parent_auth.py" "$APP_ROOT/parent_auth.py"
@@ -1316,26 +1317,35 @@ python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFA
 import json, sys, shutil, os
 path, lang, title, theme, layout, parent_label, exit_label, shutdown_label, tile_paint, tile_games, tile_music, tile_browser, browser_url, rec_path, recommended = sys.argv[1:16]
 config = {
-    "configVersion": 1,
+    "configVersion": 2,
     "language": lang,
-    "title": title,
-    "theme": theme,
-    "layoutMode": layout,
     "parentLabel": parent_label,
     "exitLabel": exit_label,
     "shutdownLabel": shutdown_label,
     "pinHash": "",
-    "currentPage": 0,
     "autoScanDone": False,
-    "timerMinutes": 0,
-    "timerWarningMinutes": 5,
-    "tiles": [
-        {"id": "paint", "label": tile_paint, "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
-        {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": ["gcompris"], "visible": True},
-        {"id": "music", "label": tile_music, "emoji": "🎵", "cmd": ["special:filme-musik"], "visible": True},
-        {"id": "browser", "label": tile_browser, "emoji": "🌐", "cmd": ["special:external-browser:" + browser_url], "visible": False}
-    ]
+    "activeProfileId": "default",
+    "profiles": [{
+        "id": "default",
+        "name": "Kiddo",
+        "avatar": "🌈",
+        "title": title,
+        "theme": theme,
+        "layoutMode": layout,
+        "currentPage": 0,
+        "timerMinutes": 0,
+        "timerWarningMinutes": 5,
+        "favorites": [],
+        "appLimits": {},
+        "tiles": [
+            {"id": "paint", "label": tile_paint, "emoji": "🎨", "cmd": ["tuxpaint"], "visible": True},
+            {"id": "games", "label": tile_games, "emoji": "🧩", "cmd": ["gcompris"], "visible": True},
+            {"id": "music", "label": tile_music, "emoji": "🎵", "cmd": ["special:filme-musik"], "visible": True},
+            {"id": "browser", "label": tile_browser, "emoji": "🌐", "cmd": ["special:external-browser:" + browser_url], "visible": False}
+        ]
+    }]
 }
+profile = config["profiles"][0]
 existing_ids = {"paint", "games", "music", "browser"}
 if recommended == "1" and os.path.isfile(rec_path):
     with open(rec_path, 'r', encoding='utf-8') as f:
@@ -1365,7 +1375,7 @@ if recommended == "1" and os.path.isfile(rec_path):
             else:
                 # Normal alt_cmd replacement: keep all args
                 tile_cmd = [found_cmd] + list(cmds[1:])
-            config["tiles"].append({
+            profile["tiles"].append({
                 "id": rec["id"],
                 "label": label,
                 "emoji": rec.get("emoji", "✨"),

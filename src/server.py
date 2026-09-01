@@ -32,6 +32,15 @@ from config_validation import (
     MAX_TILES,
     public_config,
     validate_config,
+    validate_stored_config,
+)
+from profile_config import (
+    active_config,
+    add_profile,
+    merge_active_config,
+    profile_summaries,
+    remove_profile,
+    select_profile,
 )
 from backup_store import (
     create_pre_restore_backup,
@@ -152,7 +161,7 @@ def has_media(path):
     return path_has_media(path, patterns=EXTS)
 
 
-def load_cfg():
+def load_stored_cfg():
     data = read_config(CFG)
     data, migrated = migrate_config(data)
     recs = load_recommendations()
@@ -162,25 +171,30 @@ def load_cfg():
             rec_by_first_cmd[rec["cmd"][0]] = rec["cmd"]
         for alt in rec.get("alt_cmds", []):
             rec_by_first_cmd[alt] = rec["cmd"]
-    for tile in data.get("tiles", []):
-        cmd = tile.get("cmd", [])
-        if len(cmd) == 1 and cmd[0] in LEGACY_WEB_ACTION_MIGRATIONS:
-            tile["cmd"] = [LEGACY_WEB_ACTION_MIGRATIONS[cmd[0]]]
-            cmd = tile["cmd"]
-            migrated = True
-        if cmd and len(cmd) >= 1 and cmd[0] in rec_by_first_cmd and cmd != rec_by_first_cmd[cmd[0]]:
-            tile["cmd"] = rec_by_first_cmd[cmd[0]]
-            migrated = True
+    for profile in data.get("profiles", []):
+        for tile in profile.get("tiles", []):
+            cmd = tile.get("cmd", [])
+            if len(cmd) == 1 and cmd[0] in LEGACY_WEB_ACTION_MIGRATIONS:
+                tile["cmd"] = [LEGACY_WEB_ACTION_MIGRATIONS[cmd[0]]]
+                cmd = tile["cmd"]
+                migrated = True
+            if (
+                cmd
+                and cmd[0] in rec_by_first_cmd
+                and cmd != rec_by_first_cmd[cmd[0]]
+            ):
+                tile["cmd"] = rec_by_first_cmd[cmd[0]]
+                migrated = True
     if "autoScanDone" not in data:
         data["autoScanDone"] = True
         migrated = True
-    data = validate_config(
+    data = validate_stored_config(
         data,
         existing_pin_hash=data.get("pinHash", ""),
         allow_pin_hash=True,
     )
     if migrated:
-        save_cfg(data)
+        atomic_write_config(CFG, data)
         log_runtime_event(
             "config.migrated",
             configVersion=data.get("configVersion", CURRENT_CONFIG_VERSION),
@@ -188,9 +202,40 @@ def load_cfg():
     return data
 
 
+def load_cfg():
+    return active_config(load_stored_cfg())
+
+
+def save_stored_cfg(data):
+    validated = validate_stored_config(
+        data,
+        existing_pin_hash=data.get("pinHash", ""),
+        allow_pin_hash=True,
+    )
+    atomic_write_config(CFG, validated)
+    return validated
+
+
 def save_cfg(data):
-    data, _ = migrate_config(data)
-    atomic_write_config(CFG, data)
+    try:
+        stored = load_stored_cfg()
+    except FileNotFoundError:
+        stored = validate_stored_config(
+            data,
+            existing_pin_hash=data.get("pinHash", ""),
+            allow_pin_hash=True,
+        )
+        atomic_write_config(CFG, stored)
+        return active_config(stored)
+
+    validated = validate_config(
+        data,
+        existing_pin_hash=stored.get("pinHash", ""),
+        allow_pin_hash=True,
+    )
+    stored = merge_active_config(stored, validated)
+    stored = save_stored_cfg(stored)
+    return active_config(stored)
 
 
 def write_browser_override(data):
@@ -213,7 +258,7 @@ def available_config_backups():
     for metadata in discover_config_backups(BACKUP_ROOT):
         try:
             raw = read_config_backup(BACKUP_ROOT, metadata["id"])
-            validated = validate_config(raw, existing_pin_hash="")
+            validated = validate_stored_config(raw, existing_pin_hash="")
         except (FileNotFoundError, OSError, ValueError):
             continue
         backups.append({
@@ -227,15 +272,16 @@ def available_config_backups():
 
 
 def restore_config_backup(backup_id):
-    current = load_cfg()
+    current = load_stored_cfg()
     raw = read_config_backup(BACKUP_ROOT, backup_id)
-    restored = validate_config(
+    restored = validate_stored_config(
         raw,
         existing_pin_hash=current.get("pinHash", ""),
     )
     safety_backup = create_pre_restore_backup(BACKUP_ROOT, current)
-    save_cfg(restored)
-    write_browser_override(restored)
+    restored = save_stored_cfg(restored)
+    runtime = active_config(restored)
+    write_browser_override(runtime)
     log_runtime_event(
         "config.restored",
         configVersion=restored.get(
@@ -243,7 +289,7 @@ def restore_config_backup(backup_id):
             CURRENT_CONFIG_VERSION,
         ),
     )
-    return restored, safety_backup
+    return runtime, safety_backup
 
 
 def scan_apps():
@@ -495,6 +541,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/config":
             return self.json_response(public_config(load_cfg()))
+        if self.path == "/api/profiles":
+            data = load_stored_cfg()
+            if not self.require_admin(active_config(data)):
+                return
+            return self.json_response({
+                "activeProfileId": data["activeProfileId"],
+                "profiles": profile_summaries(data),
+            })
         if self.path == "/api/apps":
             return self.json_response(scan_apps())
         if self.path == "/api/recommendations":
@@ -535,8 +589,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             return self.json_response({"backups": available_config_backups()})
         if self.path == "/api/export-config":
-            data = load_cfg()
-            if not self.require_admin(data):
+            data = load_stored_cfg()
+            if not self.require_admin(active_config(data)):
                 return
             payload = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
             self.send_response(200)
@@ -574,6 +628,71 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action == "api/profiles/create":
+            stored = load_stored_cfg()
+            if not self.require_admin(active_config(stored)):
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            try:
+                stored, profile_id = add_profile(
+                    stored,
+                    body.get("name"),
+                    body.get("avatar", ""),
+                )
+                stored = save_stored_cfg(stored)
+            except (OSError, ValueError) as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            log_runtime_event("profile.created")
+            self.json_response({
+                "status": "ok",
+                "profileId": profile_id,
+                "activeProfileId": stored["activeProfileId"],
+                "profiles": profile_summaries(stored),
+            })
+            return
+        if action == "api/profiles/select":
+            stored = load_stored_cfg()
+            if not self.require_admin(active_config(stored)):
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            try:
+                stored = select_profile(stored, body.get("profileId"))
+                stored = save_stored_cfg(stored)
+                clear_timer()
+            except (OSError, ValueError) as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            log_runtime_event("profile.selected")
+            self.json_response({
+                "status": "ok",
+                "config": public_config(active_config(stored)),
+            })
+            return
+        if action == "api/profiles/delete":
+            stored = load_stored_cfg()
+            if not self.require_admin(active_config(stored)):
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            try:
+                stored = remove_profile(stored, body.get("profileId"))
+                stored = save_stored_cfg(stored)
+            except (OSError, ValueError) as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            log_runtime_event("profile.removed")
+            self.json_response({
+                "status": "ok",
+                "activeProfileId": stored["activeProfileId"],
+                "profiles": profile_summaries(stored),
+            })
+            return
         if action == "api/save-config":
             cfg = load_cfg()
             if not self.require_admin(cfg):
@@ -660,20 +779,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
             return
         if action == "api/import-config":
-            cfg = load_cfg()
+            stored = load_stored_cfg()
+            cfg = active_config(stored)
             if not self.require_admin(cfg):
                 return
             data = self.read_json_body()
             if data is None:
                 return
             try:
-                imported = validate_config(
+                imported = validate_stored_config(
                     data,
                     existing_pin_hash=cfg.get("pinHash", ""),
                     allow_pin_hash="pinHash" in data,
                 )
-                save_cfg(imported)
-                write_browser_override(imported)
+                imported = save_stored_cfg(imported)
+                write_browser_override(active_config(imported))
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return

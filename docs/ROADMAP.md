@@ -56,6 +56,8 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 ## v0.6.0 — Family Edition
 
 - [ ] Add multiple child profiles with separate avatars, themes, tiles, favorites, and limits
+  - [x] Introduce a versioned local profile model and authenticated management API without breaking the existing launcher API
+  - [ ] Add profile creation, editing, deletion, and selection to the Parent and child-facing interfaces
 - [ ] Add a guided first-run setup for language, child, apps, time rules, and appearance
 - [ ] Add weekly screen-time schedules and per-app availability rules
 - [ ] Add a local, optional parent dashboard for recent activity and usage duration
@@ -75,10 +77,19 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 - [ ] Add more installer and interface languages beyond German and English
 - [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
-- [ ] Evaluate additional packaging only where host-app launching and desktop integration remain reliable
+  - [ ] Add a package-managed runtime mode that leaves updates to the system package manager
+  - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
+- [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable
+- [ ] Evaluate a classic-confined Snap and request Snap Store approval if host-app launching remains reliable
+- [ ] Treat Flatpak as a feasibility track: prefer a reduced or self-hosted build unless sandbox integration and current Flathub policy become compatible with the launcher
+- [ ] Pursue official Debian/Ubuntu and Arch repository adoption only as a long-term downstream-maintainer goal, not a release commitment
 - [ ] Add a supported user-service lifecycle with useful status and recovery commands
 - [ ] Add stable and opt-in preview update channels without weakening immutable releases
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
+
+Packaging therefore proceeds in the practical order DEB/APT, AUR, classic Snap,
+then Flatpak feasibility. Every package format must preserve local configuration,
+desktop integration, host-app launching, and the stable-`main` updater contract.
 
 ## Release standard
 

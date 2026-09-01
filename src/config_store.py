@@ -4,8 +4,10 @@ import json
 import os
 import tempfile
 
+from profile_config import migrate_legacy_profile
 
-CURRENT_CONFIG_VERSION = 1
+
+CURRENT_CONFIG_VERSION = 2
 
 
 def migrate_config(data):
@@ -27,6 +29,12 @@ def migrate_config(data):
     while version < CURRENT_CONFIG_VERSION:
         if version == 0:
             version = 1
+            result["configVersion"] = version
+            migrated = True
+            continue
+        if version == 1:
+            result = migrate_legacy_profile(result)
+            version = 2
             result["configVersion"] = version
             migrated = True
             continue

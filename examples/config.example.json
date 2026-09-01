@@ -1,49 +1,60 @@
 {
-  "configVersion": 1,
-  "title": "Hallo Kiddo 🌈",
-  "theme": "rosa",
-  "customColors": {
-    "bg1": "#ffd6e8",
-    "bg2": "#ffeef6",
-    "text": "#5f2148",
-    "btn": "#e85a9c",
-    "card": "#ffffff"
-  },
-  "customBackground": "",
-  "layoutMode": "gross",
-  "papaLabel": "Papa",
+  "configVersion": 2,
+  "language": "de",
+  "parentLabel": "Papa",
   "exitLabel": "Kindermodus beenden",
-  "currentPage": 0,
-  "timerMinutes": 0,
-  "timerWarningMinutes": 5,
-  "tiles": [
+  "activeProfileId": "default",
+  "profiles": [
     {
-      "id": "paint",
-      "label": "Malen",
-      "emoji": "🎨",
-      "cmd": ["tuxpaint"],
-      "visible": true
-    },
-    {
-      "id": "games",
-      "label": "Lernspiele",
-      "emoji": "🧩",
-      "cmd": ["gcompris"],
-      "visible": true
-    },
-    {
-      "id": "music",
-      "label": "Filme und Musik",
-      "emoji": "🎵",
-      "cmd": ["special:filme-musik"],
-      "visible": true
-    },
-    {
-      "id": "browser",
-      "label": "Kinder-Internet",
-      "emoji": "🌐",
-      "cmd": ["/usr/local/bin/kids-browser"],
-      "visible": false
+      "id": "default",
+      "name": "Kiddo",
+      "avatar": "🌈",
+      "title": "Hallo Kiddo 🌈",
+      "theme": "rosa",
+      "customColors": {
+        "bg1": "#ffd6e8",
+        "bg2": "#ffeef6",
+        "text": "#5f2148",
+        "btn": "#e85a9c",
+        "card": "#ffffff"
+      },
+      "customBackground": "",
+      "layoutMode": "gross",
+      "currentPage": 0,
+      "timerMinutes": 0,
+      "timerWarningMinutes": 5,
+      "favorites": [],
+      "appLimits": {},
+      "tiles": [
+        {
+          "id": "paint",
+          "label": "Malen",
+          "emoji": "🎨",
+          "cmd": ["tuxpaint"],
+          "visible": true
+        },
+        {
+          "id": "games",
+          "label": "Lernspiele",
+          "emoji": "🧩",
+          "cmd": ["gcompris"],
+          "visible": true
+        },
+        {
+          "id": "music",
+          "label": "Filme und Musik",
+          "emoji": "🎵",
+          "cmd": ["special:filme-musik"],
+          "visible": true
+        },
+        {
+          "id": "browser",
+          "label": "Kinder-Internet",
+          "emoji": "🌐",
+          "cmd": ["/usr/local/bin/kids-browser"],
+          "visible": false
+        }
+      ]
     }
   ]
 }
