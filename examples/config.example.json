@@ -24,6 +24,11 @@
       "currentPage": 0,
       "timerMinutes": 0,
       "timerWarningMinutes": 5,
+      "weeklySchedule": {
+        "enabled": false,
+        "days": {}
+      },
+      "appAvailability": {},
       "favorites": [],
       "appLimits": {},
       "tiles": [

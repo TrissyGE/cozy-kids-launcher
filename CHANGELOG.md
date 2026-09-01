@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Added Parent-authenticated profile creation, selection, and deletion APIs; profile switches clear active timer state and protected deletion rules keep one valid active profile
 - Added profile creation, editing, selection, and deletion to Parent settings plus a PIN-gated child-facing picker with per-profile recent-app state
 - Added a five-step first-run setup for language, child identity, visible apps, initial screen time, and appearance, with runtime German/English switching from generated local locale files
+- Added bounded per-profile weekly and per-app availability rules with a local status API and server-side enforcement before application launch
 - Extended configuration export, import, backup, restore, installer, diagnostics, and privacy documentation for complete multi-profile data
 
 ## [0.5.0] - 2026-09-01

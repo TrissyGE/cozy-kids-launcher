@@ -12,6 +12,7 @@ from profile_config import (
     active_config,
     profile_summaries,
 )
+from schedule_rules import validate_app_availability, validate_schedule
 
 
 MAX_TILES = 200
@@ -164,6 +165,16 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
             clean_limits[tile_id] = minutes
         result["appLimits"] = clean_limits
 
+    if "weeklySchedule" in result:
+        result["weeklySchedule"] = validate_schedule(result["weeklySchedule"])
+
+    if "appAvailability" in result:
+        result["appAvailability"] = validate_app_availability(
+            result["appAvailability"],
+            PROFILE_ID_PATTERN,
+            MAX_TILES,
+        )
+
     if allow_pin_hash:
         pin_hash = result.get("pinHash", "")
         if pin_hash and not is_supported_pin_hash(pin_hash):
@@ -227,6 +238,8 @@ def validate_stored_config(data, existing_pin_hash="", allow_pin_hash=False):
         candidate.setdefault("tiles", [])
         candidate.setdefault("favorites", [])
         candidate.setdefault("appLimits", {})
+        candidate.setdefault("weeklySchedule", {"enabled": False, "days": {}})
+        candidate.setdefault("appAvailability", {})
         validated = _validate_flat_config(candidate)
         validated.pop("configVersion", None)
         validated.pop("pinHash", None)
