@@ -61,6 +61,18 @@ class FakeTkWindow:
 
 
 class OverlayWindowHintTests(unittest.TestCase):
+    def test_tile_availability_closes_only_the_matching_owned_tile(self):
+        status = {"profileAllowed": True, "blockedTileIds": ["paint"]}
+        self.assertTrue(overlay.tile_is_blocked(status, "paint"))
+        self.assertFalse(overlay.tile_is_blocked(status, "games"))
+        self.assertTrue(
+            overlay.tile_is_blocked(
+                {"profileAllowed": False, "blockedTileIds": []},
+                "games",
+            )
+        )
+        self.assertFalse(overlay.tile_is_blocked({}, ""))
+
     def test_dock_and_topmost_hints_are_applied_before_lift(self):
         window = FakeWindow()
 

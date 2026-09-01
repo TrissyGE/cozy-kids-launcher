@@ -133,7 +133,7 @@ class ApplicationLauncher:
         except (OSError, subprocess.TimeoutExpired):
             pass
 
-    def start_overlay(self, mode, url=""):
+    def start_overlay(self, mode, url="", tile_id=""):
         if not os.path.isfile(self.overlay_script):
             return False
         command = [
@@ -146,6 +146,8 @@ class ApplicationLauncher:
         ]
         if url:
             command.extend(["--url", url])
+        if tile_id:
+            command.extend(["--tile-id", tile_id])
         process = subprocess.Popen(
             command,
             env=dict(os.environ),
@@ -168,7 +170,7 @@ class ApplicationLauncher:
             self.stop_existing_overlay()
             self.stop_active_tile()
 
-    def launch_owned_tile(self, command, mode, url=""):
+    def launch_owned_tile(self, command, mode, url="", tile_id=""):
         if not command or not os.path.isfile(self.process_supervisor):
             raise OSError("Tile process supervisor is unavailable")
         with self.lock:
@@ -199,7 +201,7 @@ class ApplicationLauncher:
             ):
                 self._terminate_started_process(process)
                 raise OSError("Tile process ownership could not be established")
-            if not self.start_overlay(mode, url=url):
+            if not self.start_overlay(mode, url=url, tile_id=tile_id):
                 self.stop_active_tile()
                 raise OSError("Tile overlay could not be started")
             return process

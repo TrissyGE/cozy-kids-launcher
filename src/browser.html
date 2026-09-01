@@ -67,9 +67,10 @@
   </div>
 </div>
 <script>
+const browserParams = new URLSearchParams(location.search);
+const tileId = browserParams.get('tile') || '';
 (function(){
-  const params = new URLSearchParams(location.search);
-  const url = params.get('url');
+  const url = browserParams.get('url');
   if (!url) {
     document.getElementById('frame').style.display = 'none';
     document.body.innerHTML += '<div style="color:white;text-align:center;padding-top:40vh;font-size:1.5rem;">No URL provided</div>';
@@ -159,6 +160,16 @@ async function extendFromBlock(minutes){
 }
 pollTimer();
 setInterval(pollTimer,10000);
+async function pollAvailability(){
+  try{
+    const response=await fetch('/api/availability/status',{cache:'no-store'});
+    const data=await response.json();
+    const blocked=Array.isArray(data.blockedTileIds)?data.blockedTileIds:[];
+    if(data.profileAllowed===false||(tileId&&blocked.includes(tileId))) goHome();
+  }catch(e){}
+}
+pollAvailability();
+setInterval(pollAvailability,10000);
 </script>
 </body>
 </html>

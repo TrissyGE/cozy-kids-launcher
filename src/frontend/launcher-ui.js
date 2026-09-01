@@ -111,6 +111,8 @@ async function bootstrapLauncher(){
     try{ await autoScanRecommendations(); }catch(e){}
     await pollTimer();
     if(timerPollInterval===null) timerPollInterval=setInterval(pollTimer,10000);
+    await pollAvailability();
+    if(availabilityPollInterval===null) availabilityPollInterval=setInterval(pollAvailability,10000);
     await startupUpdateCheck();
     return true;
   })();
@@ -183,6 +185,9 @@ function renderAll(){
   renderAdmin();
   renderNav();
   maybeOpenFirstRun();
+  if(!availabilityStatus.profileAllowed&&document.getElementById('admin').classList.contains('hidden')){
+    showAvailabilityBlock('profile_schedule');
+  }
 }
 function renderKids(){
   const grid=document.getElementById('grid');
@@ -190,6 +195,7 @@ function renderKids(){
   const tiles=tilesForPage(cfg.currentPage);
   const size=pageSize();
   let lastLaunched='';
+  const blocked=blockedTileIds();
   try{ lastLaunched=localStorage.getItem(profileStorageKey())||''; }catch(e){}
   if(tiles.length===0){
     const empty=document.createElement('div');
@@ -208,8 +214,14 @@ function renderKids(){
       const tile=tiles[i];
       const btn=document.createElement('button');
       btn.className='tile'+(tile.id===lastLaunched?' last-launched':'');
+      if(blocked.has(tile.id)){
+        btn.classList.add('unavailable');
+        btn.setAttribute('aria-disabled','true');
+      }
       btn.style.position='relative';
-      btn.onclick=()=>launchTile(tile.id);
+      btn.onclick=()=>blocked.has(tile.id)?showAvailabilityBlock(
+        availabilityStatus.profileAllowed?'app_schedule':'profile_schedule'
+      ):launchTile(tile.id);
       btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); };
       const tileEmoji=createTileVisual(tile.emoji,'emoji');
       const tileLabel=document.createElement('div');
@@ -242,12 +254,23 @@ function showStartFeedback(tile){
   overlay.classList.remove('hidden');
   setTimeout(()=>overlay.classList.add('hidden'),1500);
 }
-function launchTile(id){
+async function launchTile(id){
   const tile=cfg.tiles.find(t=>t.id===id);
   if(!tile) return;
-  try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
   showStartFeedback(tile);
-  fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).then(r=>{ if(r.redirected) window.location=r.url; }).catch(()=>{});
+  try{
+    const response=await fetch('/launch/'+encodeURIComponent(id), {method:'POST'});
+    if(response.status===403){
+      document.getElementById('startOverlay').classList.add('hidden');
+      const data=await response.json();
+      showAvailabilityBlock(data.reason||'profile_schedule');
+      await pollAvailability();
+      return;
+    }
+    if(!response.ok&&!response.redirected) return;
+    try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
+    if(response.redirected) window.location=response.url;
+  }catch(e){}
 }
 
 // PIN handling

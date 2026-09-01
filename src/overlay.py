@@ -142,11 +142,21 @@ def focus_launcher():
         pass
 
 
+def tile_is_blocked(status, tile_id):
+    if not tile_id or not isinstance(status, dict):
+        return False
+    blocked = status.get("blockedTileIds", [])
+    if not isinstance(blocked, list):
+        blocked = []
+    return status.get("profileAllowed") is False or tile_id in blocked
+
+
 class AppOverlay:
-    def __init__(self, mode, url, label):
+    def __init__(self, mode, url, label, tile_id=""):
         self.mode = mode
         self.url = url
         self.label = label
+        self.tile_id = tile_id
         self.hide_after_ms = 2000
 
         self.root = tk.Tk()
@@ -241,6 +251,10 @@ class AppOverlay:
         self.root.after(1000, self.poll_process)
 
     def poll_timer(self):
+        availability = api("/api/availability/status")
+        if tile_is_blocked(availability, self.tile_id):
+            self.on_close()
+            return
         data = api("/api/timer/status")
         if data.get("active"):
             remaining = data.get("remainingSeconds", 0)
@@ -267,9 +281,10 @@ def main():
     parser.add_argument("--mode", default="external", choices=["external", "local"])
     parser.add_argument("--url", default="")
     parser.add_argument("--label", default="Home")
+    parser.add_argument("--tile-id", default="")
     args = parser.parse_args()
 
-    overlay = AppOverlay(args.mode, args.url, args.label)
+    overlay = AppOverlay(args.mode, args.url, args.label, tile_id=args.tile_id)
     write_process_record(
         OVERLAY_PIDFILE,
         os.getpid(),

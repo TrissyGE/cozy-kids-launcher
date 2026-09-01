@@ -107,6 +107,7 @@ function homeGestureAllowed(){
     document.getElementById('installOverlay').classList.contains('hidden') &&
     document.getElementById('profileOverlay').classList.contains('hidden') &&
     document.getElementById('firstRunOverlay').classList.contains('hidden') &&
+    document.getElementById('availabilityBlock').classList.contains('hidden') &&
     document.getElementById('timerBlock').classList.contains('hidden') &&
     document.getElementById('timerWarning').classList.contains('hidden') &&
     document.getElementById('startOverlay').classList.contains('hidden');
@@ -196,6 +197,7 @@ async function saveConfig(){
   cfg.currentPage=0;
   try{
     await persistConfig();
+    await pollAvailability();
     clearUiState(message);
     renderAll();
     closeAdmin();
@@ -360,6 +362,7 @@ function focusTileByDir(dir){
 }
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
+    if(!document.getElementById('availabilityBlock').classList.contains('hidden')){ e.preventDefault(); hideAvailabilityBlock(); return; }
     if(!document.getElementById('themeOverlay').classList.contains('hidden')){ e.preventDefault(); closeThemePicker(); return; }
     if(!document.getElementById('installOverlay').classList.contains('hidden')){ e.preventDefault(); closeInstallOverlay(); return; }
     if(!document.getElementById('profileOverlay').classList.contains('hidden')){ e.preventDefault(); closeProfilePicker(); return; }
@@ -370,6 +373,7 @@ document.addEventListener('keydown',function(e){
   if(!document.getElementById('pin').classList.contains('hidden')) return;
   if(!document.getElementById('profileOverlay').classList.contains('hidden')) return;
   if(!document.getElementById('firstRunOverlay').classList.contains('hidden')) return;
+  if(!document.getElementById('availabilityBlock').classList.contains('hidden')) return;
   if(!document.getElementById('timerBlock').classList.contains('hidden')) return;
   if(!document.getElementById('timerWarning').classList.contains('hidden')) return;
   if(!document.getElementById('startOverlay').classList.contains('hidden')) return;
