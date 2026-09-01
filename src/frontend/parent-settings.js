@@ -3,6 +3,20 @@ async function savePin(){ const p1=document.getElementById('cfgPin').value; cons
 async function removePin(){ if(!cfg.pinConfigured) return; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; const r=await fetch('/api/pin/remove',{method:'POST'}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht entfernt werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=false; msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
 function updatePinButton(){ const setButton=document.getElementById('setPinBtn'); setIconLabel(setButton,'lock',cfg.pinConfigured?uiText.pinChange:uiText.pinSet); const btn=document.getElementById('removePinBtn'); setIconLabel(btn,'delete',uiText.pinRemove); btn.disabled=!cfg.pinConfigured; btn.style.opacity=cfg.pinConfigured?1:.5; }
 
+function parseBrowserAllowedOrigins(value){
+  const origins=[];
+  for(const raw of String(value||'').split(/\r?\n/)){
+    const candidate=raw.trim();
+    if(!candidate) continue;
+    let url;
+    try{ url=new URL(candidate); }catch(e){ return null; }
+    if(!['http:','https:'].includes(url.protocol)||url.username||url.password) return null;
+    if(!origins.includes(url.origin)) origins.push(url.origin);
+    if(origins.length>20) return null;
+  }
+  return origins;
+}
+
 // Update check
 let installedVersion='0.0.0';
 async function checkUpdate(){
@@ -443,8 +457,23 @@ function renderAdmin(){
     optExt.textContent=uiText.webModeExternal;
     typeSelect.appendChild(optEmb);
     typeSelect.appendChild(optExt);
-    browserWrap.appendChild(urlInput);
-    browserWrap.appendChild(typeSelect);
+    const browserPrimary=document.createElement('div');
+    browserPrimary.className='browser-primary';
+    browserPrimary.append(urlInput,typeSelect);
+    const allowlistLabel=document.createElement('label');
+    allowlistLabel.className='browser-allowlist';
+    const allowlistTitle=document.createElement('span');
+    allowlistTitle.textContent=uiText.browserAllowlistLabel;
+    const allowlistInput=document.createElement('textarea');
+    allowlistInput.rows=2;
+    allowlistInput.placeholder='https://media.example';
+    allowlistInput.value=Array.isArray(tile.browserAllowedOrigins)
+      ?tile.browserAllowedOrigins.join('\n')
+      :'';
+    allowlistLabel.append(allowlistTitle,allowlistInput);
+    const boundaryHint=document.createElement('p');
+    boundaryHint.className='muted browser-boundary-hint';
+    browserWrap.append(browserPrimary,allowlistLabel,boundaryHint);
 
     let currentExec=Array.isArray(tile.cmd)?tile.cmd.join(' '):'';
     let isBrowser=false, browserUrl='', browserType='embedded';
@@ -480,8 +509,17 @@ function renderAdmin(){
       }else{
         row.classList.remove('has-browser');
         tile.cmd=[e.target.value];
+        delete tile.browserAllowedOrigins;
       }
     };
+
+    function renderBrowserBoundary(){
+      const embedded=typeSelect.value==='embedded';
+      allowlistLabel.hidden=!embedded;
+      boundaryHint.textContent=embedded
+        ?uiText.browserBoundaryEmbedded
+        :uiText.browserBoundaryExternal;
+    }
 
     function updateBrowserCmd(){
       const u=urlInput.value.trim();
@@ -493,7 +531,13 @@ function renderAdmin(){
       }
     }
     urlInput.onchange=updateBrowserCmd;
-    typeSelect.onchange=updateBrowserCmd;
+    typeSelect.onchange=()=>{ updateBrowserCmd(); renderBrowserBoundary(); };
+    allowlistInput.oninput=()=>{
+      const origins=parseBrowserAllowedOrigins(allowlistInput.value);
+      allowlistInput.setCustomValidity(origins===null?uiText.browserAllowlistInvalid:'');
+      if(origins!==null) tile.browserAllowedOrigins=origins;
+    };
+    renderBrowserBoundary();
 
     const dragHandle=document.createElement('div');
     dragHandle.className='dragHandle';

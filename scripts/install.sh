@@ -211,6 +211,13 @@ text() {
     de:browser_page) echo "Webseite" ;;
     de:web_mode_embedded) echo "Eingebettet" ;;
     de:web_mode_external) echo "Extern" ;;
+    de:browser_allowlist_label) echo "Zusätzliche erlaubte Websites" ;;
+    de:browser_boundary_embedded) echo "Eingebettet: Die Start-Website ist automatisch erlaubt. Weitere exakte Website-Adressen können zeilenweise ergänzt werden; andere Ziele bleiben blockiert." ;;
+    de:browser_boundary_external) echo "Extern: Der Launcher kann Navigation außerhalb der Start-Website nicht begrenzen." ;;
+    de:browser_allowlist_invalid) echo "Bitte höchstens 20 gültige http(s)-Adressen ohne Zugangsdaten eingeben." ;;
+    de:browser_boundary_title) echo "Diese Seite ist nicht erlaubt" ;;
+    de:browser_boundary_body) echo "Der Link führt außerhalb der Websites, die deine Eltern für diese Kachel erlaubt haben." ;;
+    de:browser_boundary_stay) echo "Hierbleiben" ;;
     de:no_app) echo "Kein Programm" ;;
     de:custom_cmd) echo "Benutzerdefiniert" ;;
     de:move_up) echo "Hoch" ;;
@@ -315,6 +322,13 @@ text() {
     en:browser_page) echo "Website" ;;
     en:web_mode_embedded) echo "Embedded" ;;
     en:web_mode_external) echo "External" ;;
+    en:browser_allowlist_label) echo "Additional allowed websites" ;;
+    en:browser_boundary_embedded) echo "Embedded: The start website is always allowed. Add further exact website addresses one per line; other destinations stay blocked." ;;
+    en:browser_boundary_external) echo "External: The launcher cannot limit navigation beyond the start website." ;;
+    en:browser_allowlist_invalid) echo "Enter no more than 20 valid http(s) addresses without credentials." ;;
+    en:browser_boundary_title) echo "This page is not allowed" ;;
+    en:browser_boundary_body) echo "This link leads outside the websites your parent allowed for this tile." ;;
+    en:browser_boundary_stay) echo "Stay here" ;;
     en:no_app) echo "No app" ;;
     en:custom_cmd) echo "Custom" ;;
     en:move_up) echo "Up" ;;
@@ -1006,7 +1020,8 @@ render_template() {
   export LABEL_COPY_COMMAND LABEL_CLOSE
   export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG LABEL_EXPORT_DIAGNOSTICS IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
   export BACKUP_TITLE BACKUP_RESTORE BACKUP_EMPTY BACKUP_LOADING BACKUP_LOAD_ERROR BACKUP_RESTORING BACKUP_CONFIRM BACKUP_SUCCESS BACKUP_ERROR BACKUP_INSTALLER BACKUP_PRE_RESTORE BACKUP_PIN_PRESERVED
-  export JSON_BROWSER_PAGE JSON_WEB_MODE_EMBEDDED JSON_WEB_MODE_EXTERNAL
+  export JSON_BROWSER_PAGE JSON_WEB_MODE_EMBEDDED JSON_WEB_MODE_EXTERNAL JSON_BROWSER_ALLOWLIST_LABEL JSON_BROWSER_BOUNDARY_EMBEDDED JSON_BROWSER_BOUNDARY_EXTERNAL JSON_BROWSER_ALLOWLIST_INVALID
+  export BROWSER_BOUNDARY_TITLE BROWSER_BOUNDARY_BODY BROWSER_BOUNDARY_STAY
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
@@ -1162,6 +1177,13 @@ APP_BROWSER_TITLE="$(text app_browser_title)"
 BROWSER_PAGE="$(text browser_page)"
 WEB_MODE_EMBEDDED="$(text web_mode_embedded)"
 WEB_MODE_EXTERNAL="$(text web_mode_external)"
+BROWSER_ALLOWLIST_LABEL="$(text browser_allowlist_label)"
+BROWSER_BOUNDARY_EMBEDDED="$(text browser_boundary_embedded)"
+BROWSER_BOUNDARY_EXTERNAL="$(text browser_boundary_external)"
+BROWSER_ALLOWLIST_INVALID="$(text browser_allowlist_invalid)"
+BROWSER_BOUNDARY_TITLE="$(text browser_boundary_title)"
+BROWSER_BOUNDARY_BODY="$(text browser_boundary_body)"
+BROWSER_BOUNDARY_STAY="$(text browser_boundary_stay)"
 LABEL_INSTALL="$(text install)"
 LABEL_ADDED="$(text added)"
 LABEL_INSTALLED="$(text installed)"
@@ -1345,6 +1367,10 @@ JSON_APP_BROWSER_TITLE="$(json_text "$APP_BROWSER_TITLE")"
 JSON_BROWSER_PAGE="$(json_text "$BROWSER_PAGE")"
 JSON_WEB_MODE_EMBEDDED="$(json_text "$WEB_MODE_EMBEDDED")"
 JSON_WEB_MODE_EXTERNAL="$(json_text "$WEB_MODE_EXTERNAL")"
+JSON_BROWSER_ALLOWLIST_LABEL="$(json_text "$BROWSER_ALLOWLIST_LABEL")"
+JSON_BROWSER_BOUNDARY_EMBEDDED="$(json_text "$BROWSER_BOUNDARY_EMBEDDED")"
+JSON_BROWSER_BOUNDARY_EXTERNAL="$(json_text "$BROWSER_BOUNDARY_EXTERNAL")"
+JSON_BROWSER_ALLOWLIST_INVALID="$(json_text "$BROWSER_ALLOWLIST_INVALID")"
 JSON_INSTALL="$(json_text "$LABEL_INSTALL")"
 JSON_ADDED="$(json_text "$LABEL_ADDED")"
 JSON_INSTALLED="$(json_text "$LABEL_INSTALLED")"
@@ -1471,6 +1497,7 @@ install -m 0644 "$SRC_DIR/app_detection.py" "$APP_ROOT/app_detection.py"
 install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launcher.py"
 install -m 0644 "$SRC_DIR/activity_store.py" "$APP_ROOT/activity_store.py"
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
+install -m 0644 "$SRC_DIR/browser_policy.py" "$APP_ROOT/browser_policy.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/config_validation.py" "$APP_ROOT/config_validation.py"
 install -m 0644 "$SRC_DIR/profile_config.py" "$APP_ROOT/profile_config.py"

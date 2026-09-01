@@ -395,6 +395,10 @@ class ServerApiTests(unittest.TestCase):
         config_dir.mkdir()
         cache_dir.mkdir()
         (app_root / "index.html").write_text("<!doctype html><title>test</title>", encoding="utf-8")
+        (app_root / "browser.html").write_text(
+            "<!doctype html><title>browser test</title>",
+            encoding="utf-8",
+        )
         (app_root / "recommendations.json").write_text("[]", encoding="utf-8")
 
         server_module.APP_ROOT = str(app_root)
@@ -649,6 +653,55 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(activity["recordCount"], 1)
         self.assertEqual(activity["records"][0]["tileId"], "paint")
+
+    def test_embedded_browser_wrapper_enforces_its_configured_exact_origins(self):
+        config = server_module.load_cfg()
+        config["tiles"][0]["cmd"] = ["special:browser:https://kids.example/start"]
+        config["tiles"][0]["browserAllowedOrigins"] = [
+            "https://media.example/videos",
+            "https://kids.example/duplicate",
+        ]
+        server_module.save_cfg(config)
+
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, request, file_pointer, code, message, headers, url):
+                return None
+
+        launch_request = urllib.request.Request(
+            self.base_url + "/launch/paint",
+            data=b"",
+            headers={"Origin": self.base_url},
+            method="POST",
+        )
+        try:
+            launch_response = urllib.request.build_opener(NoRedirect).open(
+                launch_request,
+                timeout=5,
+            )
+        except urllib.error.HTTPError as error:
+            launch_response = error
+        self.assertEqual(launch_response.status, 302)
+        location = launch_response.headers["Location"]
+        launch_response.close()
+
+        with urllib.request.urlopen(self.base_url + location, timeout=5) as response:
+            self.assertEqual(response.status, 200)
+            policy = response.headers["Content-Security-Policy"]
+        self.assertIn(
+            "frame-src https://kids.example https://media.example;",
+            policy,
+        )
+        self.assertNotIn("*", policy)
+
+        forged = (
+            "/browser.html?url=https%3A%2F%2Fevil.example&tile=paint&activity="
+        )
+        try:
+            urllib.request.urlopen(self.base_url + forged, timeout=5)
+        except urllib.error.HTTPError as error:
+            self.assertEqual(error.code, 404)
+        else:
+            self.fail("A forged browser wrapper target was accepted")
 
     def test_schedule_status_and_launch_enforcement_share_the_same_boundary(self):
         config = server_module.load_cfg()
@@ -1523,6 +1576,35 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("select.className='appSelect'", source)
         self.assertIn(".tileform.has-browser > .appSelect { display:none; }", source)
         self.assertNotIn(".tileform.has-browser select { display:none; }", source)
+
+    def test_embedded_browser_editor_explains_and_validates_exact_origin_boundaries(self):
+        source = frontend_source()
+        browser = (REPOSITORY_ROOT / "src" / "browser.html").read_text(
+            encoding="utf-8"
+        )
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("function parseBrowserAllowedOrigins(value)", source)
+        self.assertIn("tile.browserAllowedOrigins=origins", source)
+        self.assertIn("origins.length>20", source)
+        self.assertIn("uiText.browserBoundaryEmbedded", source)
+        self.assertIn("uiText.browserBoundaryExternal", source)
+        self.assertIn("document.querySelector('#admin :invalid')", source)
+        self.assertNotIn("allow-top-navigation", browser)
+        self.assertIn("securitypolicyviolation", browser)
+        self.assertIn('role="alertdialog"', browser)
+        self.assertIn('aria-describedby="navigationBlockBody"', browser)
+        self.assertIn("buttons[event.shiftKey?buttons.length-1:0].focus()", browser)
+        for label in (
+            "Zusätzliche erlaubte Websites",
+            "andere Ziele bleiben blockiert",
+            "Additional allowed websites",
+            "other destinations stay blocked",
+            "Diese Seite ist nicht erlaubt",
+            "This page is not allowed",
+        ):
+            self.assertIn(label, installer)
 
     def test_backup_restore_ui_uses_local_api_and_text_content(self):
         source = frontend_source()

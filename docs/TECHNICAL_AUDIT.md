@@ -40,10 +40,9 @@ This audit captures the modernization priorities identified in August 2026. The 
 
 ## Product work after the foundation
 
-- Multiple child profiles
-- Scheduled application availability
-- Browser allowlists
-- Improved accessibility and audio feedback
-- Search and bulk editing in Parent settings
+Multiple child profiles, scheduled application availability, exact-origin
+browser allowlists, and search/bulk editing in Parent settings are now covered
+by the v0.6.0 work. Improved accessibility presets and audio feedback remain
+future product work.
 
 These features should follow the release and platform work so new behavior is built on a testable base.

@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Added a bilingual Parent schedule editor, child-facing unavailable states, and live enforcement that returns embedded pages home or closes only the blocked native app owned by its tile
 - Added opt-in local activity storage with 90-day and 1,000-record limits, private file permissions, Parent-protected read/clear APIs, and duration capture at the existing owned-process and embedded-browser boundaries
 - Added a bilingual Parent activity overview with bounded recent entries, local-only totals, privacy-minimized JSON export, and confirmed removal controls
+- Added exact-origin allowlists for embedded website tiles, server-bound wrapper URLs, CSP navigation enforcement, and a child-friendly blocked-link message; external mode is now explicitly identified as outside this boundary
 - Extended configuration export, import, backup, restore, installer, diagnostics, and privacy documentation for complete multi-profile data
 
 ## [0.5.0] - 2026-09-01

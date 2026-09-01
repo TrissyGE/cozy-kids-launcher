@@ -152,7 +152,11 @@
   .tileform.drag-over { border-top:3px solid var(--btn); }
   .dragHandle { font-size:1.2rem; text-align:center; cursor:grab; user-select:none; color:var(--text); }
   .browserWrap { display:none; grid-column:5 / 7; grid-row:1; }
-  .tileform.has-browser .browserWrap { display:grid; grid-template-columns:minmax(0,1fr) 200px; gap:8px; }
+  .tileform.has-browser .browserWrap { display:grid; gap:8px; }
+  .browser-primary { display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:8px; }
+  .browser-allowlist { display:grid; gap:4px; font-size:.82rem; font-weight:700; }
+  .browser-allowlist textarea { min-height:64px; resize:vertical; font:inherit; }
+  .browser-boundary-hint { margin:0; line-height:1.35; }
   .tileform.has-browser > .appSelect { display:none; }
   .tileform > .smallbtn { grid-column:7; }
   .pinoverlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:100; }
@@ -278,7 +282,7 @@
   @media (forced-colors: active) {
     #themeBg { display:none; }
     .tile, .smallbtn, .nav, .theme-thumb, .admin-tab, .overview-card, .admin-bulk-toolbar, .launcher-preview, .preview-tile, .panel, .pinbox, .install-box, .timerbox, .confirm-box,
-    .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, .schedule-panel, .schedule-day, .activity-panel, .activity-metric, .activity-item, input, select, label.chk {
+    .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, .schedule-panel, .schedule-day, .activity-panel, .activity-metric, .activity-item, input, select, textarea, label.chk {
       background:Canvas;
       color:CanvasText;
       border:2px solid ButtonText;

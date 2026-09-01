@@ -3,6 +3,7 @@
 import copy
 import re
 
+from browser_policy import normalize_browser_allowed_origins
 from config_store import migrate_config
 from parent_auth import is_supported_pin_hash
 from profile_config import (
@@ -64,14 +65,19 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         visible = tile.get("visible", True)
         if not isinstance(visible, bool):
             raise ValueError(f"tiles[{index}].visible must be a boolean")
-        validated_tiles.append({
+        validated_tile = {
             **tile,
             "id": tile_id,
             "label": label,
             "emoji": emoji,
             "cmd": clean_command,
             "visible": visible,
-        })
+        }
+        if "browserAllowedOrigins" in tile:
+            validated_tile["browserAllowedOrigins"] = normalize_browser_allowed_origins(
+                tile["browserAllowedOrigins"]
+            )
+        validated_tiles.append(validated_tile)
     result["tiles"] = validated_tiles
 
     for field, maximum in (

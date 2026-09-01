@@ -76,6 +76,21 @@ class ConfigValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must be a boolean"):
             config_validation.validate_config(data)
 
+        data = base_config()
+        data["tiles"][0]["browserAllowedOrigins"] = [
+            "https://Media.Example/path",
+            "https://media.example",
+        ]
+        validated = config_validation.validate_config(data)
+        self.assertEqual(
+            validated["tiles"][0]["browserAllowedOrigins"],
+            ["https://media.example"],
+        )
+
+        data["tiles"][0]["browserAllowedOrigins"] = ["file:///etc/passwd"]
+        with self.assertRaisesRegex(ValueError, "browserAllowedOrigins"):
+            config_validation.validate_config(data)
+
     def test_collection_and_numeric_limits_reject_untrusted_types(self):
         data = base_config()
         data["tiles"] = [

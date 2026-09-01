@@ -62,6 +62,10 @@ class LaunchActionTests(unittest.TestCase):
             application_launcher.resolve_tile_action(
                 {"cmd": ["special:browser:file:///etc/passwd"]}
             )
+        with self.assertRaisesRegex(ValueError, "Invalid browser URL"):
+            application_launcher.resolve_tile_action(
+                {"cmd": ["special:browser:https://parent:secret@example.com"]}
+            )
 
     def test_external_browser_profiles_remain_isolated(self):
         with tempfile.TemporaryDirectory() as temp_dir:

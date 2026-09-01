@@ -78,7 +78,7 @@
 .ui-icon path { vector-effect:non-scaling-stroke; }
 .icon-label { min-width:0; }
 
-input, select {
+input, select, textarea {
   width:100%;
   padding:var(--space-3) 14px;
   border:1px solid var(--input-border);

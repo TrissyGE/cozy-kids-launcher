@@ -65,8 +65,8 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [x] Add a local, optional parent dashboard for recent activity and usage duration
   - [x] Add bounded opt-in local activity storage, owned-runtime duration capture, and Parent-protected read and clear APIs
   - [x] Add the bilingual Parent dashboard, local export, and removal controls
-- [ ] Add a browser allowlist with understandable navigation boundaries
-- [ ] Keep all profile and activity data local, exportable, and removable
+- [x] Add a browser allowlist with understandable navigation boundaries
+- [x] Keep all profile and activity data local, exportable, and removable
 
 ## v0.7.0 — Delight
 
