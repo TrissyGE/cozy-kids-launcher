@@ -62,15 +62,24 @@ class LauncherLifecycleTests(unittest.TestCase):
         self.assertNotIn("pgrep", source)
         self.assertNotIn('kill "$(cat "$PIDFILE"', source)
 
-    def test_chromium_fullscreen_mode_uses_the_f11_startup_switch(self):
+    def test_chromium_fullscreen_mode_has_a_scoped_f11_assist_and_safe_fallback(self):
         source = (REPOSITORY_ROOT / "src" / "launcher.sh").read_text(
             encoding="utf-8"
         )
+        self.assertIn('CHROMIUM_FULLSCREEN_SWITCH="--start-fullscreen"', source)
+        self.assertIn('CHROMIUM_FULLSCREEN_SWITCH="--kiosk"', source)
+        self.assertIn('CHROMIUM_FLAGS+=(--ozone-platform=x11)', source)
         self.assertIn(
             '"$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" '
-            '--start-fullscreen "$URL"',
+            '"$CHROMIUM_FULLSCREEN_SWITCH" "$URL"',
             source,
         )
+        self.assertIn(
+            'xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID"',
+            source,
+        )
+        self.assertIn('xdotool key --window "$window_id" F11', source)
+        self.assertIn('confirm_chromium_fullscreen', source)
         self.assertNotIn(
             '--disable-session-crashed-bubble --fullscreen "$URL"',
             source,

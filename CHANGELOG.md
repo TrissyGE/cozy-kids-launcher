@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Added a per-tile process supervisor that follows forks and stops only the launched app, media player, or external browser tree
 - Added authenticated backup discovery and one-click configuration restore with schema validation, PIN preservation, private safety snapshots, and strict path limits
 - Added an atomically stored lifecycle contract for startup, running, recovery, updates, logout, shutdown, failure, and cleanup
-- Stabilized Chromium fullscreen switching, Firefox snap profiles, X11 focus recovery, and XWayland overlay stacking without weakening compositor security boundaries
+- Stabilized Chromium fullscreen switching across current Linux/Ozone behavior with a PID-scoped F11 assist and dependency-free kiosk fallback, alongside safe Firefox snap profiles, X11 focus recovery, and XWayland overlay stacking
 
 ### Test confidence
 
