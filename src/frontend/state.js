@@ -5,6 +5,11 @@ let updateAvailable=false, remoteVersion='';
 let browserOptions=[];
 let appCatalogState='loading', recommendationState='loading', browserCatalogState='loading', backupState='loading';
 let bootstrapPromise=null;
+let profilePickerReturnFocus=null;
+const PROFILE_TEXT={
+  de:{manageHint:'Jedes Kind erhält einen eigenen Startbildschirm. Globale Eltern- und System-Einstellungen gelten weiterhin für alle.',listTitle:'Kinderprofile',editorTitle:'Aktives Profil',name:'Name',avatar:'Avatar',launcherTitle:'Titel auf dem Startbildschirm',createTitle:'Profil hinzufügen',create:'Hinzufügen',select:'Auswählen',active:'Aktiv',remove:'Löschen',removeConfirm:'Dieses Kinderprofil und seine Einstellungen wirklich löschen?',pickerTitle:'Wer möchte starten?',pickerHint:'Ein Wechsel zu einem anderen Profil muss von einem Elternteil bestätigt werden.',close:'Schließen',error:'Das Profil konnte nicht geändert werden.',nameRequired:'Bitte einen Namen eingeben.',namePlaceholder:'Name des Kindes',avatarPlaceholder:'Emoji, z. B. 🚀'},
+  en:{manageHint:'Each child gets a separate home screen. Global Parent and system settings continue to apply to everyone.',listTitle:'Child profiles',editorTitle:'Active profile',name:'Name',avatar:'Avatar',launcherTitle:'Home screen title',createTitle:'Add profile',create:'Add',select:'Select',active:'Active',remove:'Delete',removeConfirm:'Delete this child profile and its settings?',pickerTitle:'Who wants to start?',pickerHint:'Switching to another profile must be confirmed by a parent.',close:'Close',error:'The profile could not be changed.',nameRequired:'Please enter a name.',namePlaceholder:"Child's name",avatarPlaceholder:'Emoji, e.g. 🚀'}
+};
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
   adminNavLabel: {{JSON_ADMIN_NAV_LABEL}},

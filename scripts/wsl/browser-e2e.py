@@ -322,6 +322,70 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     log_scenario("settings and theme selection persist and re-render")
 
     enter_parent_settings(browser)
+    browser.click("[data-admin-section='children']")
+    browser.set_value("#newProfileName", "Alex")
+    browser.set_value("#newProfileAvatar", "🚀")
+    browser.click("#createProfileBtn")
+    browser.wait_for(
+        "cfg.activeProfileId!=='default' && cfg.name==='Alex' && "
+        "cfg.profiles.length===2 && "
+        "document.querySelectorAll('#profileList .profile-card').length===2",
+        message="Creating a child profile did not activate and render it",
+    )
+    browser.screenshot(artifacts / "profile-management.png")
+    alex_profile_id = browser.evaluate("cfg.activeProfileId")
+    browser.set_value("#cfgProfileName", "Alex E2E")
+    browser.set_value("#cfgProfileAvatar", "🪐")
+    browser.set_value("#cfgTitle", "Alex's Space")
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "cfg.name==='Alex E2E' && cfg.avatar==='🪐' && "
+        "document.getElementById('title').textContent===\"Alex's Space\"",
+        message="Profile edits were not persisted on the active home screen",
+    )
+    browser.click("#profileBtn")
+    browser.wait_for(
+        "!document.getElementById('profileOverlay').classList.contains('hidden') && "
+        "document.querySelectorAll('#profilePickerGrid .profile-choice').length===2 && "
+        "document.activeElement.matches('.profile-choice[aria-pressed=\"true\"]')",
+        message="The child-facing profile picker did not open accessibly",
+    )
+    browser.screenshot(artifacts / "profile-picker.png")
+    browser.click('.profile-choice[data-profile-id="default"]')
+    browser.wait_for(
+        "!document.getElementById('pin').classList.contains('hidden') && "
+        "document.activeElement.id==='pinInput'",
+        message="A child-facing profile switch bypassed Parent PIN confirmation",
+    )
+    browser.set_value("#pinInput", PIN)
+    browser.click("#pin .save")
+    browser.wait_for(
+        "cfg.activeProfileId==='default' && "
+        "document.getElementById('profileOverlay').classList.contains('hidden') && "
+        "document.getElementById('title').textContent==='Polished E2E Home'",
+        message="The confirmed profile switch did not restore the separate profile",
+    )
+    enter_parent_settings(browser)
+    browser.click("[data-admin-section='children']")
+    delete_selector = (
+        f'.profile-card[data-profile-id={json.dumps(alex_profile_id)}] .danger'
+    )
+    browser.click(delete_selector)
+    browser.wait_for(
+        "!document.getElementById('confirmOverlay').classList.contains('hidden')",
+        message="Profile deletion did not use the shared confirmation dialog",
+    )
+    browser.click("#confirmActionBtn")
+    browser.wait_for(
+        "cfg.profiles.length===1 && "
+        "document.querySelectorAll('#profileList .profile-card').length===1",
+        message="The inactive child profile was not deleted",
+    )
+    browser.click("#backBtn")
+    log_scenario("profile creation, editing, PIN-gated selection, and deletion work end to end")
+
+    enter_parent_settings(browser)
     browser.click("[data-admin-section='apps']")
     browser.evaluate(
         "cfg.layoutMode='gross'; cfg.tiles=cfg.tiles.concat(["
@@ -886,7 +950,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 14 core and accessibility journeys", flush=True)
+    print("Browser E2E passed: 15 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

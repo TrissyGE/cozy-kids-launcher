@@ -702,7 +702,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             try:
                 data = validate_config(data, existing_pin_hash=cfg.get("pinHash", ""))
-                save_cfg(data)
+                data = save_cfg(data)
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
@@ -711,7 +711,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "config.saved",
                 configVersion=data.get("configVersion", CURRENT_CONFIG_VERSION),
             )
-            self.json_response({"status": "ok"})
+            self.json_response({"status": "ok", "config": public_config(data)})
             return
         if action == "api/verify-pin":
             if pin_attempt_blocked():

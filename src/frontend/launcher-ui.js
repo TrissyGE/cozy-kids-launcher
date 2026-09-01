@@ -172,6 +172,7 @@ function renderAll(){
   const shutdownBtn=document.getElementById('shutdownBtn');
   setIconLabel(shutdownBtn,'power',cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}');
   shutdownBtn.style.display=features.shutdownAvailable?'':'none';
+  renderProfileButton();
   document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}');
   const pc=pageCount();
   if(cfg.currentPage>=pc) cfg.currentPage=pc-1;
@@ -186,7 +187,7 @@ function renderKids(){
   const tiles=tilesForPage(cfg.currentPage);
   const size=pageSize();
   let lastLaunched='';
-  try{ lastLaunched=localStorage.getItem('cozyLastLaunched')||''; }catch(e){}
+  try{ lastLaunched=localStorage.getItem(profileStorageKey())||''; }catch(e){}
   if(tiles.length===0){
     const empty=document.createElement('div');
     empty.className='empty-state';
@@ -241,7 +242,7 @@ function showStartFeedback(tile){
 function launchTile(id){
   const tile=cfg.tiles.find(t=>t.id===id);
   if(!tile) return;
-  try{ localStorage.setItem('cozyLastLaunched',id); }catch(e){}
+  try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
   showStartFeedback(tile);
   fetch('/launch/'+encodeURIComponent(id), {method:'POST'}).then(r=>{ if(r.redirected) window.location=r.url; }).catch(()=>{});
 }

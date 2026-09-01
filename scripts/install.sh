@@ -854,6 +854,7 @@ FRONTEND_STATE_FILE="$FRONTEND_DIR/state.js"
 FRONTEND_ICONS_FILE="$FRONTEND_DIR/icons.js"
 FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
+FRONTEND_PROFILES_FILE="$FRONTEND_DIR/profiles.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
 FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
 MEDIA_FILE="$APP_ROOT/no-media.html"
@@ -1264,6 +1265,7 @@ backup_if_exists "$FRONTEND_STATE_FILE"
 backup_if_exists "$FRONTEND_ICONS_FILE"
 backup_if_exists "$FRONTEND_DIALOGS_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
+backup_if_exists "$FRONTEND_PROFILES_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
 backup_if_exists "$FRONTEND_RUNTIME_FILE"
 backup_if_exists "$MEDIA_FILE"
@@ -1296,6 +1298,7 @@ render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
 render_template "$SRC_DIR/frontend/icons.js" "$FRONTEND_ICONS_FILE" 0644
 render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
+render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
