@@ -101,6 +101,11 @@ class ConfigValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "setupCompleted must be a boolean"):
             config_validation.validate_config(data)
 
+        data = base_config()
+        data["activityTrackingEnabled"] = "yes"
+        with self.assertRaisesRegex(ValueError, "activityTrackingEnabled must be a boolean"):
+            config_validation.validate_config(data)
+
     def test_schedule_collections_are_bounded_and_validated(self):
         data = base_config()
         data["weeklySchedule"] = {

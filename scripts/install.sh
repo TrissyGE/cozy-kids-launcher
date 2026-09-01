@@ -1382,6 +1382,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/app_detection.py" "$APP_ROOT/app_detection.py"
 install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launcher.py"
+install -m 0644 "$SRC_DIR/activity_store.py" "$APP_ROOT/activity_store.py"
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/config_validation.py" "$APP_ROOT/config_validation.py"
@@ -1438,6 +1439,7 @@ config = {
     "pinHash": "",
     "autoScanDone": False,
     "setupCompleted": False,
+    "activityTrackingEnabled": False,
     "activeProfileId": "default",
     "profiles": [{
         "id": "default",

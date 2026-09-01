@@ -90,6 +90,7 @@ class ApplicationLauncher:
         overlay_pidfile,
         process_supervisor,
         overlay_script,
+        activity_file="",
         lock=None,
         python_executable=None,
     ):
@@ -97,6 +98,7 @@ class ApplicationLauncher:
         self.overlay_pidfile = os.fspath(overlay_pidfile)
         self.process_supervisor = os.fspath(process_supervisor)
         self.overlay_script = os.fspath(overlay_script)
+        self.activity_file = os.fspath(activity_file) if activity_file else ""
         self.lock = lock or threading.Lock()
         self.python_executable = python_executable or sys.executable
 
@@ -170,7 +172,15 @@ class ApplicationLauncher:
             self.stop_existing_overlay()
             self.stop_active_tile()
 
-    def launch_owned_tile(self, command, mode, url="", tile_id=""):
+    def launch_owned_tile(
+        self,
+        command,
+        mode,
+        url="",
+        tile_id="",
+        profile_id="",
+        track_activity=False,
+    ):
         if not command or not os.path.isfile(self.process_supervisor):
             raise OSError("Tile process supervisor is unavailable")
         with self.lock:
@@ -183,9 +193,17 @@ class ApplicationLauncher:
                 self.tile_process_pidfile,
                 "--marker",
                 self.process_supervisor,
-                "--",
-                *command,
             ]
+            if track_activity and self.activity_file and profile_id and tile_id:
+                wrapped.extend([
+                    "--activity-file",
+                    self.activity_file,
+                    "--activity-profile",
+                    profile_id,
+                    "--activity-tile",
+                    tile_id,
+                ])
+            wrapped.extend(["--", *command])
             process = subprocess.Popen(
                 wrapped,
                 env=dict(os.environ),

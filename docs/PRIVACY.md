@@ -33,6 +33,16 @@ Optional weekly and per-app availability windows are stored in that same local
 profile and are evaluated only against the device's local time. Availability
 polling stays on the launcher's loopback API; no schedule or usage information
 is uploaded.
+
+Optional activity tracking is disabled by default. When a parent enables it,
+the launcher stores only profile and tile identifiers, a start time, and the
+completed duration in `~/.local/state/cozy-kids-launcher/activity.json`. It does
+not copy child names, app labels, commands, URLs, or media paths into activity
+records. Records older than 90 days are ignored and at most 1,000 are retained.
+The existing Parent-access boundary protects reading and clearing the records,
+and requires a valid Parent session whenever a PIN is configured. Deleting a
+child profile also removes its retained activity. The activity file and its
+directory are restricted to the local user and are never uploaded.
 The child-facing picker receives only names and avatars. Switching to another
 child still requires the Parent PIN when one is configured. The small
 "last launched" marker is stored locally under a separate key for each profile.

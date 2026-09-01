@@ -22,6 +22,11 @@ from application_launcher import (
     external_browser_command as build_external_browser_command,
     resolve_tile_action,
 )
+from activity_store import (
+    EmbeddedActivitySessions,
+    activity_payload,
+    remove_profile_activity,
+)
 from config_store import (
     CURRENT_CONFIG_VERSION,
     atomic_write_config,
@@ -125,6 +130,7 @@ LEGACY_VERSION_URL = f"{LEGACY_RAW_URL}/VERSION"
 CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 BACKUP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}-backups")
 LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
+ACTIVITY_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "activity.json")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
@@ -156,6 +162,8 @@ LEGACY_WEB_ACTION_MIGRATIONS = {
 TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
 MAX_JSON_BODY_BYTES = 512 * 1024
 _tile_launch_lock = threading.Lock()
+_activity_sessions_lock = threading.Lock()
+_activity_sessions = None
 
 
 def has_media(path):
@@ -415,8 +423,17 @@ def application_launcher():
         OVERLAY_PIDFILE,
         PROCESS_SUPERVISOR,
         OVERLAY_SCRIPT,
+        activity_file=ACTIVITY_FILE,
         lock=_tile_launch_lock,
     )
+
+
+def embedded_activity_sessions():
+    global _activity_sessions
+    with _activity_sessions_lock:
+        if _activity_sessions is None or _activity_sessions.path != os.fspath(ACTIVITY_FILE):
+            _activity_sessions = EmbeddedActivitySessions(ACTIVITY_FILE)
+        return _activity_sessions
 
 
 def stop_existing_overlay():
@@ -432,15 +449,25 @@ def start_overlay(mode, url="", tile_id=""):
 
 
 def reset_active_tile():
+    embedded_activity_sessions().finish_all()
     application_launcher().reset_active_tile()
 
 
-def launch_owned_tile(command, mode, url="", tile_id=""):
+def launch_owned_tile(
+    command,
+    mode,
+    url="",
+    tile_id="",
+    profile_id="",
+    track_activity=False,
+):
     return application_launcher().launch_owned_tile(
         command,
         mode,
         url=url,
         tile_id=tile_id,
+        profile_id=profile_id,
+        track_activity=track_activity,
     )
 
 
@@ -591,6 +618,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response(timer_status(load_cfg()))
         if self.path == "/api/availability/status":
             return self.json_response(availability_summary(load_cfg()))
+        if self.path == "/api/activity":
+            data = load_cfg()
+            if not self.require_admin(data):
+                return
+            payload = activity_payload(ACTIVITY_FILE)
+            payload["enabled"] = bool(data.get("activityTrackingEnabled", False))
+            return self.json_response(payload)
         if self.path == "/api/backups":
             data = load_cfg()
             if not self.require_admin(data):
@@ -636,6 +670,31 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action == "api/activity/finish":
+            body = self.read_json_body()
+            if body is None:
+                return
+            embedded_activity_sessions().finish(body.get("token"))
+            self.send_response(204)
+            self.end_headers()
+            return
+        if action == "api/activity/clear":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            body = self.read_json_body(required=False)
+            if body is None:
+                return
+            try:
+                embedded_activity_sessions().discard_all()
+            except OSError:
+                self.json_response(
+                    {"status": "error", "message": "Activity data could not be removed"},
+                    500,
+                )
+                return
+            self.json_response({"status": "ok"})
+            return
         if action == "api/profiles/create":
             stored = load_stored_cfg()
             if not self.require_admin(active_config(stored)):
@@ -690,6 +749,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             try:
                 stored = remove_profile(stored, body.get("profileId"))
+                remove_profile_activity(ACTIVITY_FILE, body.get("profileId"))
                 stored = save_stored_cfg(stored)
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
@@ -1025,7 +1085,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     else ["xdg-open", locations[0]]
                 )
                 try:
-                    launch_owned_tile(command, "local", tile_id=tile_id)
+                    launch_owned_tile(
+                        command,
+                        "local",
+                        tile_id=tile_id,
+                        profile_id=cfg.get("activeProfileId", ""),
+                        track_activity=cfg.get("activityTrackingEnabled", False),
+                    )
                 except OSError:
                     log_runtime_event(
                         "launch.failed",
@@ -1046,10 +1112,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 url = launch["url"]
                 if launch["mode"] == "embedded":
                     reset_active_tile()
+                    activity_token = ""
+                    if cfg.get("activityTrackingEnabled", False):
+                        activity_token = embedded_activity_sessions().start(
+                            cfg.get("activeProfileId", ""),
+                            tile_id,
+                        )
                     self.send_response(302)
                     self.send_header(
                         "Location",
-                        f"/browser.html?url={quote(url, safe='')}&tile={quote(tile_id, safe='')}",
+                        f"/browser.html?url={quote(url, safe='')}&tile={quote(tile_id, safe='')}"
+                        f"&activity={quote(activity_token, safe='')}",
                     )
                     self.end_headers()
                     return
@@ -1075,6 +1148,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         "external",
                         url=url,
                         tile_id=tile_id,
+                        profile_id=cfg.get("activeProfileId", ""),
+                        track_activity=cfg.get("activityTrackingEnabled", False),
                     )
                 except OSError:
                     log_runtime_event(
@@ -1101,7 +1176,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             clean = direct_app_command(clean)
             try:
                 # The supervisor still launches argv directly and never invokes a shell.
-                launch_owned_tile(clean, "local", tile_id=tile_id)
+                launch_owned_tile(
+                    clean,
+                    "local",
+                    tile_id=tile_id,
+                    profile_id=cfg.get("activeProfileId", ""),
+                    track_activity=cfg.get("activityTrackingEnabled", False),
+                )
             except OSError:
                 log_runtime_event(
                     "launch.failed",
@@ -1165,6 +1246,7 @@ def main():
         )
         raise
     finally:
+        embedded_activity_sessions().finish_all()
         remove_process_record(PIDFILE, expected_pid=os.getpid())
         log_runtime_event("server.stopped")
         close_runtime_logging()

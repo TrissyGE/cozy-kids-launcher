@@ -5,10 +5,12 @@ import os
 import sys
 import tempfile
 import threading
+import time
 import types
 import unittest
 import urllib.error
 import urllib.request
+from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 from unittest import mock
 
@@ -19,6 +21,7 @@ if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
 import lifecycle_state
+import activity_store
 
 
 def frontend_source():
@@ -67,6 +70,7 @@ def base_config(pin_hash=""):
         "pinHash": pin_hash,
         "currentPage": 0,
         "autoScanDone": True,
+        "activityTrackingEnabled": False,
         "timerMinutes": 0,
         "timerWarningMinutes": 5,
         "tiles": [
@@ -400,6 +404,7 @@ class ServerApiTests(unittest.TestCase):
         server_module.RECOMMENDATIONS_FILE = str(app_root / "recommendations.json")
         server_module.BACKUP_ROOT = str(root / "backups")
         server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
+        server_module.ACTIVITY_FILE = str(root / "state" / "activity.json")
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
         server_module.BROWSER_PIDFILE = str(cache_dir / "browser.pid")
@@ -524,6 +529,9 @@ class ServerApiTests(unittest.TestCase):
         )
 
     def test_app_launch_preserves_argv_and_uses_owned_supervision(self):
+        config = server_module.load_cfg()
+        config["activityTrackingEnabled"] = True
+        server_module.save_cfg(config)
         with mock.patch.object(server_module, "launch_owned_tile") as launch:
             status, data, _ = self.request(
                 "/launch/paint",
@@ -533,7 +541,99 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status, 204)
         self.assertIsNone(data)
-        launch.assert_called_once_with(["tuxpaint"], "local", tile_id="paint")
+        launch.assert_called_once_with(
+            ["tuxpaint"],
+            "local",
+            tile_id="paint",
+            profile_id="default",
+            track_activity=True,
+        )
+
+    def test_activity_api_is_opt_in_parent_only_and_removable(self):
+        self.enable_pin()
+        status, _, _ = self.request("/api/activity")
+        self.assertEqual(status, 403)
+        cookie = self.authenticate()
+
+        status, data, _ = self.request("/api/activity", cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertFalse(data["enabled"])
+        self.assertEqual(data["records"], [])
+
+        config = server_module.load_cfg()
+        config["activityTrackingEnabled"] = True
+        server_module.save_cfg(config)
+        now = int(time.time())
+        activity_store.record_activity(
+            server_module.ACTIVITY_FILE,
+            "default",
+            "paint",
+            now - 45,
+            ended_at=now,
+        )
+
+        status, data, _ = self.request("/api/activity", cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertTrue(data["enabled"])
+        self.assertEqual(data["recordCount"], 1)
+        self.assertEqual(data["totalDurationSeconds"], 45)
+        self.assertEqual(data["records"][0]["tileId"], "paint")
+        self.assertNotIn("Paint", json.dumps(data))
+        self.assertNotIn("tuxpaint", json.dumps(data))
+
+        status, result, _ = self.request(
+            "/api/activity/clear",
+            method="POST",
+            body={},
+            cookie=cookie,
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(result, {"status": "ok"})
+        status, data, _ = self.request("/api/activity", cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(data["recordCount"], 0)
+
+    def test_embedded_activity_uses_an_opaque_finish_token(self):
+        config = server_module.load_cfg()
+        config["activityTrackingEnabled"] = True
+        config["tiles"][0]["cmd"] = ["special:browser:https://example.com/kids"]
+        server_module.save_cfg(config)
+
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, request, file_pointer, code, message, headers, url):
+                return None
+
+        request = urllib.request.Request(
+            self.base_url + "/launch/paint",
+            data=b"",
+            headers={"Origin": self.base_url},
+            method="POST",
+        )
+        try:
+            response = urllib.request.build_opener(NoRedirect).open(request, timeout=5)
+        except urllib.error.HTTPError as error:
+            response = error
+        self.assertEqual(response.status, 302)
+        location = response.headers["Location"]
+        response.close()
+        query = parse_qs(urlparse(location).query)
+        self.assertEqual(query["tile"], ["paint"])
+        token = query["activity"][0]
+        self.assertGreaterEqual(len(token), 16)
+
+        status, data, _ = self.request(
+            "/api/activity/finish",
+            method="POST",
+            body={"token": token},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 204)
+        self.assertIsNone(data)
+        status, activity, _ = self.request("/api/activity")
+        self.assertEqual(status, 200)
+        self.assertEqual(activity["recordCount"], 1)
+        self.assertEqual(activity["records"][0]["tileId"], "paint")
 
     def test_schedule_status_and_launch_enforcement_share_the_same_boundary(self):
         config = server_module.load_cfg()
@@ -708,6 +808,7 @@ class ServerApiTests(unittest.TestCase):
             ("/api/profiles/create", {"name": "Alex", "avatar": "🚀"}),
             ("/api/profiles/select", {"profileId": "default"}),
             ("/api/profiles/delete", {"profileId": "default"}),
+            ("/api/activity/clear", {}),
             ("/api/update", None),
             ("/shutdown", None),
         ):
@@ -877,6 +978,22 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(selected["config"]["theme"], "rosa")
         self.assertEqual(selected["config"]["tiles"][0]["label"], "Paint")
 
+        now = int(time.time())
+        activity_store.record_activity(
+            server_module.ACTIVITY_FILE,
+            profile_id,
+            "paint",
+            now - 10,
+            ended_at=now,
+        )
+        activity_store.record_activity(
+            server_module.ACTIVITY_FILE,
+            "default",
+            "paint",
+            now - 5,
+            ended_at=now,
+        )
+
         status, deleted, _ = self.request(
             "/api/profiles/delete",
             method="POST",
@@ -885,6 +1002,10 @@ class ServerApiTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(len(deleted["profiles"]), 1)
+        self.assertEqual(
+            [record["profileId"] for record in activity_store.read_activity(server_module.ACTIVITY_FILE)],
+            ["default"],
+        )
 
     def test_profile_api_rejects_deleting_the_active_profile(self):
         status, data, _ = self.request(
@@ -1305,6 +1426,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("document.getElementById('availabilityBlock').classList.contains('hidden')", source)
         self.assertIn("browserParams.get('tile')", browser)
         self.assertIn("fetch('/api/availability/status'", browser)
+        self.assertIn("navigator.sendBeacon", browser)
+        self.assertIn("'/api/activity/finish'", browser)
 
     def test_local_icon_registry_preserves_custom_emoji_tiles(self):
         source = frontend_source()

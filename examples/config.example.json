@@ -4,6 +4,7 @@
   "parentLabel": "Papa",
   "exitLabel": "Kindermodus beenden",
   "setupCompleted": true,
+  "activityTrackingEnabled": false,
   "activeProfileId": "default",
   "profiles": [
     {
