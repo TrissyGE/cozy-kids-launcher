@@ -264,7 +264,10 @@ confirm_chromium_fullscreen() {
     local Y=1
     local WIDTH=0
     local HEIGHT=0
-    for _fullscreen_attempt in $(seq 1 40); do
+    # A one-vCPU VM and older family hardware can need well over ten seconds
+    # before Chromium exposes its first window, so keep this non-blocking helper
+    # alive for at most one minute.
+    for _fullscreen_attempt in $(seq 1 240); do
       process_alive "$BROWSER_PIDFILE" browser || exit 0
       window_id="$(
         xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID" 2>/dev/null \
