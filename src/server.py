@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import threading
 import time
-from urllib.parse import quote, unquote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from app_detection import (
     BROWSER_CANDIDATES,
@@ -53,6 +53,7 @@ from backup_store import (
     discover_config_backups,
     read_config_backup,
 )
+from browser_policy import allowed_frame_origins, embedded_browser_csp
 from lifecycle_state import (
     clear_lifecycle_request,
     read_lifecycle_state,
@@ -372,6 +373,35 @@ def activity_catalog(data):
     ]
 
 
+def browser_wrapper_policy(data, query):
+    """Bind one browser wrapper request to its configured embedded tile."""
+    params = parse_qs(query, keep_blank_values=True, max_num_fields=8)
+    tile_values = params.get("tile", [])
+    url_values = params.get("url", [])
+    if len(tile_values) != 1 or len(url_values) != 1:
+        raise ValueError("Browser wrapper request is incomplete")
+    tile_id = tile_values[0]
+    requested_url = url_values[0]
+    tile = next(
+        (
+            candidate
+            for candidate in data.get("tiles", [])
+            if candidate.get("id") == tile_id and candidate.get("visible", True)
+        ),
+        None,
+    )
+    if not tile:
+        raise ValueError("Browser wrapper tile is unavailable")
+    action = resolve_tile_action(tile)
+    if (
+        action.get("type") != "web"
+        or action.get("mode") != "embedded"
+        or action.get("url") != requested_url
+    ):
+        raise ValueError("Browser wrapper target does not match its tile")
+    return embedded_browser_csp(allowed_frame_origins(tile, requested_url))
+
+
 def _fetch_remote_json(url, timeout=5):
     return fetch_update_json(url, timeout=timeout)
 
@@ -522,6 +552,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        browser_csp = getattr(self, "browser_content_security_policy", "")
+        if browser_csp:
+            self.send_header("Content-Security-Policy", browser_csp)
         super().end_headers()
 
     def json_response(self, payload, status=200, headers=None):
@@ -593,6 +626,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return admin_session_cookie(token)
 
     def do_GET(self):
+        request_url = urlparse(self.path)
+        if request_url.path == "/browser.html":
+            try:
+                self.browser_content_security_policy = browser_wrapper_policy(
+                    load_cfg(),
+                    request_url.query,
+                )
+            except ValueError:
+                self.send_error(404)
+                return
+            return super().do_GET()
         if self.path == "/api/config":
             return self.json_response(public_config(load_cfg()))
         if self.path == "/api/profiles":

@@ -13,6 +13,13 @@ The launcher is designed to run locally:
 
 No cloud backend is required.
 
+Embedded website tiles are restricted to their configured start origin plus up
+to 20 exact additional origins chosen in Parent settings. The local server binds
+the wrapper URL back to that tile, emits the matching browser policy, and the
+iframe cannot navigate the launcher window itself. If a link leaves the allowed
+origins, the child sees a local explanation. External browser mode is deliberately
+outside this boundary and is described that way before a parent selects it.
+
 The first-run setup and both bundled interface languages are served entirely
 from the local launcher. Completing or skipping setup only updates the same
 private local configuration used by Parent settings.

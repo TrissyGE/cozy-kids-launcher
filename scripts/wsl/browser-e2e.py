@@ -401,20 +401,53 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     )
     prepared_activity = browser.evaluate(
         "(async()=>{cfg.tiles[0].cmd=['special:browser:'+location.origin+"
-        "'/no-media.html'];await persistConfig();return cfg.tiles[0].id;})()",
+        "'/no-media.html'];cfg.tiles[0].browserAllowedOrigins="
+        "['https://media.example/videos'];await persistConfig();"
+        "return cfg.tiles[0].id;})()",
         await_promise=True,
     )
     if prepared_activity != "paint":
         raise AssertionError("The activity test tile could not be prepared")
+    enter_parent_settings(browser)
+    browser.click("[data-admin-section='apps']")
+    browser.wait_for(
+        "document.querySelector('#forms .tileform.has-browser .browser-allowlist textarea')"
+        ".value==='https://media.example' && "
+        "document.querySelector('#forms .tileform.has-browser .browser-boundary-hint')"
+        ".textContent===uiText.browserBoundaryEmbedded",
+        message="The embedded browser allowlist did not render its exact origin",
+    )
+    browser.screenshot(artifacts / "browser-allowlist.png")
+    browser.set_value(
+        "#forms .tileform.has-browser .browser-primary select",
+        "external",
+    )
+    assert_js(
+        browser,
+        "document.querySelector('#forms .tileform.has-browser .browser-allowlist').hidden && "
+        "document.querySelector('#forms .tileform.has-browser .browser-boundary-hint')"
+        ".textContent===uiText.browserBoundaryExternal",
+        "External browser mode did not explain that it is outside the allowlist boundary",
+    )
+    browser.set_value(
+        "#forms .tileform.has-browser .browser-primary select",
+        "embedded",
+    )
+    browser.click("#backBtn")
     embedded_finished = browser.evaluate(
         "(async()=>{const response=await fetch('/launch/paint',{method:'POST'});"
         "const target=new URL(response.url);"
         "const token=target.searchParams.get('activity')||'';"
+        "const policy=response.headers.get('Content-Security-Policy')||'';"
         "if(!response.redirected||target.pathname!=='/browser.html'||token.length<16)"
         "return false;"
         "const finish=await fetch('/api/activity/finish',{method:'POST',"
         "headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});"
-        "return finish.status===204;})()",
+        "const forged=await fetch('/browser.html?url=https%3A%2F%2Fevil.example"
+        "&tile=paint&activity=');"
+        "return finish.status===204&&forged.status===404&&"
+        "policy.includes('frame-src '+location.origin+' https://media.example;')&&"
+        "!policy.includes('*');})()",
         await_promise=True,
     )
     if embedded_finished is not True:
@@ -431,7 +464,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     if recorded is not True:
         raise AssertionError("Completed embedded usage was not recorded")
     restored_activity_tile = browser.evaluate(
-        "(async()=>{cfg.tiles[0].cmd=['tuxpaint'];await persistConfig();return true;})()",
+        "(async()=>{cfg.tiles[0].cmd=['tuxpaint'];delete cfg.tiles[0].browserAllowedOrigins;"
+        "await persistConfig();return true;})()",
         await_promise=True,
     )
     if restored_activity_tile is not True:

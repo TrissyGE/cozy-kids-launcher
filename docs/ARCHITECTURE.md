@@ -65,7 +65,7 @@ A tiny Python HTTP server:
 
 `src/server.py` remains the localhost HTTP composition root. Domain behavior is
 kept in focused standard-library modules: configuration storage and validation,
-Parent authentication, app/browser discovery, application launching, media
+Parent authentication, app/browser discovery, embedded-browser policy, application launching, media
 discovery, timer state, update discovery/triggering, lifecycle state, process
 ownership, backups, and privacy-safe diagnostics. The server supplies installed
 paths and turns module results into the existing HTTP responses; the modules do
@@ -79,7 +79,7 @@ Every tile is posted to `/launch/<tile-id>`. The server normalizes the existing 
 - **web** — redirects compatible embedded sites to the wrapper or starts the selected browser in a dedicated external profile
 - **app** — starts an argument vector directly without a shell
 
-Existing `special:` commands and older `xdg-open URL` browser tiles remain compatible. Recommended public media sites use external mode because framing policies, login flows, and DRM make third-party iframe behavior unreliable.
+Existing `special:` commands and older `xdg-open URL` browser tiles remain compatible. Embedded tiles automatically allow their configured start origin and may carry at most 20 additional exact `http(s)` origins in `browserAllowedOrigins`. `browser_policy.py` canonicalizes that list; the server accepts `browser.html` only when its tile and URL match the active configuration, then emits a per-request `frame-src` Content Security Policy. The wrapper sandbox cannot navigate the launcher top level, and a blocked frame navigation produces a local child-friendly explanation. External mode intentionally sits outside this navigation boundary and is labelled accordingly in Parent settings. Recommended public media sites use external mode because framing policies, login flows, and DRM make third-party iframe behavior unreliable.
 
 `application_launcher.py` owns action normalization and orchestration. It starts
 argument vectors below `process_supervisor.py`, waits for a verified process

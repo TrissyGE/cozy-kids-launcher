@@ -6,17 +6,10 @@ import subprocess
 import sys
 import threading
 import time
-from urllib.parse import urlparse
 
 from app_detection import browser_family
+from browser_policy import is_safe_web_url
 from process_state import owned_process_alive, terminate_owned_process
-
-
-def is_safe_web_url(url):
-    if not isinstance(url, str) or len(url) > 2048:
-        return False
-    parsed = urlparse(url)
-    return parsed.scheme in ("http", "https") and bool(parsed.hostname)
 
 
 def resolve_tile_action(tile):

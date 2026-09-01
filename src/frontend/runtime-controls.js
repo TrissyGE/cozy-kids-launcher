@@ -166,6 +166,8 @@ async function updateBattery(){
 updateBattery();
 
 async function saveConfig(){
+  const invalidField=document.querySelector('#admin :invalid');
+  if(invalidField){ invalidField.reportValidity(); invalidField.focus(); return; }
   const button=document.getElementById('saveBtn');
   const message=document.getElementById('saveMsg');
   button.disabled=true;

@@ -58,7 +58,8 @@
           "id": "browser",
           "label": "Kinder-Internet",
           "emoji": "🌐",
-          "cmd": ["/usr/local/bin/kids-browser"],
+          "cmd": ["special:browser:https://www.fragfinn.de/"],
+          "browserAllowedOrigins": ["https://eltern.fragfinn.de"],
           "visible": false
         }
       ]
