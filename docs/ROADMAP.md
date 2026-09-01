@@ -62,9 +62,9 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [x] Add weekly screen-time schedules and per-app availability rules
   - [x] Add a bounded local-time schedule model, child-safe status API, and server-side launch enforcement
   - [x] Add the Parent editor, child-facing blocked states, and native-app boundary enforcement
-- [ ] Add a local, optional parent dashboard for recent activity and usage duration
+- [x] Add a local, optional parent dashboard for recent activity and usage duration
   - [x] Add bounded opt-in local activity storage, owned-runtime duration capture, and Parent-protected read and clear APIs
-  - [ ] Add the bilingual Parent dashboard, local export, and removal controls
+  - [x] Add the bilingual Parent dashboard, local export, and removal controls
 - [ ] Add a browser allowlist with understandable navigation boundaries
 - [ ] Keep all profile and activity data local, exportable, and removable
 

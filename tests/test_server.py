@@ -36,6 +36,7 @@ def frontend_source():
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
         frontend_root / "schedule-controls.js",
+        frontend_root / "activity-dashboard.js",
         frontend_root / "parent-settings.js",
         frontend_root / "first-run.js",
         frontend_root / "runtime-controls.js",
@@ -553,6 +554,8 @@ class ServerApiTests(unittest.TestCase):
         self.enable_pin()
         status, _, _ = self.request("/api/activity")
         self.assertEqual(status, 403)
+        status, _, _ = self.request("/api/activity/export")
+        self.assertEqual(status, 403)
         cookie = self.authenticate()
 
         status, data, _ = self.request("/api/activity", cookie=cookie)
@@ -578,8 +581,20 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(data["recordCount"], 1)
         self.assertEqual(data["totalDurationSeconds"], 45)
         self.assertEqual(data["records"][0]["tileId"], "paint")
-        self.assertNotIn("Paint", json.dumps(data))
+        self.assertEqual(data["profiles"][0]["name"], "Kiddo")
+        self.assertEqual(data["profiles"][0]["tiles"][0]["label"], "Paint")
+        self.assertNotIn("Paint", json.dumps(data["records"]))
         self.assertNotIn("tuxpaint", json.dumps(data))
+
+        status, exported, headers = self.request(
+            "/api/activity/export",
+            cookie=cookie,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(exported["activityVersion"], 1)
+        self.assertEqual(exported["records"][0]["durationSeconds"], 45)
+        self.assertNotIn("profiles", exported)
+        self.assertIn("cozy-kids-activity.json", headers["Content-Disposition"])
 
         status, result, _ = self.request(
             "/api/activity/clear",
@@ -1150,6 +1165,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
             "/frontend/schedule-controls.js",
+            "/frontend/activity-dashboard.js",
             "/frontend/parent-settings.js",
             "/frontend/first-run.js",
             "/frontend/runtime-controls.js",
@@ -1166,13 +1182,14 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_SCHEDULE_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_ACTIVITY_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_LOCALIZATION_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_FIRST_RUN_FILE"', installer)
 
@@ -1310,7 +1327,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('role="dialog"', source)
         self.assertIn('aria-modal="true"', source)
         self.assertNotIn("window.confirm(", source)
-        self.assertEqual(source.count("requestConfirmation("), 6)
+        self.assertEqual(source.count("requestConfirmation("), 7)
         self.assertIn("return new Promise(resolve=>", dialogs)
         self.assertIn("confirmationReturnFocus=document.activeElement", dialogs)
         self.assertIn("returnFocus.focus()", dialogs)
@@ -1471,6 +1488,28 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("{{LABEL_EXPORT_DIAGNOSTICS}}", source)
         self.assertIn('de:export_diagnostics) echo "Diagnose herunterladen"', installer)
         self.assertIn('en:export_diagnostics) echo "Download diagnostics"', installer)
+
+    def test_activity_dashboard_is_local_bounded_and_bilingual(self):
+        dashboard = (
+            REPOSITORY_ROOT / "src" / "frontend" / "activity-dashboard.js"
+        ).read_text(encoding="utf-8")
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("fetch('/api/activity'", dashboard)
+        self.assertIn("fetch('/api/activity/export'", dashboard)
+        self.assertIn("fetch('/api/activity/clear'", dashboard)
+        self.assertIn("activityData.records.slice(0,12)", dashboard)
+        self.assertIn("requestConfirmation(uiText.activityClearConfirm", dashboard)
+        self.assertIn("document.createElement('li')", dashboard)
+        self.assertNotIn("innerHTML", dashboard)
+        for label in (
+            "Aktivitätsübersicht",
+            "Aktivität exportieren",
+            "Activity overview",
+            "Export activity",
+        ):
+            self.assertIn(label, installer)
 
     def test_theme_and_browser_labels_follow_the_interface_language(self):
         source = frontend_source()

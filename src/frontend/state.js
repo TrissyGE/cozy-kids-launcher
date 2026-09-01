@@ -5,6 +5,7 @@ let availabilityPollInterval=null, availabilityStatus={profileAllowed:true,block
 let updateAvailable=false, remoteVersion='';
 let browserOptions=[];
 let appCatalogState='loading', recommendationState='loading', browserCatalogState='loading', backupState='loading';
+let activityState='loading', activityData={recordCount:0,totalDurationSeconds:0,records:[],profiles:[]};
 let bootstrapPromise=null;
 let profilePickerReturnFocus=null;
 const PROFILE_TEXT={
@@ -166,7 +167,28 @@ let uiText = {
   backupError: {{JSON_BACKUP_ERROR}},
   backupInstaller: {{JSON_BACKUP_INSTALLER}},
   backupPreRestore: {{JSON_BACKUP_PRE_RESTORE}},
-  backupPinPreserved: {{JSON_BACKUP_PIN_PRESERVED}}
+  backupPinPreserved: {{JSON_BACKUP_PIN_PRESERVED}},
+  activityTitle: {{JSON_ACTIVITY_TITLE}},
+  activityHint: {{JSON_ACTIVITY_HINT}},
+  activityEnabled: {{JSON_ACTIVITY_ENABLED}},
+  activityEnabledStatus: {{JSON_ACTIVITY_ENABLED_STATUS}},
+  activityDisabledStatus: {{JSON_ACTIVITY_DISABLED_STATUS}},
+  activityTime: {{JSON_ACTIVITY_TIME}},
+  activityLaunches: {{JSON_ACTIVITY_LAUNCHES}},
+  activityRecent: {{JSON_ACTIVITY_RECENT}},
+  activityEmpty: {{JSON_ACTIVITY_EMPTY}},
+  activityLoading: {{JSON_ACTIVITY_LOADING}},
+  activityError: {{JSON_ACTIVITY_ERROR}},
+  activityExport: {{JSON_ACTIVITY_EXPORT}},
+  activityClear: {{JSON_ACTIVITY_CLEAR}},
+  activityClearConfirm: {{JSON_ACTIVITY_CLEAR_CONFIRM}},
+  activityClearSuccess: {{JSON_ACTIVITY_CLEAR_SUCCESS}},
+  activityClearError: {{JSON_ACTIVITY_CLEAR_ERROR}},
+  activityUnknownProfile: {{JSON_ACTIVITY_UNKNOWN_PROFILE}},
+  activityUnknownApp: {{JSON_ACTIVITY_UNKNOWN_APP}},
+  activityLessMinute: {{JSON_ACTIVITY_LESS_MINUTE}},
+  activityMinutes: {{JSON_ACTIVITY_MINUTES}},
+  activityHoursMinutes: {{JSON_ACTIVITY_HOURS_MINUTES}}
 };
 
 function clearUiState(element){

@@ -553,6 +553,7 @@ function renderAdmin(){
   renderAdminPageNav(filteredTileIndexes.length);
   renderRecommendations();
   renderScheduleControls();
+  renderActivityDashboard();
   renderAdminSections();
   renderAppearancePreview();
 }

@@ -384,6 +384,27 @@ text() {
     de:backup_installer) echo "Vor Installation oder Update" ;;
     de:backup_pre_restore) echo "Vor Wiederherstellung" ;;
     de:backup_pin_preserved) echo "Der aktuelle Eltern-PIN bleibt bei einer Wiederherstellung unverändert." ;;
+    de:activity_title) echo "Aktivitätsübersicht" ;;
+    de:activity_hint) echo "Optional und nur lokal: Zeigt abgeschlossene App-Nutzungen der letzten 90 Tage." ;;
+    de:activity_enabled) echo "Aktivität lokal aufzeichnen" ;;
+    de:activity_enabled_status) echo "Neue Nutzungen werden lokal aufgezeichnet, solange diese Option aktiviert ist." ;;
+    de:activity_disabled_status) echo "Die Aufzeichnung ist aus. Vorhandene Daten bleiben, bis du sie löschst." ;;
+    de:activity_time) echo "Nutzungszeit (90 Tage)" ;;
+    de:activity_launches) echo "Abgeschlossene Nutzungen" ;;
+    de:activity_recent) echo "Letzte Aktivitäten" ;;
+    de:activity_empty) echo "Noch keine Aktivität aufgezeichnet." ;;
+    de:activity_loading) echo "Aktivität wird geladen..." ;;
+    de:activity_error) echo "Aktivität konnte nicht geladen werden." ;;
+    de:activity_export) echo "Aktivität exportieren" ;;
+    de:activity_clear) echo "Aktivität löschen" ;;
+    de:activity_clear_confirm) echo "Alle lokal gespeicherten Aktivitätsdaten wirklich löschen?" ;;
+    de:activity_clear_success) echo "Aktivitätsdaten wurden gelöscht." ;;
+    de:activity_clear_error) echo "Aktivitätsdaten konnten nicht gelöscht werden." ;;
+    de:activity_unknown_profile) echo "Gelöschtes Profil" ;;
+    de:activity_unknown_app) echo "Entfernte App" ;;
+    de:activity_less_minute) echo "< 1 Min." ;;
+    de:activity_minutes) echo "{count} Min." ;;
+    de:activity_hours_minutes) echo "{hours} Std. {minutes} Min." ;;
     en:app_browser_title) echo "App Browser" ;;
     en:install) echo "Install" ;;
     en:added) echo "Added" ;;
@@ -413,6 +434,27 @@ text() {
     en:backup_installer) echo "Before installation or update" ;;
     en:backup_pre_restore) echo "Before restore" ;;
     en:backup_pin_preserved) echo "The current Parent PIN is preserved when restoring a backup." ;;
+    en:activity_title) echo "Activity overview" ;;
+    en:activity_hint) echo "Optional and local only: Shows completed app use from the last 90 days." ;;
+    en:activity_enabled) echo "Track activity locally" ;;
+    en:activity_enabled_status) echo "New usage is recorded locally while this option is enabled." ;;
+    en:activity_disabled_status) echo "Tracking is off. Existing data remains until you remove it." ;;
+    en:activity_time) echo "Usage time (90 days)" ;;
+    en:activity_launches) echo "Completed sessions" ;;
+    en:activity_recent) echo "Recent activity" ;;
+    en:activity_empty) echo "No activity has been recorded yet." ;;
+    en:activity_loading) echo "Loading activity..." ;;
+    en:activity_error) echo "Activity could not be loaded." ;;
+    en:activity_export) echo "Export activity" ;;
+    en:activity_clear) echo "Clear activity" ;;
+    en:activity_clear_confirm) echo "Remove all locally stored activity data?" ;;
+    en:activity_clear_success) echo "Activity data was removed." ;;
+    en:activity_clear_error) echo "Activity data could not be removed." ;;
+    en:activity_unknown_profile) echo "Deleted profile" ;;
+    en:activity_unknown_app) echo "Removed app" ;;
+    en:activity_less_minute) echo "< 1 min" ;;
+    en:activity_minutes) echo "{count} min" ;;
+    en:activity_hours_minutes) echo "{hours} hr {minutes} min" ;;
     de:timer_label) echo "Bildschirmzeit" ;;
     en:timer_label) echo "Screen time" ;;
     de:schedule_weekly_title) echo "Wochenplan" ;;
@@ -904,6 +946,7 @@ FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_PROFILES_FILE="$FRONTEND_DIR/profiles.js"
 FRONTEND_SCHEDULE_FILE="$FRONTEND_DIR/schedule-controls.js"
+FRONTEND_ACTIVITY_FILE="$FRONTEND_DIR/activity-dashboard.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
 FRONTEND_FIRST_RUN_FILE="$FRONTEND_DIR/first-run.js"
 FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
@@ -982,6 +1025,7 @@ render_template() {
   export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_LOADING JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
   export JSON_EXPORT_CONFIG JSON_IMPORT_CONFIG JSON_EXPORT_DIAGNOSTICS JSON_IMPORT_SUCCESS JSON_IMPORT_ERROR JSON_INVALID_CONFIG JSON_IMPORT_CONFIRM
   export JSON_BACKUP_TITLE JSON_BACKUP_RESTORE JSON_BACKUP_EMPTY JSON_BACKUP_LOADING JSON_BACKUP_LOAD_ERROR JSON_BACKUP_RESTORING JSON_BACKUP_CONFIRM JSON_BACKUP_SUCCESS JSON_BACKUP_ERROR JSON_BACKUP_INSTALLER JSON_BACKUP_PRE_RESTORE JSON_BACKUP_PIN_PRESERVED
+  export JSON_ACTIVITY_TITLE JSON_ACTIVITY_HINT JSON_ACTIVITY_ENABLED JSON_ACTIVITY_ENABLED_STATUS JSON_ACTIVITY_DISABLED_STATUS JSON_ACTIVITY_TIME JSON_ACTIVITY_LAUNCHES JSON_ACTIVITY_RECENT JSON_ACTIVITY_EMPTY JSON_ACTIVITY_LOADING JSON_ACTIVITY_ERROR JSON_ACTIVITY_EXPORT JSON_ACTIVITY_CLEAR JSON_ACTIVITY_CLEAR_CONFIRM JSON_ACTIVITY_CLEAR_SUCCESS JSON_ACTIVITY_CLEAR_ERROR JSON_ACTIVITY_UNKNOWN_PROFILE JSON_ACTIVITY_UNKNOWN_APP JSON_ACTIVITY_LESS_MINUTE JSON_ACTIVITY_MINUTES JSON_ACTIVITY_HOURS_MINUTES
   export UPDATE_CHECK UPDATE_AVAILABLE UPDATE_UP_TO_DATE UPDATE_ERROR VERSION_LABEL UPDATE_NOW UPDATE_PROGRESS UPDATE_CONFIRM
   export RUNTIME_FAILURE_TITLE RUNTIME_FAILURE_BODY
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
@@ -1146,6 +1190,27 @@ BACKUP_ERROR="$(text backup_error)"
 BACKUP_INSTALLER="$(text backup_installer)"
 BACKUP_PRE_RESTORE="$(text backup_pre_restore)"
 BACKUP_PIN_PRESERVED="$(text backup_pin_preserved)"
+ACTIVITY_TITLE="$(text activity_title)"
+ACTIVITY_HINT="$(text activity_hint)"
+ACTIVITY_ENABLED="$(text activity_enabled)"
+ACTIVITY_ENABLED_STATUS="$(text activity_enabled_status)"
+ACTIVITY_DISABLED_STATUS="$(text activity_disabled_status)"
+ACTIVITY_TIME="$(text activity_time)"
+ACTIVITY_LAUNCHES="$(text activity_launches)"
+ACTIVITY_RECENT="$(text activity_recent)"
+ACTIVITY_EMPTY="$(text activity_empty)"
+ACTIVITY_LOADING="$(text activity_loading)"
+ACTIVITY_ERROR="$(text activity_error)"
+ACTIVITY_EXPORT="$(text activity_export)"
+ACTIVITY_CLEAR="$(text activity_clear)"
+ACTIVITY_CLEAR_CONFIRM="$(text activity_clear_confirm)"
+ACTIVITY_CLEAR_SUCCESS="$(text activity_clear_success)"
+ACTIVITY_CLEAR_ERROR="$(text activity_clear_error)"
+ACTIVITY_UNKNOWN_PROFILE="$(text activity_unknown_profile)"
+ACTIVITY_UNKNOWN_APP="$(text activity_unknown_app)"
+ACTIVITY_LESS_MINUTE="$(text activity_less_minute)"
+ACTIVITY_MINUTES="$(text activity_minutes)"
+ACTIVITY_HOURS_MINUTES="$(text activity_hours_minutes)"
 TIMER_LABEL="$(text timer_label)"
 TIMER_OFF="$(text timer_off)"
 TIMER_15="$(text timer_15)"
@@ -1308,6 +1373,27 @@ JSON_BACKUP_ERROR="$(json_text "$BACKUP_ERROR")"
 JSON_BACKUP_INSTALLER="$(json_text "$BACKUP_INSTALLER")"
 JSON_BACKUP_PRE_RESTORE="$(json_text "$BACKUP_PRE_RESTORE")"
 JSON_BACKUP_PIN_PRESERVED="$(json_text "$BACKUP_PIN_PRESERVED")"
+JSON_ACTIVITY_TITLE="$(json_text "$ACTIVITY_TITLE")"
+JSON_ACTIVITY_HINT="$(json_text "$ACTIVITY_HINT")"
+JSON_ACTIVITY_ENABLED="$(json_text "$ACTIVITY_ENABLED")"
+JSON_ACTIVITY_ENABLED_STATUS="$(json_text "$ACTIVITY_ENABLED_STATUS")"
+JSON_ACTIVITY_DISABLED_STATUS="$(json_text "$ACTIVITY_DISABLED_STATUS")"
+JSON_ACTIVITY_TIME="$(json_text "$ACTIVITY_TIME")"
+JSON_ACTIVITY_LAUNCHES="$(json_text "$ACTIVITY_LAUNCHES")"
+JSON_ACTIVITY_RECENT="$(json_text "$ACTIVITY_RECENT")"
+JSON_ACTIVITY_EMPTY="$(json_text "$ACTIVITY_EMPTY")"
+JSON_ACTIVITY_LOADING="$(json_text "$ACTIVITY_LOADING")"
+JSON_ACTIVITY_ERROR="$(json_text "$ACTIVITY_ERROR")"
+JSON_ACTIVITY_EXPORT="$(json_text "$ACTIVITY_EXPORT")"
+JSON_ACTIVITY_CLEAR="$(json_text "$ACTIVITY_CLEAR")"
+JSON_ACTIVITY_CLEAR_CONFIRM="$(json_text "$ACTIVITY_CLEAR_CONFIRM")"
+JSON_ACTIVITY_CLEAR_SUCCESS="$(json_text "$ACTIVITY_CLEAR_SUCCESS")"
+JSON_ACTIVITY_CLEAR_ERROR="$(json_text "$ACTIVITY_CLEAR_ERROR")"
+JSON_ACTIVITY_UNKNOWN_PROFILE="$(json_text "$ACTIVITY_UNKNOWN_PROFILE")"
+JSON_ACTIVITY_UNKNOWN_APP="$(json_text "$ACTIVITY_UNKNOWN_APP")"
+JSON_ACTIVITY_LESS_MINUTE="$(json_text "$ACTIVITY_LESS_MINUTE")"
+JSON_ACTIVITY_MINUTES="$(json_text "$ACTIVITY_MINUTES")"
+JSON_ACTIVITY_HOURS_MINUTES="$(json_text "$ACTIVITY_HOURS_MINUTES")"
 JSON_TIMER_LABEL="$(json_text "$TIMER_LABEL")"
 JSON_TIMER_OFF="$(json_text "$TIMER_OFF")"
 JSON_TIMER_15="$(json_text "$TIMER_15")"
@@ -1368,6 +1454,7 @@ backup_if_exists "$FRONTEND_DIALOGS_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_PROFILES_FILE"
 backup_if_exists "$FRONTEND_SCHEDULE_FILE"
+backup_if_exists "$FRONTEND_ACTIVITY_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
 backup_if_exists "$FRONTEND_FIRST_RUN_FILE"
 backup_if_exists "$FRONTEND_RUNTIME_FILE"
@@ -1409,6 +1496,7 @@ render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
 render_template "$SRC_DIR/frontend/schedule-controls.js" "$FRONTEND_SCHEDULE_FILE" 0644
+render_template "$SRC_DIR/frontend/activity-dashboard.js" "$FRONTEND_ACTIVITY_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644

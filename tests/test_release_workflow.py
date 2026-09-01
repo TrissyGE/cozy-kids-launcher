@@ -240,6 +240,16 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / ".local"
                     / "share"
                     / "cozy-kids-launcher"
+                    / "frontend"
+                    / "activity-dashboard.js"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
                     / "parent_auth.py"
                 ).is_file()
             )

@@ -42,7 +42,10 @@ records. Records older than 90 days are ignored and at most 1,000 are retained.
 The existing Parent-access boundary protects reading and clearing the records,
 and requires a valid Parent session whenever a PIN is configured. Deleting a
 child profile also removes its retained activity. The activity file and its
-directory are restricted to the local user and are never uploaded.
+directory are restricted to the local user and are never uploaded. The Parent
+dashboard resolves readable names only from the current local configuration;
+the downloadable activity export contains the stored identifiers and times,
+but no profile names, app labels, commands, URLs, or media paths.
 The child-facing picker receives only names and avatars. Switching to another
 child still requires the Parent PIN when one is configured. The small
 "last launched" marker is stored locally under a separate key for each profile.
