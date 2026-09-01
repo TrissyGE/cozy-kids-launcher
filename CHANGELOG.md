@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Media library
+
+- Added a bounded local media catalog API with stable opaque IDs, audio/video metadata, sidecar and folder-cover discovery, and path-private cover delivery while preserving the existing playlist launch behavior
+
 ### Family profiles
 
 - Added configuration schema 2 with bounded local child profiles for separate names, avatars, themes, tiles, favorites, and per-app limits

@@ -60,11 +60,15 @@ from lifecycle_state import (
     write_lifecycle_request,
 )
 from media_library import (
+    MAX_MEDIA_COVER_BYTES,
     SUPPORTED_MEDIA_PATTERNS,
+    catalog_item,
     find_media_player as detect_media_player,
     has_media as path_has_media,
     media_locations as discover_media_locations,
     media_player_command,
+    public_media_catalog,
+    scan_media_catalog,
 )
 from parent_auth import (
     ADMIN_COOKIE_NAME,
@@ -320,6 +324,11 @@ def media_locations():
     )
 
 
+def media_catalog():
+    """Return a bounded catalog without changing the legacy playlist launch path."""
+    return scan_media_catalog((VIDEOS, MUSIC, ALT_MUSIC))
+
+
 def find_media_player():
     return detect_media_player(which=shutil.which)
 
@@ -567,6 +576,33 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def media_cover_response(self, item):
+        path = item.get("coverPath", "") if item else ""
+        content_types = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".webp": "image/webp",
+        }
+        content_type = content_types.get(os.path.splitext(path)[1].casefold())
+        if not content_type:
+            self.send_error(404)
+            return
+        try:
+            with open(path, "rb") as cover_file:
+                payload = cover_file.read(MAX_MEDIA_COVER_BYTES + 1)
+        except OSError:
+            self.send_error(404)
+            return
+        if len(payload) > MAX_MEDIA_COVER_BYTES:
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
     def read_json_body(self, required=True):
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -637,6 +673,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404)
                 return
             return super().do_GET()
+        if request_url.path == "/api/media":
+            entries, truncated = media_catalog()
+            return self.json_response({
+                "items": public_media_catalog(entries),
+                "truncated": truncated,
+            })
+        if request_url.path == "/api/media/cover":
+            query = parse_qs(request_url.query, keep_blank_values=True)
+            media_ids = query.get("id", [])
+            if len(media_ids) != 1 or len(query) != 1:
+                self.send_error(404)
+                return
+            entries, _ = media_catalog()
+            return self.media_cover_response(catalog_item(entries, media_ids[0]))
         if self.path == "/api/config":
             return self.json_response(public_config(load_cfg()))
         if self.path == "/api/profiles":

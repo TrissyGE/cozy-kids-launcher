@@ -71,6 +71,9 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 ## v0.7.0 — Delight
 
 - [ ] Add a cover-based local media library with favorites, recents, and resume support
+  - [x] Add a bounded, path-private local catalog API with sidecar and folder-cover discovery
+  - [ ] Add the child-facing cover library and launch individual media items
+  - [ ] Add per-profile media favorites, recents, and resume positions
 - [ ] Add animated world themes and optional time-of-day variants
 - [ ] Add subtle navigation, launch, success, and return transitions
 - [ ] Add optional local sounds and Linux text-to-speech feedback

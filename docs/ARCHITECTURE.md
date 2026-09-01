@@ -81,6 +81,16 @@ Every tile is posted to `/launch/<tile-id>`. The server normalizes the existing 
 
 Existing `special:` commands and older `xdg-open URL` browser tiles remain compatible. Embedded tiles automatically allow their configured start origin and may carry at most 20 additional exact `http(s)` origins in `browserAllowedOrigins`. `browser_policy.py` canonicalizes that list; the server accepts `browser.html` only when its tile and URL match the active configuration, then emits a per-request `frame-src` Content Security Policy. The wrapper sandbox cannot navigate the launcher top level, and a blocked frame navigation produces a local child-friendly explanation. External mode intentionally sits outside this navigation boundary and is labelled accordingly in Parent settings. Recommended public media sites use external mode because framing policies, login flows, and DRM make third-party iframe behavior unreliable.
 
+The read-only `/api/media` foundation scans only the configured local Videos
+and Music roots, skips hidden content and links outside those roots, and caps a
+scan at 5,000 directories, 20,000 files, and 2,000 returned items. It exposes
+stable opaque IDs, display titles, media kinds, and optional local cover
+URLs—never filesystem paths. Cover requests are resolved back through a fresh
+bounded catalog and can serve only adjacent `.jpg`, `.jpeg`, `.png`, or `.webp`
+sidecars and conventional `cover`/`folder` images of at most 10 MiB. The
+existing media tile still opens the legacy all-folder playlist; individual-item
+launching will be introduced separately.
+
 `application_launcher.py` owns action normalization and orchestration. It starts
 argument vectors below `process_supervisor.py`, waits for a verified process
 record, and only then starts `overlay.py`. Missing ownership or overlay startup
