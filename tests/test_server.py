@@ -534,6 +534,32 @@ class ServerApiTests(unittest.TestCase):
         self.assertIsNone(data)
         launch.assert_called_once_with(["tuxpaint"], "local")
 
+    def test_schedule_status_and_launch_enforcement_share_the_same_boundary(self):
+        config = server_module.load_cfg()
+        config["weeklySchedule"] = {"enabled": True, "days": {}}
+        server_module.save_cfg(config)
+
+        status, availability, _ = self.request("/api/availability/status")
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            availability,
+            {"profileAllowed": False, "blockedTileIds": ["paint"]},
+        )
+
+        with mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, data, _ = self.request(
+                "/launch/paint",
+                method="POST",
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 403)
+        self.assertEqual(
+            data,
+            {"status": "blocked", "reason": "profile_schedule"},
+        )
+        launch.assert_not_called()
+
     def test_update_status_comes_from_the_local_release_resolver(self):
         expected = {
             "installedVersion": "0.3.4",

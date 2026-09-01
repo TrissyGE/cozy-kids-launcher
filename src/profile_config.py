@@ -22,6 +22,8 @@ PROFILE_FIELDS = (
     "tiles",
     "favorites",
     "appLimits",
+    "weeklySchedule",
+    "appAvailability",
 )
 
 
@@ -34,6 +36,8 @@ def migrate_legacy_profile(data):
         "avatar": "🌈",
         "favorites": [],
         "appLimits": {},
+        "weeklySchedule": {"enabled": False, "days": {}},
+        "appAvailability": {},
     }
     for field in PROFILE_FIELDS:
         if field in result:
@@ -110,6 +114,8 @@ def add_profile(data, name, avatar="", profile_id=None):
     profile["currentPage"] = 0
     profile["favorites"] = []
     profile["appLimits"] = {}
+    profile["weeklySchedule"] = {"enabled": False, "days": {}}
+    profile["appAvailability"] = {}
     profiles.append(profile)
     return result, new_id
 

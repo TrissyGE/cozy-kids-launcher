@@ -90,6 +90,7 @@ from runtime_diagnostics import (
     configure_runtime_logging,
     log_runtime_event,
 )
+from schedule_rules import availability_summary, tile_availability
 from timer_state import (
     clear_timer as remove_timer_state,
     load_timer as read_timer_state,
@@ -583,6 +584,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
+        if self.path == "/api/availability/status":
+            return self.json_response(availability_summary(load_cfg()))
         if self.path == "/api/backups":
             data = load_cfg()
             if not self.require_admin(data):
@@ -981,6 +984,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if not tile:
                 self.send_response(404)
                 self.end_headers()
+                return
+            availability = tile_availability(cfg, tile_id)
+            if not availability["allowed"]:
+                self.json_response({
+                    "status": "blocked",
+                    "reason": availability["reason"],
+                }, 403)
                 return
             try:
                 launch = resolve_tile_action(tile)

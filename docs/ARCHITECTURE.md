@@ -135,6 +135,8 @@ focus recovery are documented in [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md).
 - the runtime and `/api/config` retain the original flat active-profile view so existing frontend code and API clients continue to work during the incremental v0.6.0 rollout
 - profile creation, selection, and deletion use dedicated Parent-authenticated endpoints; the active profile and the final remaining profile cannot be deleted
 - the child-facing profile picker exposes only profile summaries and sends a switch through the same Parent PIN/session boundary; switching profiles also separates local recent-app UI state and clears the active runtime timer
+- optional `weeklySchedule` and `appAvailability` rules are stored inside each profile as bounded local-time windows; missing or disabled rules preserve the unrestricted legacy behavior
+- `schedule_rules.py` validates and evaluates both rule types, `/api/availability/status` exposes only the current child-safe result, and `/launch/<tile-id>` repeats the same decision before any process or browser can start
 - new installations set `setupCompleted` to false and use a five-step local first-run flow; missing flags on existing configurations are treated as completed, so upgrades never force the wizard onto current families
 - German and English UI dictionaries are generated from the installer's canonical translations, shipped as local JSON assets, and loaded before the first render; the installer-rendered strings remain an offline fallback
 - migrations preserve unknown keys so newer optional data is not discarded accidentally

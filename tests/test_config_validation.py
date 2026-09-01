@@ -101,6 +101,34 @@ class ConfigValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "setupCompleted must be a boolean"):
             config_validation.validate_config(data)
 
+    def test_schedule_collections_are_bounded_and_validated(self):
+        data = base_config()
+        data["weeklySchedule"] = {
+            "enabled": True,
+            "days": {"monday": [{"start": "08:00", "end": "18:00"}]},
+        }
+        data["appAvailability"] = {
+            "paint": {
+                "enabled": True,
+                "days": {"saturday": [{"start": "09:00", "end": "12:00"}]},
+            },
+        }
+        validated = config_validation.validate_config(data)
+        self.assertTrue(validated["weeklySchedule"]["enabled"])
+        self.assertIn("paint", validated["appAvailability"])
+
+        data["appAvailability"]["bad id"] = {"enabled": False, "days": {}}
+        with self.assertRaisesRegex(ValueError, "invalid tile id"):
+            config_validation.validate_config(data)
+
+        data = base_config()
+        data["weeklySchedule"] = {
+            "enabled": True,
+            "days": {"monday": [{"start": "18:00", "end": "08:00"}]},
+        }
+        with self.assertRaisesRegex(ValueError, "end after"):
+            config_validation.validate_config(data)
+
     def test_public_projection_never_mutates_or_exposes_the_pin_hash(self):
         data = base_config()
         data["pinHash"] = "0123456789abcdef"

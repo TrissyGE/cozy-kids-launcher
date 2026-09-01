@@ -60,6 +60,8 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
   - [x] Add profile creation, editing, deletion, and selection to the Parent and child-facing interfaces
 - [x] Add a guided first-run setup for language, child, apps, time rules, and appearance
 - [ ] Add weekly screen-time schedules and per-app availability rules
+  - [x] Add a bounded local-time schedule model, child-safe status API, and server-side launch enforcement
+  - [ ] Add the Parent editor, child-facing blocked states, and native-app boundary enforcement
 - [ ] Add a local, optional parent dashboard for recent activity and usage duration
 - [ ] Add a browser allowlist with understandable navigation boundaries
 - [ ] Keep all profile and activity data local, exportable, and removable

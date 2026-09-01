@@ -70,6 +70,16 @@ class ProfileConfigTests(unittest.TestCase):
         alex["tiles"][0]["label"] = "Alex Paint"
         alex["favorites"] = ["paint"]
         alex["appLimits"] = {"paint": 20}
+        alex["weeklySchedule"] = {
+            "enabled": True,
+            "days": {"monday": [{"start": "08:00", "end": "18:00"}]},
+        }
+        alex["appAvailability"] = {
+            "paint": {
+                "enabled": True,
+                "days": {"monday": [{"start": "09:00", "end": "12:00"}]},
+            },
+        }
         stored = profile_config.merge_active_config(stored, alex)
         stored = config_validation.validate_stored_config(stored)
 
@@ -83,6 +93,8 @@ class ProfileConfigTests(unittest.TestCase):
         self.assertEqual(alex["theme"], "blau")
         self.assertEqual(alex["favorites"], ["paint"])
         self.assertEqual(alex["appLimits"], {"paint": 20})
+        self.assertTrue(alex["weeklySchedule"]["enabled"])
+        self.assertIn("paint", alex["appAvailability"])
 
     def test_active_and_last_profile_deletion_is_rejected(self):
         stored = config_validation.validate_stored_config(legacy_config())
