@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          # Scheduled and manual workflows start from the default development
+          # branch. The invariant must always inspect the stable channel.
+          ref: main
           fetch-depth: 0
 
       - name: Require main to equal the latest published release

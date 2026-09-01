@@ -36,6 +36,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             REPOSITORY_ROOT / ".github" / "workflows" / "stable-main.yml"
         ).read_text(encoding="utf-8")
         self.assertIn("releases/latest", workflow)
+        self.assertIn("ref: main", workflow)
         self.assertIn('release_sha="$(git rev-parse "$tag^{commit}")"', workflow)
         self.assertIn('main_sha="$(git rev-parse HEAD)"', workflow)
         self.assertIn('[[ "$main_sha" != "$release_sha" ]]', workflow)
