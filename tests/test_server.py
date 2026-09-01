@@ -27,6 +27,7 @@ def frontend_source():
         REPOSITORY_ROOT / "src" / "index.html",
         frontend_root / "design-system.css",
         frontend_root / "state.js",
+        frontend_root / "dialogs.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "parent-settings.js",
         frontend_root / "runtime-controls.js",
@@ -901,6 +902,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/design-system.css",
             "/frontend/styles.css",
             "/frontend/state.js",
+            "/frontend/dialogs.js",
             "/frontend/launcher-ui.js",
             "/frontend/parent-settings.js",
             "/frontend/runtime-controls.js",
@@ -917,9 +919,10 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "dialogs.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
 
     def test_design_system_defines_shared_tokens_and_controls(self):
         source = (
@@ -1031,7 +1034,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("function setSelectedTilesVisible(visible)", source)
         self.assertIn("function deleteSelectedTiles()", source)
         self.assertIn("adminSelectedTileIds.has(tile.id)", source)
-        self.assertIn("window.confirm(uiText.appBulkDeleteConfirm", source)
+        self.assertIn("requestConfirmation(uiText.appBulkDeleteConfirm", source)
         design_system = (
             REPOSITORY_ROOT / "src" / "frontend" / "design-system.css"
         ).read_text(encoding="utf-8")
@@ -1045,6 +1048,29 @@ class FrontendSafetyTests(unittest.TestCase):
             "Delete selection",
         ):
             self.assertIn(label, installer)
+
+    def test_destructive_frontend_actions_share_an_accessible_confirmation_dialog(self):
+        source = frontend_source()
+        dialogs = (REPOSITORY_ROOT / "src" / "frontend" / "dialogs.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('id="confirmOverlay"', source)
+        self.assertIn('role="dialog"', source)
+        self.assertIn('aria-modal="true"', source)
+        self.assertNotIn("window.confirm(", source)
+        self.assertEqual(source.count("requestConfirmation("), 5)
+        self.assertIn("return new Promise(resolve=>", dialogs)
+        self.assertIn("confirmationReturnFocus=document.activeElement", dialogs)
+        self.assertIn("returnFocus.focus()", dialogs)
+        self.assertIn("event.key==='Escape'", dialogs)
+        self.assertIn("event.stopImmediatePropagation()", dialogs)
+        self.assertIn("buttons[buttons.length-1].focus()", dialogs)
+
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('de:confirm_title) echo "Bitte bestätigen"', installer)
+        self.assertIn('en:confirm_title) echo "Please confirm"', installer)
 
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()

@@ -216,7 +216,7 @@ async function importConfig(input){
   msg.textContent='';
   msg.style.color='';
   if(!input.files||!input.files[0]) return;
-  if(!window.confirm(uiText.importConfirm||'This will overwrite all settings. Continue?')){ input.value=''; return; }
+  if(!(await requestConfirmation(uiText.importConfirm||'This will overwrite all settings. Continue?',uiText.importConfig))){ input.value=''; return; }
   try{
     const text=await input.files[0].text();
     const data=JSON.parse(text);
@@ -289,7 +289,7 @@ async function restoreBackup(){
   const button=document.getElementById('restoreBackupBtn');
   const msg=document.getElementById('backupMsg');
   const backupId=select.value;
-  if(!backupId||!window.confirm(uiText.backupConfirm)) return;
+  if(!backupId||!(await requestConfirmation(uiText.backupConfirm,uiText.backupRestore))) return;
   button.disabled=true;
   msg.textContent=uiText.backupRestoring;
   msg.style.color='';

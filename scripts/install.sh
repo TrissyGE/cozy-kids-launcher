@@ -180,6 +180,9 @@ text() {
     de:app_bulk_delete) echo "Auswahl löschen" ;;
     de:app_bulk_delete_confirm) echo "{count} ausgewählte Kacheln löschen?" ;;
     de:app_select_tile) echo "{tile} auswählen" ;;
+    de:confirm_title) echo "Bitte bestätigen" ;;
+    de:confirm_cancel) echo "Abbrechen" ;;
+    de:confirm_continue) echo "Fortfahren" ;;
     de:placeholder_title) echo "Überschrift" ;;
     de:placeholder_parent_label) echo "Eltern-Button" ;;
     de:placeholder_exit_label) echo "Beenden-Button" ;;
@@ -265,6 +268,9 @@ text() {
     en:app_bulk_delete) echo "Delete selection" ;;
     en:app_bulk_delete_confirm) echo "Delete {count} selected tiles?" ;;
     en:app_select_tile) echo "Select {tile}" ;;
+    en:confirm_title) echo "Please confirm" ;;
+    en:confirm_cancel) echo "Cancel" ;;
+    en:confirm_continue) echo "Continue" ;;
     en:placeholder_title) echo "Title" ;;
     en:placeholder_parent_label) echo "Parent button" ;;
     en:placeholder_exit_label) echo "Exit button" ;;
@@ -813,6 +819,7 @@ INDEX_FILE="$APP_ROOT/index.html"
 FRONTEND_STYLES_FILE="$FRONTEND_DIR/styles.css"
 FRONTEND_DESIGN_SYSTEM_FILE="$FRONTEND_DIR/design-system.css"
 FRONTEND_STATE_FILE="$FRONTEND_DIR/state.js"
+FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
 FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
@@ -879,6 +886,7 @@ render_template() {
   export JSON_ADMIN_TITLE JSON_ADMIN_NAV_LABEL JSON_ADMIN_OVERVIEW JSON_ADMIN_CHILDREN JSON_ADMIN_APPS_MEDIA JSON_ADMIN_SCREEN_TIME JSON_ADMIN_APPEARANCE JSON_ADMIN_SYSTEM
   export JSON_APP_SEARCH_LABEL JSON_APP_FILTER_LABEL JSON_APP_FILTER_ALL JSON_APP_FILTER_VISIBLE JSON_APP_FILTER_HIDDEN JSON_APP_FILTER_EMPTY JSON_APP_FILTER_COUNT
   export JSON_APP_BULK_ACTIONS JSON_APP_BULK_SELECT_ALL JSON_APP_BULK_SELECTED JSON_APP_BULK_SHOW JSON_APP_BULK_HIDE JSON_APP_BULK_DELETE JSON_APP_BULK_DELETE_CONFIRM JSON_APP_SELECT_TILE
+  export JSON_CONFIRM_TITLE JSON_CONFIRM_CANCEL JSON_CONFIRM_CONTINUE
   export JSON_PLACEHOLDER_TITLE JSON_PLACEHOLDER_PARENT_LABEL JSON_PLACEHOLDER_EXIT_LABEL
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
@@ -950,6 +958,9 @@ APP_BULK_HIDE="$(text app_bulk_hide)"
 APP_BULK_DELETE="$(text app_bulk_delete)"
 APP_BULK_DELETE_CONFIRM="$(text app_bulk_delete_confirm)"
 APP_SELECT_TILE="$(text app_select_tile)"
+CONFIRM_TITLE="$(text confirm_title)"
+CONFIRM_CANCEL="$(text confirm_cancel)"
+CONFIRM_CONTINUE="$(text confirm_continue)"
 PLACEHOLDER_TITLE="$(text placeholder_title)"
 PLACEHOLDER_PARENT_LABEL="$(text placeholder_parent_label)"
 PLACEHOLDER_EXIT_LABEL="$(text placeholder_exit_label)"
@@ -1079,6 +1090,9 @@ JSON_APP_BULK_HIDE="$(json_text "$APP_BULK_HIDE")"
 JSON_APP_BULK_DELETE="$(json_text "$APP_BULK_DELETE")"
 JSON_APP_BULK_DELETE_CONFIRM="$(json_text "$APP_BULK_DELETE_CONFIRM")"
 JSON_APP_SELECT_TILE="$(json_text "$APP_SELECT_TILE")"
+JSON_CONFIRM_TITLE="$(json_text "$CONFIRM_TITLE")"
+JSON_CONFIRM_CANCEL="$(json_text "$CONFIRM_CANCEL")"
+JSON_CONFIRM_CONTINUE="$(json_text "$CONFIRM_CONTINUE")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
 JSON_PLACEHOLDER_PARENT_LABEL="$(json_text "$PLACEHOLDER_PARENT_LABEL")"
 JSON_PLACEHOLDER_EXIT_LABEL="$(json_text "$PLACEHOLDER_EXIT_LABEL")"
@@ -1178,6 +1192,7 @@ backup_if_exists "$INDEX_FILE"
 backup_if_exists "$FRONTEND_STYLES_FILE"
 backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"
 backup_if_exists "$FRONTEND_STATE_FILE"
+backup_if_exists "$FRONTEND_DIALOGS_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
 backup_if_exists "$FRONTEND_RUNTIME_FILE"
@@ -1207,6 +1222,7 @@ render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/frontend/design-system.css" "$FRONTEND_DESIGN_SYSTEM_FILE" 0644
 render_template "$SRC_DIR/frontend/styles.css" "$FRONTEND_STYLES_FILE" 0644
 render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
+render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644

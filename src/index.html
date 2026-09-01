@@ -32,6 +32,16 @@
     <div class="hint" id="pinHint"></div>
   </div>
 </div>
+<div id="confirmOverlay" class="install-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+  <div class="confirm-box">
+    <h2 id="confirmTitle"></h2>
+    <p id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button id="confirmCancelBtn" type="button" class="smallbtn" onclick="resolveConfirmation(false)"></button>
+      <button id="confirmActionBtn" type="button" class="smallbtn save" onclick="resolveConfirmation(true)"></button>
+    </div>
+  </div>
+</div>
 <div id="updating" class="pinoverlay hidden">
   <div class="pinbox">
     <div class="emoji" style="font-size:3rem;">🔄</div>
@@ -264,6 +274,7 @@
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script defer src="/frontend/state.js"></script>
+<script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
 <script defer src="/frontend/runtime-controls.js"></script>

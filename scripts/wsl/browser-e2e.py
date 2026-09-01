@@ -142,7 +142,7 @@ def enter_parent_settings(browser):
     )
 
 
-def run_scenarios(browser, release_fixture, installed_version):
+def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.wait_for(
         "typeof cfg !== 'undefined' && cfg !== null && "
         "document.querySelectorAll('#grid .tile:not(.placeholder)').length === 2",
@@ -314,8 +314,35 @@ def run_scenarios(browser, release_fixture, installed_version):
     browser.click(
         "#forms .tileform[style*='display: grid'] .tile-select-toggle input"
     )
-    browser.evaluate("window.confirm=()=>true")
+    browser.evaluate("document.getElementById('bulkDeleteTilesBtn').focus()")
     browser.click("#bulkDeleteTilesBtn")
+    browser.wait_for(
+        "!document.getElementById('confirmOverlay').classList.contains('hidden') && "
+        "document.activeElement.id==='confirmCancelBtn' && cfg.tiles.length===5",
+        message="Bulk delete did not open the shared confirmation dialog safely",
+    )
+    browser.key_press("Escape")
+    browser.wait_for(
+        "document.getElementById('confirmOverlay').classList.contains('hidden') && "
+        "document.activeElement.id==='bulkDeleteTilesBtn' && cfg.tiles.length===5",
+        message="Confirmation cancellation did not restore focus and preserve tiles",
+    )
+    browser.click("#bulkDeleteTilesBtn")
+    browser.wait_for("document.activeElement.id==='confirmCancelBtn'")
+    browser.screenshot(artifacts / "confirmation-dialog.png")
+    browser.key_press("Tab")
+    assert_js(
+        browser,
+        "document.activeElement.id==='confirmActionBtn'",
+        "Confirmation tab order did not reach its action",
+    )
+    browser.key_press("Tab")
+    assert_js(
+        browser,
+        "document.activeElement.id==='confirmCancelBtn'",
+        "Confirmation dialog did not keep keyboard focus contained",
+    )
+    browser.click("#confirmActionBtn")
     browser.wait_for(
         "cfg.tiles.length===4 && !cfg.tiles.some(tile => tile.id==='drawing-filter') && "
         "!document.getElementById('adminTileEmptyState').hidden && "
@@ -721,7 +748,12 @@ def main():
                 height=900,
             ) as browser:
                 try:
-                    run_scenarios(browser, ReleaseFixtureHandler, installed_version)
+                    run_scenarios(
+                        browser,
+                        ReleaseFixtureHandler,
+                        installed_version,
+                        args.artifacts,
+                    )
                     run_accessibility_scenarios(browser, args.artifacts)
                     browser.screenshot(args.artifacts / "final-state.png")
                 except Exception:

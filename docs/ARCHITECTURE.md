@@ -30,6 +30,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/design-system.css` contains shared spacing, sizing, radius, focus, and motion tokens plus reusable control and surface primitives
 - `src/frontend/styles.css` contains launcher-specific themes, visual rules, and responsive layout
 - `src/frontend/state.js` contains shared state and localized UI strings
+- `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing, recommendations, and updates
 - `src/frontend/runtime-controls.js` owns timer flows, device status, import/export, backups, and keyboard control

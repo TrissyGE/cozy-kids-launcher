@@ -49,7 +49,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
   - [x] Add a live preview
   - [x] Add app search and visibility filtering
   - [x] Add bulk actions
-  - [ ] Make confirmation dialogs consistent
+  - [x] Make confirmation dialogs consistent
   - [ ] Complete empty, error, and loading states
 - [ ] Create a coherent local icon system while keeping custom emoji tiles available
 
