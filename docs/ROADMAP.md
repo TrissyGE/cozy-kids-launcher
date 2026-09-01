@@ -51,7 +51,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
   - [x] Add bulk actions
   - [x] Make confirmation dialogs consistent
   - [x] Complete empty, error, and loading states
-- [ ] Create a coherent local icon system while keeping custom emoji tiles available
+- [x] Create a coherent local icon system while keeping custom emoji tiles available
 
 ## v0.6.0 — Family Edition
 
@@ -73,6 +73,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 ## v0.8.0 — Platform
 
+- [ ] Add more installer and interface languages beyond German and English
 - [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
 - [ ] Evaluate additional packaging only where host-app launching and desktop integration remain reliable
 - [ ] Add a supported user-service lifecycle with useful status and recovery commands

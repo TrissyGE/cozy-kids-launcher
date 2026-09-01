@@ -163,7 +163,7 @@ function renderUiState(element,state,message,retryAction=null){
     const retry=document.createElement('button');
     retry.type='button';
     retry.className='smallbtn ui-state-retry';
-    retry.textContent=uiText.retry;
+    setIconLabel(retry,'refresh',uiText.retry);
     retry.onclick=retryAction;
     element.appendChild(retry);
   }

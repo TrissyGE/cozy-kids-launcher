@@ -155,7 +155,7 @@ function renderAll(){
   const cornerbar=document.querySelector('.cornerbar');
   cornerbar.classList.toggle('hidden',isAdmin);
   const parentBtn=document.getElementById('parentBtn');
-  parentBtn.textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}');
+  setIconLabel(parentBtn,isAdmin?'back':'system',isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'));
   parentBtn.style.position='relative';
   let badge=parentBtn.querySelector('.update-badge');
   if(updateAvailable && !isAdmin){
@@ -168,9 +168,9 @@ function renderAll(){
   }else if(badge){
     badge.remove();
   }
-  document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
+  setIconLabel(document.getElementById('exitBtn'),'exit',cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}');
   const shutdownBtn=document.getElementById('shutdownBtn');
-  shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}';
+  setIconLabel(shutdownBtn,'power',cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}');
   shutdownBtn.style.display=features.shutdownAvailable?'':'none';
   document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}');
   const pc=pageCount();
@@ -207,25 +207,19 @@ function renderKids(){
       btn.style.position='relative';
       btn.onclick=()=>launchTile(tile.id);
       btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); };
-      const tileEmoji=document.createElement('div');
-      tileEmoji.className='emoji';
-      tileEmoji.textContent=tile.emoji||'✨';
+      const tileEmoji=createTileVisual(tile.emoji,'emoji');
       const tileLabel=document.createElement('div');
       tileLabel.textContent=tile.label||'';
       btn.append(tileEmoji,tileLabel);
       if(tile.id===lastLaunched){
-        const star=document.createElement('div');
-        star.className='last-star';
-        star.textContent='⭐';
+        const star=createLocalIcon('star','last-star');
         btn.appendChild(star);
       }
       grid.appendChild(btn);
     } else {
       const ph=document.createElement('div');
       ph.className='tile placeholder';
-      const phEmoji=document.createElement('div');
-      phEmoji.className='emoji';
-      phEmoji.textContent='✨';
+      const phEmoji=createTileVisual('✨','emoji');
       ph.append(phEmoji,document.createElement('div'));
       grid.appendChild(ph);
     }
@@ -239,7 +233,7 @@ function showStartFeedback(tile){
   const overlay=document.getElementById('startOverlay');
   const emoji=document.getElementById('startEmoji');
   const text=document.getElementById('startText');
-  emoji.textContent=tile.emoji||'✨';
+  renderTileVisual(emoji,tile.emoji,'start-tile-visual');
   text.textContent=(uiText.startingApp||'Starte {app}...').replace('{app}',tile.label||'');
   overlay.classList.remove('hidden');
   setTimeout(()=>overlay.classList.add('hidden'),1500);

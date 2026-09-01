@@ -74,6 +74,7 @@ test -f "$TEST_HOME/.local/share/cozy-kids-launcher/process_state.py"
 test -x "$TEST_HOME/.local/share/cozy-kids-launcher/process_supervisor.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/timer_state.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/update_manager.py"
+test -f "$TEST_HOME/.local/share/cozy-kids-launcher/frontend/icons.js"
 cmp VERSION "$TEST_HOME/.local/share/cozy-kids-launcher/version"
 python3 - "$TEST_HOME/.config/cozy-kids-launcher/config.json" <<'PY'
 import json

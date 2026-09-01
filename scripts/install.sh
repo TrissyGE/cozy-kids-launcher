@@ -232,8 +232,8 @@ text() {
     de:pin_mismatch) echo "PINs stimmen nicht überein" ;;
     de:pin_saved) echo "PIN gespeichert" ;;
     de:pin_removed) echo "PIN entfernt" ;;
-    de:admin_page_prev) echo "← Vorherige Seite" ;;
-    de:admin_page_next) echo "Nächste Seite →" ;;
+    de:admin_page_prev) echo "Vorherige Seite" ;;
+    de:admin_page_next) echo "Nächste Seite" ;;
     de:update_check) echo "Auf Updates prüfen" ;;
     de:update_available) echo "Update verfügbar" ;;
     de:update_up_to_date) echo "Aktuell" ;;
@@ -336,8 +336,8 @@ text() {
     en:pin_mismatch) echo "PINs do not match" ;;
     en:pin_saved) echo "PIN saved" ;;
     en:pin_removed) echo "PIN removed" ;;
-    en:admin_page_prev) echo "← Previous page" ;;
-    en:admin_page_next) echo "Next page →" ;;
+    en:admin_page_prev) echo "Previous page" ;;
+    en:admin_page_next) echo "Next page" ;;
     en:update_check) echo "Check for updates" ;;
     en:update_available) echo "Update available" ;;
     en:update_up_to_date) echo "Up to date" ;;
@@ -851,6 +851,7 @@ INDEX_FILE="$APP_ROOT/index.html"
 FRONTEND_STYLES_FILE="$FRONTEND_DIR/styles.css"
 FRONTEND_DESIGN_SYSTEM_FILE="$FRONTEND_DIR/design-system.css"
 FRONTEND_STATE_FILE="$FRONTEND_DIR/state.js"
+FRONTEND_ICONS_FILE="$FRONTEND_DIR/icons.js"
 FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
@@ -1260,6 +1261,7 @@ backup_if_exists "$INDEX_FILE"
 backup_if_exists "$FRONTEND_STYLES_FILE"
 backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"
 backup_if_exists "$FRONTEND_STATE_FILE"
+backup_if_exists "$FRONTEND_ICONS_FILE"
 backup_if_exists "$FRONTEND_DIALOGS_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
@@ -1290,6 +1292,7 @@ render_template "$SRC_DIR/index.html" "$INDEX_FILE" 0644
 render_template "$SRC_DIR/frontend/design-system.css" "$FRONTEND_DESIGN_SYSTEM_FILE" 0644
 render_template "$SRC_DIR/frontend/styles.css" "$FRONTEND_STYLES_FILE" 0644
 render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
+render_template "$SRC_DIR/frontend/icons.js" "$FRONTEND_ICONS_FILE" 0644
 render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644

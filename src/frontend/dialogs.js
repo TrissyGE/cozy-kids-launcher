@@ -13,8 +13,8 @@ function requestConfirmation(message,actionLabel){
   confirmationReturnFocus=document.activeElement;
   document.getElementById('confirmTitle').textContent=uiText.confirmTitle;
   document.getElementById('confirmMessage').textContent=String(message||'');
-  cancelButton.textContent=uiText.confirmCancel;
-  actionButton.textContent=actionLabel||uiText.confirmContinue;
+  setIconLabel(cancelButton,'close',uiText.confirmCancel);
+  setIconLabel(actionButton,'save',actionLabel||uiText.confirmContinue);
   overlay.classList.remove('hidden');
   return new Promise(resolve=>{
     confirmationResolve=resolve;

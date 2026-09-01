@@ -12,10 +12,10 @@ async function pollTimer(){
     const badge=document.getElementById('timerBadge');
     if(data.active){
       badge.style.display='block';
-      badge.textContent='⏱️ '+formatTime(data.remainingSeconds);
+      setIconLabel(badge,'timer',formatTime(data.remainingSeconds));
       if(data.expired){
         badge.className='expired';
-        badge.textContent='⏰ '+uiText.timerExpired;
+        setIconLabel(badge,'timer',uiText.timerExpired);
         showTimerBlock();
       }else if(data.warning && !timerWarningShown){
         badge.className='warning';
@@ -60,7 +60,7 @@ async function toggleTimer(){
     const data=await r.json();
     if(data.valid){
       timerWarningShown=false;
-      btn.textContent=uiText.timerStart;
+      setIconLabel(btn,'timer',uiText.timerStart);
       document.getElementById('timerStatus').textContent='';
       pollTimer();
     }
@@ -77,7 +77,7 @@ async function toggleTimer(){
     const r=await fetch('/api/timer/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minutes:minutes})});
     const data=await r.json();
     if(data.valid){
-      btn.textContent=uiText.timerStop;
+      setIconLabel(btn,'timer',uiText.timerStop);
       document.getElementById('timerStatus').textContent=uiText.timerActive;
       pollTimer();
     }
@@ -128,18 +128,18 @@ document.addEventListener('touchend',function(e){
 },false);
 
 // Clock
-function clockEmoji(h){
-  if(h>=5 && h<11) return '🌅';
-  if(h>=11 && h<17) return '☀️';
-  if(h>=17 && h<21) return '🌇';
-  return '🌙';
+function clockIconName(h){
+  if(h>=5 && h<11) return 'sunrise';
+  if(h>=11 && h<17) return 'sun';
+  if(h>=17 && h<21) return 'sunset';
+  return 'moon';
 }
 function updateClock(){
   const now=new Date();
   const h=now.getHours();
   const m=String(now.getMinutes()).padStart(2,'0');
   const badge=document.getElementById('clockBadge');
-  badge.textContent=clockEmoji(h)+' '+h+':'+m;
+  setIconLabel(badge,clockIconName(h),h+':'+m);
 }
 setInterval(updateClock,30000);
 updateClock();
@@ -151,11 +151,11 @@ async function updateBattery(){
   try{
     const bat=await navigator.getBattery();
     const pct=Math.round(bat.level*100);
-    let icon='🔋';
-    if(bat.charging) icon='⚡';
-    else if(pct<=20) icon='🪫';
+    let icon='battery';
+    if(bat.charging) icon='charging';
+    else if(pct<=20) icon='battery-low';
     badge.style.display='flex';
-    badge.textContent=icon+' '+pct+'%';
+    setIconLabel(badge,icon,pct+'%');
     bat.addEventListener('levelchange',updateBattery);
     bat.addEventListener('chargingchange',updateBattery);
   }catch(e){}
@@ -260,7 +260,7 @@ function renderBackupOptions(){
   const button=document.getElementById('restoreBackupBtn');
   if(!select||!button) return;
   select.replaceChildren();
-  button.textContent=uiText.backupRestore;
+  setIconLabel(button,'restore',uiText.backupRestore);
   if(backupState!=='ready'){
     const empty=document.createElement('option');
     empty.value='';

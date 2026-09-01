@@ -159,6 +159,34 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     )
     log_scenario("home renders title and app tiles")
 
+    icon_metrics = browser.evaluate(
+        "({tiles:document.querySelectorAll('#grid .tile:not(.placeholder) .local-tile-icon').length,"
+        "paths:document.querySelectorAll('#grid .tile:not(.placeholder) .local-tile-icon path').length,"
+        "clock:document.querySelector('#clockBadge .ui-icon')!==null})"
+    )
+    if icon_metrics != {"tiles": 2, "paths": 7, "clock": True}:
+        raise AssertionError(
+            "Built-in tiles or launcher chrome did not use the local icon registry "
+            f"({icon_metrics!r})"
+        )
+    browser.evaluate(
+        "cfg.tiles.push({id:'custom-emoji',label:'Unicorn',emoji:'🦄',"
+        "cmd:['true'],visible:true}); renderAll()"
+    )
+    assert_js(
+        browser,
+        "Array.from(document.querySelectorAll('#grid .tile')).some(tile => "
+        "tile.textContent.includes('Unicorn') && "
+        "tile.querySelector('.emoji').tagName==='SPAN' && "
+        "tile.querySelector('.emoji').textContent==='🦄' && "
+        "tile.querySelector('.local-tile-icon')===null)",
+        "A custom emoji tile was replaced by the local icon registry",
+    )
+    browser.evaluate(
+        "cfg.tiles=cfg.tiles.filter(tile=>tile.id!=='custom-emoji'); renderAll()"
+    )
+    log_scenario("local icons render built-ins while custom emoji remain text")
+
     browser.evaluate(
         "window.__cozyOriginalFetch=window.fetch.bind(window);"
         "window.__failConfigOnce=true;"
@@ -222,6 +250,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.wait_for(
         "!document.getElementById('admin').classList.contains('hidden') && "
         "document.querySelectorAll('[data-admin-section]').length===6 && "
+        "document.querySelectorAll('#adminNav .ui-icon').length===6 && "
         "document.querySelector('[data-admin-section=\"overview\"]')"
         ".getAttribute('aria-current')==='page'"
     )
@@ -855,7 +884,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 13 core and accessibility journeys", flush=True)
+    print("Browser E2E passed: 14 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

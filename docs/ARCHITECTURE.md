@@ -30,6 +30,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/design-system.css` contains shared spacing, sizing, radius, focus, and motion tokens plus reusable control and surface primitives
 - `src/frontend/styles.css` contains launcher-specific themes, visual rules, and responsive layout
 - `src/frontend/state.js` contains shared state and localized UI strings
+- `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing, recommendations, and updates
@@ -43,6 +44,12 @@ an actionable localized retry screen, while app, browser, recommendation, and
 feature discovery fail independently without hiding configured launcher tiles.
 Retry actions repeat only their local request, and failed discovery never clears
 or rewrites the saved browser or tile configuration.
+
+Interface chrome uses a local, stroke-based SVG icon registry with no font or
+network dependency. Known built-in tile emoji receive matching local artwork at
+render time; stored values are not migrated, and every unrecognized or custom
+emoji is still inserted with `textContent`. Existing configurations therefore
+retain both their data and the ability to use arbitrary emoji tiles.
 
 ### 2. Local HTTP server
 

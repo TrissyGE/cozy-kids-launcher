@@ -27,6 +27,7 @@ def frontend_source():
         REPOSITORY_ROOT / "src" / "index.html",
         frontend_root / "design-system.css",
         frontend_root / "state.js",
+        frontend_root / "icons.js",
         frontend_root / "dialogs.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "parent-settings.js",
@@ -902,6 +903,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/design-system.css",
             "/frontend/styles.css",
             "/frontend/state.js",
+            "/frontend/icons.js",
             "/frontend/dialogs.js",
             "/frontend/launcher-ui.js",
             "/frontend/parent-settings.js",
@@ -919,9 +921,10 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "dialogs.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "icons.js", "dialogs.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
 
     def test_design_system_defines_shared_tokens_and_controls(self):
@@ -1009,7 +1012,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('id="appearancePreviewGrid"', source)
         self.assertIn("preview.className='launcher-preview theme-'", preview)
         self.assertIn("previewGrid.replaceChildren()", preview)
-        self.assertIn("emoji.textContent=tile.emoji||'✨'", preview)
+        self.assertIn("createTileVisual(tile.emoji,'preview-tile-emoji')", preview)
         self.assertIn("label.textContent=tile.label||''", preview)
         self.assertNotIn("document.body.className", preview)
         self.assertNotIn("persistConfig", preview)
@@ -1115,8 +1118,30 @@ class FrontendSafetyTests(unittest.TestCase):
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)
-        self.assertIn("tileEmoji.textContent=tile.emoji||'✨'", source)
+        self.assertIn("createTileVisual(tile.emoji,'emoji')", source)
+        self.assertIn("emoji.textContent=value||'✨'", source)
         self.assertNotIn("btn.innerHTML=html", source)
+
+    def test_local_icon_registry_preserves_custom_emoji_tiles(self):
+        source = frontend_source()
+        icons = (REPOSITORY_ROOT / "src" / "frontend" / "icons.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('<script defer src="/frontend/icons.js"></script>', source)
+        self.assertLess(source.index("/frontend/state.js"), source.index("/frontend/icons.js"))
+        self.assertLess(source.index("/frontend/icons.js"), source.index("/frontend/dialogs.js"))
+        self.assertIn("const LOCAL_ICON_PATHS=Object.freeze({", icons)
+        self.assertIn("function createLocalIcon(name,className='ui-icon')", icons)
+        self.assertIn("function setIconLabel(element,name,label)", icons)
+        self.assertIn("function localTileIconName(value)", icons)
+        self.assertIn("return LEGACY_TILE_ICONS[normalized]||''", icons)
+        self.assertIn("emoji.textContent=value||'✨'", icons)
+        self.assertNotIn("innerHTML", icons)
+        self.assertNotIn("https://", icons)
+        self.assertNotIn("fetch(", icons)
+        self.assertIn("setIconLabel(button,ADMIN_SECTION_ICONS[section],label)", source)
+        self.assertIn("setIconLabel(shutdownBtn,'power'", source)
+        self.assertIn("setIconLabel(badge,clockIconName(h)", source)
 
     def test_every_tile_uses_the_same_launch_endpoint(self):
         source = frontend_source()

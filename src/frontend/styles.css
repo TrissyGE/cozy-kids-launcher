@@ -47,6 +47,8 @@
   .grid.klein .tile { font-size:clamp(1rem,2vw,1.35rem); }
   .grid.gross .emoji { font-size:4rem; }
   .grid.klein .emoji { font-size:2.6rem; }
+  .local-tile-icon { width:1em; height:1em; color:var(--btn); stroke-width:1.8; }
+  .nav .ui-icon { width:1.7em; height:1.7em; }
   .cornerbar { position:fixed; left:20px; right:20px; bottom:18px; display:flex; justify-content:space-between; pointer-events:none; }
   .smallcluster { display:flex; gap:var(--space-3); pointer-events:auto; }
   .nav.left { left:14px; }
@@ -62,7 +64,7 @@
   .admin-header-actions { display:flex; gap:var(--space-2); }
   .admin-workspace { display:grid; grid-template-columns:210px minmax(0,1fr); gap:var(--space-6); padding-top:var(--space-4); }
   .admin-nav { position:sticky; top:0; align-self:start; display:flex; flex-direction:column; gap:var(--space-2); }
-  .admin-tab { min-height:var(--touch-target-min); padding:0 var(--space-3); border:1px solid transparent; border-radius:var(--radius-field); background:transparent; color:var(--text); cursor:pointer; font:inherit; font-weight:700; text-align:left; }
+  .admin-tab { min-height:var(--touch-target-min); padding:0 var(--space-3); border:1px solid transparent; border-radius:var(--radius-field); background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:var(--space-2); font:inherit; font-weight:700; text-align:left; }
   .admin-tab:hover { background:var(--smallbtn-bg); }
   .admin-tab.active { border-color:var(--input-border); background:var(--smallbtn-bg); box-shadow:0 4px 14px var(--rec-shadow); }
   .admin-content { min-width:0; }
@@ -164,7 +166,7 @@
   .tile:active { transform:scale(.95); }
   .tile.last-launched { animation:tileWiggle .5s ease; box-shadow:0 0 0 4px var(--btn), var(--shadow); }
   .tile.focused { outline:4px solid var(--btn); outline-offset:4px; border-radius:inherit; }
-  .tile .last-star { position:absolute; top:8px; right:8px; font-size:1.4rem; animation:tileBounce 1s ease infinite; }
+  .tile .last-star { position:absolute; top:8px; right:8px; width:1.4rem; height:1.4rem; color:var(--btn); animation:tileBounce 1s ease infinite; }
   /* Start feedback overlay */
   .startoverlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:60; }
   .startbox { background:white; border-radius:28px; padding:40px 48px; box-shadow:var(--shadow); text-align:center; }
@@ -230,7 +232,7 @@
     .admin-header { align-items:flex-start; }
     .admin-workspace { grid-template-columns:1fr; gap:var(--space-4); }
     .admin-nav { position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
-    .admin-tab { text-align:center; }
+    .admin-tab { justify-content:center; text-align:center; }
     .overview-card { min-height:96px; }
     .app-list-tools { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .app-list-tools #addTileBtn { grid-column:1 / -1; }
@@ -244,4 +246,5 @@
       grid-template-columns:44px 40px minmax(0,1fr) 92px minmax(0,1.1fr) 100px 80px;
       gap:6px;
     }
+    .tileform > .smallbtn .icon-label { display:none; }
   }
