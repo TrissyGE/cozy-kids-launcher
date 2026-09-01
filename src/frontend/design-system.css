@@ -90,7 +90,7 @@ label.chk {
   box-shadow:var(--shadow);
 }
 
-.pinbox, .install-box, .timerbox {
+.pinbox, .install-box, .timerbox, .confirm-box {
   width:90%;
   padding:var(--space-8);
   border-radius:var(--radius-surface);
@@ -99,7 +99,7 @@ label.chk {
   text-align:center;
 }
 
-.pinbox, .timerbox { max-width:420px; }
+.pinbox, .timerbox, .confirm-box { max-width:420px; }
 .install-box { max-width:480px; }
 .save { background:var(--btn); color:var(--btn-text); }
 

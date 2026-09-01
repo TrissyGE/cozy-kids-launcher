@@ -18,7 +18,7 @@ async function startupUpdateCheck(){
     }
   }catch(e){}
 }
-async function installUpdate(){ if(!window.confirm(uiText.updateConfirm||'Close browser and install update now?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
+async function installUpdate(){ if(!(await requestConfirmation(uiText.updateConfirm||'Close browser and install update now?',uiText.updateNow))) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
 
 const ADMIN_SECTIONS=[
   ['overview','adminOverview'],
@@ -206,9 +206,9 @@ function setSelectedTilesVisible(visible){
 function createAdminTile(){
   return {id:'tile-'+Date.now(),label:uiText.newTile,emoji:'✨',cmd:[''],visible:true};
 }
-function deleteSelectedTiles(){
+async function deleteSelectedTiles(){
   const count=adminSelectedTileIds.size;
-  if(!count||!window.confirm(uiText.appBulkDeleteConfirm.replace('{count}',String(count)))) return;
+  if(!count||!(await requestConfirmation(uiText.appBulkDeleteConfirm.replace('{count}',String(count)),uiText.appBulkDelete))) return;
   cfg.tiles=cfg.tiles.filter(tile=>!adminSelectedTileIds.has(tile.id));
   adminSelectedTileIds.clear();
   if(!cfg.tiles.length){
