@@ -4,30 +4,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Solid Core
+## [0.5.0] - 2026-09-01
 
-- Split the frontend into focused CSS, shared state, launcher UI, Parent settings, and runtime-control modules without adding a build dependency
-- Added schema version 1 for launcher configuration with automatic atomic migration of legacy files
-- Reject configuration files from unsupported future versions instead of risking destructive rewrites
-- Extended normal CI and the release installer gate to verify the installed configuration schema
-- Extracted schema migration and atomic configuration storage into a dedicated runtime module
-- Added privacy-allowlisted JSON runtime events with bounded log rotation and private file permissions
-- Added an authenticated diagnostics download that excludes PINs, family settings, commands, URLs, usernames, and personal paths
-- Enforced a single launcher instance and replaced raw browser/server PID files with role-bound kernel process identities
-- Removed global browser process guessing and isolated both Chromium and Firefox launcher profiles
-- Added bounded full-stack recovery when the local server fails, closing the owned kiosk before restarting instead of leaving a blank window
-- Added a localized terminal error state after repeated failures and privacy-safe recovery attempt diagnostics
-- Added a per-tile Linux process supervisor that retains ownership across forks and stops only the launched app, media player, or external browser tree
-- Removed command-name and active-window kill fallbacks from the overlay, and made tile changes, updates, exits, and launcher cleanup close the verified active tile
-- Added authenticated backup discovery and one-click configuration restore to Parent settings in German and English
-- Preserve the current Parent PIN, validate the selected backup against the installed schema, and create a private safety snapshot before every restore
-- Restrict restores to timestamped configuration backups under the local backup root; reject paths, symlinks, oversized files, corrupt JSON, and unsupported future schemas
-- Added an explicit, atomically stored launcher lifecycle contract for starting, running, recovering, updating, stopping, stopped, and failed states
-- Distinguish logout from an authenticated shutdown request while guaranteeing the same owned-process cleanup path
-- Added real Linux integration coverage for clean startup, successful and failed updates, logout, shutdown, crash recovery, and exhausted recovery
-- Keep the external-app close control above fullscreen applications on KDE Wayland by applying the compositor's dock-layer hint with a portable fallback
-- Start Chromium fullscreen mode with its F11-equivalent switch and suppress keyring, crash-restore, and translation prompts in the launcher's isolated profile
+### Maintainability and configuration
+
+- Split the large Python server into focused modules for configuration storage and validation, Parent authentication and sessions, app and browser detection, application launching, media, timer state, and updates
+- Split the frontend into focused CSS, shared state, launcher UI, Parent settings, runtime controls, dialogs, and local icon modules without adding a production build dependency
+- Added schema version 1 for launcher configuration with automatic atomic migration of legacy files and safe rejection of unsupported future versions
+- Added privacy-allowlisted JSON runtime events with bounded rotation and an authenticated diagnostics export that excludes PINs and family configuration values
 - Updated the reusable GitHub workflow actions to their Node 24-based v7 releases
+
+### Runtime stability and safety
+
+- Enforced a single launcher instance and replaced raw browser and server PID files with role-bound kernel process identities
+- Added bounded full-stack recovery for server failures so the owned kiosk closes before restart instead of leaving a blank window
+- Added a per-tile process supervisor that follows forks and stops only the launched app, media player, or external browser tree
+- Added authenticated backup discovery and one-click configuration restore with schema validation, PIN preservation, private safety snapshots, and strict path limits
+- Added an atomically stored lifecycle contract for startup, running, recovery, updates, logout, shutdown, failure, and cleanup
+- Stabilized Chromium fullscreen switching across current Linux/Ozone behavior with a PID-scoped F11 assist and dependency-free kiosk fallback, alongside safe Firefox snap profiles, X11 focus recovery, and XWayland overlay stacking
+
+### Test confidence
+
+- Added browser end-to-end journeys for home, PIN, settings, timer, themes, updates, recovery states, and custom emoji compatibility
+- Added Linux integration coverage for startup, updates, logout, shutdown, crash recovery, process ownership, and rollback
+- Added a repeatable desktop-session harness with machine-readable reports and recorded passing GNOME Wayland, KDE Plasma Wayland, and XFCE X11 VM evidence
+- Documented and tested the X11 and Wayland focus, overlay, launch-mode, and kiosk contracts
+- Added keyboard-only, touch, reduced-motion, forced-colors, and 800x600 accessibility journeys
+
+### Parent settings and design
+
+- Introduced shared design tokens and reusable controls, then reorganized Parent settings into Overview, Children, Apps & Media, Screen Time, Appearance, and System sections
+- Added app search, visibility filters, stable-ID bulk actions, an isolated live appearance preview, and consistent destructive-action confirmations
+- Completed localized loading, empty, error, retry, and recovery states for asynchronous Parent settings resources
+- Added a dependency-free local SVG icon system while preserving stored values and arbitrary custom emoji tiles
 
 ## [0.4.1] - 2026-08-25
 

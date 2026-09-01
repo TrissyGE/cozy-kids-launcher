@@ -58,6 +58,24 @@ CHROMIUM_FLAGS=(
   --disable-translate
   --disable-features=Translate
 )
+CHROMIUM_FULLSCREEN_SWITCH="--start-fullscreen"
+CHROMIUM_FULLSCREEN_ASSIST=0
+if [[ "$BROWSER_FAMILY" == "chromium" && "$LAUNCH_MODE" == "fullscreen" ]]; then
+  if [[ -n "${DISPLAY:-}" ]] && command -v xdotool >/dev/null 2>&1; then
+    CHROMIUM_FULLSCREEN_ASSIST=1
+    if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]]; then
+      # Keep the owned browser and Tk overlay in the same XWayland space so a
+      # PID-scoped F11 confirmation can recover when Chromium ignores its
+      # documented startup switch before the surface is activated.
+      CHROMIUM_FLAGS+=(--ozone-platform=x11)
+    fi
+  else
+    # Fullscreen must remain reliable on minimal desktops without adding a
+    # mandatory window-control dependency. Kiosk is the safe chrome-free
+    # fallback for Chromium when the F11 assist is unavailable.
+    CHROMIUM_FULLSCREEN_SWITCH="--kiosk"
+  fi
+fi
 mkdir -p "$CACHE_ROOT" "$CHROMIUM_PROFILE" "$FIREFOX_PROFILE"
 
 exec 9>"$LOCK_FILE"
@@ -233,6 +251,59 @@ finally:
 PY
 }
 
+confirm_chromium_fullscreen() {
+  if [[ "$CHROMIUM_FULLSCREEN_ASSIST" != "1" ]]; then
+    return
+  fi
+  (
+    local window_id=""
+    local settling_window_id=""
+    local geometry=""
+    local display_width=0
+    local display_height=0
+    local X=1
+    local Y=1
+    local WIDTH=0
+    local HEIGHT=0
+    # A one-vCPU VM and older family hardware can need well over ten seconds
+    # before Chromium exposes its first window, so keep this non-blocking helper
+    # alive for at most one minute.
+    for _fullscreen_attempt in $(seq 1 240); do
+      process_alive "$BROWSER_PIDFILE" browser || exit 0
+      window_id="$(
+        xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID" \
+          --name "Cozy Kids Launcher" 2>/dev/null || true
+      )"
+      window_id="${window_id%%$'\n'*}"
+      if [[ -n "$window_id" ]]; then
+        # KWin can expose the titled XWayland window at screen size before it
+        # applies the final decorated geometry. Let that first window settle so
+        # a transient full-size rectangle is not mistaken for fullscreen.
+        if [[ "$window_id" != "$settling_window_id" ]]; then
+          settling_window_id="$window_id"
+          sleep 2
+          continue
+        fi
+        geometry="$(xdotool getwindowgeometry --shell "$window_id" 2>/dev/null || true)"
+        if [[ -z "$geometry" ]]; then
+          sleep 0.25
+          continue
+        fi
+        eval "$geometry"
+        if read -r display_width display_height < <(xdotool getdisplaygeometry); then
+          if (( X <= 0 && Y <= 0 && WIDTH >= display_width && HEIGHT >= display_height )); then
+            exit 0
+          fi
+        fi
+        xdotool windowactivate --sync "$window_id"
+        xdotool key --window "$window_id" F11
+        exit 0
+      fi
+      sleep 0.25
+    done
+  ) 9>&- >/dev/null 2>&1 &
+}
+
 stop_runtime_children() {
   terminate_process "$OVERLAY_PIDFILE" overlay
   terminate_process "$TILE_PROCESS_PIDFILE" tile-process
@@ -374,7 +445,7 @@ while true; do
       ;;
     fullscreen)
       if [[ "$BROWSER_FAMILY" == "chromium" ]]; then
-        "$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" --start-fullscreen "$URL" 9>&- >/dev/null 2>&1 &
+        "$BROWSER_CMD" "${CHROMIUM_FLAGS[@]}" "$CHROMIUM_FULLSCREEN_SWITCH" "$URL" 9>&- >/dev/null 2>&1 &
       else
         "$BROWSER_CMD" --no-remote --profile "$FIREFOX_PROFILE" --new-window --fullscreen "$URL" 9>&- >/dev/null 2>&1 &
       fi
@@ -397,6 +468,7 @@ while true; do
     show_recovery_failure
     exit 1
   fi
+  confirm_chromium_fullscreen
   if [[ "$RUNTIME_START_REASON" == "recovery" ]]; then
     lifecycle_transition running recovered "$ACTIVE_RECOVERY_ATTEMPT"
   elif [[ "$RUNTIME_START_REASON" == "update-complete" ]]; then

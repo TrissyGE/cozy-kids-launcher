@@ -13,7 +13,7 @@ argument vector matches the selected mode.
 | Mode | Chromium family | Firefox family | Intended behavior |
 | --- | --- | --- | --- |
 | `window` | no kiosk/fullscreen switch | no kiosk/fullscreen switch | ordinary desktop window |
-| `fullscreen` | `--start-fullscreen` | compatibility passthrough; no upstream-supported switch | fullscreen UI that still follows normal browser policies |
+| `fullscreen` | `--start-fullscreen` with a PID-scoped F11 confirmation, or `--kiosk` fallback | compatibility passthrough; no upstream-supported switch | fullscreen UI that still follows normal browser policies where supported |
 | `kiosk` | `--kiosk` | `--kiosk` | strict browser chrome suppression |
 
 These checks prove that the requested mode reached the owned browser process.
@@ -32,6 +32,14 @@ cached `browser.window_placement` preference before applying the mode switch.
 This prevents geometry saved by an earlier windowed session from overriding an
 explicit display-mode change. Ordinary `window` launches retain their saved
 geometry.
+
+Current Chromium builds can acknowledge `--start-fullscreen` while a Wayland
+compositor still maps the window normally. If `xdotool` is already available,
+the launcher keeps fullscreen Chromium in XWayland, finds only the window owned
+by its recorded browser PID, and confirms F11 after the window becomes visible.
+Minimal installations do not gain a new dependency: without that helper the
+same `fullscreen` setting falls back to Chromium kiosk mode so browser chrome
+cannot remain exposed. Window and explicit kiosk modes are unchanged.
 
 The generated desktop autostart entry uses a short compositor-settling delay
 after acquiring the single-instance lock. This keeps early GNOME session startup
