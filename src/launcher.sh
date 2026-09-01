@@ -270,8 +270,8 @@ confirm_chromium_fullscreen() {
     for _fullscreen_attempt in $(seq 1 240); do
       process_alive "$BROWSER_PIDFILE" browser || exit 0
       window_id="$(
-        xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID" 2>/dev/null \
-          || true
+        xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID" \
+          --name "Cozy Kids Launcher" 2>/dev/null || true
       )"
       window_id="${window_id%%$'\n'*}"
       if [[ -n "$window_id" ]]; then

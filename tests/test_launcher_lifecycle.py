@@ -75,7 +75,8 @@ class LauncherLifecycleTests(unittest.TestCase):
             source,
         )
         self.assertIn(
-            'xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID"',
+            'xdotool search --onlyvisible --pid "$BROWSER_CHILD_PID" \\\n'
+            '          --name "Cozy Kids Launcher"',
             source,
         )
         self.assertIn('xdotool key --window "$window_id" F11', source)
