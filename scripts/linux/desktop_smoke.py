@@ -293,10 +293,18 @@ def write_smoke_config(config_path, browser_name):
         config = json.load(handle)
     config.update({
         "language": "en",
-        "title": "Cozy Kids Desktop Smoke",
         "browser": browser_name,
         "pinHash": "",
         "autoScanDone": True,
+        "setupCompleted": True,
+    })
+    profile = next(
+        profile
+        for profile in config["profiles"]
+        if profile["id"] == config["activeProfileId"]
+    )
+    profile.update({
+        "title": "Cozy Kids Desktop Smoke",
         "currentPage": 0,
         "tiles": [
             {

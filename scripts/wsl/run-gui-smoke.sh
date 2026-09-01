@@ -144,6 +144,7 @@ path = sys.argv[1]
 browser = sys.argv[2]
 with open(path, encoding="utf-8") as handle:
     config = json.load(handle)
+config["setupCompleted"] = True
 config["browser"] = browser
 config["tiles"].extend([
     {

@@ -96,6 +96,11 @@ class ConfigValidationTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, field):
                     config_validation.validate_config(data)
 
+        data = base_config()
+        data["setupCompleted"] = "yes"
+        with self.assertRaisesRegex(ValueError, "setupCompleted must be a boolean"):
+            config_validation.validate_config(data)
+
     def test_public_projection_never_mutates_or_exposes_the_pin_hash(self):
         data = base_config()
         data["pinHash"] = "0123456789abcdef"

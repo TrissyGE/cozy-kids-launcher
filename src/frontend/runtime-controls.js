@@ -106,6 +106,7 @@ function homeGestureAllowed(){
     document.getElementById('themeOverlay').classList.contains('hidden') &&
     document.getElementById('installOverlay').classList.contains('hidden') &&
     document.getElementById('profileOverlay').classList.contains('hidden') &&
+    document.getElementById('firstRunOverlay').classList.contains('hidden') &&
     document.getElementById('timerBlock').classList.contains('hidden') &&
     document.getElementById('timerWarning').classList.contains('hidden') &&
     document.getElementById('startOverlay').classList.contains('hidden');
@@ -368,6 +369,7 @@ document.addEventListener('keydown',function(e){
   if(!document.getElementById('admin').classList.contains('hidden')) return;
   if(!document.getElementById('pin').classList.contains('hidden')) return;
   if(!document.getElementById('profileOverlay').classList.contains('hidden')) return;
+  if(!document.getElementById('firstRunOverlay').classList.contains('hidden')) return;
   if(!document.getElementById('timerBlock').classList.contains('hidden')) return;
   if(!document.getElementById('timerWarning').classList.contains('hidden')) return;
   if(!document.getElementById('startOverlay').classList.contains('hidden')) return;

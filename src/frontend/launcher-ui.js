@@ -8,6 +8,7 @@ async function loadConfig(){
   const data=await response.json();
   if(!data||typeof data!=='object'||!Array.isArray(data.tiles)) throw new Error('Invalid config response');
   cfg=data;
+  await loadInterfaceLanguage(cfg.language);
   if(typeof cfg.currentPage!=='number') cfg.currentPage=0;
   renderAll();
 }
@@ -148,6 +149,7 @@ function applyDynamicTheme(){
   }
 }
 function renderAll(){
+  renderLocalizedChrome();
   document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}');
   applyDynamicTheme();
   document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}';
@@ -180,6 +182,7 @@ function renderAll(){
   renderKids();
   renderAdmin();
   renderNav();
+  maybeOpenFirstRun();
 }
 function renderKids(){
   const grid=document.getElementById('grid');

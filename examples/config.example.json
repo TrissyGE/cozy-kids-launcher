@@ -3,6 +3,7 @@
   "language": "de",
   "parentLabel": "Papa",
   "exitLabel": "Kindermodus beenden",
+  "setupCompleted": true,
   "activeProfileId": "default",
   "profiles": [
     {

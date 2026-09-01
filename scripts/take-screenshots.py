@@ -113,6 +113,7 @@ def write_config(profile, theme):
         "shutdownLabel": "Shut down",
         "pinHash": "",
         "autoScanDone": True,
+        "setupCompleted": True,
         "activeProfileId": "default",
         "profiles": [{
             "id": "default",
