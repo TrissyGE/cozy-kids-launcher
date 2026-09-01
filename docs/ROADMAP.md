@@ -58,7 +58,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [ ] Add multiple child profiles with separate avatars, themes, tiles, favorites, and limits
   - [x] Introduce a versioned local profile model and authenticated management API without breaking the existing launcher API
   - [x] Add profile creation, editing, deletion, and selection to the Parent and child-facing interfaces
-- [ ] Add a guided first-run setup for language, child, apps, time rules, and appearance
+- [x] Add a guided first-run setup for language, child, apps, time rules, and appearance
 - [ ] Add weekly screen-time schedules and per-app availability rules
 - [ ] Add a local, optional parent dashboard for recent activity and usage duration
 - [ ] Add a browser allowlist with understandable navigation boundaries

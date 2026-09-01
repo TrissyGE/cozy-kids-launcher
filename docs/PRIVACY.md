@@ -13,6 +13,10 @@ The launcher is designed to run locally:
 
 No cloud backend is required.
 
+The first-run setup and both bundled interface languages are served entirely
+from the local launcher. Completing or skipping setup only updates the same
+private local configuration used by Parent settings.
+
 The launcher keeps small, rotating technical event logs locally. Parents can
 download a diagnostics JSON file from Parent settings when troubleshooting.
 Both the logs and the export use a fixed allowlist and exclude PIN data,

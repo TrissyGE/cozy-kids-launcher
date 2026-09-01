@@ -25,6 +25,44 @@ def subprocess_result(returncode=0, stdout="", stderr=""):
     )
 
 
+class SmokeConfigTests(unittest.TestCase):
+    def test_smoke_fixture_updates_the_active_schema_two_profile(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "config.json"
+            path.write_text(
+                json.dumps({
+                    "configVersion": 2,
+                    "language": "de",
+                    "browser": "firefox",
+                    "pinHash": "",
+                    "activeProfileId": "default",
+                    "profiles": [{
+                        "id": "default",
+                        "name": "Kiddo",
+                        "avatar": "🌈",
+                        "title": "Old",
+                        "theme": "rosa",
+                        "layoutMode": "gross",
+                        "currentPage": 0,
+                        "timerMinutes": 0,
+                        "timerWarningMinutes": 5,
+                        "favorites": [],
+                        "appLimits": {},
+                        "tiles": [],
+                    }],
+                }),
+                encoding="utf-8",
+            )
+
+            desktop_smoke.write_smoke_config(path, "chromium")
+            updated = json.loads(path.read_text(encoding="utf-8"))
+
+            self.assertTrue(updated["setupCompleted"])
+            self.assertNotIn("title", updated)
+            self.assertEqual(updated["profiles"][0]["title"], "Cozy Kids Desktop Smoke")
+            self.assertEqual(updated["profiles"][0]["tiles"][0]["id"], "desktop-smoke")
+
+
 class DesktopDetectionTests(unittest.TestCase):
     def test_desktop_aliases_are_normalized(self):
         examples = {

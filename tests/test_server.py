@@ -27,11 +27,13 @@ def frontend_source():
         REPOSITORY_ROOT / "src" / "index.html",
         frontend_root / "design-system.css",
         frontend_root / "state.js",
+        frontend_root / "localization.js",
         frontend_root / "icons.js",
         frontend_root / "dialogs.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
         frontend_root / "parent-settings.js",
+        frontend_root / "first-run.js",
         frontend_root / "runtime-controls.js",
         frontend_root / "styles.css",
     ]
@@ -994,11 +996,13 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/design-system.css",
             "/frontend/styles.css",
             "/frontend/state.js",
+            "/frontend/localization.js",
             "/frontend/icons.js",
             "/frontend/dialogs.js",
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
             "/frontend/parent-settings.js",
+            "/frontend/first-run.js",
             "/frontend/runtime-controls.js",
         )
         for asset in expected_assets:
@@ -1013,12 +1017,14 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "parent-settings.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_LOCALIZATION_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_FIRST_RUN_FILE"', installer)
 
     def test_design_system_defines_shared_tokens_and_controls(self):
         source = (
@@ -1231,6 +1237,24 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("localStorage.getItem(profileStorageKey())", source)
         self.assertIn("localStorage.setItem(profileStorageKey(),id)", source)
         self.assertIn("document.getElementById('profileOverlay').classList.contains('hidden')", source)
+
+    def test_guided_setup_and_runtime_locales_are_local_dependency_free_assets(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
+        source = frontend_source()
+        first_run = (frontend / "first-run.js").read_text(encoding="utf-8")
+        localization = (frontend / "localization.js").read_text(encoding="utf-8")
+        de = json.loads((frontend / "locales" / "de.json").read_text(encoding="utf-8"))
+        en = json.loads((frontend / "locales" / "en.json").read_text(encoding="utf-8"))
+        self.assertEqual(de.keys(), en.keys())
+        self.assertGreaterEqual(len(de), 140)
+        self.assertIn("'/frontend/locales/'+normalized+'.json'", localization)
+        self.assertNotIn("https://", localization)
+        self.assertNotIn("innerHTML", first_run)
+        self.assertIn("cfg.setupCompleted!==false", first_run)
+        self.assertIn("cfg.setupCompleted=true", first_run)
+        self.assertIn("await persistConfig()", first_run)
+        self.assertIn("requestPin(persistFirstRun)", first_run)
+        self.assertIn("document.getElementById('firstRunOverlay').classList.contains('hidden')", source)
 
     def test_local_icon_registry_preserves_custom_emoji_tiles(self):
         source = frontend_source()

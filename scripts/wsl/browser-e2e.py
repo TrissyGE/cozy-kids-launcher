@@ -85,6 +85,7 @@ def write_demo_config(config_path, browser_name):
         config = json.load(handle)
     config.update({
         "language": "en",
+        "setupCompleted": False,
         "parentLabel": "Parent",
         "exitLabel": "Exit kids mode",
         "pinHash": "",
@@ -151,6 +152,68 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "document.querySelectorAll('#grid .tile:not(.placeholder)').length === 2",
         message="Home screen did not finish rendering",
     )
+    browser.wait_for(
+        "!document.getElementById('firstRunOverlay').classList.contains('hidden') && "
+        "document.documentElement.lang==='en' && "
+        "document.activeElement.matches('.first-run-choice[aria-pressed=\"true\"]')",
+        message="A fresh installation did not open the guided setup",
+    )
+    browser.set_device_metrics(800, 600)
+    assert_js(
+        browser,
+        "window.innerWidth===800 && window.innerHeight===600 && "
+        "document.documentElement.scrollWidth<=window.innerWidth && "
+        "document.querySelector('.first-run-box').scrollWidth<="
+        "document.querySelector('.first-run-box').clientWidth+1 && "
+        "Array.from(document.querySelectorAll('#firstRunOverlay button:not([disabled])'))"
+        ".every(button=>button.getBoundingClientRect().height>=44)",
+        "Guided setup overflows or exposes undersized controls at 800x600",
+    )
+    browser.screenshot(artifacts / "first-run-800x600.png")
+    browser.set_device_metrics(1440, 900)
+    browser.click('.first-run-choice[data-language="de"]')
+    browser.wait_for(
+        "cfg.language==='de' && document.documentElement.lang==='de' && "
+        "document.getElementById('firstRunTitle').textContent==='Willkommen bei Cozy Kids' && "
+        "uiText.adminTitle==='Eltern-Einstellungen'",
+        message="The setup language choice did not load the German interface locale",
+    )
+    browser.click('.first-run-choice[data-language="en"]')
+    browser.wait_for(
+        "cfg.language==='en' && document.documentElement.lang==='en' && "
+        "document.getElementById('firstRunTitle').textContent==='Welcome to Cozy Kids' && "
+        "uiText.adminTitle==='Parent settings'",
+        message="The setup language choice did not restore the English interface locale",
+    )
+    browser.click("#firstRunNextBtn")
+    browser.wait_for("document.getElementById('firstRunChildName')!==null")
+    browser.set_value("#firstRunChildName", "Kiddo")
+    browser.set_value("#firstRunChildAvatar", "🌈")
+    browser.set_value("#firstRunHomeTitle", "E2E Home")
+    browser.click("#firstRunNextBtn")
+    browser.wait_for("document.querySelectorAll('#firstRunContent input[data-tile-id]').length===2")
+    browser.click("#firstRunNextBtn")
+    browser.wait_for("document.getElementById('firstRunTimerMinutes')!==null")
+    browser.set_value("#firstRunTimerMinutes", "0")
+    browser.click("#firstRunNextBtn")
+    browser.wait_for("document.querySelector('#firstRunContent [data-theme=\"rosa\"]')!==null")
+    browser.click('#firstRunContent [data-theme="rosa"]')
+    browser.click('#firstRunContent [data-layout="gross"]')
+    browser.screenshot(artifacts / "first-run-setup.png")
+    browser.click("#firstRunNextBtn")
+    browser.wait_for(
+        "cfg.setupCompleted===true && "
+        "document.getElementById('firstRunOverlay').classList.contains('hidden') && "
+        "document.getElementById('title').textContent==='E2E Home'",
+        message="Finishing guided setup did not persist and reveal the launcher",
+    )
+    saved_setup = browser.evaluate(
+        "fetch('/api/config',{cache:'no-store'}).then(response=>response.json())",
+        await_promise=True,
+    )
+    if saved_setup.get("setupCompleted") is not True:
+        raise AssertionError(f"Guided setup was not persisted: {saved_setup!r}")
+    log_scenario("guided first run covers language, child, apps, time, and appearance")
     assert_js(
         browser,
         "document.getElementById('title').textContent === 'E2E Home' && "
@@ -649,7 +712,7 @@ def run_accessibility_scenarios(browser, artifacts):
     browser.key_press("Enter")
     browser.wait_for(
         "!document.getElementById('startOverlay').classList.contains('hidden') && "
-        "document.getElementById('startText').textContent.includes('Music')",
+        "document.getElementById('startText').textContent.includes(tilesForPage(cfg.currentPage)[1].label)",
         message="Keyboard activation did not launch the focused tile",
     )
     browser.wait_for(
@@ -950,7 +1013,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 15 core and accessibility journeys", flush=True)
+    print("Browser E2E passed: 16 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

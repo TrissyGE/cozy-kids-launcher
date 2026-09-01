@@ -30,7 +30,7 @@
     <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')submitPin()">
     <div class="err" id="pinErr"></div>
     <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
-      <button class="smallbtn" data-local-icon="back" onclick="cancelPin()">{{LABEL_BACK}}</button>
+      <button id="pinCancelBtn" class="smallbtn" data-local-icon="back" onclick="cancelPin()">{{LABEL_BACK}}</button>
       <button class="smallbtn save" data-local-icon="lock" onclick="submitPin()">OK</button>
     </div>
     <div class="hint" id="pinHint"></div>
@@ -59,6 +59,24 @@
     <div id="profilePickerMessage" class="ui-state" aria-live="polite" hidden></div>
   </div>
 </div>
+<div id="firstRunOverlay" class="install-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="firstRunTitle" aria-describedby="firstRunDescription">
+  <div class="first-run-box">
+    <div class="first-run-progress-row">
+      <span id="firstRunProgress"></span>
+      <div id="firstRunProgressDots" class="first-run-progress-dots" aria-hidden="true"></div>
+    </div>
+    <h2 id="firstRunTitle"></h2>
+    <p id="firstRunDescription" class="muted"></p>
+    <div id="firstRunContent" class="first-run-content"></div>
+    <div id="firstRunMessage" class="ui-state" aria-live="polite" hidden></div>
+    <div class="first-run-actions">
+      <button id="firstRunSkipBtn" type="button" class="smallbtn" onclick="skipFirstRun()"></button>
+      <span class="first-run-action-spacer"></span>
+      <button id="firstRunBackBtn" type="button" class="smallbtn" onclick="changeFirstRunStep(-1)"></button>
+      <button id="firstRunNextBtn" type="button" class="smallbtn save" onclick="changeFirstRunStep(1)"></button>
+    </div>
+  </div>
+</div>
 <div id="updating" class="pinoverlay hidden">
   <div class="pinbox">
     <div class="emoji" data-local-icon="update" data-icon-only aria-label="{{UPDATE_PROGRESS}}" style="font-size:3rem;"></div>
@@ -72,17 +90,17 @@
     <div id="installMessage"></div>
     <div class="command-box">
       <span id="installCommand"></span>
-      <button class="smallbtn" data-local-icon="copy" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
+      <button id="installCopyBtn" class="smallbtn" data-local-icon="copy" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
     </div>
     <div id="installHint" class="muted" style="margin-top:12px;"></div>
-    <button class="smallbtn" data-local-icon="close" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
+    <button id="installCloseBtn" class="smallbtn" data-local-icon="close" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
   </div>
 </div>
 <div id="themeOverlay" class="install-overlay hidden">
   <div class="install-box" style="max-width:900px;">
     <h2 id="themePickerTitle">Theme</h2>
     <div id="themeChooser" class="theme-grid" style="max-height:60vh; overflow-y:auto; padding:8px;"></div>
-    <button class="smallbtn" data-local-icon="close" onclick="closeThemePicker()" style="margin-top:12px;">{{LABEL_CLOSE}}</button>
+    <button id="themePickerCloseBtn" class="smallbtn" data-local-icon="close" onclick="closeThemePicker()" style="margin-top:12px;">{{LABEL_CLOSE}}</button>
   </div>
 </div>
 <div id="timerWarning" class="timeroverlay hidden">
@@ -95,8 +113,8 @@
 <div id="timerBlock" class="timeroverlay hidden">
   <div class="timerbox">
     <div class="emoji" data-local-icon="timer" data-icon-only aria-label="{{TIMER_EXPIRED_TITLE}}"></div>
-    <h2>{{TIMER_EXPIRED_TITLE}}</h2>
-    <p>{{TIMER_EXPIRED_BODY}}</p>
+    <h2 id="timerBlockTitle">{{TIMER_EXPIRED_TITLE}}</h2>
+    <p id="timerBlockBody">{{TIMER_EXPIRED_BODY}}</p>
     <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')extendFromBlock()">
     <div class="err" id="timerBlockErr"></div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
@@ -105,7 +123,7 @@
       <button class="smallbtn" onclick="extendFromBlock(60)">+60</button>
     </div>
     <div style="margin-top:12px;">
-      <button class="smallbtn" onclick="exitKids()">{{TIMER_EXIT}}</button>
+      <button id="timerBlockExitBtn" class="smallbtn" onclick="exitKids()">{{TIMER_EXIT}}</button>
     </div>
   </div>
 </div>
@@ -236,11 +254,11 @@
             <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px; align-items:center;">
               <label style="font-weight:700; color:var(--text);"><span id="timerLabel"></span></label>
               <select id="cfgTimerMinutes">
-                <option value="0">{{TIMER_OFF}}</option>
-                <option value="15">15 {{TIMER_MINUTES}}</option>
-                <option value="30">30 {{TIMER_MINUTES}}</option>
-                <option value="60">60 {{TIMER_MINUTES}}</option>
-                <option value="custom">{{TIMER_CUSTOM}}</option>
+                <option id="timerOptionOff" value="0">{{TIMER_OFF}}</option>
+                <option id="timerOption15" value="15">15 {{TIMER_MINUTES}}</option>
+                <option id="timerOption30" value="30">30 {{TIMER_MINUTES}}</option>
+                <option id="timerOption60" value="60">60 {{TIMER_MINUTES}}</option>
+                <option id="timerOptionCustom" value="custom">{{TIMER_CUSTOM}}</option>
               </select>
               <input id="cfgTimerCustom" type="number" min="1" max="180" placeholder="Minuten" style="display:none;">
               <button class="smallbtn" id="timerToggleBtn" onclick="toggleTimer()">{{TIMER_START}}</button>
@@ -255,7 +273,7 @@
               <div class="appearance-controls">
                 <div class="row2">
                   <button id="openThemeBtn" class="smallbtn" onclick="openThemePicker()"><span id="themeDisplay"></span></button>
-                  <select id="cfgLayoutMode" onchange="renderAppearancePreview()"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
+                  <select id="cfgLayoutMode" onchange="renderAppearancePreview()"><option id="layoutOptionLarge" value="gross">{{LABEL_LAYOUT_LARGE}}</option><option id="layoutOptionSmall" value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
                 </div>
                 <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
                   <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
@@ -295,15 +313,15 @@
               <button class="smallbtn save" id="updateNowBtn" data-local-icon="update" onclick="installUpdate()">{{UPDATE_NOW}}</button>
             </div>
             <div class="row2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:8px; align-items:center;">
-              <button class="smallbtn" data-local-icon="download" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
-              <button class="smallbtn" data-local-icon="upload" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
-              <button class="smallbtn" data-local-icon="diagnostics" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
+              <button id="exportConfigBtn" class="smallbtn" data-local-icon="download" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
+              <button id="importConfigBtn" class="smallbtn" data-local-icon="upload" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
+              <button id="exportDiagnosticsBtn" class="smallbtn" data-local-icon="diagnostics" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
               <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
             </div>
             <div id="importMsg" class="muted"></div>
             <section class="backup-panel" aria-labelledby="backupTitle">
               <h3 id="backupTitle">{{BACKUP_TITLE}}</h3>
-              <div class="muted">{{BACKUP_PIN_PRESERVED}}</div>
+              <div id="backupPinPreserved" class="muted">{{BACKUP_PIN_PRESERVED}}</div>
               <div class="backup-actions">
                 <select id="backupSelect" aria-label="{{BACKUP_TITLE}}"></select>
                 <button id="restoreBackupBtn" class="smallbtn" onclick="restoreBackup()">{{BACKUP_RESTORE}}</button>
@@ -321,11 +339,13 @@
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script defer src="/frontend/state.js"></script>
+<script defer src="/frontend/localization.js"></script>
 <script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
+<script defer src="/frontend/first-run.js"></script>
 <script defer src="/frontend/runtime-controls.js"></script>
 </body>
 </html>

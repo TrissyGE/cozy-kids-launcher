@@ -64,6 +64,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
         )
         self.assertIn('"configVersion": 2', installer)
         self.assertEqual(example["configVersion"], 2)
+        self.assertTrue(example["setupCompleted"])
         self.assertEqual(example["activeProfileId"], "default")
         self.assertEqual(len(example["profiles"]), 1)
 
@@ -97,6 +98,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "config.json"
                 ).read_text(encoding="utf-8")
             )
+            self.assertFalse(installed["setupCompleted"])
             config_path = (
                 Path(home)
                 / ".config"
@@ -199,6 +201,17 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "update_manager.py"
                 ).is_file()
             )
+            frontend_root = (
+                Path(home)
+                / ".local"
+                / "share"
+                / "cozy-kids-launcher"
+                / "frontend"
+            )
+            self.assertTrue((frontend_root / "localization.js").is_file())
+            self.assertTrue((frontend_root / "first-run.js").is_file())
+            self.assertTrue((frontend_root / "locales" / "de.json").is_file())
+            self.assertTrue((frontend_root / "locales" / "en.json").is_file())
             self.assertTrue(
                 (
                     Path(home)

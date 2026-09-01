@@ -115,6 +115,8 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
 
     if "autoScanDone" in result and not isinstance(result["autoScanDone"], bool):
         raise ValueError("autoScanDone must be a boolean")
+    if "setupCompleted" in result and not isinstance(result["setupCompleted"], bool):
+        raise ValueError("setupCompleted must be a boolean")
 
     if "customColors" in result:
         colors = result["customColors"]

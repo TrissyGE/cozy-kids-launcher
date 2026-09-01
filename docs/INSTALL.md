@@ -21,9 +21,10 @@ It downloads the launcher, installs it for your user, and sets everything up aut
 ## What Happens After Installing
 
 1. **Log out and log back in** — the kids launcher opens automatically
-2. **Your child taps an app tile** to open apps
-3. **You tap "Parent"** to customize tiles, add apps, change colors
-4. **A shortcut appears on your desktop** to reopen kids mode anytime
+2. **Follow the short first-run setup** for language, child, apps, screen time, and appearance
+3. **Your child taps an app tile** to open apps
+4. **You tap "Parent"** to customize tiles, add apps, change colors
+5. **A shortcut appears on your desktop** to reopen kids mode anytime
 
 That's it. No complex configuration needed.
 
