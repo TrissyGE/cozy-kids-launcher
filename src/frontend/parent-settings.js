@@ -78,6 +78,26 @@ function renderAdminSections(){
   document.getElementById('overviewAppearanceValue').textContent=themeLabel(cfg.theme||'{{DEFAULT_THEME}}');
   activateAdminSection(adminSection);
 }
+function filteredAdminTileIndexes(){
+  const query=adminTileQuery.trim().toLocaleLowerCase();
+  return cfg.tiles.map((tile,index)=>({tile,index})).filter(({tile})=>{
+    if(adminTileVisibility==='visible'&&!tile.visible) return false;
+    if(adminTileVisibility==='hidden'&&tile.visible) return false;
+    if(!query) return true;
+    const command=Array.isArray(tile.cmd)?tile.cmd.join(' '):String(tile.cmd||'');
+    return [tile.label||'',tile.emoji||'',command].join(' ').toLocaleLowerCase().includes(query);
+  }).map(({index})=>index);
+}
+function setAdminTileSearch(value){
+  adminTileQuery=String(value||'');
+  adminPage=0;
+  renderAdmin();
+}
+function setAdminTileVisibility(value){
+  adminTileVisibility=['all','visible','hidden'].includes(value)?value:'all';
+  adminPage=0;
+  renderAdmin();
+}
 
 function renderAdmin(){
   document.getElementById('adminTitle').textContent=uiText.adminTitle;
@@ -87,6 +107,15 @@ function renderAdmin(){
   document.getElementById('addTileBtn').textContent=uiText.addTile;
   document.getElementById('backBtn').textContent=uiText.back;
   document.getElementById('saveBtn').textContent=uiText.save;
+  document.getElementById('tileSearchLabel').textContent=uiText.appSearchLabel;
+  const tileSearch=document.getElementById('tileSearch');
+  tileSearch.placeholder=uiText.appSearchLabel;
+  tileSearch.value=adminTileQuery;
+  document.getElementById('tileFilterLabel').textContent=uiText.appFilterLabel;
+  document.getElementById('tileFilterAll').textContent=uiText.appFilterAll;
+  document.getElementById('tileFilterVisible').textContent=uiText.appFilterVisible;
+  document.getElementById('tileFilterHidden').textContent=uiText.appFilterHidden;
+  document.getElementById('tileVisibilityFilter').value=adminTileVisibility;
   document.getElementById('cfgTitle').value=cfg.title||'';
   document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}';
   updateThemeDisplay();
@@ -161,12 +190,24 @@ function renderAdmin(){
     timerBtn.textContent=uiText.timerStart||'Start';
     document.getElementById('timerStatus').textContent='';
   }
+  const filteredTileIndexes=filteredAdminTileIndexes();
+  const filteredPages=Math.max(1,Math.ceil(filteredTileIndexes.length/pageSize()));
+  adminPage=Math.min(Math.max(0,adminPage),filteredPages-1);
+  const pageStart=adminPage*pageSize();
+  const pageTileIndexes=new Set(filteredTileIndexes.slice(pageStart,pageStart+pageSize()));
+  const resultCount=document.getElementById('adminTileResultCount');
+  resultCount.textContent=uiText.appFilterCount
+    .replace('{shown}',String(filteredTileIndexes.length))
+    .replace('{total}',String(cfg.tiles.length));
+  const emptyState=document.getElementById('adminTileEmptyState');
+  emptyState.textContent=uiText.appFilterEmpty;
+  emptyState.hidden=filteredTileIndexes.length!==0;
   const forms=document.getElementById('forms');
   forms.innerHTML='';
   cfg.tiles.forEach((tile, idx)=>{
     const row=document.createElement('div');
     row.className='tileform';
-    row.style.display = tilePageIndex(idx) === adminPage ? 'grid' : 'none';
+    row.style.display=pageTileIndexes.has(idx)?'grid':'none';
     const emoji=document.createElement('input');
     emoji.value=tile.emoji||'';
     emoji.onchange=e=>tile.emoji=e.target.value;
@@ -178,7 +219,10 @@ function renderAdmin(){
     const visible=document.createElement('input');
     visible.type='checkbox';
     visible.checked=!!tile.visible;
-    visible.onchange=e=>tile.visible=e.target.checked;
+    visible.onchange=e=>{
+      tile.visible=e.target.checked;
+      if(adminTileVisibility==='all') renderAdminSections(); else renderAdmin();
+    };
     visibleWrap.append(visible,' '+uiText.visible);
     const select=document.createElement('select');
     select.className='appSelect';
@@ -309,7 +353,7 @@ function renderAdmin(){
     forms.appendChild(row);
   });
   renderBackupOptions();
-  renderAdminPageNav();
+  renderAdminPageNav(filteredTileIndexes.length);
   renderRecommendations();
   renderAdminSections();
 }
@@ -317,12 +361,13 @@ function reorderTile(from,to){
   if(from===to||from<0||to<0||from>=cfg.tiles.length||to>=cfg.tiles.length) return;
   const[tile]=cfg.tiles.splice(from,1);
   cfg.tiles.splice(to,0,tile);
-  adminPage=tilePageIndex(to);
+  const filteredPosition=filteredAdminTileIndexes().indexOf(to);
+  adminPage=filteredPosition<0?0:Math.floor(filteredPosition/pageSize());
   renderAdmin();
 }
 function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
-function addTile(){ cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); renderAll(); adminPage=pageCount()-1; renderAdmin(); }
-function renderAdminPageNav(){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1, Math.ceil(cfg.tiles.length / pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
+function addTile(){ adminTileQuery=''; adminTileVisibility='all'; cfg.tiles.push({ id:'tile-'+Date.now(), label:uiText.newTile, emoji:'✨', cmd:[''], visible:true }); adminPage=Math.max(0,Math.ceil(cfg.tiles.length/pageSize())-1); renderAll(); }
+function renderAdminPageNav(tileCount){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1,Math.ceil(tileCount/pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
 function renderRecommendations(){
   const container=document.getElementById('recommendations');
   container.innerHTML='';

@@ -1,4 +1,4 @@
-let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', pinCallback=null, pinReturnFocus=null;
+let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', adminTileQuery='', adminTileVisibility='all', pinCallback=null, pinReturnFocus=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
@@ -12,6 +12,13 @@ const uiText = {
   adminScreenTime: {{JSON_ADMIN_SCREEN_TIME}},
   adminAppearance: {{JSON_ADMIN_APPEARANCE}},
   adminSystem: {{JSON_ADMIN_SYSTEM}},
+  appSearchLabel: {{JSON_APP_SEARCH_LABEL}},
+  appFilterLabel: {{JSON_APP_FILTER_LABEL}},
+  appFilterAll: {{JSON_APP_FILTER_ALL}},
+  appFilterVisible: {{JSON_APP_FILTER_VISIBLE}},
+  appFilterHidden: {{JSON_APP_FILTER_HIDDEN}},
+  appFilterEmpty: {{JSON_APP_FILTER_EMPTY}},
+  appFilterCount: {{JSON_APP_FILTER_COUNT}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
   placeholderParentLabel: {{JSON_PLACEHOLDER_PARENT_LABEL}},
   placeholderExitLabel: {{JSON_PLACEHOLDER_EXIT_LABEL}},

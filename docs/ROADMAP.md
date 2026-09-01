@@ -46,6 +46,11 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [x] Introduce shared design tokens and reusable controls
 - [x] Redesign Parent settings as Overview, Children, Apps & Media, Screen Time, Appearance, and System sections
 - [ ] Add a live preview, search, filtering, bulk actions, consistent dialogs, and clear empty/error/loading states
+  - [ ] Add a live preview
+  - [x] Add app search and visibility filtering
+  - [ ] Add bulk actions
+  - [ ] Make confirmation dialogs consistent
+  - [ ] Complete empty, error, and loading states
 - [ ] Create a coherent local icon system while keeping custom emoji tiles available
 
 ## v0.6.0 — Family Edition

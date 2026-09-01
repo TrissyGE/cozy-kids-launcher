@@ -970,6 +970,32 @@ class FrontendSafetyTests(unittest.TestCase):
         ):
             self.assertIn(label, installer)
 
+    def test_app_editor_search_and_visibility_filters_are_localized(self):
+        source = frontend_source()
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('id="tileSearch" type="search"', source)
+        self.assertIn('id="tileVisibilityFilter"', source)
+        self.assertIn('id="adminTileEmptyState"', source)
+        self.assertIn("function filteredAdminTileIndexes()", source)
+        self.assertIn("function setAdminTileSearch(value)", source)
+        self.assertIn("function setAdminTileVisibility(value)", source)
+        self.assertIn("renderAdminPageNav(filteredTileIndexes.length)", source)
+        self.assertIn(
+            "if(adminTileVisibility==='all') renderAdminSections(); else renderAdmin();",
+            source,
+        )
+        for label in (
+            "Apps und Medien durchsuchen",
+            "Nach Sichtbarkeit filtern",
+            "Keine Kacheln passen zu Suche und Filter.",
+            "Search apps and media",
+            "Filter by visibility",
+            "No tiles match your search and filter.",
+        ):
+            self.assertIn(label, installer)
+
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)
