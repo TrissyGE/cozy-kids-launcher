@@ -68,7 +68,11 @@
   .admin-content { min-width:0; }
   .admin-section[hidden] { display:none; }
   .section-heading { margin:0 0 var(--space-4); font-size:1.35rem; }
-  .section-toolbar { display:flex; justify-content:flex-end; margin-bottom:var(--space-3); }
+  .app-list-tools { display:grid; grid-template-columns:minmax(220px,1fr) minmax(180px,.55fr) auto; gap:var(--space-3); align-items:end; margin-bottom:var(--space-2); }
+  .admin-field-label { display:flex; flex-direction:column; gap:var(--space-1); color:var(--text); font-weight:700; }
+  .admin-result-count { min-height:1.4em; margin-bottom:var(--space-3); }
+  .admin-empty-state { padding:var(--space-6) var(--space-4); border:1px dashed var(--input-border); border-radius:var(--radius-control); color:var(--text); text-align:center; }
+  .admin-empty-state[hidden] { display:none; }
   .overview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-3); }
   .overview-card { min-height:130px; padding:var(--space-4); border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--smallbtn-bg); color:var(--text); cursor:pointer; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; text-align:left; }
   .overview-card:hover { box-shadow:0 8px 24px var(--rec-shadow); }
@@ -192,6 +196,8 @@
     .admin-nav { position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
     .admin-tab { text-align:center; }
     .overview-card { min-height:96px; }
+    .app-list-tools { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .app-list-tools #addTileBtn { grid-column:1 / -1; }
     .row2 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
     .tileform {
       grid-template-columns:32px 52px minmax(0,1fr) 92px minmax(0,1.1fr) 100px 80px;

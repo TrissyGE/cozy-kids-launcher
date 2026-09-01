@@ -137,15 +137,27 @@
 
           <section id="adminSectionApps" class="admin-section" data-admin-panel="apps" aria-labelledby="adminNavApps" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
-            <div class="section-toolbar">
+            <div class="app-list-tools">
+              <label class="admin-field-label" for="tileSearch"><span id="tileSearchLabel"></span>
+                <input id="tileSearch" type="search" oninput="setAdminTileSearch(this.value)">
+              </label>
+              <label class="admin-field-label" for="tileVisibilityFilter"><span id="tileFilterLabel"></span>
+                <select id="tileVisibilityFilter" onchange="setAdminTileVisibility(this.value)">
+                  <option id="tileFilterAll" value="all"></option>
+                  <option id="tileFilterVisible" value="visible"></option>
+                  <option id="tileFilterHidden" value="hidden"></option>
+                </select>
+              </label>
               <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
             </div>
+            <div id="adminTileResultCount" class="muted admin-result-count" aria-live="polite"></div>
             <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
               <label style="font-weight:700; color:var(--text);">Browser</label>
               <select id="cfgBrowser"></select>
             </div>
             <div id="browserHint" class="muted" style="margin-bottom:8px;"></div>
             <div id="forms"></div>
+            <div id="adminTileEmptyState" class="admin-empty-state" role="status" hidden></div>
             <div class="adminpagenav" id="adminPageNav"></div>
             <div id="recommendations" style="margin-top:18px;"></div>
           </section>

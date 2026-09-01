@@ -229,6 +229,54 @@ def run_scenarios(browser, release_fixture, installed_version):
     log_scenario("settings and theme selection persist and re-render")
 
     enter_parent_settings(browser)
+    browser.click("[data-admin-section='apps']")
+    browser.evaluate(
+        "cfg.layoutMode='gross'; cfg.tiles=cfg.tiles.concat(["
+        "{id:'reading-filter',label:'Reading',emoji:'📚',cmd:['true'],visible:true},"
+        "{id:'puzzles-filter',label:'Puzzles',emoji:'🧩',cmd:['true'],visible:true},"
+        "{id:'drawing-filter',label:'Drawing',emoji:'✏️',cmd:['true'],visible:true}"
+        "]); renderAdmin()"
+    )
+    browser.wait_for(
+        "document.getElementById('adminPageNav').children.length===3",
+        message="Unfiltered app editor did not paginate its five tiles",
+    )
+    browser.set_value("#tileSearch", "Paint")
+    browser.wait_for(
+        "Array.from(document.querySelectorAll('#forms .tileform'))"
+        ".filter(row => getComputedStyle(row).display!=='none').length===1 && "
+        "document.getElementById('adminTileResultCount').textContent.includes('1') && "
+        "document.getElementById('adminPageNav').children.length===0",
+        message="App search did not narrow the editor list",
+    )
+    browser.set_value("#tileSearch", "no matching tile")
+    browser.wait_for(
+        "!document.getElementById('adminTileEmptyState').hidden && "
+        "Array.from(document.querySelectorAll('#forms .tileform'))"
+        ".every(row => getComputedStyle(row).display==='none')",
+        message="Empty search results did not expose their status",
+    )
+    browser.set_value("#tileSearch", "")
+    browser.evaluate("cfg.tiles[0].visible=false; renderAdmin()")
+    browser.set_value("#tileVisibilityFilter", "hidden")
+    browser.wait_for(
+        "Array.from(document.querySelectorAll('#forms .tileform'))"
+        ".filter(row => getComputedStyle(row).display!=='none').length===1 && "
+        "document.querySelector('#forms .tileform input:nth-of-type(2)').value==='Paint'",
+        message="Visibility filter did not isolate hidden tiles",
+    )
+    browser.click("#forms .tileform input[type='checkbox']")
+    browser.wait_for(
+        "!document.getElementById('adminTileEmptyState').hidden && "
+        "filteredAdminTileIndexes().length===0",
+        message="Changing a hidden tile to visible did not refresh the active filter",
+    )
+    browser.evaluate(
+        "cfg.tiles=cfg.tiles.slice(0,2); cfg.layoutMode='klein'; "
+        "adminTileVisibility='all'; adminPage=0; renderAdmin()"
+    )
+    log_scenario("app search, visibility filtering, and empty results stay local")
+
     browser.click("[data-admin-section='screen-time']")
     browser.set_value("#cfgTimerMinutes", "15")
     browser.click("#timerToggleBtn")
@@ -509,6 +557,10 @@ def run_accessibility_scenarios(browser, artifacts):
             raise AssertionError(
                 f"Parent section {section!r} overflows at 800x600: {metrics!r}"
             )
+    browser.evaluate(
+        "activateAdminSection('apps'); document.querySelector('#admin .wrap').scrollTop=0"
+    )
+    browser.screenshot(artifacts / "low-resolution-apps.png")
     browser.evaluate("activateAdminSection('overview')")
     browser.screenshot(artifacts / "low-resolution-parent.png")
     browser.key_press("Escape")

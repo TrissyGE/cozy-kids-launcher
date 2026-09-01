@@ -165,6 +165,13 @@ text() {
     de:admin_screen_time) echo "Bildschirmzeit" ;;
     de:admin_appearance) echo "Darstellung" ;;
     de:admin_system) echo "System" ;;
+    de:app_search_label) echo "Apps und Medien durchsuchen" ;;
+    de:app_filter_label) echo "Nach Sichtbarkeit filtern" ;;
+    de:app_filter_all) echo "Alle Kacheln" ;;
+    de:app_filter_visible) echo "Sichtbar" ;;
+    de:app_filter_hidden) echo "Ausgeblendet" ;;
+    de:app_filter_empty) echo "Keine Kacheln passen zu Suche und Filter." ;;
+    de:app_filter_count) echo "{shown} von {total} Kacheln" ;;
     de:placeholder_title) echo "Überschrift" ;;
     de:placeholder_parent_label) echo "Eltern-Button" ;;
     de:placeholder_exit_label) echo "Beenden-Button" ;;
@@ -235,6 +242,13 @@ text() {
     en:admin_screen_time) echo "Screen Time" ;;
     en:admin_appearance) echo "Appearance" ;;
     en:admin_system) echo "System" ;;
+    en:app_search_label) echo "Search apps and media" ;;
+    en:app_filter_label) echo "Filter by visibility" ;;
+    en:app_filter_all) echo "All tiles" ;;
+    en:app_filter_visible) echo "Visible" ;;
+    en:app_filter_hidden) echo "Hidden" ;;
+    en:app_filter_empty) echo "No tiles match your search and filter." ;;
+    en:app_filter_count) echo "{shown} of {total} tiles" ;;
     en:placeholder_title) echo "Title" ;;
     en:placeholder_parent_label) echo "Parent button" ;;
     en:placeholder_exit_label) echo "Exit button" ;;
@@ -847,6 +861,7 @@ render_template() {
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
   export JSON_ADMIN_TITLE JSON_ADMIN_NAV_LABEL JSON_ADMIN_OVERVIEW JSON_ADMIN_CHILDREN JSON_ADMIN_APPS_MEDIA JSON_ADMIN_SCREEN_TIME JSON_ADMIN_APPEARANCE JSON_ADMIN_SYSTEM
+  export JSON_APP_SEARCH_LABEL JSON_APP_FILTER_LABEL JSON_APP_FILTER_ALL JSON_APP_FILTER_VISIBLE JSON_APP_FILTER_HIDDEN JSON_APP_FILTER_EMPTY JSON_APP_FILTER_COUNT
   export JSON_PLACEHOLDER_TITLE JSON_PLACEHOLDER_PARENT_LABEL JSON_PLACEHOLDER_EXIT_LABEL
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
@@ -903,6 +918,13 @@ ADMIN_APPS_MEDIA="$(text admin_apps_media)"
 ADMIN_SCREEN_TIME="$(text admin_screen_time)"
 ADMIN_APPEARANCE="$(text admin_appearance)"
 ADMIN_SYSTEM="$(text admin_system)"
+APP_SEARCH_LABEL="$(text app_search_label)"
+APP_FILTER_LABEL="$(text app_filter_label)"
+APP_FILTER_ALL="$(text app_filter_all)"
+APP_FILTER_VISIBLE="$(text app_filter_visible)"
+APP_FILTER_HIDDEN="$(text app_filter_hidden)"
+APP_FILTER_EMPTY="$(text app_filter_empty)"
+APP_FILTER_COUNT="$(text app_filter_count)"
 PLACEHOLDER_TITLE="$(text placeholder_title)"
 PLACEHOLDER_PARENT_LABEL="$(text placeholder_parent_label)"
 PLACEHOLDER_EXIT_LABEL="$(text placeholder_exit_label)"
@@ -1017,6 +1039,13 @@ JSON_ADMIN_APPS_MEDIA="$(json_text "$ADMIN_APPS_MEDIA")"
 JSON_ADMIN_SCREEN_TIME="$(json_text "$ADMIN_SCREEN_TIME")"
 JSON_ADMIN_APPEARANCE="$(json_text "$ADMIN_APPEARANCE")"
 JSON_ADMIN_SYSTEM="$(json_text "$ADMIN_SYSTEM")"
+JSON_APP_SEARCH_LABEL="$(json_text "$APP_SEARCH_LABEL")"
+JSON_APP_FILTER_LABEL="$(json_text "$APP_FILTER_LABEL")"
+JSON_APP_FILTER_ALL="$(json_text "$APP_FILTER_ALL")"
+JSON_APP_FILTER_VISIBLE="$(json_text "$APP_FILTER_VISIBLE")"
+JSON_APP_FILTER_HIDDEN="$(json_text "$APP_FILTER_HIDDEN")"
+JSON_APP_FILTER_EMPTY="$(json_text "$APP_FILTER_EMPTY")"
+JSON_APP_FILTER_COUNT="$(json_text "$APP_FILTER_COUNT")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
 JSON_PLACEHOLDER_PARENT_LABEL="$(json_text "$PLACEHOLDER_PARENT_LABEL")"
 JSON_PLACEHOLDER_EXIT_LABEL="$(json_text "$PLACEHOLDER_EXIT_LABEL")"
