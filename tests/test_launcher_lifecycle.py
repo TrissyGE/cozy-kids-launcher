@@ -79,6 +79,8 @@ class LauncherLifecycleTests(unittest.TestCase):
             '          --name "Cozy Kids Launcher"',
             source,
         )
+        self.assertIn('settling_window_id="$window_id"', source)
+        self.assertIn("a transient full-size rectangle", source)
         self.assertIn('xdotool key --window "$window_id" F11', source)
         self.assertIn('confirm_chromium_fullscreen', source)
         self.assertNotIn(

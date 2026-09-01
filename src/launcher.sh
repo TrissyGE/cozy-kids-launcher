@@ -257,6 +257,7 @@ confirm_chromium_fullscreen() {
   fi
   (
     local window_id=""
+    local settling_window_id=""
     local geometry=""
     local display_width=0
     local display_height=0
@@ -275,6 +276,14 @@ confirm_chromium_fullscreen() {
       )"
       window_id="${window_id%%$'\n'*}"
       if [[ -n "$window_id" ]]; then
+        # KWin can expose the titled XWayland window at screen size before it
+        # applies the final decorated geometry. Let that first window settle so
+        # a transient full-size rectangle is not mistaken for fullscreen.
+        if [[ "$window_id" != "$settling_window_id" ]]; then
+          settling_window_id="$window_id"
+          sleep 2
+          continue
+        fi
         geometry="$(xdotool getwindowgeometry --shell "$window_id" 2>/dev/null || true)"
         if [[ -z "$geometry" ]]; then
           sleep 0.25
