@@ -1,6 +1,7 @@
 let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', adminTileQuery='', adminTileVisibility='all', adminSelectedTileIds=new Set(), pinCallback=null, pinReturnFocus=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
+let availabilityPollInterval=null, availabilityStatus={profileAllowed:true,blockedTileIds:[]}, selectedAppScheduleId='';
 let updateAvailable=false, remoteVersion='';
 let browserOptions=[];
 let appCatalogState='loading', recommendationState='loading', browserCatalogState='loading', backupState='loading';
@@ -131,6 +132,29 @@ let uiText = {
   timerExit: {{JSON_TIMER_EXIT}},
   timerWrongPin: {{JSON_TIMER_WRONG_PIN}},
   timerExtended: {{JSON_TIMER_EXTENDED}},
+  weeklyScheduleTitle: {{JSON_SCHEDULE_WEEKLY_TITLE}},
+  weeklyScheduleHint: {{JSON_SCHEDULE_WEEKLY_HINT}},
+  scheduleEnabled: {{JSON_SCHEDULE_ENABLED}},
+  appScheduleTitle: {{JSON_SCHEDULE_APP_TITLE}},
+  appScheduleHint: {{JSON_SCHEDULE_APP_HINT}},
+  scheduleSelectApp: {{JSON_SCHEDULE_SELECT_APP}},
+  scheduleAddWindow: {{JSON_SCHEDULE_ADD_WINDOW}},
+  scheduleRemoveWindow: {{JSON_SCHEDULE_REMOVE_WINDOW}},
+  scheduleStart: {{JSON_SCHEDULE_START}},
+  scheduleEnd: {{JSON_SCHEDULE_END}},
+  scheduleClearApp: {{JSON_SCHEDULE_CLEAR_APP}},
+  scheduleNoWindows: {{JSON_SCHEDULE_NO_WINDOWS}},
+  scheduleBlockedTitle: {{JSON_SCHEDULE_BLOCKED_TITLE}},
+  scheduleProfileBlocked: {{JSON_SCHEDULE_PROFILE_BLOCKED}},
+  scheduleAppBlocked: {{JSON_SCHEDULE_APP_BLOCKED}},
+  scheduleOpenParents: {{JSON_SCHEDULE_OPEN_PARENTS}},
+  weekdayMonday: {{JSON_WEEKDAY_MONDAY}},
+  weekdayTuesday: {{JSON_WEEKDAY_TUESDAY}},
+  weekdayWednesday: {{JSON_WEEKDAY_WEDNESDAY}},
+  weekdayThursday: {{JSON_WEEKDAY_THURSDAY}},
+  weekdayFriday: {{JSON_WEEKDAY_FRIDAY}},
+  weekdaySaturday: {{JSON_WEEKDAY_SATURDAY}},
+  weekdaySunday: {{JSON_WEEKDAY_SUNDAY}},
   backupTitle: {{JSON_BACKUP_TITLE}},
   backupRestore: {{JSON_BACKUP_RESTORE}},
   backupEmpty: {{JSON_BACKUP_EMPTY}},

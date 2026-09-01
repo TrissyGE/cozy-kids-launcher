@@ -210,6 +210,24 @@
   .timeroverlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; z-index:250; }
   .timerbox h2 { margin:0 0 12px; }
   .timerbox .emoji { font-size:3rem; }
+  .availability-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:var(--space-2); margin-top:var(--space-4); }
+  .smallbtn[hidden] { display:none; }
+  .tile.unavailable { filter:saturate(.35); opacity:.62; }
+  .tile.unavailable::after { content:'\1F512'; position:absolute; top:10px; right:12px; font-size:1.25rem; }
+  .schedule-settings-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-4); margin-top:var(--space-5); }
+  .schedule-panel { min-width:0; padding:var(--space-4); border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--card); }
+  .schedule-panel h4 { margin:0 0 var(--space-2); }
+  .schedule-toggle { margin:var(--space-3) 0; }
+  .schedule-days { display:grid; gap:var(--space-2); margin-top:var(--space-3); }
+  .schedule-day { display:grid; grid-template-columns:minmax(72px,.55fr) minmax(0,1.45fr); align-items:start; gap:var(--space-2); padding:var(--space-2) 0; border-top:1px solid var(--input-border); }
+  .schedule-day h5 { margin:8px 0 0; }
+  .schedule-windows { display:grid; gap:var(--space-1); }
+  .schedule-window { display:grid; grid-template-columns:minmax(65px,1fr) auto minmax(65px,1fr) auto; align-items:center; gap:var(--space-1); }
+  .schedule-window input { min-width:0; }
+  .schedule-empty { padding:9px 0; }
+  .schedule-add { grid-column:2; justify-self:start; white-space:nowrap; }
+  .schedule-remove { min-width:42px; padding-inline:10px; }
+  .schedule-app-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-2); margin-top:var(--space-3); }
   /* Bouncy tile animations */
   @keyframes tileBounce { 0%{transform:scale(1)} 40%{transform:scale(1.06) rotate(1deg)} 100%{transform:scale(1.02)} }
   @keyframes tileWiggle { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-2deg)} 75%{transform:rotate(2deg)} }
@@ -245,7 +263,7 @@
   @media (forced-colors: active) {
     #themeBg { display:none; }
     .tile, .smallbtn, .nav, .theme-thumb, .admin-tab, .overview-card, .admin-bulk-toolbar, .launcher-preview, .preview-tile, .panel, .pinbox, .install-box, .timerbox, .confirm-box,
-    .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, input, select, label.chk {
+    .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, .schedule-panel, .schedule-day, input, select, label.chk {
       background:Canvas;
       color:CanvasText;
       border:2px solid ButtonText;
@@ -293,6 +311,8 @@
     .admin-bulk-actions .smallbtn { flex:1; }
     .appearance-settings-grid { grid-template-columns:1fr; }
     .profile-management-grid { grid-template-columns:1fr; }
+    .schedule-settings-grid { grid-template-columns:1fr; }
+    .schedule-day { grid-template-columns:minmax(80px,.6fr) minmax(0,1.4fr); }
     .profile-picker { max-height:90vh; padding:var(--space-4); }
     .profile-choice { min-height:110px; }
     .first-run-box { max-height:96vh; padding:var(--space-4); }

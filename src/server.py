@@ -427,16 +427,21 @@ def stop_active_tile():
     return application_launcher().stop_active_tile()
 
 
-def start_overlay(mode, url=""):
-    return application_launcher().start_overlay(mode, url=url)
+def start_overlay(mode, url="", tile_id=""):
+    return application_launcher().start_overlay(mode, url=url, tile_id=tile_id)
 
 
 def reset_active_tile():
     application_launcher().reset_active_tile()
 
 
-def launch_owned_tile(command, mode, url=""):
-    return application_launcher().launch_owned_tile(command, mode, url=url)
+def launch_owned_tile(command, mode, url="", tile_id=""):
+    return application_launcher().launch_owned_tile(
+        command,
+        mode,
+        url=url,
+        tile_id=tile_id,
+    )
 
 
 def load_timer():
@@ -1020,7 +1025,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     else ["xdg-open", locations[0]]
                 )
                 try:
-                    launch_owned_tile(command, "local")
+                    launch_owned_tile(command, "local", tile_id=tile_id)
                 except OSError:
                     log_runtime_event(
                         "launch.failed",
@@ -1042,7 +1047,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 if launch["mode"] == "embedded":
                     reset_active_tile()
                     self.send_response(302)
-                    self.send_header("Location", f"/browser.html?url={quote(url, safe='')}")
+                    self.send_header(
+                        "Location",
+                        f"/browser.html?url={quote(url, safe='')}&tile={quote(tile_id, safe='')}",
+                    )
                     self.end_headers()
                     return
                 browser = find_browser(cfg)
@@ -1062,7 +1070,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.json_response({"status": "error", "message": "No supported browser found"}, 503)
                     return
                 try:
-                    launch_owned_tile(command, "external", url=url)
+                    launch_owned_tile(
+                        command,
+                        "external",
+                        url=url,
+                        tile_id=tile_id,
+                    )
                 except OSError:
                     log_runtime_event(
                         "launch.failed",
@@ -1088,7 +1101,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             clean = direct_app_command(clean)
             try:
                 # The supervisor still launches argv directly and never invokes a shell.
-                launch_owned_tile(clean, "local")
+                launch_owned_tile(clean, "local", tile_id=tile_id)
             except OSError:
                 log_runtime_event(
                     "launch.failed",

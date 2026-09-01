@@ -133,6 +133,18 @@
     <h2 id="startText">{{STARTING_APP}}</h2>
   </div>
 </div>
+<div id="availabilityBlock" class="timeroverlay hidden" data-reason="" role="dialog" aria-modal="true" aria-labelledby="availabilityBlockTitle">
+  <div class="timerbox">
+    <div class="emoji" data-local-icon="timer" data-icon-only aria-hidden="true"></div>
+    <h2 id="availabilityBlockTitle"></h2>
+    <p id="availabilityBlockBody"></p>
+    <div class="availability-actions">
+      <button id="availabilityBlockClose" class="smallbtn" type="button" onclick="hideAvailabilityBlock()"></button>
+      <button id="availabilityParentsBtn" class="smallbtn" type="button" onclick="openParentsFromAvailability()"></button>
+      <button id="availabilityExitBtn" class="smallbtn" type="button" onclick="exitKids()"></button>
+    </div>
+  </div>
+</div>
 <div id="admin" class="screen hidden">
   <div class="wrap admin">
     <div class="panel admin-shell">
@@ -264,6 +276,32 @@
               <button class="smallbtn" id="timerToggleBtn" onclick="toggleTimer()">{{TIMER_START}}</button>
             </div>
             <div id="timerStatus" class="muted"></div>
+            <div class="schedule-settings-grid">
+              <section class="schedule-panel" aria-labelledby="weeklyScheduleTitle">
+                <h4 id="weeklyScheduleTitle"></h4>
+                <p id="weeklyScheduleHint" class="muted"></p>
+                <label class="chk schedule-toggle" for="weeklyScheduleEnabled">
+                  <input id="weeklyScheduleEnabled" type="checkbox" onchange="setProfileScheduleEnabled(this.checked)">
+                  <span id="weeklyScheduleEnabledLabel"></span>
+                </label>
+                <div id="weeklyScheduleDays" class="schedule-days"></div>
+              </section>
+              <section class="schedule-panel" aria-labelledby="appScheduleTitle">
+                <h4 id="appScheduleTitle"></h4>
+                <p id="appScheduleHint" class="muted"></p>
+                <label class="admin-field-label" for="appScheduleTile"><span id="appScheduleSelectLabel"></span>
+                  <select id="appScheduleTile" onchange="selectAppSchedule(this.value)"></select>
+                </label>
+                <div class="schedule-app-actions">
+                  <label class="chk" for="appScheduleEnabled">
+                    <input id="appScheduleEnabled" type="checkbox" onchange="setAppScheduleEnabled(this.checked)">
+                    <span id="appScheduleEnabledLabel"></span>
+                  </label>
+                  <button id="clearAppScheduleBtn" class="smallbtn" type="button" onclick="clearAppSchedule()"></button>
+                </div>
+                <div id="appScheduleDays" class="schedule-days"></div>
+              </section>
+            </div>
           </section>
 
           <section id="adminSectionAppearance" class="admin-section" data-admin-panel="appearance" aria-labelledby="adminNavAppearance" hidden>
@@ -344,6 +382,7 @@
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>
+<script defer src="/frontend/schedule-controls.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
 <script defer src="/frontend/first-run.js"></script>
 <script defer src="/frontend/runtime-controls.js"></script>

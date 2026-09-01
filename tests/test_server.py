@@ -32,6 +32,7 @@ def frontend_source():
         frontend_root / "dialogs.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
+        frontend_root / "schedule-controls.js",
         frontend_root / "parent-settings.js",
         frontend_root / "first-run.js",
         frontend_root / "runtime-controls.js",
@@ -532,7 +533,7 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status, 204)
         self.assertIsNone(data)
-        launch.assert_called_once_with(["tuxpaint"], "local")
+        launch.assert_called_once_with(["tuxpaint"], "local", tile_id="paint")
 
     def test_schedule_status_and_launch_enforcement_share_the_same_boundary(self):
         config = server_module.load_cfg()
@@ -1027,6 +1028,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/dialogs.js",
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
+            "/frontend/schedule-controls.js",
             "/frontend/parent-settings.js",
             "/frontend/first-run.js",
             "/frontend/runtime-controls.js",
@@ -1043,12 +1045,13 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_SCHEDULE_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_LOCALIZATION_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_FIRST_RUN_FILE"', installer)
 
@@ -1281,6 +1284,27 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("await persistConfig()", first_run)
         self.assertIn("requestPin(persistFirstRun)", first_run)
         self.assertIn("document.getElementById('firstRunOverlay').classList.contains('hidden')", source)
+
+    def test_schedule_controls_use_local_status_and_safe_dom_rendering(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
+        source = frontend_source()
+        controls = (frontend / "schedule-controls.js").read_text(encoding="utf-8")
+        browser = (REPOSITORY_ROOT / "src" / "browser.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('<script defer src="/frontend/schedule-controls.js"></script>', source)
+        self.assertIn("fetch('/api/availability/status'", controls)
+        self.assertIn("blockedTileIds", controls)
+        self.assertIn("setProfileScheduleEnabled", controls)
+        self.assertIn("setAppScheduleEnabled", controls)
+        self.assertIn("renderScheduleEditor", controls)
+        self.assertNotIn("innerHTML", controls)
+        self.assertNotIn("https://", controls)
+        self.assertIn('id="availabilityBlock"', source)
+        self.assertIn("aria-disabled','true'", source)
+        self.assertIn("document.getElementById('availabilityBlock').classList.contains('hidden')", source)
+        self.assertIn("browserParams.get('tile')", browser)
+        self.assertIn("fetch('/api/availability/status'", browser)
 
     def test_local_icon_registry_preserves_custom_emoji_tiles(self):
         source = frontend_source()

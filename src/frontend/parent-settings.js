@@ -239,6 +239,7 @@ function createAdminTile(){
 async function deleteSelectedTiles(){
   const count=adminSelectedTileIds.size;
   if(!count||!(await requestConfirmation(uiText.appBulkDeleteConfirm.replace('{count}',String(count)),uiText.appBulkDelete))) return;
+  for(const tileId of adminSelectedTileIds) removeTileSchedule(tileId);
   cfg.tiles=cfg.tiles.filter(tile=>!adminSelectedTileIds.has(tile.id));
   adminSelectedTileIds.clear();
   if(!cfg.tiles.length){
@@ -551,6 +552,7 @@ function renderAdmin(){
   renderBackupOptions();
   renderAdminPageNav(filteredTileIndexes.length);
   renderRecommendations();
+  renderScheduleControls();
   renderAdminSections();
   renderAppearancePreview();
 }
@@ -562,7 +564,7 @@ function reorderTile(from,to){
   adminPage=filteredPosition<0?0:Math.floor(filteredPosition/pageSize());
   renderAdmin();
 }
-function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
+function deleteTile(idx){ const tile=cfg.tiles[idx]; if(tile) removeTileSchedule(tile.id); cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
 function addTile(){ adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); cfg.tiles.push(createAdminTile()); adminPage=Math.max(0,Math.ceil(cfg.tiles.length/pageSize())-1); renderAll(); }
 function renderAdminPageNav(tileCount){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1,Math.ceil(tileCount/pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; setIconLabel(prev,'nav-left',uiText.adminPagePrev); prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; setIconLabel(next,'nav-right',uiText.adminPageNext); next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
 function renderRecommendations(){

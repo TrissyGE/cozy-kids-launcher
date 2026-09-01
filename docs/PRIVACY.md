@@ -30,7 +30,9 @@ boundary. Configuration exports and backups contain every profile so they can
 be restored together; deleting a profile removes it from the active
 configuration and later backup rotation determines how long older copies remain.
 Optional weekly and per-app availability windows are stored in that same local
-profile and are evaluated only against the device's local time.
+profile and are evaluated only against the device's local time. Availability
+polling stays on the launcher's loopback API; no schedule or usage information
+is uploaded.
 The child-facing picker receives only names and avatars. Switching to another
 child still requires the Parent PIN when one is configured. The small
 "last launched" marker is stored locally under a separate key for each profile.

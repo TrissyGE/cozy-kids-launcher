@@ -123,6 +123,7 @@ async function activateProfile(profileId,options={}){
     timerWarningShown=false;
     if(message) clearUiState(message);
     if(options.picker) closeProfilePicker();
+    await pollAvailability();
     renderAll();
     pollTimer();
   }catch(e){

@@ -415,6 +415,52 @@ text() {
     en:backup_pin_preserved) echo "The current Parent PIN is preserved when restoring a backup." ;;
     de:timer_label) echo "Bildschirmzeit" ;;
     en:timer_label) echo "Screen time" ;;
+    de:schedule_weekly_title) echo "Wochenplan" ;;
+    en:schedule_weekly_title) echo "Weekly schedule" ;;
+    de:schedule_weekly_hint) echo "Lege fest, wann dieses Kinderprofil Apps starten darf. Die Zeiten verwenden die lokale Gerätezeit." ;;
+    en:schedule_weekly_hint) echo "Choose when this child profile may start apps. Times use the device's local time." ;;
+    de:schedule_enabled) echo "Zeitplan aktiv" ;;
+    en:schedule_enabled) echo "Schedule enabled" ;;
+    de:schedule_app_title) echo "Zeitfenster pro App" ;;
+    en:schedule_app_title) echo "Per-app availability" ;;
+    de:schedule_app_hint) echo "Optional kannst du für einzelne Apps engere Zeitfenster festlegen." ;;
+    en:schedule_app_hint) echo "Optionally set narrower time windows for individual apps." ;;
+    de:schedule_select_app) echo "App auswählen" ;;
+    en:schedule_select_app) echo "Select app" ;;
+    de:schedule_add_window) echo "Zeitfenster hinzufügen" ;;
+    en:schedule_add_window) echo "Add time window" ;;
+    de:schedule_remove_window) echo "Zeitfenster entfernen" ;;
+    en:schedule_remove_window) echo "Remove time window" ;;
+    de:schedule_start) echo "Beginn" ;;
+    en:schedule_start) echo "Start" ;;
+    de:schedule_end) echo "Ende" ;;
+    en:schedule_end) echo "End" ;;
+    de:schedule_clear_app) echo "App-Regel entfernen" ;;
+    en:schedule_clear_app) echo "Remove app rule" ;;
+    de:schedule_no_windows) echo "Gesperrt" ;;
+    en:schedule_no_windows) echo "Blocked" ;;
+    de:schedule_blocked_title) echo "Jetzt ist Pause" ;;
+    en:schedule_blocked_title) echo "Time for a break" ;;
+    de:schedule_profile_blocked) echo "Der Wochenplan erlaubt gerade keine Apps. Frag deine Eltern, wenn etwas geändert werden soll." ;;
+    en:schedule_profile_blocked) echo "The weekly schedule does not allow apps right now. Ask a parent if it should be changed." ;;
+    de:schedule_app_blocked) echo "Diese App ist laut Zeitplan gerade nicht verfügbar." ;;
+    en:schedule_app_blocked) echo "This app is not available at this time." ;;
+    de:schedule_open_parents) echo "Elterneinstellungen" ;;
+    en:schedule_open_parents) echo "Parent settings" ;;
+    de:weekday_monday) echo "Montag" ;;
+    en:weekday_monday) echo "Monday" ;;
+    de:weekday_tuesday) echo "Dienstag" ;;
+    en:weekday_tuesday) echo "Tuesday" ;;
+    de:weekday_wednesday) echo "Mittwoch" ;;
+    en:weekday_wednesday) echo "Wednesday" ;;
+    de:weekday_thursday) echo "Donnerstag" ;;
+    en:weekday_thursday) echo "Thursday" ;;
+    de:weekday_friday) echo "Freitag" ;;
+    en:weekday_friday) echo "Friday" ;;
+    de:weekday_saturday) echo "Samstag" ;;
+    en:weekday_saturday) echo "Saturday" ;;
+    de:weekday_sunday) echo "Sonntag" ;;
+    en:weekday_sunday) echo "Sunday" ;;
     de:timer_off) echo "Aus" ;;
     en:timer_off) echo "Off" ;;
     de:timer_15) echo "15 Minuten" ;;
@@ -857,6 +903,7 @@ FRONTEND_ICONS_FILE="$FRONTEND_DIR/icons.js"
 FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_PROFILES_FILE="$FRONTEND_DIR/profiles.js"
+FRONTEND_SCHEDULE_FILE="$FRONTEND_DIR/schedule-controls.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
 FRONTEND_FIRST_RUN_FILE="$FRONTEND_DIR/first-run.js"
 FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
@@ -942,6 +989,8 @@ render_template() {
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
   export TIMER_LABEL TIMER_OFF TIMER_15 TIMER_30 TIMER_60 TIMER_CUSTOM TIMER_START TIMER_STOP TIMER_ACTIVE TIMER_EXPIRED TIMER_REMAINING TIMER_WARNING_TITLE TIMER_WARNING_TEXT TIMER_ENTER_PIN TIMER_EXTEND TIMER_EXIT TIMER_WRONG_PIN TIMER_EXTENDED TIMER_EXPIRED_TITLE TIMER_EXPIRED_BODY TIMER_MINUTES
   export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE
+  export JSON_SCHEDULE_WEEKLY_TITLE JSON_SCHEDULE_WEEKLY_HINT JSON_SCHEDULE_ENABLED JSON_SCHEDULE_APP_TITLE JSON_SCHEDULE_APP_HINT JSON_SCHEDULE_SELECT_APP JSON_SCHEDULE_ADD_WINDOW JSON_SCHEDULE_REMOVE_WINDOW JSON_SCHEDULE_START JSON_SCHEDULE_END JSON_SCHEDULE_CLEAR_APP JSON_SCHEDULE_NO_WINDOWS JSON_SCHEDULE_BLOCKED_TITLE JSON_SCHEDULE_PROFILE_BLOCKED JSON_SCHEDULE_APP_BLOCKED JSON_SCHEDULE_OPEN_PARENTS
+  export JSON_WEEKDAY_MONDAY JSON_WEEKDAY_TUESDAY JSON_WEEKDAY_WEDNESDAY JSON_WEEKDAY_THURSDAY JSON_WEEKDAY_FRIDAY JSON_WEEKDAY_SATURDAY JSON_WEEKDAY_SUNDAY
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -1118,6 +1167,29 @@ TIMER_EXTENDED="$(text timer_extended)"
 TIMER_EXPIRED_TITLE="$(text timer_expired_title)"
 TIMER_EXPIRED_BODY="$(text timer_expired_body)"
 TIMER_MINUTES="$(text timer_minutes)"
+SCHEDULE_WEEKLY_TITLE="$(text schedule_weekly_title)"
+SCHEDULE_WEEKLY_HINT="$(text schedule_weekly_hint)"
+SCHEDULE_ENABLED="$(text schedule_enabled)"
+SCHEDULE_APP_TITLE="$(text schedule_app_title)"
+SCHEDULE_APP_HINT="$(text schedule_app_hint)"
+SCHEDULE_SELECT_APP="$(text schedule_select_app)"
+SCHEDULE_ADD_WINDOW="$(text schedule_add_window)"
+SCHEDULE_REMOVE_WINDOW="$(text schedule_remove_window)"
+SCHEDULE_START="$(text schedule_start)"
+SCHEDULE_END="$(text schedule_end)"
+SCHEDULE_CLEAR_APP="$(text schedule_clear_app)"
+SCHEDULE_NO_WINDOWS="$(text schedule_no_windows)"
+SCHEDULE_BLOCKED_TITLE="$(text schedule_blocked_title)"
+SCHEDULE_PROFILE_BLOCKED="$(text schedule_profile_blocked)"
+SCHEDULE_APP_BLOCKED="$(text schedule_app_blocked)"
+SCHEDULE_OPEN_PARENTS="$(text schedule_open_parents)"
+WEEKDAY_MONDAY="$(text weekday_monday)"
+WEEKDAY_TUESDAY="$(text weekday_tuesday)"
+WEEKDAY_WEDNESDAY="$(text weekday_wednesday)"
+WEEKDAY_THURSDAY="$(text weekday_thursday)"
+WEEKDAY_FRIDAY="$(text weekday_friday)"
+WEEKDAY_SATURDAY="$(text weekday_saturday)"
+WEEKDAY_SUNDAY="$(text weekday_sunday)"
 LABEL_PREVIEW_TITLE="$(text preview_title)"
 STARTING_APP="$(text starting_app)"
 EMPTY_STATE_EMOJI="$(text empty_state_emoji)"
@@ -1255,6 +1327,29 @@ JSON_TIMER_EXTEND="$(json_text "$TIMER_EXTEND")"
 JSON_TIMER_EXIT="$(json_text "$TIMER_EXIT")"
 JSON_TIMER_WRONG_PIN="$(json_text "$TIMER_WRONG_PIN")"
 JSON_TIMER_EXTENDED="$(json_text "$TIMER_EXTENDED")"
+JSON_SCHEDULE_WEEKLY_TITLE="$(json_text "$SCHEDULE_WEEKLY_TITLE")"
+JSON_SCHEDULE_WEEKLY_HINT="$(json_text "$SCHEDULE_WEEKLY_HINT")"
+JSON_SCHEDULE_ENABLED="$(json_text "$SCHEDULE_ENABLED")"
+JSON_SCHEDULE_APP_TITLE="$(json_text "$SCHEDULE_APP_TITLE")"
+JSON_SCHEDULE_APP_HINT="$(json_text "$SCHEDULE_APP_HINT")"
+JSON_SCHEDULE_SELECT_APP="$(json_text "$SCHEDULE_SELECT_APP")"
+JSON_SCHEDULE_ADD_WINDOW="$(json_text "$SCHEDULE_ADD_WINDOW")"
+JSON_SCHEDULE_REMOVE_WINDOW="$(json_text "$SCHEDULE_REMOVE_WINDOW")"
+JSON_SCHEDULE_START="$(json_text "$SCHEDULE_START")"
+JSON_SCHEDULE_END="$(json_text "$SCHEDULE_END")"
+JSON_SCHEDULE_CLEAR_APP="$(json_text "$SCHEDULE_CLEAR_APP")"
+JSON_SCHEDULE_NO_WINDOWS="$(json_text "$SCHEDULE_NO_WINDOWS")"
+JSON_SCHEDULE_BLOCKED_TITLE="$(json_text "$SCHEDULE_BLOCKED_TITLE")"
+JSON_SCHEDULE_PROFILE_BLOCKED="$(json_text "$SCHEDULE_PROFILE_BLOCKED")"
+JSON_SCHEDULE_APP_BLOCKED="$(json_text "$SCHEDULE_APP_BLOCKED")"
+JSON_SCHEDULE_OPEN_PARENTS="$(json_text "$SCHEDULE_OPEN_PARENTS")"
+JSON_WEEKDAY_MONDAY="$(json_text "$WEEKDAY_MONDAY")"
+JSON_WEEKDAY_TUESDAY="$(json_text "$WEEKDAY_TUESDAY")"
+JSON_WEEKDAY_WEDNESDAY="$(json_text "$WEEKDAY_WEDNESDAY")"
+JSON_WEEKDAY_THURSDAY="$(json_text "$WEEKDAY_THURSDAY")"
+JSON_WEEKDAY_FRIDAY="$(json_text "$WEEKDAY_FRIDAY")"
+JSON_WEEKDAY_SATURDAY="$(json_text "$WEEKDAY_SATURDAY")"
+JSON_WEEKDAY_SUNDAY="$(json_text "$WEEKDAY_SUNDAY")"
 JSON_STARTING_APP="$(json_text "$STARTING_APP")"
 JSON_EMPTY_STATE_EMOJI="$(json_text "$EMPTY_STATE_EMOJI")"
 JSON_EMPTY_STATE_TEXT="$(json_text "$EMPTY_STATE_TEXT")"
@@ -1272,6 +1367,7 @@ backup_if_exists "$FRONTEND_ICONS_FILE"
 backup_if_exists "$FRONTEND_DIALOGS_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_PROFILES_FILE"
+backup_if_exists "$FRONTEND_SCHEDULE_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
 backup_if_exists "$FRONTEND_FIRST_RUN_FILE"
 backup_if_exists "$FRONTEND_RUNTIME_FILE"
@@ -1311,6 +1407,7 @@ render_template "$SRC_DIR/frontend/icons.js" "$FRONTEND_ICONS_FILE" 0644
 render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
+render_template "$SRC_DIR/frontend/schedule-controls.js" "$FRONTEND_SCHEDULE_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644

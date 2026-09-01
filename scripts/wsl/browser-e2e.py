@@ -600,6 +600,81 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     log_scenario("recommendations expose loading, error, empty, and recovery states")
 
     browser.click("[data-admin-section='screen-time']")
+    browser.click("#appScheduleEnabled")
+    browser.wait_for(
+        "cfg.appAvailability[selectedAppScheduleId].enabled===true && "
+        "document.querySelectorAll('#appScheduleDays .schedule-window').length===7",
+        message="Enabling a per-app schedule did not create editable weekly defaults",
+    )
+    assert_js(
+        browser,
+        "document.querySelector('[data-admin-panel=\"screen-time\"]')"
+        ".scrollWidth<=document.querySelector('[data-admin-panel=\"screen-time\"]')"
+        ".clientWidth+1 && "
+        "document.querySelector('.schedule-settings-grid').scrollWidth<="
+        "document.querySelector('.schedule-settings-grid').clientWidth+1",
+        "Schedule controls require horizontal scrolling",
+    )
+    browser.screenshot(artifacts / "schedule-editor.png")
+    browser.evaluate(
+        "cfg.appAvailability[selectedAppScheduleId]={enabled:true,days:{}};"
+        "renderScheduleControls()"
+    )
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "availabilityStatus.profileAllowed===true && "
+        "availabilityStatus.blockedTileIds.includes(cfg.tiles[0].id) && "
+        "document.querySelector('#grid .tile.unavailable')!==null",
+        message="The saved app schedule did not mark its tile unavailable",
+    )
+    browser.click("#grid .tile.unavailable")
+    browser.wait_for(
+        "!document.getElementById('availabilityBlock').classList.contains('hidden') && "
+        "document.getElementById('availabilityBlock').dataset.reason==='app_schedule' && "
+        "document.activeElement.id==='availabilityBlockClose'",
+        message="An unavailable app did not explain its blocked state accessibly",
+    )
+    browser.screenshot(artifacts / "app-schedule-blocked.png")
+    browser.click("#availabilityBlockClose")
+
+    enter_parent_settings(browser)
+    browser.click("[data-admin-section='screen-time']")
+    browser.click("#clearAppScheduleBtn")
+    browser.click("#weeklyScheduleEnabled")
+    browser.wait_for(
+        "cfg.weeklySchedule.enabled===true && "
+        "document.querySelectorAll('#weeklyScheduleDays .schedule-window').length===7",
+        message="Enabling the weekly schedule did not create editable daily defaults",
+    )
+    browser.evaluate("cfg.weeklySchedule={enabled:true,days:{}};renderScheduleControls()")
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "availabilityStatus.profileAllowed===false && "
+        "!document.getElementById('availabilityBlock').classList.contains('hidden') && "
+        "document.getElementById('availabilityBlock').dataset.reason==='profile_schedule' && "
+        "document.getElementById('availabilityBlockClose').hidden===true",
+        message="The profile-wide schedule did not block the launcher",
+    )
+    browser.screenshot(artifacts / "weekly-schedule-blocked.png")
+    browser.click("#availabilityParentsBtn")
+    browser.wait_for("!document.getElementById('pin').classList.contains('hidden')")
+    browser.set_value("#pinInput", PIN)
+    browser.click("#pin .save")
+    browser.wait_for("!document.getElementById('admin').classList.contains('hidden')")
+    browser.click("[data-admin-section='screen-time']")
+    browser.click("#weeklyScheduleEnabled")
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "availabilityStatus.profileAllowed===true && "
+        "document.getElementById('availabilityBlock').classList.contains('hidden')",
+        message="Disabling the weekly schedule did not restore launcher availability",
+    )
+    log_scenario("weekly and per-app schedules persist and explain blocked states")
+
+    enter_parent_settings(browser)
+    browser.click("[data-admin-section='screen-time']")
     browser.set_value("#cfgTimerMinutes", "15")
     browser.click("#timerToggleBtn")
     browser.wait_for(
@@ -1013,7 +1088,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 16 core and accessibility journeys", flush=True)
+    print("Browser E2E passed: 17 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

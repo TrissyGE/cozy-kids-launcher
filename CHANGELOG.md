@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added profile creation, editing, selection, and deletion to Parent settings plus a PIN-gated child-facing picker with per-profile recent-app state
 - Added a five-step first-run setup for language, child identity, visible apps, initial screen time, and appearance, with runtime German/English switching from generated local locale files
 - Added bounded per-profile weekly and per-app availability rules with a local status API and server-side enforcement before application launch
+- Added a bilingual Parent schedule editor, child-facing unavailable states, and live enforcement that returns embedded pages home or closes only the blocked native app owned by its tile
 - Extended configuration export, import, backup, restore, installer, diagnostics, and privacy documentation for complete multi-profile data
 
 ## [0.5.0] - 2026-09-01

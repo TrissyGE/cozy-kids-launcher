@@ -185,6 +185,7 @@ class ApplicationLauncherTests(unittest.TestCase):
             result = self.launcher.launch_owned_tile(
                 ["paint-app", "--kids"],
                 "local",
+                tile_id="paint",
             )
 
         self.assertIs(result, supervisor_process)
@@ -216,6 +217,8 @@ class ApplicationLauncherTests(unittest.TestCase):
                 "local",
                 "--label",
                 "Home",
+                "--tile-id",
+                "paint",
             ],
         )
         for call in popen.call_args_list:
