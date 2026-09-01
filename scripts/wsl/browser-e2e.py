@@ -160,6 +160,7 @@ def run_scenarios(browser, release_fixture, installed_version):
 
     browser.click("#parentBtn")
     browser.wait_for("!document.getElementById('admin').classList.contains('hidden')")
+    browser.click("[data-admin-section='system']")
     browser.set_value("#cfgPin", PIN)
     browser.set_value("#cfgPinConfirm", PIN)
     browser.click("#setPinBtn")
@@ -178,9 +179,15 @@ def run_scenarios(browser, release_fixture, installed_version):
     )
     browser.set_value("#pinInput", PIN)
     browser.click("#pin .save")
-    browser.wait_for("!document.getElementById('admin').classList.contains('hidden')")
+    browser.wait_for(
+        "!document.getElementById('admin').classList.contains('hidden') && "
+        "document.querySelectorAll('[data-admin-section]').length===6 && "
+        "document.querySelector('[data-admin-section=\"overview\"]')"
+        ".getAttribute('aria-current')==='page'"
+    )
     log_scenario("PIN setup rejects a wrong PIN and accepts the correct PIN")
 
+    browser.click("[data-admin-section='appearance']")
     browser.click("#openThemeBtn")
     browser.wait_for("!document.getElementById('themeOverlay').classList.contains('hidden')")
     chosen = browser.evaluate(
@@ -190,8 +197,9 @@ def run_scenarios(browser, release_fixture, installed_version):
     )
     if chosen is not True:
         raise AssertionError("Space theme could not be selected")
-    browser.set_value("#cfgTitle", "Polished E2E Home")
     browser.set_value("#cfgLayoutMode", "klein")
+    browser.click("[data-admin-section='children']")
+    browser.set_value("#cfgTitle", "Polished E2E Home")
     browser.set_value("#cfgParentLabel", "Family controls")
     browser.click("#saveBtn")
     browser.wait_for(
@@ -221,6 +229,7 @@ def run_scenarios(browser, release_fixture, installed_version):
     log_scenario("settings and theme selection persist and re-render")
 
     enter_parent_settings(browser)
+    browser.click("[data-admin-section='screen-time']")
     browser.set_value("#cfgTimerMinutes", "15")
     browser.click("#timerToggleBtn")
     browser.wait_for(
@@ -244,6 +253,7 @@ def run_scenarios(browser, release_fixture, installed_version):
 
     release_fixture.latest_version = installed_version
     release_fixture.mode = "ok"
+    browser.click("[data-admin-section='system']")
     browser.click("#checkUpdateBtn")
     browser.wait_for(
         "document.getElementById('checkUpdateBtn').disabled === false && "
@@ -354,14 +364,25 @@ def run_accessibility_scenarios(browser, artifacts):
     browser.key_press("Enter")
     browser.wait_for(
         "!document.getElementById('admin').classList.contains('hidden') && "
-        "document.activeElement.id==='cfgTitle'",
-        message="Keyboard PIN submission did not focus Parent settings",
+        "document.activeElement.id==='adminNavOverview' && "
+        "document.querySelector('[data-admin-panel=\"overview\"]')"
+        ".hidden===false",
+        message="Keyboard PIN submission did not focus the Parent overview",
+    )
+    for _ in range(4):
+        browser.key_press("ArrowRight")
+    assert_js(
+        browser,
+        "document.activeElement.id==='adminNavAppearance' && "
+        "document.querySelector('[data-admin-panel=\"appearance\"]')"
+        ".hidden===false",
+        "Arrow navigation did not activate the Appearance section",
     )
     browser.key_press("Tab")
     assert_js(
         browser,
         "document.activeElement.id==='openThemeBtn'",
-        "Parent settings tab order did not reach the theme picker",
+        "Appearance tab order did not reach the theme picker",
     )
     browser.key_press("Enter")
     browser.wait_for(
@@ -455,12 +476,47 @@ def run_accessibility_scenarios(browser, artifacts):
         "document.querySelector('#admin .wrap').scrollWidth<=document.querySelector('#admin .wrap').clientWidth+1 && "
         "getComputedStyle(document.querySelector('#admin .wrap')).overflowY==='auto' && "
         "document.getElementById('adminTitle').getBoundingClientRect().top>=64 && "
+        "document.querySelectorAll('[data-admin-section]').length===6 && "
+        "Array.from(document.querySelectorAll('[data-admin-section]')).every(button => "
+        "button.getBoundingClientRect().height>=44) && "
+        "document.querySelector('.cornerbar').classList.contains('hidden') && "
         "document.getElementById('navLeft').classList.contains('hidden') && "
         "document.getElementById('navRight').classList.contains('hidden')",
         "The 800x600 Parent layout requires horizontal scrolling",
     )
+    for section in (
+        "overview",
+        "children",
+        "apps",
+        "screen-time",
+        "appearance",
+        "system",
+    ):
+        panel_selector = json.dumps(f'[data-admin-panel="{section}"]')
+        metrics = browser.evaluate(
+            "(() => { activateAdminSection(" + json.dumps(section) + "); "
+            "const panel=document.querySelector(" + panel_selector + "); "
+            "const wrap=document.querySelector('#admin .wrap'); "
+            "return {hidden:panel.hidden,panelScroll:panel.scrollWidth,"
+            "panelClient:panel.clientWidth,wrapScroll:wrap.scrollWidth,"
+            "wrapClient:wrap.clientWidth}; })()"
+        )
+        if (
+            metrics["hidden"]
+            or metrics["panelScroll"] > metrics["panelClient"] + 1
+            or metrics["wrapScroll"] > metrics["wrapClient"] + 1
+        ):
+            raise AssertionError(
+                f"Parent section {section!r} overflows at 800x600: {metrics!r}"
+            )
+    browser.evaluate("activateAdminSection('overview')")
     browser.screenshot(artifacts / "low-resolution-parent.png")
     browser.key_press("Escape")
+    assert_js(
+        browser,
+        "!document.querySelector('.cornerbar').classList.contains('hidden')",
+        "Closing Parent settings did not restore the home controls",
+    )
     browser.set_device_metrics(1440, 900)
     log_scenario("800x600 home and Parent flows avoid clipping and horizontal scroll")
 

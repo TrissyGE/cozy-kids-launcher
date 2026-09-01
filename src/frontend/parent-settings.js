@@ -20,6 +20,65 @@ async function startupUpdateCheck(){
 }
 async function installUpdate(){ if(!window.confirm(uiText.updateConfirm||'Close browser and install update now?')) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
 
+const ADMIN_SECTIONS=[
+  ['overview','adminOverview'],
+  ['children','adminChildren'],
+  ['apps','adminAppsMedia'],
+  ['screen-time','adminScreenTime'],
+  ['appearance','adminAppearance'],
+  ['system','adminSystem']
+];
+function activateAdminSection(section,focusHeading=false){
+  if(!ADMIN_SECTIONS.some(([id])=>id===section)) section='overview';
+  adminSection=section;
+  document.querySelectorAll('[data-admin-section]').forEach(button=>{
+    const active=button.dataset.adminSection===section;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-current',active?'page':'false');
+    button.tabIndex=active?0:-1;
+  });
+  document.querySelectorAll('[data-admin-panel]').forEach(panel=>{
+    panel.hidden=panel.dataset.adminPanel!==section;
+  });
+  if(focusHeading){
+    const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
+    if(heading) heading.focus({preventScroll:true});
+  }
+}
+function handleAdminNavKey(event){
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+  const buttons=Array.from(document.querySelectorAll('[data-admin-section]'));
+  let index=buttons.indexOf(document.activeElement);
+  if(index<0) return;
+  event.preventDefault();
+  if(event.key==='Home') index=0;
+  else if(event.key==='End') index=buttons.length-1;
+  else if(event.key==='ArrowUp'||event.key==='ArrowLeft') index=(index-1+buttons.length)%buttons.length;
+  else index=(index+1)%buttons.length;
+  const button=buttons[index];
+  activateAdminSection(button.dataset.adminSection);
+  button.focus();
+}
+function renderAdminSections(){
+  document.getElementById('adminNav').setAttribute('aria-label',uiText.adminNavLabel);
+  for(const [section,labelKey] of ADMIN_SECTIONS){
+    const label=uiText[labelKey];
+    const button=document.querySelector('[data-admin-section="'+section+'"]');
+    const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
+    button.textContent=label;
+    heading.textContent=label;
+  }
+  document.getElementById('overviewAppsLabel').textContent=uiText.adminAppsMedia;
+  document.getElementById('overviewAppsValue').textContent=visibleTiles().length+' / '+cfg.tiles.length;
+  document.getElementById('overviewTimerLabel').textContent=uiText.adminScreenTime;
+  document.getElementById('overviewTimerValue').textContent=(cfg.timerMinutes||0)>0
+    ? String(cfg.timerMinutes)+' '+uiText.timerMinutes
+    : uiText.timerOff;
+  document.getElementById('overviewAppearanceLabel').textContent=uiText.adminAppearance;
+  document.getElementById('overviewAppearanceValue').textContent=themeLabel(cfg.theme||'{{DEFAULT_THEME}}');
+  activateAdminSection(adminSection);
+}
+
 function renderAdmin(){
   document.getElementById('adminTitle').textContent=uiText.adminTitle;
   document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle;
@@ -252,6 +311,7 @@ function renderAdmin(){
   renderBackupOptions();
   renderAdminPageNav();
   renderRecommendations();
+  renderAdminSections();
 }
 function reorderTile(from,to){
   if(from===to||from<0||to<0||from>=cfg.tiles.length||to>=cfg.tiles.length) return;

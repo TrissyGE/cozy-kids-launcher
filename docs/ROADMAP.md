@@ -44,7 +44,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 ### Design foundation
 
 - [x] Introduce shared design tokens and reusable controls
-- [ ] Redesign Parent settings as Overview, Children, Apps & Media, Screen Time, Appearance, and System sections
+- [x] Redesign Parent settings as Overview, Children, Apps & Media, Screen Time, Appearance, and System sections
 - [ ] Add a live preview, search, filtering, bulk actions, consistent dialogs, and clear empty/error/loading states
 - [ ] Create a coherent local icon system while keeping custom emoji tiles available
 

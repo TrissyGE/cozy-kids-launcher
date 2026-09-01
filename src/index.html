@@ -90,82 +90,137 @@
 </div>
 <div id="admin" class="screen hidden">
   <div class="wrap admin">
-    <div class="panel">
-      <h2 id="adminTitle">{{ADMIN_TITLE}}</h2>
-      <div class="row2">
-        <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}">
-        <input type="hidden" id="cfgTheme">
-        <button id="openThemeBtn" class="smallbtn" onclick="openThemePicker()"><span id="themeDisplay"></span></button>
-        <select id="cfgLayoutMode"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
-        <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
-      </div>
-      <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
-        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;"></label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG2 <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;"></label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Text <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;"></label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Btn <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;"></label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;"></label>
-        <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
-      </div>
-      <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
-        <label style="font-weight:700; color:var(--text);">Browser</label>
-        <select id="cfgBrowser"></select>
-      </div>
-      <div id="browserHint" class="muted" style="margin-bottom:8px;"></div>
-      <div class="row2">
-        <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
-        <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
-        <button id="backBtn" class="smallbtn" onclick="closeAdmin()">{{LABEL_BACK}}</button>
-        <button id="saveBtn" class="smallbtn save" onclick="saveConfig()">{{LABEL_SAVE}}</button>
-      </div>
-      <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
-        <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
-        <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">
-        <button class="smallbtn" id="setPinBtn" onclick="savePin()">{{PIN_SET}}</button>
-        <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
-      </div>
-      <div id="pinMsg" class="muted"></div>
-      <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px; align-items:center;">
-        <label style="font-weight:700; color:var(--text);"><span id="timerLabel"></span></label>
-        <select id="cfgTimerMinutes">
-          <option value="0">{{TIMER_OFF}}</option>
-          <option value="15">15 {{TIMER_MINUTES}}</option>
-          <option value="30">30 {{TIMER_MINUTES}}</option>
-          <option value="60">60 {{TIMER_MINUTES}}</option>
-          <option value="custom">{{TIMER_CUSTOM}}</option>
-        </select>
-        <input id="cfgTimerCustom" type="number" min="1" max="180" placeholder="Minuten" style="display:none;">
-        <button class="smallbtn" id="timerToggleBtn" onclick="toggleTimer()">{{TIMER_START}}</button>
-      </div>
-      <div id="timerStatus" class="muted"></div>
-      <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
-        <span class="muted" id="versionDisplay"></span>
-        <button class="smallbtn" id="checkUpdateBtn" onclick="checkUpdate()">{{UPDATE_CHECK}}</button>
-      </div>
-      <div id="updateMsg" class="muted"></div>
-      <div class="row2" id="updateRow" style="grid-template-columns:1fr 1fr; margin-top:8px; display:none;">
-        <span class="muted"></span>
-        <button class="smallbtn save" id="updateNowBtn" onclick="installUpdate()">{{UPDATE_NOW}}</button>
-      </div>
-      <div class="row2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:8px; align-items:center;">
-        <button class="smallbtn" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
-        <button class="smallbtn" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
-        <button class="smallbtn" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
-        <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
-      </div>
-      <div id="importMsg" class="muted"></div>
-      <section class="backup-panel" aria-labelledby="backupTitle">
-        <h3 id="backupTitle">{{BACKUP_TITLE}}</h3>
-        <div class="muted">{{BACKUP_PIN_PRESERVED}}</div>
-        <div class="backup-actions">
-          <select id="backupSelect" aria-label="{{BACKUP_TITLE}}"></select>
-          <button id="restoreBackupBtn" class="smallbtn" onclick="restoreBackup()">{{BACKUP_RESTORE}}</button>
+    <div class="panel admin-shell">
+      <header class="admin-header">
+        <h2 id="adminTitle">{{ADMIN_TITLE}}</h2>
+        <div class="admin-header-actions">
+          <button id="backBtn" class="smallbtn" onclick="closeAdmin()">{{LABEL_BACK}}</button>
+          <button id="saveBtn" class="smallbtn save" onclick="saveConfig()">{{LABEL_SAVE}}</button>
         </div>
-        <div id="backupMsg" class="muted backup-message" aria-live="polite"></div>
-      </section>
-      <div id="forms"></div>
-      <div class="adminpagenav" id="adminPageNav"></div>
-      <div id="recommendations" style="margin-top:18px;"></div>
+      </header>
+      <div class="admin-workspace">
+        <nav id="adminNav" class="admin-nav" onkeydown="handleAdminNavKey(event)">
+          <button id="adminNavOverview" class="admin-tab" type="button" data-admin-section="overview" aria-controls="adminSectionOverview" onclick="activateAdminSection('overview')"></button>
+          <button id="adminNavChildren" class="admin-tab" type="button" data-admin-section="children" aria-controls="adminSectionChildren" onclick="activateAdminSection('children')"></button>
+          <button id="adminNavApps" class="admin-tab" type="button" data-admin-section="apps" aria-controls="adminSectionApps" onclick="activateAdminSection('apps')"></button>
+          <button id="adminNavScreenTime" class="admin-tab" type="button" data-admin-section="screen-time" aria-controls="adminSectionScreenTime" onclick="activateAdminSection('screen-time')"></button>
+          <button id="adminNavAppearance" class="admin-tab" type="button" data-admin-section="appearance" aria-controls="adminSectionAppearance" onclick="activateAdminSection('appearance')"></button>
+          <button id="adminNavSystem" class="admin-tab" type="button" data-admin-section="system" aria-controls="adminSectionSystem" onclick="activateAdminSection('system')"></button>
+        </nav>
+        <main class="admin-content">
+          <section id="adminSectionOverview" class="admin-section" data-admin-panel="overview" aria-labelledby="adminNavOverview">
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <div class="overview-grid">
+              <button class="overview-card" type="button" onclick="activateAdminSection('apps',true)">
+                <span id="overviewAppsLabel" class="overview-label"></span>
+                <span id="overviewAppsValue" class="overview-value"></span>
+              </button>
+              <button class="overview-card" type="button" onclick="activateAdminSection('screen-time',true)">
+                <span id="overviewTimerLabel" class="overview-label"></span>
+                <span id="overviewTimerValue" class="overview-value"></span>
+              </button>
+              <button class="overview-card" type="button" onclick="activateAdminSection('appearance',true)">
+                <span id="overviewAppearanceLabel" class="overview-label"></span>
+                <span id="overviewAppearanceValue" class="overview-value"></span>
+              </button>
+            </div>
+          </section>
+
+          <section id="adminSectionChildren" class="admin-section" data-admin-panel="children" aria-labelledby="adminNavChildren" hidden>
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <div class="row2">
+              <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}">
+              <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
+              <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
+            </div>
+          </section>
+
+          <section id="adminSectionApps" class="admin-section" data-admin-panel="apps" aria-labelledby="adminNavApps" hidden>
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <div class="section-toolbar">
+              <button id="addTileBtn" class="smallbtn" onclick="addTile()">{{LABEL_ADD_TILE}}</button>
+            </div>
+            <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
+              <label style="font-weight:700; color:var(--text);">Browser</label>
+              <select id="cfgBrowser"></select>
+            </div>
+            <div id="browserHint" class="muted" style="margin-bottom:8px;"></div>
+            <div id="forms"></div>
+            <div class="adminpagenav" id="adminPageNav"></div>
+            <div id="recommendations" style="margin-top:18px;"></div>
+          </section>
+
+          <section id="adminSectionScreenTime" class="admin-section" data-admin-panel="screen-time" aria-labelledby="adminNavScreenTime" hidden>
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px; align-items:center;">
+              <label style="font-weight:700; color:var(--text);"><span id="timerLabel"></span></label>
+              <select id="cfgTimerMinutes">
+                <option value="0">{{TIMER_OFF}}</option>
+                <option value="15">15 {{TIMER_MINUTES}}</option>
+                <option value="30">30 {{TIMER_MINUTES}}</option>
+                <option value="60">60 {{TIMER_MINUTES}}</option>
+                <option value="custom">{{TIMER_CUSTOM}}</option>
+              </select>
+              <input id="cfgTimerCustom" type="number" min="1" max="180" placeholder="Minuten" style="display:none;">
+              <button class="smallbtn" id="timerToggleBtn" onclick="toggleTimer()">{{TIMER_START}}</button>
+            </div>
+            <div id="timerStatus" class="muted"></div>
+          </section>
+
+          <section id="adminSectionAppearance" class="admin-section" data-admin-panel="appearance" aria-labelledby="adminNavAppearance" hidden>
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <input type="hidden" id="cfgTheme">
+            <div class="row2">
+              <button id="openThemeBtn" class="smallbtn" onclick="openThemePicker()"><span id="themeDisplay"></span></button>
+              <select id="cfgLayoutMode"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
+            </div>
+            <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;"></label>
+              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG2 <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;"></label>
+              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Text <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;"></label>
+              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Btn <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;"></label>
+              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;"></label>
+              <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
+            </div>
+          </section>
+
+          <section id="adminSectionSystem" class="admin-section" data-admin-panel="system" aria-labelledby="adminNavSystem" hidden>
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
+              <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
+              <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">
+              <button class="smallbtn" id="setPinBtn" onclick="savePin()">{{PIN_SET}}</button>
+              <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
+            </div>
+            <div id="pinMsg" class="muted"></div>
+            <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
+              <span class="muted" id="versionDisplay"></span>
+              <button class="smallbtn" id="checkUpdateBtn" onclick="checkUpdate()">{{UPDATE_CHECK}}</button>
+            </div>
+            <div id="updateMsg" class="muted"></div>
+            <div class="row2" id="updateRow" style="grid-template-columns:1fr 1fr; margin-top:8px; display:none;">
+              <span class="muted"></span>
+              <button class="smallbtn save" id="updateNowBtn" onclick="installUpdate()">{{UPDATE_NOW}}</button>
+            </div>
+            <div class="row2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:8px; align-items:center;">
+              <button class="smallbtn" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
+              <button class="smallbtn" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
+              <button class="smallbtn" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
+              <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
+            </div>
+            <div id="importMsg" class="muted"></div>
+            <section class="backup-panel" aria-labelledby="backupTitle">
+              <h3 id="backupTitle">{{BACKUP_TITLE}}</h3>
+              <div class="muted">{{BACKUP_PIN_PRESERVED}}</div>
+              <div class="backup-actions">
+                <select id="backupSelect" aria-label="{{BACKUP_TITLE}}"></select>
+                <button id="restoreBackupBtn" class="smallbtn" onclick="restoreBackup()">{{BACKUP_RESTORE}}</button>
+              </div>
+              <div id="backupMsg" class="muted backup-message" aria-live="polite"></div>
+            </section>
+          </section>
+        </main>
+      </div>
     </div>
   </div>
 </div>

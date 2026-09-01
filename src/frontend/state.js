@@ -1,10 +1,17 @@
-let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, pinCallback=null, pinReturnFocus=null;
+let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', pinCallback=null, pinReturnFocus=null;
 let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
 let browserOptions=[];
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
+  adminNavLabel: {{JSON_ADMIN_NAV_LABEL}},
+  adminOverview: {{JSON_ADMIN_OVERVIEW}},
+  adminChildren: {{JSON_ADMIN_CHILDREN}},
+  adminAppsMedia: {{JSON_ADMIN_APPS_MEDIA}},
+  adminScreenTime: {{JSON_ADMIN_SCREEN_TIME}},
+  adminAppearance: {{JSON_ADMIN_APPEARANCE}},
+  adminSystem: {{JSON_ADMIN_SYSTEM}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
   placeholderParentLabel: {{JSON_PLACEHOLDER_PARENT_LABEL}},
   placeholderExitLabel: {{JSON_PLACEHOLDER_EXIT_LABEL}},
@@ -68,6 +75,7 @@ const uiText = {
   timerMinutes15: {{JSON_TIMER_15}},
   timerMinutes30: {{JSON_TIMER_30}},
   timerMinutes60: {{JSON_TIMER_60}},
+  timerMinutes: {{JSON_TIMER_MINUTES}},
   timerCustom: {{JSON_TIMER_CUSTOM}},
   timerStart: {{JSON_TIMER_START}},
   timerStop: {{JSON_TIMER_STOP}},

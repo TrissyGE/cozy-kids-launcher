@@ -937,6 +937,39 @@ class FrontendSafetyTests(unittest.TestCase):
             self.assertIn(control, source)
         self.assertIn(".pinbox, .install-box, .timerbox", source)
 
+    def test_parent_settings_are_split_into_six_keyboard_sections(self):
+        source = frontend_source()
+        for section in (
+            "overview",
+            "children",
+            "apps",
+            "screen-time",
+            "appearance",
+            "system",
+        ):
+            self.assertIn(f'data-admin-section="{section}"', source)
+            self.assertIn(f'data-admin-panel="{section}"', source)
+        self.assertIn("function activateAdminSection(", source)
+        self.assertIn("function handleAdminNavKey(", source)
+        self.assertIn("button.tabIndex=active?0:-1", source)
+
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        for label in (
+            "Übersicht",
+            "Kinder",
+            "Apps & Medien",
+            "Bildschirmzeit",
+            "Darstellung",
+            "Overview",
+            "Children",
+            "Apps & Media",
+            "Screen Time",
+            "Appearance",
+        ):
+            self.assertIn(label, installer)
+
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)
