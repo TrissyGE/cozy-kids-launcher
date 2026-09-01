@@ -1072,6 +1072,46 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('de:confirm_title) echo "Bitte bestätigen"', installer)
         self.assertIn('en:confirm_title) echo "Please confirm"', installer)
 
+    def test_async_frontend_resources_have_localized_recoverable_states(self):
+        source = frontend_source()
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('id="startupState"', source)
+        self.assertIn('id="appCatalogState"', source)
+        self.assertIn('id="browserCatalogState"', source)
+        self.assertIn('id="saveMsg"', source)
+        self.assertIn("function renderUiState(element,state,message,retryAction=null)", source)
+        self.assertIn("function showLauncherStartupState(state)", source)
+        self.assertIn("async function bootstrapLauncher()", source)
+        bootstrap = source[
+            source.index("async function bootstrapLauncher()"):
+            source.index("function applyDynamicTheme()")
+        ]
+        self.assertLess(bootstrap.index("await loadConfig()"), bootstrap.index("Promise.all(["))
+        self.assertIn("showLauncherStartupState('error')", bootstrap)
+        self.assertIn("loadApps()", bootstrap)
+        self.assertIn("loadRecommendations()", bootstrap)
+        self.assertIn("loadBrowsers()", bootstrap)
+        self.assertIn("appCatalogState='error'", source)
+        self.assertIn("recommendationState=recommendations.length?'ready':'empty'", source)
+        self.assertIn("if(recommendationState==='error') return", source)
+        self.assertIn("browserCatalogState='error'", source)
+        self.assertIn("opt.value=currentBrowser", source)
+        self.assertIn("renderUiState(msg,'loading',uiText.updateLoading)", source)
+        self.assertIn("renderUiState(message,'error',uiText.saveError)", source)
+        self.assertIn("backupState=backups.length?'ready':'empty'", source)
+        self.assertIn("@keyframes uiStateSpin", source)
+        for label in (
+            "Launcher wird geladen...",
+            "Die Launcher-Einstellungen konnten nicht geladen werden.",
+            "App-Empfehlungen konnten nicht geladen werden.",
+            "Loading launcher...",
+            "The launcher settings could not be loaded.",
+            "App recommendations could not be loaded.",
+        ):
+            self.assertIn(label, installer)
+
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)

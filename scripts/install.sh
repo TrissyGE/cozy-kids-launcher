@@ -183,6 +183,21 @@ text() {
     de:confirm_title) echo "Bitte bestätigen" ;;
     de:confirm_cancel) echo "Abbrechen" ;;
     de:confirm_continue) echo "Fortfahren" ;;
+    de:retry) echo "Erneut versuchen" ;;
+    de:startup_loading) echo "Launcher wird geladen..." ;;
+    de:startup_error_title) echo "Start fehlgeschlagen" ;;
+    de:startup_error) echo "Die Launcher-Einstellungen konnten nicht geladen werden." ;;
+    de:save_loading) echo "Einstellungen werden gespeichert..." ;;
+    de:save_error) echo "Einstellungen konnten nicht gespeichert werden. Bitte erneut versuchen." ;;
+    de:app_catalog_loading) echo "Installierte Apps werden geladen..." ;;
+    de:app_catalog_empty) echo "Keine installierten Desktop-Apps gefunden. Webseiten- und Medienkacheln sind weiterhin verfügbar." ;;
+    de:app_catalog_error) echo "Installierte Apps konnten nicht geladen werden. Vorhandene Kacheln bleiben unverändert." ;;
+    de:browser_catalog_loading) echo "Browser werden geladen..." ;;
+    de:browser_catalog_empty) echo "Kein unterstützter Browser gefunden." ;;
+    de:browser_catalog_error) echo "Die Browser-Liste konnte nicht geladen werden. Die aktuelle Auswahl bleibt erhalten." ;;
+    de:recommendations_loading) echo "App-Empfehlungen werden geladen..." ;;
+    de:recommendations_empty) echo "Zurzeit sind keine App-Empfehlungen verfügbar." ;;
+    de:recommendations_error) echo "App-Empfehlungen konnten nicht geladen werden." ;;
     de:placeholder_title) echo "Überschrift" ;;
     de:placeholder_parent_label) echo "Eltern-Button" ;;
     de:placeholder_exit_label) echo "Beenden-Button" ;;
@@ -222,6 +237,7 @@ text() {
     de:update_check) echo "Auf Updates prüfen" ;;
     de:update_available) echo "Update verfügbar" ;;
     de:update_up_to_date) echo "Aktuell" ;;
+    de:update_loading) echo "Updates werden geprüft..." ;;
     de:update_error) echo "Update-Prüfung fehlgeschlagen" ;;
     de:version_label) echo "Version" ;;
     de:update_now) echo "Jetzt aktualisieren" ;;
@@ -271,6 +287,21 @@ text() {
     en:confirm_title) echo "Please confirm" ;;
     en:confirm_cancel) echo "Cancel" ;;
     en:confirm_continue) echo "Continue" ;;
+    en:retry) echo "Try again" ;;
+    en:startup_loading) echo "Loading launcher..." ;;
+    en:startup_error_title) echo "Startup failed" ;;
+    en:startup_error) echo "The launcher settings could not be loaded." ;;
+    en:save_loading) echo "Saving settings..." ;;
+    en:save_error) echo "Settings could not be saved. Please try again." ;;
+    en:app_catalog_loading) echo "Loading installed apps..." ;;
+    en:app_catalog_empty) echo "No installed desktop apps found. Website and media tiles are still available." ;;
+    en:app_catalog_error) echo "Installed apps could not be loaded. Existing tiles remain unchanged." ;;
+    en:browser_catalog_loading) echo "Loading browsers..." ;;
+    en:browser_catalog_empty) echo "No supported browser found." ;;
+    en:browser_catalog_error) echo "The browser list could not be loaded. The current selection is preserved." ;;
+    en:recommendations_loading) echo "Loading app recommendations..." ;;
+    en:recommendations_empty) echo "No app recommendations are currently available." ;;
+    en:recommendations_error) echo "App recommendations could not be loaded." ;;
     en:placeholder_title) echo "Title" ;;
     en:placeholder_parent_label) echo "Parent button" ;;
     en:placeholder_exit_label) echo "Exit button" ;;
@@ -310,6 +341,7 @@ text() {
     en:update_check) echo "Check for updates" ;;
     en:update_available) echo "Update available" ;;
     en:update_up_to_date) echo "Up to date" ;;
+    en:update_loading) echo "Checking for updates..." ;;
     en:update_error) echo "Update check failed" ;;
     en:version_label) echo "Version" ;;
     en:update_now) echo "Update now" ;;
@@ -887,11 +919,15 @@ render_template() {
   export JSON_APP_SEARCH_LABEL JSON_APP_FILTER_LABEL JSON_APP_FILTER_ALL JSON_APP_FILTER_VISIBLE JSON_APP_FILTER_HIDDEN JSON_APP_FILTER_EMPTY JSON_APP_FILTER_COUNT
   export JSON_APP_BULK_ACTIONS JSON_APP_BULK_SELECT_ALL JSON_APP_BULK_SELECTED JSON_APP_BULK_SHOW JSON_APP_BULK_HIDE JSON_APP_BULK_DELETE JSON_APP_BULK_DELETE_CONFIRM JSON_APP_SELECT_TILE
   export JSON_CONFIRM_TITLE JSON_CONFIRM_CANCEL JSON_CONFIRM_CONTINUE
+  export STARTUP_LOADING
+  export JSON_RETRY JSON_STARTUP_LOADING JSON_STARTUP_ERROR_TITLE JSON_STARTUP_ERROR JSON_SAVE_LOADING JSON_SAVE_ERROR
+  export JSON_APP_CATALOG_LOADING JSON_APP_CATALOG_EMPTY JSON_APP_CATALOG_ERROR JSON_BROWSER_CATALOG_LOADING JSON_BROWSER_CATALOG_EMPTY JSON_BROWSER_CATALOG_ERROR
+  export JSON_RECOMMENDATIONS_LOADING JSON_RECOMMENDATIONS_EMPTY JSON_RECOMMENDATIONS_ERROR
   export JSON_PLACEHOLDER_TITLE JSON_PLACEHOLDER_PARENT_LABEL JSON_PLACEHOLDER_EXIT_LABEL
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
-  export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
+  export JSON_UPDATE_CHECK JSON_UPDATE_AVAILABLE JSON_UPDATE_UP_TO_DATE JSON_UPDATE_LOADING JSON_UPDATE_ERROR JSON_VERSION_LABEL JSON_UPDATE_NOW JSON_UPDATE_PROGRESS JSON_UPDATE_CONFIRM
   export JSON_EXPORT_CONFIG JSON_IMPORT_CONFIG JSON_IMPORT_SUCCESS JSON_IMPORT_ERROR JSON_INVALID_CONFIG JSON_IMPORT_CONFIRM
   export JSON_BACKUP_TITLE JSON_BACKUP_RESTORE JSON_BACKUP_EMPTY JSON_BACKUP_LOADING JSON_BACKUP_LOAD_ERROR JSON_BACKUP_RESTORING JSON_BACKUP_CONFIRM JSON_BACKUP_SUCCESS JSON_BACKUP_ERROR JSON_BACKUP_INSTALLER JSON_BACKUP_PRE_RESTORE JSON_BACKUP_PIN_PRESERVED
   export UPDATE_CHECK UPDATE_AVAILABLE UPDATE_UP_TO_DATE UPDATE_ERROR VERSION_LABEL UPDATE_NOW UPDATE_PROGRESS UPDATE_CONFIRM
@@ -961,6 +997,21 @@ APP_SELECT_TILE="$(text app_select_tile)"
 CONFIRM_TITLE="$(text confirm_title)"
 CONFIRM_CANCEL="$(text confirm_cancel)"
 CONFIRM_CONTINUE="$(text confirm_continue)"
+RETRY="$(text retry)"
+STARTUP_LOADING="$(text startup_loading)"
+STARTUP_ERROR_TITLE="$(text startup_error_title)"
+STARTUP_ERROR="$(text startup_error)"
+SAVE_LOADING="$(text save_loading)"
+SAVE_ERROR="$(text save_error)"
+APP_CATALOG_LOADING="$(text app_catalog_loading)"
+APP_CATALOG_EMPTY="$(text app_catalog_empty)"
+APP_CATALOG_ERROR="$(text app_catalog_error)"
+BROWSER_CATALOG_LOADING="$(text browser_catalog_loading)"
+BROWSER_CATALOG_EMPTY="$(text browser_catalog_empty)"
+BROWSER_CATALOG_ERROR="$(text browser_catalog_error)"
+RECOMMENDATIONS_LOADING="$(text recommendations_loading)"
+RECOMMENDATIONS_EMPTY="$(text recommendations_empty)"
+RECOMMENDATIONS_ERROR="$(text recommendations_error)"
 PLACEHOLDER_TITLE="$(text placeholder_title)"
 PLACEHOLDER_PARENT_LABEL="$(text placeholder_parent_label)"
 PLACEHOLDER_EXIT_LABEL="$(text placeholder_exit_label)"
@@ -992,6 +1043,7 @@ ADMIN_PAGE_NEXT="$(text admin_page_next)"
 UPDATE_CHECK="$(text update_check)"
 UPDATE_AVAILABLE="$(text update_available)"
 UPDATE_UP_TO_DATE="$(text update_up_to_date)"
+UPDATE_LOADING="$(text update_loading)"
 UPDATE_ERROR="$(text update_error)"
 VERSION_LABEL="$(text version_label)"
 UPDATE_NOW="$(text update_now)"
@@ -1093,6 +1145,21 @@ JSON_APP_SELECT_TILE="$(json_text "$APP_SELECT_TILE")"
 JSON_CONFIRM_TITLE="$(json_text "$CONFIRM_TITLE")"
 JSON_CONFIRM_CANCEL="$(json_text "$CONFIRM_CANCEL")"
 JSON_CONFIRM_CONTINUE="$(json_text "$CONFIRM_CONTINUE")"
+JSON_RETRY="$(json_text "$RETRY")"
+JSON_STARTUP_LOADING="$(json_text "$STARTUP_LOADING")"
+JSON_STARTUP_ERROR_TITLE="$(json_text "$STARTUP_ERROR_TITLE")"
+JSON_STARTUP_ERROR="$(json_text "$STARTUP_ERROR")"
+JSON_SAVE_LOADING="$(json_text "$SAVE_LOADING")"
+JSON_SAVE_ERROR="$(json_text "$SAVE_ERROR")"
+JSON_APP_CATALOG_LOADING="$(json_text "$APP_CATALOG_LOADING")"
+JSON_APP_CATALOG_EMPTY="$(json_text "$APP_CATALOG_EMPTY")"
+JSON_APP_CATALOG_ERROR="$(json_text "$APP_CATALOG_ERROR")"
+JSON_BROWSER_CATALOG_LOADING="$(json_text "$BROWSER_CATALOG_LOADING")"
+JSON_BROWSER_CATALOG_EMPTY="$(json_text "$BROWSER_CATALOG_EMPTY")"
+JSON_BROWSER_CATALOG_ERROR="$(json_text "$BROWSER_CATALOG_ERROR")"
+JSON_RECOMMENDATIONS_LOADING="$(json_text "$RECOMMENDATIONS_LOADING")"
+JSON_RECOMMENDATIONS_EMPTY="$(json_text "$RECOMMENDATIONS_EMPTY")"
+JSON_RECOMMENDATIONS_ERROR="$(json_text "$RECOMMENDATIONS_ERROR")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
 JSON_PLACEHOLDER_PARENT_LABEL="$(json_text "$PLACEHOLDER_PARENT_LABEL")"
 JSON_PLACEHOLDER_EXIT_LABEL="$(json_text "$PLACEHOLDER_EXIT_LABEL")"
@@ -1122,6 +1189,7 @@ JSON_ADMIN_PAGE_NEXT="$(json_text "$ADMIN_PAGE_NEXT")"
 JSON_UPDATE_CHECK="$(json_text "$UPDATE_CHECK")"
 JSON_UPDATE_AVAILABLE="$(json_text "$UPDATE_AVAILABLE")"
 JSON_UPDATE_UP_TO_DATE="$(json_text "$UPDATE_UP_TO_DATE")"
+JSON_UPDATE_LOADING="$(json_text "$UPDATE_LOADING")"
 JSON_UPDATE_ERROR="$(json_text "$UPDATE_ERROR")"
 JSON_VERSION_LABEL="$(json_text "$VERSION_LABEL")"
 JSON_UPDATE_NOW="$(json_text "$UPDATE_NOW")"

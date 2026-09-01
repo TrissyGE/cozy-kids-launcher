@@ -37,6 +37,13 @@ The frontend stays dependency-free and is split by responsibility:
 
 The installer renders template values into these files and installs them below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager, bundler, or generated files in the repository.
 
+Asynchronous frontend resources use explicit loading, empty, error, and success
+states. Configuration remains the only startup-critical request: a failure leaves
+an actionable localized retry screen, while app, browser, recommendation, and
+feature discovery fail independently without hiding configured launcher tiles.
+Retry actions repeat only their local request, and failed discovery never clears
+or rewrites the saved browser or tile configuration.
+
 ### 2. Local HTTP server
 
 A tiny Python HTTP server:
