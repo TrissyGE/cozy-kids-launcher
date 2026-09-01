@@ -2,11 +2,123 @@ function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
 function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageSize())); }
 function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }
-async function loadConfig(){ cfg=await fetch('/api/config').then(r=>r.json()); if(typeof cfg.currentPage!=='number') cfg.currentPage=0; renderAll(); }
-async function loadApps(){ appOptions=await fetch('/api/apps').then(r=>r.json()); }
-async function loadRecommendations(){ try{ const r=await fetch('/api/recommendations'); recommendations=await r.json(); }catch(e){ recommendations=[]; } }
-async function loadFeatures(){ try{ const r=await fetch('/api/features'); features=await r.json(); }catch(e){} }
-async function loadBrowsers(){ try{ const r=await fetch('/api/browsers'); browserOptions=await r.json(); }catch(e){ browserOptions=[]; } }
+async function loadConfig(){
+  const response=await fetch('/api/config',{cache:'no-store'});
+  if(!response.ok) throw new Error('Config could not be loaded');
+  const data=await response.json();
+  if(!data||typeof data!=='object'||!Array.isArray(data.tiles)) throw new Error('Invalid config response');
+  cfg=data;
+  if(typeof cfg.currentPage!=='number') cfg.currentPage=0;
+  renderAll();
+}
+async function loadApps(refreshAdmin=false){
+  appCatalogState='loading';
+  if(cfg&&typeof renderCatalogStates==='function') renderCatalogStates();
+  try{
+    const response=await fetch('/api/apps',{cache:'no-store'});
+    if(!response.ok) throw new Error('App catalog could not be loaded');
+    const data=await response.json();
+    if(!Array.isArray(data)) throw new Error('Invalid app catalog response');
+    appOptions=data;
+    appCatalogState=appOptions.length?'ready':'empty';
+  }catch(e){
+    appOptions=[];
+    appCatalogState='error';
+  }
+  if(cfg&&refreshAdmin) renderAdmin();
+}
+async function loadRecommendations(){
+  recommendationState='loading';
+  if(cfg&&typeof renderRecommendations==='function') renderRecommendations();
+  try{
+    const response=await fetch('/api/recommendations',{cache:'no-store'});
+    if(!response.ok) throw new Error('Recommendations could not be loaded');
+    const data=await response.json();
+    if(!Array.isArray(data)) throw new Error('Invalid recommendations response');
+    recommendations=data;
+    recommendationState=recommendations.length?'ready':'empty';
+  }catch(e){
+    recommendations=[];
+    recommendationState='error';
+  }
+  if(cfg&&typeof renderRecommendations==='function') renderRecommendations();
+}
+async function loadFeatures(){
+  try{
+    const response=await fetch('/api/features',{cache:'no-store'});
+    if(!response.ok) return;
+    const data=await response.json();
+    if(data&&typeof data==='object') features=data;
+  }catch(e){}
+}
+async function loadBrowsers(refreshAdmin=false){
+  browserCatalogState='loading';
+  if(cfg&&typeof renderCatalogStates==='function') renderCatalogStates();
+  try{
+    const response=await fetch('/api/browsers',{cache:'no-store'});
+    if(!response.ok) throw new Error('Browser catalog could not be loaded');
+    const data=await response.json();
+    if(!Array.isArray(data)) throw new Error('Invalid browser catalog response');
+    browserOptions=data;
+    browserCatalogState=browserOptions.some(browser=>browser.installed)?'ready':'empty';
+  }catch(e){
+    browserOptions=[];
+    browserCatalogState='error';
+  }
+  if(cfg&&refreshAdmin) renderAdmin();
+}
+function showLauncherStartupState(state){
+  const grid=document.getElementById('grid');
+  const title=document.getElementById('title');
+  document.getElementById('kids').classList.remove('hidden');
+  document.getElementById('admin').classList.add('hidden');
+  document.querySelector('.cornerbar').classList.add('hidden');
+  document.getElementById('navLeft').classList.add('hidden');
+  document.getElementById('navRight').classList.add('hidden');
+  title.textContent=state==='error'?uiText.startupErrorTitle:'';
+  grid.className='grid {{DEFAULT_LAYOUT}}';
+  grid.replaceChildren();
+  const status=document.createElement('section');
+  status.id='startupState';
+  status.setAttribute('aria-live','polite');
+  renderUiState(
+    status,
+    state,
+    state==='error'?uiText.startupError:uiText.startupLoading,
+    state==='error'?bootstrapLauncher:null
+  );
+  status.classList.add('launcher-state');
+  grid.appendChild(status);
+}
+async function bootstrapLauncher(){
+  if(bootstrapPromise) return bootstrapPromise;
+  showLauncherStartupState('loading');
+  bootstrapPromise=(async()=>{
+    try{
+      await loadConfig();
+    }catch(e){
+      cfg=null;
+      showLauncherStartupState('error');
+      return false;
+    }
+    await Promise.all([
+      loadApps(),
+      loadRecommendations(),
+      loadFeatures(),
+      loadBrowsers()
+    ]);
+    try{ await autoScanRecommendations(); }catch(e){}
+    await pollTimer();
+    if(timerPollInterval===null) timerPollInterval=setInterval(pollTimer,10000);
+    await startupUpdateCheck();
+    return true;
+  })();
+  try{
+    return await bootstrapPromise;
+  }finally{
+    bootstrapPromise=null;
+  }
+}
 function applyDynamicTheme(){
   const body=document.body;
   const bg=document.getElementById('themeBg');
@@ -35,7 +147,39 @@ function applyDynamicTheme(){
     }
   }
 }
-function renderAll(){ document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}'); applyDynamicTheme(); document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}'; const isAdmin=!document.getElementById('admin').classList.contains('hidden'); const parentBtn=document.getElementById('parentBtn'); parentBtn.textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'); parentBtn.style.position='relative'; let badge=parentBtn.querySelector('.update-badge'); if(updateAvailable && !isAdmin){ if(!badge){ badge=document.createElement('span'); badge.className='update-badge'; parentBtn.appendChild(badge); } badge.textContent='1'; }else if(badge){ badge.remove(); } document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}'; const shutdownBtn=document.getElementById('shutdownBtn'); shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}'; shutdownBtn.style.display=features.shutdownAvailable?'':'none'; document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}'); const pc=pageCount(); if(cfg.currentPage>=pc) cfg.currentPage=pc-1; if(cfg.currentPage<0) cfg.currentPage=0; renderKids(); renderAdmin(); renderNav(); }
+function renderAll(){
+  document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}');
+  applyDynamicTheme();
+  document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}';
+  const isAdmin=!document.getElementById('admin').classList.contains('hidden');
+  const cornerbar=document.querySelector('.cornerbar');
+  cornerbar.classList.toggle('hidden',isAdmin);
+  const parentBtn=document.getElementById('parentBtn');
+  parentBtn.textContent=isAdmin?(uiText.back||'{{LABEL_BACK}}'):(cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}');
+  parentBtn.style.position='relative';
+  let badge=parentBtn.querySelector('.update-badge');
+  if(updateAvailable && !isAdmin){
+    if(!badge){
+      badge=document.createElement('span');
+      badge.className='update-badge';
+      parentBtn.appendChild(badge);
+    }
+    badge.textContent='1';
+  }else if(badge){
+    badge.remove();
+  }
+  document.getElementById('exitBtn').textContent=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
+  const shutdownBtn=document.getElementById('shutdownBtn');
+  shutdownBtn.textContent=cfg.shutdownLabel||'{{SHUTDOWN_LABEL}}';
+  shutdownBtn.style.display=features.shutdownAvailable?'':'none';
+  document.getElementById('grid').className='grid '+(cfg.layoutMode||'{{DEFAULT_LAYOUT}}');
+  const pc=pageCount();
+  if(cfg.currentPage>=pc) cfg.currentPage=pc-1;
+  if(cfg.currentPage<0) cfg.currentPage=0;
+  renderKids();
+  renderAdmin();
+  renderNav();
+}
 function renderKids(){
   const grid=document.getElementById('grid');
   grid.innerHTML='';

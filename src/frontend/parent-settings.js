@@ -5,7 +5,31 @@ function updatePinButton(){ const btn=document.getElementById('removePinBtn'); b
 
 // Update check
 let installedVersion='0.0.0';
-async function checkUpdate(){ const btn=document.getElementById('checkUpdateBtn'); const msg=document.getElementById('updateMsg'); const updateRow=document.getElementById('updateRow'); msg.textContent=''; msg.style.color=''; updateRow.style.display='none'; btn.disabled=true; try{ const statusR=await fetch('/api/update/status',{cache:'no-store'}); if(!statusR.ok) throw new Error('fetch failed'); const status=await statusR.json(); installedVersion=status.installedVersion||'0.0.0'; document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion; if(status.updateAvailable){ msg.textContent=(uiText.updateAvailable||'Update available')+': '+status.latestVersion; msg.style.color='green'; updateRow.style.display='grid'; } else { msg.textContent=uiText.updateUpToDate||'Up to date'; msg.style.color='green'; } } catch(e){ msg.textContent=uiText.updateError||'Update check failed'; msg.style.color='#c00'; } finally { btn.disabled=false; } }
+async function checkUpdate(){
+  const btn=document.getElementById('checkUpdateBtn');
+  const msg=document.getElementById('updateMsg');
+  const updateRow=document.getElementById('updateRow');
+  updateRow.style.display='none';
+  btn.disabled=true;
+  renderUiState(msg,'loading',uiText.updateLoading);
+  try{
+    const statusR=await fetch('/api/update/status',{cache:'no-store'});
+    if(!statusR.ok) throw new Error('fetch failed');
+    const status=await statusR.json();
+    installedVersion=status.installedVersion||'0.0.0';
+    document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
+    if(status.updateAvailable){
+      renderUiState(msg,'success',(uiText.updateAvailable||'Update available')+': '+status.latestVersion);
+      updateRow.style.display='grid';
+    }else{
+      renderUiState(msg,'success',uiText.updateUpToDate||'Up to date');
+    }
+  }catch(e){
+    renderUiState(msg,'error',uiText.updateError||'Update check failed',checkUpdate);
+  }finally{
+    btn.disabled=false;
+  }
+}
 async function startupUpdateCheck(){
   try{
     const statusR=await fetch('/api/update/status',{cache:'no-store'});
@@ -220,6 +244,35 @@ async function deleteSelectedTiles(){
   renderAll();
 }
 
+function renderCatalogStates(){
+  const appState=document.getElementById('appCatalogState');
+  const browserState=document.getElementById('browserCatalogState');
+  const appMessages={
+    loading:uiText.appCatalogLoading,
+    empty:uiText.appCatalogEmpty,
+    error:uiText.appCatalogError
+  };
+  const browserMessages={
+    loading:uiText.browserCatalogLoading,
+    empty:uiText.browserCatalogEmpty,
+    error:uiText.browserCatalogError
+  };
+  if(appCatalogState==='ready') clearUiState(appState);
+  else renderUiState(
+    appState,
+    appCatalogState,
+    appMessages[appCatalogState],
+    appCatalogState==='loading'?null:()=>loadApps(true)
+  );
+  if(browserCatalogState==='ready') clearUiState(browserState);
+  else renderUiState(
+    browserState,
+    browserCatalogState,
+    browserMessages[browserCatalogState],
+    browserCatalogState==='loading'?null:()=>loadBrowsers(true)
+  );
+}
+
 function renderAdmin(){
   document.getElementById('adminTitle').textContent=uiText.adminTitle;
   document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle;
@@ -256,9 +309,11 @@ function renderAdmin(){
   const browserSel=document.getElementById('cfgBrowser');
   browserSel.innerHTML='';
   const installedBrowsers=browserOptions.filter(b=>b.installed);
+  const currentBrowser=cfg.browser||'{{BROWSER_CMD}}';
   if(installedBrowsers.length===0){
     const opt=document.createElement('option');
-    opt.value=''; opt.textContent='Kein Browser gefunden';
+    opt.value=currentBrowser;
+    opt.textContent=currentBrowser||uiText.browserCatalogEmpty;
     browserSel.appendChild(opt);
   }else{
     for(const b of installedBrowsers){
@@ -267,7 +322,7 @@ function renderAdmin(){
       browserSel.appendChild(opt);
     }
   }
-  const currentBrowser=cfg.browser||'{{BROWSER_CMD}}';
+  browserSel.disabled=browserCatalogState!=='ready';
   if(Array.from(browserSel.options).some(option=>option.value===currentBrowser)){
     browserSel.value=currentBrowser;
   }else if(installedBrowsers.length>0){
@@ -280,7 +335,9 @@ function renderAdmin(){
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
   document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates';
   document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
-  document.getElementById('updateMsg').textContent='';
+  clearUiState(document.getElementById('updateMsg'));
+  clearUiState(document.getElementById('saveMsg'));
+  renderCatalogStates();
   updatePinButton();
   // Timer admin
   document.getElementById('timerLabel').textContent=uiText.timerLabel||'Bildschirmzeit';
@@ -503,16 +560,34 @@ function addTile(){ adminTileQuery=''; adminTileVisibility='all'; adminSelectedT
 function renderAdminPageNav(tileCount){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1,Math.ceil(tileCount/pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
 function renderRecommendations(){
   const container=document.getElementById('recommendations');
-  container.innerHTML='';
-  if(!recommendations.length) return;
-  const existingIds=new Set(cfg.tiles.map(t=>t.id));
-  const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
+  container.replaceChildren();
   const panel=document.createElement('div'); panel.className='panel';
   const headerRow=document.createElement('div'); headerRow.style.display='flex'; headerRow.style.justifyContent='space-between'; headerRow.style.alignItems='center'; headerRow.style.marginBottom='12px';
   const h2=document.createElement('h2'); h2.style.margin='0'; h2.textContent=uiText.appBrowserTitle||'App Browser';
-  const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; refreshBtn.textContent='↻'; refreshBtn.title='Refresh'; refreshBtn.onclick=async()=>{ await loadRecommendations(); renderRecommendations(); };
+  const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; refreshBtn.textContent='↻'; refreshBtn.title=uiText.retry; refreshBtn.setAttribute('aria-label',uiText.retry); refreshBtn.disabled=recommendationState==='loading'; refreshBtn.onclick=loadRecommendations;
   headerRow.appendChild(h2); headerRow.appendChild(refreshBtn);
   panel.appendChild(headerRow);
+  container.appendChild(panel);
+  if(recommendationState!=='ready'){
+    const messages={
+      loading:uiText.recommendationsLoading,
+      empty:uiText.recommendationsEmpty,
+      error:uiText.recommendationsError
+    };
+    const status=document.createElement('div');
+    status.id='recommendationState';
+    status.setAttribute('aria-live','polite');
+    renderUiState(
+      status,
+      recommendationState,
+      messages[recommendationState],
+      recommendationState==='loading'?null:loadRecommendations
+    );
+    panel.appendChild(status);
+    return;
+  }
+  const existingIds=new Set(cfg.tiles.map(t=>t.id));
+  const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
   const grid=document.createElement('div'); grid.className='rec-grid';
   const sorted=[...recommendations].sort((a,b)=>{
     const aAdded=existingIds.has(a.id)||existingCmds.has(JSON.stringify(a.cmd||[]));
@@ -550,7 +625,6 @@ function renderRecommendations(){
   panel.appendChild(grid);
   const disclaimer=document.createElement('div'); disclaimer.className='muted'; disclaimer.style.marginTop='14px'; disclaimer.style.fontSize='.85rem'; disclaimer.textContent=cfg.language==='de'?'Diese Programme stammen aus externen Quellen und stehen in keiner Verbindung zum Cozy Kids Launcher Projekt.':'This software comes from external sources and is not affiliated with the Cozy Kids Launcher project.';
   panel.appendChild(disclaimer);
-  container.appendChild(panel);
 }
 let pendingInstallCommand='';
 function triggerInstall(rec){
@@ -593,6 +667,7 @@ async function copyInstallCommand(){
 async function autoScanRecommendations(){
   if(cfg.autoScanDone) return;
   if(cfg.pinConfigured) return;
+  if(recommendationState==='error') return;
   const existingIds=new Set(cfg.tiles.map(t=>t.id));
   const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
   let added=false;

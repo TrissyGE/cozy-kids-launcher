@@ -3,6 +3,8 @@ let features={shutdownAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let updateAvailable=false, remoteVersion='';
 let browserOptions=[];
+let appCatalogState='loading', recommendationState='loading', browserCatalogState='loading', backupState='loading';
+let bootstrapPromise=null;
 const uiText = {
   adminTitle: {{JSON_ADMIN_TITLE}},
   adminNavLabel: {{JSON_ADMIN_NAV_LABEL}},
@@ -30,6 +32,21 @@ const uiText = {
   confirmTitle: {{JSON_CONFIRM_TITLE}},
   confirmCancel: {{JSON_CONFIRM_CANCEL}},
   confirmContinue: {{JSON_CONFIRM_CONTINUE}},
+  retry: {{JSON_RETRY}},
+  startupLoading: {{JSON_STARTUP_LOADING}},
+  startupErrorTitle: {{JSON_STARTUP_ERROR_TITLE}},
+  startupError: {{JSON_STARTUP_ERROR}},
+  saveLoading: {{JSON_SAVE_LOADING}},
+  saveError: {{JSON_SAVE_ERROR}},
+  appCatalogLoading: {{JSON_APP_CATALOG_LOADING}},
+  appCatalogEmpty: {{JSON_APP_CATALOG_EMPTY}},
+  appCatalogError: {{JSON_APP_CATALOG_ERROR}},
+  browserCatalogLoading: {{JSON_BROWSER_CATALOG_LOADING}},
+  browserCatalogEmpty: {{JSON_BROWSER_CATALOG_EMPTY}},
+  browserCatalogError: {{JSON_BROWSER_CATALOG_ERROR}},
+  recommendationsLoading: {{JSON_RECOMMENDATIONS_LOADING}},
+  recommendationsEmpty: {{JSON_RECOMMENDATIONS_EMPTY}},
+  recommendationsError: {{JSON_RECOMMENDATIONS_ERROR}},
   placeholderTitle: {{JSON_PLACEHOLDER_TITLE}},
   placeholderParentLabel: {{JSON_PLACEHOLDER_PARENT_LABEL}},
   placeholderExitLabel: {{JSON_PLACEHOLDER_EXIT_LABEL}},
@@ -59,6 +76,7 @@ const uiText = {
   updateCheck: {{JSON_UPDATE_CHECK}},
   updateAvailable: {{JSON_UPDATE_AVAILABLE}},
   updateUpToDate: {{JSON_UPDATE_UP_TO_DATE}},
+  updateLoading: {{JSON_UPDATE_LOADING}},
   updateError: {{JSON_UPDATE_ERROR}},
   versionLabel: {{JSON_VERSION_LABEL}},
   updateNow: {{JSON_UPDATE_NOW}},
@@ -120,3 +138,33 @@ const uiText = {
   backupPreRestore: {{JSON_BACKUP_PRE_RESTORE}},
   backupPinPreserved: {{JSON_BACKUP_PIN_PRESERVED}}
 };
+
+function clearUiState(element){
+  if(!element) return;
+  element.replaceChildren();
+  element.className='ui-state';
+  element.hidden=true;
+  element.removeAttribute('aria-busy');
+  element.setAttribute('role','status');
+}
+
+function renderUiState(element,state,message,retryAction=null){
+  if(!element) return;
+  element.replaceChildren();
+  element.className='ui-state ui-state-'+state;
+  element.hidden=false;
+  element.setAttribute('role',state==='error'?'alert':'status');
+  element.setAttribute('aria-busy',state==='loading'?'true':'false');
+  const text=document.createElement('span');
+  text.className='ui-state-message';
+  text.textContent=message;
+  element.appendChild(text);
+  if(retryAction){
+    const retry=document.createElement('button');
+    retry.type='button';
+    retry.className='smallbtn ui-state-retry';
+    retry.textContent=uiText.retry;
+    retry.onclick=retryAction;
+    element.appendChild(retry);
+  }
+}

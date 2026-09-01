@@ -145,6 +145,7 @@ def enter_parent_settings(browser):
 def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.wait_for(
         "typeof cfg !== 'undefined' && cfg !== null && "
+        "bootstrapPromise===null && "
         "document.querySelectorAll('#grid .tile:not(.placeholder)').length === 2",
         message="Home screen did not finish rendering",
     )
@@ -157,6 +158,45 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "Home title or tiles are incorrect",
     )
     log_scenario("home renders title and app tiles")
+
+    browser.evaluate(
+        "window.__cozyOriginalFetch=window.fetch.bind(window);"
+        "window.__failConfigOnce=true;"
+        "window.fetch=(input,options)=>{"
+        " if(String(input)==='/api/config'&&window.__failConfigOnce){"
+        "  window.__failConfigOnce=false;"
+        "  return Promise.resolve(new Response('{}',{status:503,"
+        "headers:{'Content-Type':'application/json'}}));"
+        " }"
+        " return window.__cozyOriginalFetch(input,options);"
+        "};"
+        "bootstrapLauncher()"
+    )
+    browser.wait_for(
+        "document.getElementById('startupState') && "
+        "document.getElementById('startupState').classList.contains('ui-state-error')",
+        message="Failed config load did not render a recoverable startup error",
+    )
+    assert_js(
+        browser,
+        "cfg===null && document.getElementById('startupState').getAttribute('role')==='alert' && "
+        "document.querySelector('.cornerbar').classList.contains('hidden') && "
+        "document.querySelector('#startupState .ui-state-retry')!==null",
+        "Startup error did not preserve a safe, actionable state",
+    )
+    browser.screenshot(artifacts / "startup-error.png")
+    browser.click("#startupState .ui-state-retry")
+    browser.wait_for(
+        "cfg!==null && document.getElementById('startupState')===null && "
+        "document.querySelectorAll('#grid .tile:not(.placeholder)').length===2 && "
+        "!document.querySelector('.cornerbar').classList.contains('hidden')",
+        message="Startup retry did not restore the launcher",
+    )
+    browser.evaluate(
+        "window.fetch=window.__cozyOriginalFetch;"
+        "delete window.__cozyOriginalFetch; delete window.__failConfigOnce"
+    )
+    log_scenario("startup failure renders an error and recovers in place")
 
     browser.click("#parentBtn")
     browser.wait_for("!document.getElementById('admin').classList.contains('hidden')")
@@ -355,6 +395,52 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     )
     log_scenario("app search, filtering, bulk actions, and empty results stay local")
 
+    browser.evaluate(
+        "window.__cozyOriginalFetch=window.fetch.bind(window);"
+        "window.fetch=(input,options)=>{"
+        " if(String(input)==='/api/recommendations') return new Promise((resolve,reject)=>{"
+        "  window.__rejectRecommendations=reject;"
+        " });"
+        " return window.__cozyOriginalFetch(input,options);"
+        "};"
+        "loadRecommendations()"
+    )
+    browser.wait_for(
+        "recommendationState==='loading' && "
+        "document.getElementById('recommendationState').getAttribute('aria-busy')==='true'",
+        message="Recommendation refresh did not expose its loading state",
+    )
+    browser.evaluate("window.__rejectRecommendations(new Error('synthetic failure'))")
+    browser.wait_for(
+        "recommendationState==='error' && "
+        "document.getElementById('recommendationState').classList.contains('ui-state-error') && "
+        "document.querySelector('#recommendationState .ui-state-retry')!==null",
+        message="Recommendation failure did not expose an actionable error state",
+    )
+    browser.screenshot(artifacts / "recommendations-error.png")
+    browser.evaluate(
+        "window.fetch=(input,options)=>String(input)==='/api/recommendations'"
+        " ? Promise.resolve(new Response('[]',{status:200,"
+        "headers:{'Content-Type':'application/json'}}))"
+        " : window.__cozyOriginalFetch(input,options)"
+    )
+    browser.click("#recommendationState .ui-state-retry")
+    browser.wait_for(
+        "recommendationState==='empty' && "
+        "document.getElementById('recommendationState').classList.contains('ui-state-empty')",
+        message="Empty recommendations did not render a clear empty state",
+    )
+    browser.evaluate(
+        "window.fetch=window.__cozyOriginalFetch;"
+        "delete window.__cozyOriginalFetch; delete window.__rejectRecommendations;"
+        "loadRecommendations()"
+    )
+    browser.wait_for(
+        "recommendationState==='ready' && document.getElementById('recommendationState')===null",
+        message="Recommendation retry did not restore the populated state",
+    )
+    log_scenario("recommendations expose loading, error, empty, and recovery states")
+
     browser.click("[data-admin-section='screen-time']")
     browser.set_value("#cfgTimerMinutes", "15")
     browser.click("#timerToggleBtn")
@@ -383,12 +469,12 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.click("#checkUpdateBtn")
     browser.wait_for(
         "document.getElementById('checkUpdateBtn').disabled === false && "
-        "document.getElementById('updateMsg').textContent === uiText.updateUpToDate",
+        "document.querySelector('#updateMsg .ui-state-message').textContent === uiText.updateUpToDate",
         message="Up-to-date check did not finish",
     )
     assert_js(
         browser,
-        "document.getElementById('updateMsg').textContent === uiText.updateUpToDate && "
+        "document.querySelector('#updateMsg .ui-state-message').textContent === uiText.updateUpToDate && "
         "document.getElementById('updateRow').style.display === 'none'",
         "Up-to-date state was not rendered",
     )
@@ -414,14 +500,15 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.click("#checkUpdateBtn")
     browser.wait_for(
         "document.getElementById('checkUpdateBtn').disabled === false && "
-        "document.getElementById('updateMsg').textContent === uiText.updateError",
+        "document.querySelector('#updateMsg .ui-state-message').textContent === uiText.updateError",
         message="Failed update check did not finish",
     )
     assert_js(
         browser,
-        "document.getElementById('updateMsg').textContent === uiText.updateError && "
+        "document.querySelector('#updateMsg .ui-state-message').textContent === uiText.updateError && "
         "document.getElementById('updateRow').style.display === 'none' && "
-        "document.getElementById('checkUpdateBtn').disabled === false",
+        "document.getElementById('checkUpdateBtn').disabled === false && "
+        "document.querySelector('#updateMsg .ui-state-retry')!==null",
         "Update error state was not rendered or did not recover",
     )
     log_scenario("update check renders current, available, and error states")
@@ -768,7 +855,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 11 core and accessibility journeys", flush=True)
+    print("Browser E2E passed: 13 core and accessibility journeys", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

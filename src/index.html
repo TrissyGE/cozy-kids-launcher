@@ -17,7 +17,11 @@
 <div id="kids" class="screen">
   <div class="wrap">
     <div class="titlewrap"><h1 id="title"></h1></div>
-    <div id="grid" class="grid {{DEFAULT_LAYOUT}}"></div>
+    <div id="grid" class="grid {{DEFAULT_LAYOUT}}">
+      <section id="startupState" class="ui-state ui-state-loading launcher-state" role="status" aria-live="polite" aria-busy="true">
+        <span class="ui-state-message">{{STARTUP_LOADING}}</span>
+      </section>
+    </div>
   </div>
 </div>
 <div id="pin" class="pinoverlay hidden">
@@ -108,6 +112,7 @@
           <button id="saveBtn" class="smallbtn save" onclick="saveConfig()">{{LABEL_SAVE}}</button>
         </div>
       </header>
+      <div id="saveMsg" class="ui-state" aria-live="polite" hidden></div>
       <div class="admin-workspace">
         <nav id="adminNav" class="admin-nav" onkeydown="handleAdminNavKey(event)">
           <button id="adminNavOverview" class="admin-tab" type="button" data-admin-section="overview" aria-controls="adminSectionOverview" onclick="activateAdminSection('overview')"></button>
@@ -178,6 +183,8 @@
               <select id="cfgBrowser"></select>
             </div>
             <div id="browserHint" class="muted" style="margin-bottom:8px;"></div>
+            <div id="browserCatalogState" class="ui-state" aria-live="polite" hidden></div>
+            <div id="appCatalogState" class="ui-state" aria-live="polite" hidden></div>
             <div id="forms"></div>
             <div id="adminTileEmptyState" class="admin-empty-state" role="status" hidden></div>
             <div class="adminpagenav" id="adminPageNav"></div>
@@ -242,7 +249,7 @@
               <span class="muted" id="versionDisplay"></span>
               <button class="smallbtn" id="checkUpdateBtn" onclick="checkUpdate()">{{UPDATE_CHECK}}</button>
             </div>
-            <div id="updateMsg" class="muted"></div>
+            <div id="updateMsg" class="ui-state" aria-live="polite" hidden></div>
             <div class="row2" id="updateRow" style="grid-template-columns:1fr 1fr; margin-top:8px; display:none;">
               <span class="muted"></span>
               <button class="smallbtn save" id="updateNowBtn" onclick="installUpdate()">{{UPDATE_NOW}}</button>
@@ -261,7 +268,7 @@
                 <select id="backupSelect" aria-label="{{BACKUP_TITLE}}"></select>
                 <button id="restoreBackupBtn" class="smallbtn" onclick="restoreBackup()">{{BACKUP_RESTORE}}</button>
               </div>
-              <div id="backupMsg" class="muted backup-message" aria-live="polite"></div>
+              <div id="backupMsg" class="ui-state backup-message" aria-live="polite" hidden></div>
             </section>
           </section>
         </main>
@@ -269,7 +276,7 @@
     </div>
   </div>
 </div>
-<div class="cornerbar">
+<div class="cornerbar hidden">
   <div class="smallcluster"><button id="shutdownBtn" class="smallbtn" onclick="shutdownNow()"></button></div>
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>

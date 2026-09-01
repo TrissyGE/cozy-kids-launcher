@@ -163,6 +163,10 @@ async function updateBattery(){
 updateBattery();
 
 async function saveConfig(){
+  const button=document.getElementById('saveBtn');
+  const message=document.getElementById('saveMsg');
+  button.disabled=true;
+  renderUiState(message,'loading',uiText.saveLoading);
   cfg.title=document.getElementById('cfgTitle').value;
   cfg.theme=document.getElementById('cfgTheme').value;
   cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
@@ -186,9 +190,16 @@ async function saveConfig(){
   }
   cfg.browser=document.getElementById('cfgBrowser').value;
   cfg.currentPage=0;
-  await persistConfig();
-  renderAll();
-  closeAdmin();
+  try{
+    await persistConfig();
+    clearUiState(message);
+    renderAll();
+    closeAdmin();
+  }catch(e){
+    renderUiState(message,'error',uiText.saveError);
+  }finally{
+    button.disabled=false;
+  }
 }
 async function exportConfig(){
   const r=await fetch('/api/export-config');
@@ -250,11 +261,17 @@ function renderBackupOptions(){
   if(!select||!button) return;
   select.replaceChildren();
   button.textContent=uiText.backupRestore;
-  if(!backups.length){
+  if(backupState!=='ready'){
     const empty=document.createElement('option');
     empty.value='';
-    empty.textContent=uiText.backupEmpty;
+    const labels={
+      loading:uiText.backupLoading,
+      empty:uiText.backupEmpty,
+      error:uiText.backupLoadError
+    };
+    empty.textContent=labels[backupState]||uiText.backupEmpty;
     select.appendChild(empty);
+    select.disabled=true;
     button.disabled=true;
     return;
   }
@@ -264,24 +281,28 @@ function renderBackupOptions(){
     option.textContent=backupLabel(backup);
     select.appendChild(option);
   }
+  select.disabled=false;
   button.disabled=false;
 }
 async function loadBackups(){
   const msg=document.getElementById('backupMsg');
-  msg.textContent=uiText.backupLoading;
-  msg.style.color='';
+  backupState='loading';
+  renderBackupOptions();
+  renderUiState(msg,'loading',uiText.backupLoading);
   try{
     const response=await fetch('/api/backups',{cache:'no-store'});
     if(!response.ok) throw new Error('backup list failed');
     const result=await response.json();
     backups=Array.isArray(result.backups)?result.backups:[];
+    backupState=backups.length?'ready':'empty';
     renderBackupOptions();
-    msg.textContent='';
+    if(backupState==='empty') renderUiState(msg,'empty',uiText.backupEmpty,loadBackups);
+    else clearUiState(msg);
   }catch(e){
     backups=[];
+    backupState='error';
     renderBackupOptions();
-    msg.textContent=uiText.backupLoadError;
-    msg.style.color='#c00';
+    renderUiState(msg,'error',uiText.backupLoadError,loadBackups);
   }
 }
 async function restoreBackup(){
@@ -291,8 +312,7 @@ async function restoreBackup(){
   const backupId=select.value;
   if(!backupId||!(await requestConfirmation(uiText.backupConfirm,uiText.backupRestore))) return;
   button.disabled=true;
-  msg.textContent=uiText.backupRestoring;
-  msg.style.color='';
+  renderUiState(msg,'loading',uiText.backupRestoring);
   try{
     const response=await fetch('/api/backups/restore',{
       method:'POST',
@@ -303,13 +323,11 @@ async function restoreBackup(){
     if(!response.ok||result.status!=='ok') throw new Error('backup restore failed');
     await loadConfig();
     await loadBackups();
-    msg.textContent=uiText.backupSuccess;
-    msg.style.color='green';
+    renderUiState(msg,'success',uiText.backupSuccess);
   }catch(e){
-    msg.textContent=uiText.backupError;
-    msg.style.color='#c00';
+    renderUiState(msg,'error',uiText.backupError);
   }finally{
-    button.disabled=backups.length===0;
+    button.disabled=backupState!=='ready';
   }
 }
 // Keyboard navigation
@@ -362,4 +380,4 @@ document.addEventListener('keydown',function(e){
   else if(e.key==='Escape') exitKids();
 });
 
-(async()=>{ await loadApps(); await loadRecommendations(); await loadFeatures(); await loadBrowsers(); await loadConfig(); await autoScanRecommendations(); await pollTimer(); timerPollInterval=setInterval(pollTimer,10000); await startupUpdateCheck(); })();
+bootstrapLauncher();

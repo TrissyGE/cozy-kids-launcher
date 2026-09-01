@@ -79,6 +79,16 @@
   .admin-bulk-actions .smallbtn { min-width:0; }
   .admin-empty-state { padding:var(--space-6) var(--space-4); border:1px dashed var(--input-border); border-radius:var(--radius-control); color:var(--text); text-align:center; }
   .admin-empty-state[hidden] { display:none; }
+  .ui-state { width:100%; min-height:52px; margin:var(--space-2) 0; padding:var(--space-3); border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--smallbtn-bg); color:var(--text); display:flex; align-items:center; justify-content:center; gap:var(--space-3); text-align:center; }
+  .ui-state[hidden] { display:none; }
+  .ui-state-loading::before { content:'◌'; flex:none; font-size:1.4rem; line-height:1; animation:uiStateSpin .9s linear infinite; }
+  .ui-state-empty { border-style:dashed; }
+  .ui-state-error { border-color:#d97786; background:#fff1f3; color:#8a1538; }
+  .ui-state-success { border-color:#74b98b; background:#effaf2; color:#24563a; }
+  .ui-state-message { line-height:1.4; }
+  .ui-state-retry { flex:none; }
+  .launcher-state { grid-column:1 / -1; grid-row:1 / -1; min-height:100%; flex-direction:column; font-size:1.1rem; font-weight:700; }
+  @keyframes uiStateSpin { to { transform:rotate(360deg); } }
   .appearance-settings-grid { display:grid; grid-template-columns:minmax(260px,.75fr) minmax(380px,1.25fr); gap:var(--space-4); align-items:start; }
   .appearance-preview-shell { min-width:0; }
   .appearance-preview-shell h4 { margin:0 0 var(--space-2); }
@@ -181,7 +191,7 @@
   @media (forced-colors: active) {
     #themeBg { display:none; }
     .tile, .smallbtn, .nav, .theme-thumb, .admin-tab, .overview-card, .admin-bulk-toolbar, .launcher-preview, .preview-tile, .panel, .pinbox, .install-box, .timerbox, .confirm-box,
-    .backup-panel, .rec-card, input, select, label.chk {
+    .backup-panel, .rec-card, .ui-state, input, select, label.chk {
       background:Canvas;
       color:CanvasText;
       border:2px solid ButtonText;
