@@ -394,6 +394,12 @@ class ServerApiTests(unittest.TestCase):
         app_root.mkdir()
         config_dir.mkdir()
         cache_dir.mkdir()
+        videos = root / "Videos"
+        music = root / "Music"
+        alternate_music = root / "Musik"
+        videos.mkdir()
+        music.mkdir()
+        alternate_music.mkdir()
         (app_root / "index.html").write_text("<!doctype html><title>test</title>", encoding="utf-8")
         (app_root / "browser.html").write_text(
             "<!doctype html><title>browser test</title>",
@@ -407,6 +413,9 @@ class ServerApiTests(unittest.TestCase):
         server_module.UPDATE_SCRIPT = str(app_root / "update.sh")
         server_module.UPDATE_CHANNEL_FILE = str(app_root / "update-channel")
         server_module.RECOMMENDATIONS_FILE = str(app_root / "recommendations.json")
+        server_module.VIDEOS = str(videos)
+        server_module.MUSIC = str(music)
+        server_module.ALT_MUSIC = str(alternate_music)
         server_module.BACKUP_ROOT = str(root / "backups")
         server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
         server_module.ACTIVITY_FILE = str(root / "state" / "activity.json")
@@ -495,6 +504,57 @@ class ServerApiTests(unittest.TestCase):
         self.assertNotIn("pinHash", data)
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+
+    def test_media_catalog_returns_opaque_metadata_and_safe_cover_urls(self):
+        media_file = Path(server_module.VIDEOS) / "My_Film.mp4"
+        cover_file = Path(server_module.VIDEOS) / "My_Film.png"
+        media_file.write_bytes(b"video")
+        cover_file.write_bytes(b"cover-bytes")
+
+        status, data, _ = self.request("/api/media")
+
+        self.assertEqual(status, 200)
+        self.assertFalse(data["truncated"])
+        self.assertEqual(len(data["items"]), 1)
+        item = data["items"][0]
+        self.assertEqual(item["title"], "My Film")
+        self.assertEqual(item["kind"], "video")
+        self.assertRegex(item["id"], r"^[0-9a-f]{24}$")
+        self.assertEqual(item["coverUrl"], f"/api/media/cover?id={item['id']}")
+        self.assertNotIn(str(media_file), json.dumps(data))
+
+        with urllib.request.urlopen(
+            self.base_url + item["coverUrl"],
+            timeout=5,
+        ) as response:
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.headers["Content-Type"], "image/png")
+            self.assertEqual(response.read(), b"cover-bytes")
+
+    def test_media_cover_endpoint_rejects_unknown_or_ambiguous_identifiers(self):
+        for path in (
+            "/api/media/cover?id=unknown",
+            "/api/media/cover?id=" + "a" * 24 + "&extra=1",
+            "/api/media/cover",
+        ):
+            with self.subTest(path=path):
+                with self.assertRaises(urllib.error.HTTPError) as error:
+                    urllib.request.urlopen(self.base_url + path, timeout=5)
+                self.assertEqual(error.exception.code, 404)
+
+    def test_media_cover_endpoint_rejects_oversized_images(self):
+        (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
+        (Path(server_module.VIDEOS) / "Film.jpg").write_bytes(b"large")
+        _, data, _ = self.request("/api/media")
+
+        with mock.patch.object(server_module, "MAX_MEDIA_COVER_BYTES", 4):
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(
+                    self.base_url + data["items"][0]["coverUrl"],
+                    timeout=5,
+                )
+
+        self.assertEqual(error.exception.code, 404)
 
     def test_app_discovery_endpoint_preserves_public_payload(self):
         expected = [{"name": "Paint", "exec": "paint-app --kids"}]

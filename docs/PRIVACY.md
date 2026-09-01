@@ -13,6 +13,12 @@ The launcher is designed to run locally:
 
 No cloud backend is required.
 
+The local media catalog stays on the loopback server. Its public response uses
+opaque identifiers and never returns absolute media or cover paths. Discovery
+is bounded, ignores hidden content, and rejects symbolic links that resolve
+outside the standard local Videos and Music folders. Cover bytes are served
+only after resolving an identifier through that same local catalog.
+
 Embedded website tiles are restricted to their configured start origin plus up
 to 20 exact additional origins chosen in Parent settings. The local server binds
 the wrapper URL back to that tile, emits the matching browser policy, and the
