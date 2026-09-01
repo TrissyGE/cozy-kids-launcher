@@ -46,6 +46,19 @@
     </div>
   </div>
 </div>
+<div id="profileOverlay" class="install-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="profilePickerTitle" aria-describedby="profilePickerHint">
+  <div class="profile-picker">
+    <div class="profile-picker-header">
+      <div>
+        <h2 id="profilePickerTitle"></h2>
+        <p id="profilePickerHint" class="muted"></p>
+      </div>
+      <button id="profilePickerClose" type="button" class="smallbtn" onclick="closeProfilePicker()"></button>
+    </div>
+    <div id="profilePickerGrid" class="profile-picker-grid"></div>
+    <div id="profilePickerMessage" class="ui-state" aria-live="polite" hidden></div>
+  </div>
+</div>
 <div id="updating" class="pinoverlay hidden">
   <div class="pinbox">
     <div class="emoji" data-local-icon="update" data-icon-only aria-label="{{UPDATE_PROGRESS}}" style="font-size:3rem;"></div>
@@ -143,8 +156,35 @@
 
           <section id="adminSectionChildren" class="admin-section" data-admin-panel="children" aria-labelledby="adminNavChildren" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
-            <div class="row2">
-              <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}" oninput="renderAppearancePreview()">
+            <p id="profileManageHint" class="muted"></p>
+            <div class="profile-management-grid">
+              <section class="profile-list-panel" aria-labelledby="profileListTitle">
+                <h4 id="profileListTitle"></h4>
+                <div id="profileList" class="profile-list"></div>
+              </section>
+              <section class="profile-editor" aria-labelledby="profileEditorTitle">
+                <h4 id="profileEditorTitle"></h4>
+                <label class="admin-field-label" for="cfgProfileName"><span id="profileNameLabel"></span>
+                  <input id="cfgProfileName" maxlength="40">
+                </label>
+                <label class="admin-field-label" for="cfgProfileAvatar"><span id="profileAvatarLabel"></span>
+                  <input id="cfgProfileAvatar" maxlength="16">
+                </label>
+                <label class="admin-field-label" for="cfgTitle"><span id="profileLauncherTitleLabel"></span>
+                  <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}" oninput="renderAppearancePreview()">
+                </label>
+              </section>
+            </div>
+            <section class="profile-create" aria-labelledby="profileCreateTitle">
+              <h4 id="profileCreateTitle"></h4>
+              <div class="row2">
+                <input id="newProfileName" maxlength="40">
+                <input id="newProfileAvatar" maxlength="16">
+                <button id="createProfileBtn" type="button" class="smallbtn" onclick="createProfileFromAdmin()"></button>
+              </div>
+              <div id="profileAdminMessage" class="ui-state" aria-live="polite" hidden></div>
+            </section>
+            <div class="row2 profile-global-settings">
               <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
               <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
             </div>
@@ -277,13 +317,14 @@
   </div>
 </div>
 <div class="cornerbar hidden">
-  <div class="smallcluster"><button id="shutdownBtn" class="smallbtn" onclick="shutdownNow()"></button></div>
+  <div class="smallcluster"><button id="shutdownBtn" class="smallbtn" onclick="shutdownNow()"></button><button id="profileBtn" class="smallbtn profile-button" onclick="openProfilePicker()"></button></div>
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script defer src="/frontend/state.js"></script>
 <script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
+<script defer src="/frontend/profiles.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
 <script defer src="/frontend/runtime-controls.js"></script>
 </body>

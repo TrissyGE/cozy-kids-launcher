@@ -25,6 +25,9 @@ selecting, and deleting profiles uses the existing Parent-authentication
 boundary. Configuration exports and backups contain every profile so they can
 be restored together; deleting a profile removes it from the active
 configuration and later backup rotation determines how long older copies remain.
+The child-facing picker receives only names and avatars. Switching to another
+child still requires the Parent PIN when one is configured. The small
+"last launched" marker is stored locally under a separate key for each profile.
 
 Installer and pre-restore backups remain under the user's local data directory.
 They can contain the same family settings and hashed Parent PIN as the active

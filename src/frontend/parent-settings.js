@@ -297,6 +297,7 @@ function renderAdmin(){
   document.getElementById('tileFilterHidden').textContent=uiText.appFilterHidden;
   document.getElementById('tileVisibilityFilter').value=adminTileVisibility;
   document.getElementById('cfgTitle').value=cfg.title||'';
+  renderProfileAdmin();
   document.getElementById('cfgTheme').value=cfg.theme||'{{DEFAULT_THEME}}';
   updateThemeDisplay();
   // Custom theme controls
@@ -691,4 +692,6 @@ async function autoScanRecommendations(){
 async function persistConfig(){
   const r=await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)});
   if(!r.ok) throw new Error('Config could not be saved');
+  const result=await r.json();
+  if(result.config) cfg=result.config;
 }

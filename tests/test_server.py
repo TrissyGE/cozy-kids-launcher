@@ -30,6 +30,7 @@ def frontend_source():
         frontend_root / "icons.js",
         frontend_root / "dialogs.js",
         frontend_root / "launcher-ui.js",
+        frontend_root / "profiles.js",
         frontend_root / "parent-settings.js",
         frontend_root / "runtime-controls.js",
         frontend_root / "styles.css",
@@ -781,6 +782,8 @@ class ServerApiTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(data["status"], "ok")
+        self.assertEqual(data["config"]["title"], "Updated")
+        self.assertNotIn("pinHash", data["config"])
         saved = server_module.load_cfg()
         self.assertEqual(saved["title"], "Updated")
         self.assertTrue(server_module.verify_pin(saved["pinHash"], "1234"))
@@ -994,6 +997,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/icons.js",
             "/frontend/dialogs.js",
             "/frontend/launcher-ui.js",
+            "/frontend/profiles.js",
             "/frontend/parent-settings.js",
             "/frontend/runtime-controls.js",
         )
@@ -1009,11 +1013,12 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "icons.js", "dialogs.js", "launcher-ui.js", "parent-settings.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "parent-settings.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
 
     def test_design_system_defines_shared_tokens_and_controls(self):
         source = (
@@ -1149,7 +1154,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('role="dialog"', source)
         self.assertIn('aria-modal="true"', source)
         self.assertNotIn("window.confirm(", source)
-        self.assertEqual(source.count("requestConfirmation("), 5)
+        self.assertEqual(source.count("requestConfirmation("), 6)
         self.assertIn("return new Promise(resolve=>", dialogs)
         self.assertIn("confirmationReturnFocus=document.activeElement", dialogs)
         self.assertIn("returnFocus.focus()", dialogs)
@@ -1209,6 +1214,23 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("createTileVisual(tile.emoji,'emoji')", source)
         self.assertIn("emoji.textContent=value||'✨'", source)
         self.assertNotIn("btn.innerHTML=html", source)
+
+    def test_profile_interfaces_keep_parent_authentication_and_render_text_safely(self):
+        source = frontend_source()
+        profiles = (REPOSITORY_ROOT / "src" / "frontend" / "profiles.js").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("fetch(path", profiles)
+        self.assertIn("'/api/profiles/create'", profiles)
+        self.assertIn("'/api/profiles/select'", profiles)
+        self.assertIn("'/api/profiles/delete'", profiles)
+        self.assertIn("requestPin(()=>activateProfile", profiles)
+        self.assertIn("name.textContent=profile.name", profiles)
+        self.assertIn("avatar.textContent=profile.avatar||'👤'", profiles)
+        self.assertNotIn("innerHTML", profiles)
+        self.assertIn("localStorage.getItem(profileStorageKey())", source)
+        self.assertIn("localStorage.setItem(profileStorageKey(),id)", source)
+        self.assertIn("document.getElementById('profileOverlay').classList.contains('hidden')", source)
 
     def test_local_icon_registry_preserves_custom_emoji_tiles(self):
         source = frontend_source()

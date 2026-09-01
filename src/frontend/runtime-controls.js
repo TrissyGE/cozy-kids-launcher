@@ -105,6 +105,7 @@ function homeGestureAllowed(){
     document.getElementById('pin').classList.contains('hidden') &&
     document.getElementById('themeOverlay').classList.contains('hidden') &&
     document.getElementById('installOverlay').classList.contains('hidden') &&
+    document.getElementById('profileOverlay').classList.contains('hidden') &&
     document.getElementById('timerBlock').classList.contains('hidden') &&
     document.getElementById('timerWarning').classList.contains('hidden') &&
     document.getElementById('startOverlay').classList.contains('hidden');
@@ -168,6 +169,8 @@ async function saveConfig(){
   button.disabled=true;
   renderUiState(message,'loading',uiText.saveLoading);
   cfg.title=document.getElementById('cfgTitle').value;
+  cfg.name=document.getElementById('cfgProfileName').value.trim();
+  cfg.avatar=document.getElementById('cfgProfileAvatar').value.trim();
   cfg.theme=document.getElementById('cfgTheme').value;
   cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
   cfg.parentLabel=document.getElementById('cfgParentLabel').value;
@@ -358,11 +361,13 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if(!document.getElementById('themeOverlay').classList.contains('hidden')){ e.preventDefault(); closeThemePicker(); return; }
     if(!document.getElementById('installOverlay').classList.contains('hidden')){ e.preventDefault(); closeInstallOverlay(); return; }
+    if(!document.getElementById('profileOverlay').classList.contains('hidden')){ e.preventDefault(); closeProfilePicker(); return; }
     if(!document.getElementById('pin').classList.contains('hidden')){ e.preventDefault(); cancelPin(); return; }
     if(!document.getElementById('admin').classList.contains('hidden')){ e.preventDefault(); closeAdmin(); return; }
   }
   if(!document.getElementById('admin').classList.contains('hidden')) return;
   if(!document.getElementById('pin').classList.contains('hidden')) return;
+  if(!document.getElementById('profileOverlay').classList.contains('hidden')) return;
   if(!document.getElementById('timerBlock').classList.contains('hidden')) return;
   if(!document.getElementById('timerWarning').classList.contains('hidden')) return;
   if(!document.getElementById('startOverlay').classList.contains('hidden')) return;
