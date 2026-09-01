@@ -16,6 +16,7 @@ if str(SOURCE_ROOT) not in sys.path:
 
 import process_state
 import process_supervisor
+import activity_store
 
 
 def wait_until(predicate, timeout=5):
@@ -150,6 +151,7 @@ class ProcessSupervisorTests(unittest.TestCase):
     def test_supervisor_removes_record_after_a_normal_exit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             record_path = Path(temp_dir) / "tile-process.pid"
+            activity_path = Path(temp_dir) / "activity.json"
             supervisor = subprocess.Popen(
                 [
                     sys.executable,
@@ -158,6 +160,12 @@ class ProcessSupervisorTests(unittest.TestCase):
                     str(record_path),
                     "--marker",
                     str(SOURCE_ROOT / "process_supervisor.py"),
+                    "--activity-file",
+                    str(activity_path),
+                    "--activity-profile",
+                    "default",
+                    "--activity-tile",
+                    "paint",
                     "--",
                     sys.executable,
                     "-c",
@@ -168,6 +176,10 @@ class ProcessSupervisorTests(unittest.TestCase):
 
             self.assertEqual(supervisor.wait(timeout=5), 0)
             self.assertFalse(record_path.exists())
+            records = activity_store.read_activity(activity_path)
+            self.assertEqual(len(records), 1)
+            self.assertEqual(records[0]["profileId"], "default")
+            self.assertEqual(records[0]["tileId"], "paint")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 
+from activity_store import record_activity
 from process_state import remove_process_record, write_process_record
 
 
@@ -114,7 +115,14 @@ def terminate_owned_tree(grace_seconds=TERMINATION_GRACE_SECONDS):
     _reap_children()
 
 
-def supervise(command, record_path, marker):
+def supervise(
+    command,
+    record_path,
+    marker,
+    activity_file="",
+    activity_profile="",
+    activity_tile="",
+):
     global _termination_signal
     _termination_signal = None
     _enable_child_subreaper()
@@ -122,8 +130,10 @@ def supervise(command, record_path, marker):
         signal.signal(signum, _handle_termination)
 
     child = None
+    started_at = None
     try:
         child = subprocess.Popen(command, env=dict(os.environ))
+        started_at = int(time.time())
         write_process_record(
             record_path,
             os.getpid(),
@@ -148,12 +158,25 @@ def supervise(command, record_path, marker):
             except (subprocess.TimeoutExpired, ChildProcessError):
                 pass
         remove_process_record(record_path, expected_pid=os.getpid())
+        if started_at is not None and activity_file and activity_profile and activity_tile:
+            try:
+                record_activity(
+                    activity_file,
+                    activity_profile,
+                    activity_tile,
+                    started_at,
+                )
+            except (OSError, ValueError):
+                pass
 
 
 def _parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--record", required=True)
     parser.add_argument("--marker", required=True)
+    parser.add_argument("--activity-file", default="")
+    parser.add_argument("--activity-profile", default="")
+    parser.add_argument("--activity-tile", default="")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     return parser
 
@@ -166,7 +189,14 @@ def main(argv=None):
     if not command:
         return 2
     try:
-        return supervise(command, args.record, args.marker)
+        return supervise(
+            command,
+            args.record,
+            args.marker,
+            activity_file=args.activity_file,
+            activity_profile=args.activity_profile,
+            activity_tile=args.activity_tile,
+        )
     except (OSError, ValueError):
         remove_process_record(args.record, expected_pid=os.getpid())
         return 127

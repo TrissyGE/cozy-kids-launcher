@@ -131,12 +131,14 @@ class ApplicationLauncherTests(unittest.TestCase):
         self.overlay.touch()
         self.tile_record = root / "tile-process.pid"
         self.overlay_record = root / "overlay.pid"
+        self.activity_file = root / "activity.json"
         self.lock = threading.Lock()
         self.launcher = application_launcher.ApplicationLauncher(
             self.tile_record,
             self.overlay_record,
             self.supervisor,
             self.overlay,
+            activity_file=self.activity_file,
             lock=self.lock,
             python_executable="/usr/bin/python3",
         )
@@ -248,6 +250,49 @@ class ApplicationLauncherTests(unittest.TestCase):
         self.assertEqual(popen.call_count, 1)
         self.assertTrue(process.terminated)
         self.assertEqual(process.wait_timeouts, [1])
+
+    def test_opt_in_activity_is_passed_to_the_owned_supervisor(self):
+        supervisor_process = FakeProcess()
+        overlay_process = FakeProcess()
+        with mock.patch.object(
+            application_launcher,
+            "terminate_owned_process",
+        ), mock.patch.object(
+            application_launcher,
+            "owned_process_alive",
+            side_effect=[True, True],
+        ), mock.patch.object(
+            application_launcher.subprocess,
+            "Popen",
+            side_effect=[supervisor_process, overlay_process],
+        ) as popen:
+            self.launcher.launch_owned_tile(
+                ["paint-app"],
+                "local",
+                tile_id="paint",
+                profile_id="default",
+                track_activity=True,
+            )
+
+        self.assertEqual(
+            popen.call_args_list[0].args[0],
+            [
+                "/usr/bin/python3",
+                str(self.supervisor),
+                "--record",
+                str(self.tile_record),
+                "--marker",
+                str(self.supervisor),
+                "--activity-file",
+                str(self.activity_file),
+                "--activity-profile",
+                "default",
+                "--activity-tile",
+                "paint",
+                "--",
+                "paint-app",
+            ],
+        )
 
     def test_missing_supervisor_never_starts_an_unowned_process(self):
         self.supervisor.unlink()

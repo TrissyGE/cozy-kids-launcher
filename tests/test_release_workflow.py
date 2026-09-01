@@ -66,6 +66,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
         self.assertIn('"configVersion": 2', installer)
         self.assertEqual(example["configVersion"], 2)
         self.assertTrue(example["setupCompleted"])
+        self.assertFalse(example["activityTrackingEnabled"])
         self.assertEqual(example["activeProfileId"], "default")
         self.assertEqual(len(example["profiles"]), 1)
 
@@ -257,6 +258,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / ".local"
                     / "share"
                     / "cozy-kids-launcher"
+                    / "activity_store.py"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
                     / "process_state.py"
                 ).is_file()
             )
@@ -273,6 +283,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertEqual(backup_root.stat().st_mode & 0o777, 0o700)
             self.assertEqual(len(list(backup_root.iterdir())), 1)
             self.assertEqual(installed["configVersion"], 2)
+            self.assertFalse(installed["activityTrackingEnabled"])
             self.assertEqual(installed["activeProfileId"], "default")
             self.assertEqual(len(installed["profiles"]), 1)
 

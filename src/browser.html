@@ -69,6 +69,8 @@
 <script>
 const browserParams = new URLSearchParams(location.search);
 const tileId = browserParams.get('tile') || '';
+const activityToken = browserParams.get('activity') || '';
+let activityFinished = false;
 (function(){
   const url = browserParams.get('url');
   if (!url) {
@@ -86,7 +88,19 @@ const tileId = browserParams.get('tile') || '';
   }
   document.getElementById('frame').src = url;
 })();
-function goHome() { window.location.href = '/index.html'; }
+function finishActivity(){
+  if(activityFinished||!activityToken) return;
+  activityFinished=true;
+  const body=JSON.stringify({token:activityToken});
+  const queued=navigator.sendBeacon&&navigator.sendBeacon(
+    '/api/activity/finish',new Blob([body],{type:'application/json'})
+  );
+  if(!queued){
+    fetch('/api/activity/finish',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});
+  }
+}
+function goHome() { finishActivity(); window.location.href = '/index.html'; }
+window.addEventListener('pagehide',finishActivity);
 
 // Auto-hide overlay after 2s inactivity
 const overlay = document.getElementById('appOverlay');
