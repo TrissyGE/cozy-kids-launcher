@@ -158,6 +158,13 @@ text() {
     de:no_media_body) echo "Hier wurden noch keine Musik- oder Videodateien gefunden." ;;
     de:no_media_back) echo "Zurück zur Startseite" ;;
     de:admin_title) echo "Eltern-Einstellungen" ;;
+    de:admin_nav_label) echo "Bereiche der Eltern-Einstellungen" ;;
+    de:admin_overview) echo "Übersicht" ;;
+    de:admin_children) echo "Kinder" ;;
+    de:admin_apps_media) echo "Apps & Medien" ;;
+    de:admin_screen_time) echo "Bildschirmzeit" ;;
+    de:admin_appearance) echo "Darstellung" ;;
+    de:admin_system) echo "System" ;;
     de:placeholder_title) echo "Überschrift" ;;
     de:placeholder_parent_label) echo "Eltern-Button" ;;
     de:placeholder_exit_label) echo "Beenden-Button" ;;
@@ -221,6 +228,13 @@ text() {
     en:no_media_body) echo "No music or video files were found here yet." ;;
     en:no_media_back) echo "Back to home screen" ;;
     en:admin_title) echo "Parent settings" ;;
+    en:admin_nav_label) echo "Parent settings sections" ;;
+    en:admin_overview) echo "Overview" ;;
+    en:admin_children) echo "Children" ;;
+    en:admin_apps_media) echo "Apps & Media" ;;
+    en:admin_screen_time) echo "Screen Time" ;;
+    en:admin_appearance) echo "Appearance" ;;
+    en:admin_system) echo "System" ;;
     en:placeholder_title) echo "Title" ;;
     en:placeholder_parent_label) echo "Parent button" ;;
     en:placeholder_exit_label) echo "Exit button" ;;
@@ -832,7 +846,8 @@ render_template() {
   export NO_MEDIA_TITLE NO_MEDIA_BODY NO_MEDIA_BACK
   export PIN_TITLE PIN_PLACEHOLDER PIN_WRONG PIN_SET PIN_CHANGE PIN_REMOVE PIN_CONFIRM PIN_MISMATCH PIN_SAVED PIN_REMOVED ADMIN_PAGE_PREV ADMIN_PAGE_NEXT
   export DEFAULT_TILE_PAINT DEFAULT_TILE_GAMES DEFAULT_TILE_MUSIC DEFAULT_TILE_BROWSER DEFAULT_BROWSER_URL
-  export JSON_ADMIN_TITLE JSON_PLACEHOLDER_TITLE JSON_PLACEHOLDER_PARENT_LABEL JSON_PLACEHOLDER_EXIT_LABEL
+  export JSON_ADMIN_TITLE JSON_ADMIN_NAV_LABEL JSON_ADMIN_OVERVIEW JSON_ADMIN_CHILDREN JSON_ADMIN_APPS_MEDIA JSON_ADMIN_SCREEN_TIME JSON_ADMIN_APPEARANCE JSON_ADMIN_SYSTEM
+  export JSON_PLACEHOLDER_TITLE JSON_PLACEHOLDER_PARENT_LABEL JSON_PLACEHOLDER_EXIT_LABEL
   export JSON_ADD_TILE JSON_BACK JSON_SAVE JSON_VISIBLE JSON_SPECIAL_MEDIA
   export JSON_NO_APP JSON_CUSTOM_CMD JSON_MOVE_UP JSON_MOVE_DOWN JSON_DELETE JSON_NEW_TILE
   export JSON_PIN_TITLE JSON_PIN_PLACEHOLDER JSON_PIN_WRONG JSON_PIN_SET JSON_PIN_CHANGE JSON_PIN_REMOVE JSON_PIN_CONFIRM JSON_PIN_MISMATCH JSON_PIN_SAVED JSON_PIN_REMOVED JSON_ADMIN_PAGE_PREV JSON_ADMIN_PAGE_NEXT
@@ -845,7 +860,7 @@ render_template() {
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
   export TIMER_LABEL TIMER_OFF TIMER_15 TIMER_30 TIMER_60 TIMER_CUSTOM TIMER_START TIMER_STOP TIMER_ACTIVE TIMER_EXPIRED TIMER_REMAINING TIMER_WARNING_TITLE TIMER_WARNING_TEXT TIMER_ENTER_PIN TIMER_EXTEND TIMER_EXIT TIMER_WRONG_PIN TIMER_EXTENDED TIMER_EXPIRED_TITLE TIMER_EXPIRED_BODY TIMER_MINUTES
-  export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE
+  export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -881,6 +896,13 @@ NO_MEDIA_TITLE="$(text no_media_title)"
 NO_MEDIA_BODY="$(text no_media_body)"
 NO_MEDIA_BACK="$(text no_media_back)"
 ADMIN_TITLE="$(text admin_title)"
+ADMIN_NAV_LABEL="$(text admin_nav_label)"
+ADMIN_OVERVIEW="$(text admin_overview)"
+ADMIN_CHILDREN="$(text admin_children)"
+ADMIN_APPS_MEDIA="$(text admin_apps_media)"
+ADMIN_SCREEN_TIME="$(text admin_screen_time)"
+ADMIN_APPEARANCE="$(text admin_appearance)"
+ADMIN_SYSTEM="$(text admin_system)"
 PLACEHOLDER_TITLE="$(text placeholder_title)"
 PLACEHOLDER_PARENT_LABEL="$(text placeholder_parent_label)"
 PLACEHOLDER_EXIT_LABEL="$(text placeholder_exit_label)"
@@ -988,6 +1010,13 @@ EMPTY_STATE_TEXT="$(text empty_state_text)"
 PREVIEW_TITLE="$(text preview_title)"
 
 JSON_ADMIN_TITLE="$(json_text "$ADMIN_TITLE")"
+JSON_ADMIN_NAV_LABEL="$(json_text "$ADMIN_NAV_LABEL")"
+JSON_ADMIN_OVERVIEW="$(json_text "$ADMIN_OVERVIEW")"
+JSON_ADMIN_CHILDREN="$(json_text "$ADMIN_CHILDREN")"
+JSON_ADMIN_APPS_MEDIA="$(json_text "$ADMIN_APPS_MEDIA")"
+JSON_ADMIN_SCREEN_TIME="$(json_text "$ADMIN_SCREEN_TIME")"
+JSON_ADMIN_APPEARANCE="$(json_text "$ADMIN_APPEARANCE")"
+JSON_ADMIN_SYSTEM="$(json_text "$ADMIN_SYSTEM")"
 JSON_PLACEHOLDER_TITLE="$(json_text "$PLACEHOLDER_TITLE")"
 JSON_PLACEHOLDER_PARENT_LABEL="$(json_text "$PLACEHOLDER_PARENT_LABEL")"
 JSON_PLACEHOLDER_EXIT_LABEL="$(json_text "$PLACEHOLDER_EXIT_LABEL")"
@@ -1062,6 +1091,7 @@ JSON_TIMER_OFF="$(json_text "$TIMER_OFF")"
 JSON_TIMER_15="$(json_text "$TIMER_15")"
 JSON_TIMER_30="$(json_text "$TIMER_30")"
 JSON_TIMER_60="$(json_text "$TIMER_60")"
+JSON_TIMER_MINUTES="$(json_text "$TIMER_MINUTES")"
 JSON_TIMER_CUSTOM="$(json_text "$TIMER_CUSTOM")"
 JSON_TIMER_START="$(json_text "$TIMER_START")"
 JSON_TIMER_STOP="$(json_text "$TIMER_STOP")"
