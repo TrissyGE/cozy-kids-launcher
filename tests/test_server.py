@@ -996,6 +996,27 @@ class FrontendSafetyTests(unittest.TestCase):
         ):
             self.assertIn(label, installer)
 
+    def test_appearance_live_preview_does_not_apply_unsaved_settings(self):
+        source = frontend_source()
+        preview = source[
+            source.index("function renderAppearancePreview()"):
+            source.index("function filteredAdminTileIndexes()")
+        ]
+        self.assertIn('id="appearancePreview"', source)
+        self.assertIn('id="appearancePreviewGrid"', source)
+        self.assertIn("preview.className='launcher-preview theme-'", preview)
+        self.assertIn("previewGrid.replaceChildren()", preview)
+        self.assertIn("emoji.textContent=tile.emoji||'✨'", preview)
+        self.assertIn("label.textContent=tile.label||''", preview)
+        self.assertNotIn("document.body.className", preview)
+        self.assertNotIn("persistConfig", preview)
+
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('de:preview_title) echo "Vorschau"', installer)
+        self.assertIn('en:preview_title) echo "Preview"', installer)
+
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
         self.assertIn("tileLabel.textContent=tile.label||''", source)
