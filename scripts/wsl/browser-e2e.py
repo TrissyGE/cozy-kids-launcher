@@ -188,6 +188,8 @@ def run_scenarios(browser, release_fixture, installed_version):
     log_scenario("PIN setup rejects a wrong PIN and accepts the correct PIN")
 
     browser.click("[data-admin-section='appearance']")
+    saved_theme = browser.evaluate("cfg.theme")
+    saved_layout = browser.evaluate("cfg.layoutMode")
     browser.click("#openThemeBtn")
     browser.wait_for("!document.getElementById('themeOverlay').classList.contains('hidden')")
     chosen = browser.evaluate(
@@ -197,10 +199,30 @@ def run_scenarios(browser, release_fixture, installed_version):
     )
     if chosen is not True:
         raise AssertionError("Space theme could not be selected")
+    assert_js(
+        browser,
+        "document.getElementById('appearancePreview').classList.contains('theme-weltraum') && "
+        "document.getElementById('appearancePreview').style.background.includes('space.jpg') && "
+        f"cfg.theme==={json.dumps(saved_theme)} && "
+        f"document.body.classList.contains('theme-{saved_theme}')",
+        "Theme preview changed the saved or active launcher theme",
+    )
     browser.set_value("#cfgLayoutMode", "klein")
+    assert_js(
+        browser,
+        "document.getElementById('appearancePreviewGrid').classList.contains('klein') && "
+        "document.querySelectorAll('#appearancePreviewGrid .preview-tile').length===2 && "
+        f"cfg.layoutMode==={json.dumps(saved_layout)}",
+        "Layout preview changed the saved launcher layout",
+    )
     browser.click("[data-admin-section='children']")
     browser.set_value("#cfgTitle", "Polished E2E Home")
     browser.set_value("#cfgParentLabel", "Family controls")
+    assert_js(
+        browser,
+        "document.getElementById('appearancePreviewTitle').textContent==='Polished E2E Home'",
+        "Title input did not update the isolated launcher preview",
+    )
     browser.click("#saveBtn")
     browser.wait_for(
         "document.getElementById('admin').classList.contains('hidden') && "
@@ -557,6 +579,10 @@ def run_accessibility_scenarios(browser, artifacts):
             raise AssertionError(
                 f"Parent section {section!r} overflows at 800x600: {metrics!r}"
             )
+    browser.evaluate(
+        "activateAdminSection('appearance'); document.querySelector('#admin .wrap').scrollTop=0"
+    )
+    browser.screenshot(artifacts / "low-resolution-appearance.png")
     browser.evaluate(
         "activateAdminSection('apps'); document.querySelector('#admin .wrap').scrollTop=0"
     )

@@ -151,6 +151,7 @@ function closeThemePicker(){
   const ctp=document.getElementById('customThemePanel');
   const isCustom=(document.getElementById('cfgTheme').value||'')==='custom';
   ctp.style.display=isCustom?'grid':'none';
+  renderAppearancePreview();
   document.getElementById('openThemeBtn').focus();
 }
 function updateThemeDisplay(){ const id=document.getElementById('cfgTheme').value; document.getElementById('themeDisplay').textContent=themeLabel(id); }

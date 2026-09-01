@@ -129,7 +129,7 @@
           <section id="adminSectionChildren" class="admin-section" data-admin-panel="children" aria-labelledby="adminNavChildren" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
             <div class="row2">
-              <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}">
+              <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}" oninput="renderAppearancePreview()">
               <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
               <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
             </div>
@@ -182,17 +182,28 @@
           <section id="adminSectionAppearance" class="admin-section" data-admin-panel="appearance" aria-labelledby="adminNavAppearance" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
             <input type="hidden" id="cfgTheme">
-            <div class="row2">
-              <button id="openThemeBtn" class="smallbtn" onclick="openThemePicker()"><span id="themeDisplay"></span></button>
-              <select id="cfgLayoutMode"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
-            </div>
-            <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
-              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;"></label>
-              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG2 <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;"></label>
-              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Text <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;"></label>
-              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Btn <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;"></label>
-              <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;"></label>
-              <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
+            <div class="appearance-settings-grid">
+              <div class="appearance-controls">
+                <div class="row2">
+                  <button id="openThemeBtn" class="smallbtn" onclick="openThemePicker()"><span id="themeDisplay"></span></button>
+                  <select id="cfgLayoutMode" onchange="renderAppearancePreview()"><option value="gross">{{LABEL_LAYOUT_LARGE}}</option><option value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
+                </div>
+                <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG2 <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Text <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Btn <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
+                </div>
+              </div>
+              <section class="appearance-preview-shell" aria-labelledby="appearancePreviewHeading">
+                <h4 id="appearancePreviewHeading">{{LABEL_PREVIEW_TITLE}}</h4>
+                <div id="appearancePreview" class="launcher-preview" role="img">
+                  <div id="appearancePreviewTitle" class="preview-launcher-title"></div>
+                  <div id="appearancePreviewGrid" class="preview-launcher-grid"></div>
+                </div>
+              </section>
             </div>
           </section>
 
