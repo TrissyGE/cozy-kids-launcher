@@ -33,6 +33,10 @@
   box-shadow:var(--shadow);
   color:var(--text);
   cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:var(--space-2);
   font-family:inherit;
   font-size:1rem;
   font-weight:700;
@@ -56,10 +60,23 @@
   box-shadow:var(--shadow);
   color:var(--text);
   cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-family:inherit;
   font-size:2rem;
   font-weight:700;
 }
+
+.ui-icon {
+  width:1.25em;
+  height:1.25em;
+  flex:none;
+  overflow:visible;
+}
+
+.ui-icon path { vector-effect:non-scaling-stroke; }
+.icon-label { min-width:0; }
 
 input, select {
   width:100%;

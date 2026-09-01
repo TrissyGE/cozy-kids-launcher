@@ -1,7 +1,7 @@
 // PIN setup
 async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1||p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const r=await fetch('/api/pin/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p1})}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht gespeichert werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=true; msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
 async function removePin(){ if(!cfg.pinConfigured) return; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; const r=await fetch('/api/pin/remove',{method:'POST'}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht entfernt werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=false; msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
-function updatePinButton(){ const btn=document.getElementById('removePinBtn'); btn.textContent=uiText.pinRemove; btn.disabled=!cfg.pinConfigured; btn.style.opacity=cfg.pinConfigured?1:.5; }
+function updatePinButton(){ const btn=document.getElementById('removePinBtn'); setIconLabel(btn,'delete',uiText.pinRemove); btn.disabled=!cfg.pinConfigured; btn.style.opacity=cfg.pinConfigured?1:.5; }
 
 // Update check
 let installedVersion='0.0.0';
@@ -52,6 +52,14 @@ const ADMIN_SECTIONS=[
   ['appearance','adminAppearance'],
   ['system','adminSystem']
 ];
+const ADMIN_SECTION_ICONS={
+  overview:'overview',
+  children:'child',
+  apps:'apps',
+  'screen-time':'timer',
+  appearance:'appearance',
+  system:'system'
+};
 function activateAdminSection(section,focusHeading=false){
   if(!ADMIN_SECTIONS.some(([id])=>id===section)) section='overview';
   adminSection=section;
@@ -89,7 +97,7 @@ function renderAdminSections(){
     const label=uiText[labelKey];
     const button=document.querySelector('[data-admin-section="'+section+'"]');
     const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
-    button.textContent=label;
+    setIconLabel(button,ADMIN_SECTION_ICONS[section],label);
     heading.textContent=label;
   }
   document.getElementById('overviewAppsLabel').textContent=uiText.adminAppsMedia;
@@ -144,9 +152,7 @@ function renderAppearancePreview(){
     for(const tile of tiles){
       const card=document.createElement('div');
       card.className='preview-tile';
-      const emoji=document.createElement('span');
-      emoji.className='preview-tile-emoji';
-      emoji.textContent=tile.emoji||'✨';
+      const emoji=createTileVisual(tile.emoji,'preview-tile-emoji');
       const label=document.createElement('span');
       label.className='preview-tile-label';
       label.textContent=tile.label||'';
@@ -200,9 +206,9 @@ function renderAdminBulkActions(filteredTileIndexes){
   const showButton=document.getElementById('bulkShowTilesBtn');
   const hideButton=document.getElementById('bulkHideTilesBtn');
   const deleteButton=document.getElementById('bulkDeleteTilesBtn');
-  showButton.textContent=uiText.appBulkShow;
-  hideButton.textContent=uiText.appBulkHide;
-  deleteButton.textContent=uiText.appBulkDelete;
+  setIconLabel(showButton,'show',uiText.appBulkShow);
+  setIconLabel(hideButton,'hide',uiText.appBulkHide);
+  setIconLabel(deleteButton,'delete',uiText.appBulkDelete);
   showButton.disabled=disabled;
   hideButton.disabled=disabled;
   deleteButton.disabled=disabled;
@@ -278,9 +284,9 @@ function renderAdmin(){
   document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle;
   document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel;
   document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel;
-  document.getElementById('addTileBtn').textContent=uiText.addTile;
-  document.getElementById('backBtn').textContent=uiText.back;
-  document.getElementById('saveBtn').textContent=uiText.save;
+  setIconLabel(document.getElementById('addTileBtn'),'add',uiText.addTile);
+  setIconLabel(document.getElementById('backBtn'),'back',uiText.back);
+  setIconLabel(document.getElementById('saveBtn'),'save',uiText.save);
   document.getElementById('tileSearchLabel').textContent=uiText.appSearchLabel;
   const tileSearch=document.getElementById('tileSearch');
   tileSearch.placeholder=uiText.appSearchLabel;
@@ -333,7 +339,7 @@ function renderAdmin(){
     : 'Changes take effect after the next login.';
   document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
-  document.getElementById('checkUpdateBtn').textContent=uiText.updateCheck||'Check for updates';
+  setIconLabel(document.getElementById('checkUpdateBtn'),'refresh',uiText.updateCheck||'Check for updates');
   document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
   clearUiState(document.getElementById('updateMsg'));
   clearUiState(document.getElementById('saveMsg'));
@@ -360,10 +366,10 @@ function renderAdmin(){
   };
   const timerBtn=document.getElementById('timerToggleBtn');
   if(lastTimerStatus.active&&!lastTimerStatus.expired){
-    timerBtn.textContent=uiText.timerStop||'Stop';
+    setIconLabel(timerBtn,'timer',uiText.timerStop||'Stop');
     document.getElementById('timerStatus').textContent=(uiText.timerRemaining||'Noch {time}').replace('{time}',formatTime(lastTimerStatus.remainingSeconds));
   }else{
-    timerBtn.textContent=uiText.timerStart||'Start';
+    setIconLabel(timerBtn,'timer',uiText.timerStart||'Start');
     document.getElementById('timerStatus').textContent='';
   }
   const filteredTileIndexes=filteredAdminTileIndexes();
@@ -503,7 +509,7 @@ function renderAdmin(){
     leading.append(selectLabel,dragHandle);
     const del=document.createElement('button');
     del.className='smallbtn';
-    del.textContent=uiText.delete;
+    setIconLabel(del,'delete',uiText.delete);
     del.onclick=()=>deleteTile(idx);
 
     row.draggable=true;
@@ -557,14 +563,14 @@ function reorderTile(from,to){
 }
 function deleteTile(idx){ cfg.tiles.splice(idx,1); if(cfg.tiles.length===0) addTile(); renderAll(); }
 function addTile(){ adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); cfg.tiles.push(createAdminTile()); adminPage=Math.max(0,Math.ceil(cfg.tiles.length/pageSize())-1); renderAll(); }
-function renderAdminPageNav(tileCount){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1,Math.ceil(tileCount/pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; prev.textContent=uiText.adminPagePrev; prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; next.textContent=uiText.adminPageNext; next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
+function renderAdminPageNav(tileCount){ const nav=document.getElementById('adminPageNav'); nav.innerHTML=''; const pages=Math.max(1,Math.ceil(tileCount/pageSize())); if(pages<=1) return; const prev=document.createElement('button'); prev.className='smallbtn'; setIconLabel(prev,'nav-left',uiText.adminPagePrev); prev.onclick=()=>{ adminPage=Math.max(0,adminPage-1); renderAdmin(); }; prev.disabled=adminPage<=0; nav.appendChild(prev); const info=document.createElement('span'); info.className='muted'; info.textContent=(adminPage+1)+' / '+pages; nav.appendChild(info); const next=document.createElement('button'); next.className='smallbtn'; setIconLabel(next,'nav-right',uiText.adminPageNext); next.onclick=()=>{ adminPage=Math.min(pages-1,adminPage+1); renderAdmin(); }; next.disabled=adminPage>=pages-1; nav.appendChild(next); }
 function renderRecommendations(){
   const container=document.getElementById('recommendations');
   container.replaceChildren();
   const panel=document.createElement('div'); panel.className='panel';
   const headerRow=document.createElement('div'); headerRow.style.display='flex'; headerRow.style.justifyContent='space-between'; headerRow.style.alignItems='center'; headerRow.style.marginBottom='12px';
   const h2=document.createElement('h2'); h2.style.margin='0'; h2.textContent=uiText.appBrowserTitle||'App Browser';
-  const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; refreshBtn.textContent='↻'; refreshBtn.title=uiText.retry; refreshBtn.setAttribute('aria-label',uiText.retry); refreshBtn.disabled=recommendationState==='loading'; refreshBtn.onclick=loadRecommendations;
+  const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; setIconOnly(refreshBtn,'refresh',uiText.retry); refreshBtn.disabled=recommendationState==='loading'; refreshBtn.onclick=loadRecommendations;
   headerRow.appendChild(h2); headerRow.appendChild(refreshBtn);
   panel.appendChild(headerRow);
   container.appendChild(panel);
@@ -598,7 +604,7 @@ function renderRecommendations(){
   });
   for(const rec of sorted){
     const card=document.createElement('div'); card.className='rec-card';
-    const em=document.createElement('div'); em.className='emoji'; em.textContent=rec.emoji||'✨';
+    const em=createTileVisual(rec.emoji,'emoji');
     const nm=document.createElement('div'); nm.className='name';
     nm.textContent=(cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id;
     const desc=document.createElement('div'); desc.className='desc';
@@ -608,14 +614,14 @@ function renderRecommendations(){
     const actions=document.createElement('div'); actions.className='actions';
     const added=existingIds.has(rec.id)||existingCmds.has(JSON.stringify(rec.cmd||[]));
     if(added){
-      const btn=document.createElement('button'); btn.className='smallbtn'; btn.disabled=true; btn.textContent=uiText.added||'Added';
+      const btn=document.createElement('button'); btn.className='smallbtn'; btn.disabled=true; setIconLabel(btn,'save',uiText.added||'Added');
       actions.appendChild(btn);
     } else if(rec.installed){
-      const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.addTile||'Add tile';
+      const btn=document.createElement('button'); btn.className='smallbtn'; setIconLabel(btn,'add',uiText.addTile||'Add tile');
       btn.onclick=()=>{ cfg.tiles.push({ id:rec.id, label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true }); renderAll(); persistConfig(); };
       actions.appendChild(btn);
     } else {
-      const btn=document.createElement('button'); btn.className='smallbtn'; btn.textContent=uiText.install||'Install';
+      const btn=document.createElement('button'); btn.className='smallbtn'; setIconLabel(btn,'download',uiText.install||'Install');
       btn.onclick=()=>{ triggerInstall(rec); };
       actions.appendChild(btn);
     }
@@ -660,8 +666,8 @@ async function copyInstallCommand(){
   try{
     await navigator.clipboard.writeText(pendingInstallCommand);
     const btn=document.querySelector('#installOverlay .command-box .smallbtn');
-    btn.textContent=uiText.commandCopied||'Copied!';
-    setTimeout(()=>btn.textContent=uiText.copyCommand||'Copy',2000);
+    setIconLabel(btn,'save',uiText.commandCopied||'Copied!');
+    setTimeout(()=>setIconLabel(btn,'copy',uiText.copyCommand||'Copy'),2000);
   }catch(e){}
 }
 async function autoScanRecommendations(){

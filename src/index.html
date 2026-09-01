@@ -12,8 +12,8 @@
 <div id="clockBadge"></div>
 <div id="batteryBadge"></div>
 <div id="timerBadge"></div>
-<button id="navLeft" class="nav left hidden" onclick="changePage(-1)">‹</button>
-<button id="navRight" class="nav right hidden" onclick="changePage(1)">›</button>
+<button id="navLeft" class="nav left hidden" data-local-icon="nav-left" data-icon-only aria-label="{{ADMIN_PAGE_PREV}}" onclick="changePage(-1)"></button>
+<button id="navRight" class="nav right hidden" data-local-icon="nav-right" data-icon-only aria-label="{{ADMIN_PAGE_NEXT}}" onclick="changePage(1)"></button>
 <div id="kids" class="screen">
   <div class="wrap">
     <div class="titlewrap"><h1 id="title"></h1></div>
@@ -30,8 +30,8 @@
     <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')submitPin()">
     <div class="err" id="pinErr"></div>
     <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
-      <button class="smallbtn" onclick="cancelPin()">{{LABEL_BACK}}</button>
-      <button class="smallbtn save" onclick="submitPin()">OK</button>
+      <button class="smallbtn" data-local-icon="back" onclick="cancelPin()">{{LABEL_BACK}}</button>
+      <button class="smallbtn save" data-local-icon="lock" onclick="submitPin()">OK</button>
     </div>
     <div class="hint" id="pinHint"></div>
   </div>
@@ -48,7 +48,7 @@
 </div>
 <div id="updating" class="pinoverlay hidden">
   <div class="pinbox">
-    <div class="emoji" style="font-size:3rem;">🔄</div>
+    <div class="emoji" data-local-icon="update" data-icon-only aria-label="{{UPDATE_PROGRESS}}" style="font-size:3rem;"></div>
     <h2 id="updateProgressTitle">{{UPDATE_PROGRESS}}</h2>
     <div class="muted" id="updateProgressText"></div>
   </div>
@@ -59,29 +59,29 @@
     <div id="installMessage"></div>
     <div class="command-box">
       <span id="installCommand"></span>
-      <button class="smallbtn" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
+      <button class="smallbtn" data-local-icon="copy" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
     </div>
     <div id="installHint" class="muted" style="margin-top:12px;"></div>
-    <button class="smallbtn" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
+    <button class="smallbtn" data-local-icon="close" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
   </div>
 </div>
 <div id="themeOverlay" class="install-overlay hidden">
   <div class="install-box" style="max-width:900px;">
     <h2 id="themePickerTitle">Theme</h2>
     <div id="themeChooser" class="theme-grid" style="max-height:60vh; overflow-y:auto; padding:8px;"></div>
-    <button class="smallbtn" onclick="closeThemePicker()" style="margin-top:12px;">{{LABEL_CLOSE}}</button>
+    <button class="smallbtn" data-local-icon="close" onclick="closeThemePicker()" style="margin-top:12px;">{{LABEL_CLOSE}}</button>
   </div>
 </div>
 <div id="timerWarning" class="timeroverlay hidden">
   <div class="timerbox">
-    <div class="emoji">⏰</div>
+    <div class="emoji" data-local-icon="timer" data-icon-only aria-label="{{TIMER_WARNING_TITLE}}"></div>
     <h2 id="timerWarningTitle"></h2>
     <div class="muted" id="timerWarningText"></div>
   </div>
 </div>
 <div id="timerBlock" class="timeroverlay hidden">
   <div class="timerbox">
-    <div class="emoji">⏰</div>
+    <div class="emoji" data-local-icon="timer" data-icon-only aria-label="{{TIMER_EXPIRED_TITLE}}"></div>
     <h2>{{TIMER_EXPIRED_TITLE}}</h2>
     <p>{{TIMER_EXPIRED_BODY}}</p>
     <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')extendFromBlock()">
@@ -241,7 +241,7 @@
             <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
               <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
               <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">
-              <button class="smallbtn" id="setPinBtn" onclick="savePin()">{{PIN_SET}}</button>
+              <button class="smallbtn" id="setPinBtn" data-local-icon="lock" onclick="savePin()">{{PIN_SET}}</button>
               <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
             </div>
             <div id="pinMsg" class="muted"></div>
@@ -252,12 +252,12 @@
             <div id="updateMsg" class="ui-state" aria-live="polite" hidden></div>
             <div class="row2" id="updateRow" style="grid-template-columns:1fr 1fr; margin-top:8px; display:none;">
               <span class="muted"></span>
-              <button class="smallbtn save" id="updateNowBtn" onclick="installUpdate()">{{UPDATE_NOW}}</button>
+              <button class="smallbtn save" id="updateNowBtn" data-local-icon="update" onclick="installUpdate()">{{UPDATE_NOW}}</button>
             </div>
             <div class="row2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:8px; align-items:center;">
-              <button class="smallbtn" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
-              <button class="smallbtn" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
-              <button class="smallbtn" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
+              <button class="smallbtn" data-local-icon="download" onclick="exportConfig()">{{LABEL_EXPORT_CONFIG}}</button>
+              <button class="smallbtn" data-local-icon="upload" onclick="document.getElementById('importFile').click()">{{LABEL_IMPORT_CONFIG}}</button>
+              <button class="smallbtn" data-local-icon="diagnostics" onclick="exportDiagnostics()">{{LABEL_EXPORT_DIAGNOSTICS}}</button>
               <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importConfig(this)">
             </div>
             <div id="importMsg" class="muted"></div>
@@ -281,6 +281,7 @@
   <div class="smallcluster"><button id="exitBtn" class="smallbtn" onclick="exitKids()"></button><button id="parentBtn" class="smallbtn" onclick="handleParentClick()"></button></div>
 </div>
 <script defer src="/frontend/state.js"></script>
+<script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
