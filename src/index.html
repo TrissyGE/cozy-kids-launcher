@@ -133,6 +133,7 @@
     <h2 id="startText">{{STARTING_APP}}</h2>
   </div>
 </div>
+<div id="celebrationLayer" class="celebration-layer" aria-hidden="true" hidden></div>
 <div id="availabilityBlock" class="timeroverlay hidden" data-reason="" role="dialog" aria-modal="true" aria-labelledby="availabilityBlockTitle">
   <div class="timerbox">
     <div class="emoji" data-local-icon="timer" data-icon-only aria-hidden="true"></div>
@@ -378,6 +379,14 @@
                   <p id="feedbackOptionsHint" class="muted"></p>
                   <p id="speechFeedbackStatus" class="muted" role="status"></p>
                 </fieldset>
+                <fieldset id="celebrationOptions" class="world-theme-options celebration-options">
+                  <legend id="celebrationOptionsTitle"></legend>
+                  <label class="chk" for="cfgCelebrationEnabled">
+                    <input id="cfgCelebrationEnabled" type="checkbox">
+                    <span id="celebrationEnabledLabel"></span>
+                  </label>
+                  <p id="celebrationOptionsHint" class="muted"></p>
+                </fieldset>
               </div>
               <section class="appearance-preview-shell" aria-labelledby="appearancePreviewHeading">
                 <h4 id="appearancePreviewHeading">{{LABEL_PREVIEW_TITLE}}</h4>
@@ -460,6 +469,7 @@
 <script defer src="/frontend/theme-runtime.js"></script>
 <script defer src="/frontend/accessibility-runtime.js"></script>
 <script defer src="/frontend/feedback-runtime.js"></script>
+<script defer src="/frontend/celebration-runtime.js"></script>
 <script defer src="/frontend/transition-runtime.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>

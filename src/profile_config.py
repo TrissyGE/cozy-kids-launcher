@@ -19,6 +19,7 @@ PROFILE_FIELDS = (
     "themeTimeOfDayEnabled",
     "soundFeedbackEnabled",
     "speechFeedbackEnabled",
+    "celebrationEnabled",
     "accessibilityLargeText",
     "accessibilityHighContrast",
     "accessibilityReducedMotion",

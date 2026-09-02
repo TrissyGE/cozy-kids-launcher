@@ -131,6 +131,7 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/theme-runtime.js"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/accessibility-runtime.js"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/feedback-runtime.js"
+          test -f "$test_home/.local/share/cozy-kids-launcher/frontend/celebration-runtime.js"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/transition-runtime.js"
           cmp VERSION "$test_home/.local/share/cozy-kids-launcher/version"
 

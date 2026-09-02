@@ -292,6 +292,7 @@ async function playMedia(item,button){
     mediaRecentIds=[item.id,...mediaRecentIds.filter(mediaId=>mediaId!==item.id)].slice(0,50);
     if(mediaFilter==='recents') renderMediaCatalog();
     hideMediaState();
+    playCelebrationMoment(mediaConfig);
   }catch(e){
     button.classList.remove('is-starting');
     showMediaState('error',mediaText.mediaLibraryPlayError);

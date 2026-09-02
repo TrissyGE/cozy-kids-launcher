@@ -17,6 +17,7 @@
       "themeTimeOfDayEnabled": false,
       "soundFeedbackEnabled": false,
       "speechFeedbackEnabled": false,
+      "celebrationEnabled": false,
       "accessibilityLargeText": false,
       "accessibilityHighContrast": false,
       "accessibilityReducedMotion": false,

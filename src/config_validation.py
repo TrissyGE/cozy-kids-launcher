@@ -128,6 +128,7 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         "themeTimeOfDayEnabled",
         "soundFeedbackEnabled",
         "speechFeedbackEnabled",
+        "celebrationEnabled",
         "accessibilityLargeText",
         "accessibilityHighContrast",
         "accessibilityReducedMotion",
