@@ -272,6 +272,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())
             self.assertTrue((frontend_root / "theme-runtime.js").is_file())
+            self.assertTrue((frontend_root / "transition-runtime.js").is_file())
             self.assertTrue((frontend_root / "media-library.css").is_file())
             self.assertTrue((frontend_root / "media-library.js").is_file())
             self.assertTrue((frontend_root / "locales" / "de.json").is_file())

@@ -101,6 +101,7 @@
   "invalidConfig": "Invalid config file",
   "importConfirm": "This will overwrite all settings. Continue?",
   "startingApp": "Starting {app}...",
+  "startedApp": "{app} is ready",
   "emptyStateEmoji": "🤔",
   "emptyStateText": "Ask Mom or Dad to add apps!",
   "previewTitle": "Preview",

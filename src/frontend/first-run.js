@@ -235,6 +235,7 @@ function changeFirstRunStep(direction){
   }
   firstRunStep=Math.max(0,Math.min(FIRST_RUN_STEPS.length-1,firstRunStep+direction));
   renderFirstRun();
+  playFirstRunStepTransition(direction);
 }
 
 function skipFirstRun(){

@@ -127,7 +127,7 @@
     </div>
   </div>
 </div>
-<div id="startOverlay" class="startoverlay hidden">
+<div id="startOverlay" class="startoverlay hidden" role="status" aria-live="polite">
   <div class="startbox">
     <div class="emoji" id="startEmoji">✨</div>
     <h2 id="startText">{{STARTING_APP}}</h2>
@@ -425,6 +425,7 @@
 <script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/theme-runtime.js"></script>
+<script defer src="/frontend/transition-runtime.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>
 <script defer src="/frontend/schedule-controls.js"></script>

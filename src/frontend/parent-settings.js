@@ -76,6 +76,7 @@ const ADMIN_SECTION_ICONS={
 };
 function activateAdminSection(section,focusHeading=false){
   if(!ADMIN_SECTIONS.some(([id])=>id===section)) section='overview';
+  const changed=adminSection!==section;
   adminSection=section;
   document.querySelectorAll('[data-admin-section]').forEach(button=>{
     const active=button.dataset.adminSection===section;
@@ -86,6 +87,8 @@ function activateAdminSection(section,focusHeading=false){
   document.querySelectorAll('[data-admin-panel]').forEach(panel=>{
     panel.hidden=panel.dataset.adminPanel!==section;
   });
+  const activePanel=document.querySelector('[data-admin-panel="'+section+'"]');
+  if(changed) playAdminPanelTransition(activePanel);
   if(focusHeading){
     const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
     if(heading) heading.focus({preventScroll:true});

@@ -302,11 +302,36 @@
   .tile.last-launched { animation:tileWiggle .5s ease; box-shadow:0 0 0 4px var(--btn), var(--shadow); }
   .tile.focused { outline:4px solid var(--btn); outline-offset:4px; border-radius:inherit; }
   .tile .last-star { position:absolute; top:8px; right:8px; width:1.4rem; height:1.4rem; color:var(--btn); animation:tileBounce 1s ease infinite; }
+  /* Brief state transitions; navigation and focus update before motion starts. */
+  @keyframes pageEnterNext { from { opacity:.72; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes pageEnterBack { from { opacity:.72; transform:translateX(-16px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes screenEnterForward { from { opacity:.74; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes screenEnterReturn { from { opacity:.78; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes panelEnter { from { opacity:.76; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes setupStepNext { from { opacity:.76; transform:translateX(14px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes setupStepBack { from { opacity:.76; transform:translateX(-14px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes overlayEnter { from { opacity:0; } to { opacity:1; } }
+  @keyframes startBoxEnter { from { opacity:.82; transform:translateY(8px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes successSettle { 0% { opacity:.84; transform:scale(.98); } 55% { opacity:1; transform:scale(1.025); } 100% { opacity:1; transform:scale(1); } }
+  @keyframes returnHighlight { 0% { box-shadow:var(--shadow); } 45% { box-shadow:0 0 0 5px var(--input-border),var(--shadow); } 100% { box-shadow:var(--shadow); } }
+  .grid.page-enter-next { animation:pageEnterNext .28s ease-out; }
+  .grid.page-enter-back { animation:pageEnterBack .28s ease-out; }
+  .screen.screen-enter-forward .wrap { animation:screenEnterForward .36s ease-out; }
+  .screen.screen-enter-return .wrap, .screen.screen-returning .wrap { animation:screenEnterReturn .38s ease-out; }
+  [data-admin-panel].admin-panel-enter { animation:panelEnter .24s ease-out; }
+  .first-run-content.setup-step-next { animation:setupStepNext .24s ease-out; }
+  .first-run-content.setup-step-back { animation:setupStepBack .24s ease-out; }
+  .tile.return-highlight { animation:returnHighlight .82s ease-out; }
+  .ui-state-success:not([hidden]) { animation:successSettle .34s ease-out; }
   /* Start feedback overlay */
   .startoverlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:60; }
   .startbox { background:white; border-radius:28px; padding:40px 48px; box-shadow:var(--shadow); text-align:center; }
   .startbox .emoji { font-size:4rem; animation:tileBounce 1s ease infinite; }
   .startbox h2 { margin:12px 0 0; font-size:1.6rem; color:var(--text); }
+  .startoverlay.launch-starting, .startoverlay.launch-success { animation:overlayEnter .22s ease-out; }
+  .startoverlay.launch-starting .startbox { animation:startBoxEnter .32s ease-out; }
+  .startoverlay.launch-success .startbox { animation:successSettle .42s ease-out; box-shadow:0 14px 46px rgba(39,174,96,.24); }
+  .startoverlay.launch-success .emoji { animation:successSettle .42s ease-out; }
   /* Clock & battery badges */
   #clockBadge { position:fixed; top:18px; right:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 14px; font-weight:700; font-size:1rem; color:var(--text); box-shadow:var(--shadow); display:flex; align-items:center; gap:6px; }
   #batteryBadge { position:fixed; top:18px; left:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 14px; font-weight:700; font-size:1rem; color:var(--text); box-shadow:var(--shadow); display:none; align-items:center; gap:4px; }
@@ -340,6 +365,7 @@
       outline:var(--focus-ring-width) solid Highlight !important;
       outline-offset:3px;
     }
+    .tile.return-highlight, .startoverlay.launch-success .startbox { box-shadow:none; }
   }
 
   @media (max-width:900px), (max-height:700px) {

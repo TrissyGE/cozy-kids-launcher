@@ -53,7 +53,9 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
   - [x] Complete empty, error, and loading states
 - [x] Create a coherent local icon system while keeping custom emoji tiles available
 
-## v0.6.0 — Family Edition
+## v0.6.0 — Family Edition & Delight
+
+### Family Edition
 
 - [x] Add multiple child profiles with separate avatars, themes, tiles, favorites, and limits
   - [x] Introduce a versioned local profile model and authenticated management API without breaking the existing launcher API
@@ -68,7 +70,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [x] Add a browser allowlist with understandable navigation boundaries
 - [x] Keep all profile and activity data local, exportable, and removable
 
-## v0.7.0 — Delight
+### Delight
 
 - [x] Add a cover-based local media library with favorites, recents, and resume support
   - [x] Add a bounded, path-private local catalog API with sidecar and folder-cover discovery
@@ -79,17 +81,30 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
     - [x] Capture VLC positions through a supervised local adapter without using global viewing history
     - [x] Keep Celluloid, Totem, and desktop openers as explicit start-over fallbacks
 - [x] Add animated world themes and optional time-of-day variants
-- [ ] Add subtle navigation, launch, success, and return transitions
+- [x] Add subtle navigation, launch, success, and return transitions
 - [ ] Add optional local sounds and Linux text-to-speech feedback
 - [ ] Add accessibility presets for larger text, contrast, reduced motion, and keyboard-only operation
 - [ ] Add optional, non-manipulative celebration moments without engagement scoring
 
 ## v0.8.0 — Platform
 
+### Cross-distribution app catalog
+
+- [ ] Redesign the Parent app catalog with search, child-friendly categories, detail views, and clear install, retry, update, and removal states
+- [ ] Expand the curated catalog with more educational, creative, media, and accessible apps such as GCompris, Tux Paint, KolourPaint, KTurtle, KGeography, KStars, and Stellarium where each distribution provides a maintained package
+- [ ] Show age guidance, offline capability, license, input methods, and privacy/network expectations before a parent installs an app
+- [ ] Replace distribution-specific install commands with tested package-provider adapters for APT, DNF, Pacman, Zypper, and suitable Flatpak remotes
+- [ ] Keep every package action Parent-authenticated, explicitly confirmed, argv-based, allowlisted, and free of downloaded arbitrary shell scripts
+- [ ] Preserve install progress and recoverable error state across a launcher restart without collecting package or family telemetry
+- [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
+
+### Packaging and lifecycle
+
 - [ ] Add more installer and interface languages beyond German and English
 - [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
   - [ ] Add a package-managed runtime mode that leaves updates to the system package manager
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
+- [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
 - [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable
 - [ ] Evaluate a classic-confined Snap and request Snap Store approval if host-app launching remains reliable
 - [ ] Treat Flatpak as a feasibility track: prefer a reduced or self-hosted build unless sandbox integration and current Flathub policy become compatible with the launcher
@@ -101,6 +116,24 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 Packaging therefore proceeds in the practical order DEB/APT, AUR, classic Snap,
 then Flatpak feasibility. Every package format must preserve local configuration,
 desktop integration, host-app launching, and the stable-`main` updater contract.
+
+## v0.9.0 — Living Room
+
+- [ ] Add optional gamepad and simple remote-control navigation with the same focus and modal boundaries as keyboard input
+- [ ] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
+- [ ] Handle removable-media disconnect and reconnect states without stale covers, crashes, or path leakage
+- [ ] Add optional child-friendly folders and categories without recommendations, streaks, or engagement scoring
+- [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
+- [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
+
+## v1.0.0 — Long-term Stable
+
+- [ ] Publish a compatibility policy for configuration schemas, the loopback API, package migrations, and update channels
+- [ ] Complete a documented threat model and security review of Parent authentication, local HTTP boundaries, imports, updates, and process launching
+- [ ] Verify clean install, script-to-package migration, upgrade, rollback, backup restore, and uninstall paths on every supported distribution
+- [ ] Complete manual screen-reader coverage alongside keyboard, touch, reduced-motion, high-contrast, and low-resolution testing
+- [ ] Make release artifacts and repository metadata reproducible, signed where applicable, and independently verifiable
+- [ ] Document a sustainable translation, accessibility, security-reporting, and downstream-packaging contribution workflow
 
 ## Release standard
 

@@ -58,6 +58,11 @@ Optional world-theme day periods use only the current hour reported by the
 device. The launcher does not request location data, contact an external time
 service, or store a history of theme periods.
 
+Returning from the local media library or embedded browser uses one session-only
+marker containing the active profile and tile identifiers. It contains no child
+name, label, command, URL, or filesystem path and is removed when the launcher
+consumes it. Native application return feedback is tracked only in page memory.
+
 Optional activity tracking is disabled by default. When a parent enables it,
 the launcher stores only profile and tile identifiers, a start time, and the
 completed duration in `~/.local/state/cozy-kids-launcher/activity.json`. It does
