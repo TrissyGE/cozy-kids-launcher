@@ -204,5 +204,14 @@
   "mediaLibraryStarting": "Starting {title}...",
   "mediaLibraryPlayError": "This media could not be started.",
   "mediaLibraryUnavailable": "This media tile is not available right now.",
-  "mediaLibraryTruncated": "Showing the first 2,000 items."
+  "mediaLibraryTruncated": "Showing the first 2,000 items.",
+  "mediaLibraryViews": "Media library views",
+  "mediaLibraryAll": "All media",
+  "mediaLibraryFavorites": "Favorites",
+  "mediaLibraryRecents": "Recently played",
+  "mediaLibraryFavoritesEmpty": "No favorites yet. Use the star on a cover to add one.",
+  "mediaLibraryRecentsEmpty": "Nothing has been played here yet.",
+  "mediaLibraryFavoriteAdd": "Add {title} to favorites",
+  "mediaLibraryFavoriteRemove": "Remove {title} from favorites",
+  "mediaLibraryFavoriteError": "This favorite could not be saved."
 }

@@ -20,6 +20,11 @@
       </div>
       <span id="mediaTruncated" class="media-truncated" hidden></span>
     </header>
+    <nav id="mediaFilters" class="media-library-filters" aria-label="Media library views">
+      <button class="smallbtn media-filter is-active" type="button" data-media-filter="all" aria-pressed="true">All media</button>
+      <button class="smallbtn media-filter" type="button" data-media-filter="favorites" aria-pressed="false">Favorites</button>
+      <button class="smallbtn media-filter" type="button" data-media-filter="recents" aria-pressed="false">Recently played</button>
+    </nav>
     <section id="mediaState" class="ui-state ui-state-loading media-library-state" role="status" aria-live="polite" aria-busy="true">
       <span class="ui-state-message">Looking for your media...</span>
     </section>

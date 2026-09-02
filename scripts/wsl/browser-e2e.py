@@ -3,6 +3,7 @@
 
 import argparse
 import getpass
+import hashlib
 import http.server
 import json
 import os
@@ -246,6 +247,38 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "!document.body.textContent.includes('/Videos/')",
         "The media library did not render safe localized covers and fallbacks",
     )
+    browser.evaluate(
+        "Array.from(document.querySelectorAll('.media-card-shell')).find(shell=>"
+        "shell.querySelector('.media-card-title').textContent==='Bedtime Song')"
+        ".querySelector('.media-favorite').click()"
+    )
+    browser.wait_for(
+        "mediaFavoriteIds.size===1 && "
+        "Array.from(document.querySelectorAll('.media-favorite')).some(button=>"
+        "button.getAttribute('aria-pressed')==='true')",
+        message="The media favorite did not persist and re-render",
+    )
+    favorite_state = browser.evaluate(
+        "fetch('/api/media',{cache:'no-store'}).then(response=>response.json())",
+        await_promise=True,
+    )
+    if len(favorite_state.get("favoriteIds", [])) != 1:
+        raise AssertionError(f"The favorite API did not retain one opaque ID: {favorite_state!r}")
+    browser.click('[data-media-filter="favorites"]')
+    assert_js(
+        browser,
+        "document.querySelectorAll('.media-card').length===1 && "
+        "document.querySelector('.media-card-title').textContent==='Bedtime Song'",
+        "The Favorites view did not show only the saved item",
+    )
+    browser.click('[data-media-filter="recents"]')
+    assert_js(
+        browser,
+        "document.querySelectorAll('.media-card').length===1 && "
+        "document.querySelector('.media-card-title').textContent==='E2E Film'",
+        "The Recently played view did not preserve its profile-specific order",
+    )
+    browser.click('[data-media-filter="all"]')
     browser.evaluate("document.querySelector('.media-card').focus()")
     browser.key_press("ArrowRight")
     assert_js(
@@ -1215,6 +1248,22 @@ def main():
                 videos / "E2E_Film.jpg",
             )
             (music / "Bedtime_Song.ogg").write_bytes(b"audio fixture")
+            recent_media_id = hashlib.sha256(
+                os.fsencode(os.path.realpath(videos / "E2E_Film.mp4"))
+            ).hexdigest()[:24]
+            media_state_path = (
+                test_home / ".local" / "state" / "cozy-kids-launcher" / "media.json"
+            )
+            media_state_path.parent.mkdir(parents=True, exist_ok=True)
+            media_state_path.write_text(
+                json.dumps({
+                    "mediaStateVersion": 1,
+                    "profiles": {
+                        "default": {"favorites": [], "recents": [recent_media_id]}
+                    },
+                }),
+                encoding="utf-8",
+            )
             write_demo_config(config_path, browser_name)
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = installed_version

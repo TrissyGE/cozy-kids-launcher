@@ -70,6 +70,12 @@ from media_library import (
     public_media_catalog,
     scan_media_catalog,
 )
+from media_state import (
+    media_state_payload,
+    record_media_play,
+    remove_profile_media_state,
+    set_media_favorite,
+)
 from parent_auth import (
     ADMIN_COOKIE_NAME,
     ADMIN_SESSION_TTL_SECONDS,
@@ -137,6 +143,7 @@ CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 BACKUP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}-backups")
 LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
 ACTIVITY_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "activity.json")
+MEDIA_STATE_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "media.json")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
@@ -696,9 +703,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return super().do_GET()
         if request_url.path == "/api/media":
             entries, truncated = media_catalog()
+            cfg = load_cfg()
+            try:
+                state = media_state_payload(
+                    MEDIA_STATE_FILE,
+                    cfg.get("activeProfileId", ""),
+                    available_ids=[entry["id"] for entry in entries],
+                )
+            except (OSError, ValueError):
+                state = {"favoriteIds": [], "recentIds": []}
             return self.json_response({
                 "items": public_media_catalog(entries),
                 "truncated": truncated,
+                **state,
             })
         if request_url.path == "/api/media/cover":
             query = parse_qs(request_url.query, keep_blank_values=True)
@@ -828,6 +845,47 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action == "api/media/favorite":
+            body = self.read_json_body()
+            if body is None:
+                return
+            cfg = load_cfg()
+            tile_id = body.get("tileId")
+            if not configured_media_tile(cfg, tile_id):
+                self.send_response(404)
+                self.end_headers()
+                return
+            availability = tile_availability(cfg, tile_id)
+            if not availability["allowed"]:
+                self.json_response({
+                    "status": "blocked",
+                    "reason": availability["reason"],
+                }, 403)
+                return
+            entries, _ = media_catalog()
+            item = catalog_item(entries, body.get("mediaId"))
+            if not item:
+                self.send_response(404)
+                self.end_headers()
+                return
+            try:
+                favorite = set_media_favorite(
+                    MEDIA_STATE_FILE,
+                    cfg.get("activeProfileId", ""),
+                    item["id"],
+                    body.get("favorite"),
+                )
+            except ValueError as exc:
+                self.json_response({"status": "error", "message": str(exc)}, 400)
+                return
+            except OSError:
+                self.json_response(
+                    {"status": "error", "message": "Media favorite could not be saved"},
+                    503,
+                )
+                return
+            self.json_response({"status": "ok", "favorite": favorite})
+            return
         if action == "api/media/play":
             body = self.read_json_body()
             if body is None:
@@ -889,6 +947,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     503,
                 )
                 return
+            try:
+                record_media_play(
+                    MEDIA_STATE_FILE,
+                    cfg.get("activeProfileId", ""),
+                    item["id"],
+                )
+            except (OSError, ValueError):
+                pass
             self.send_response(204)
             self.end_headers()
             return
@@ -972,6 +1038,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             try:
                 stored = remove_profile(stored, body.get("profileId"))
                 remove_profile_activity(ACTIVITY_FILE, body.get("profileId"))
+                remove_profile_media_state(MEDIA_STATE_FILE, body.get("profileId"))
                 stored = save_stored_cfg(stored)
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)

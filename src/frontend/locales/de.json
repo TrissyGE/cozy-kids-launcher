@@ -204,5 +204,14 @@
   "mediaLibraryStarting": "{title} wird gestartet...",
   "mediaLibraryPlayError": "Dieses Medium konnte nicht gestartet werden.",
   "mediaLibraryUnavailable": "Diese Medien-Kachel ist gerade nicht verfügbar.",
-  "mediaLibraryTruncated": "Die ersten 2.000 Einträge werden angezeigt."
+  "mediaLibraryTruncated": "Die ersten 2.000 Einträge werden angezeigt.",
+  "mediaLibraryViews": "Ansichten der Medienbibliothek",
+  "mediaLibraryAll": "Alle Medien",
+  "mediaLibraryFavorites": "Favoriten",
+  "mediaLibraryRecents": "Zuletzt abgespielt",
+  "mediaLibraryFavoritesEmpty": "Noch keine Favoriten. Tippe auf den Stern eines Covers, um eins hinzuzufügen.",
+  "mediaLibraryRecentsEmpty": "Hier wurde noch nichts abgespielt.",
+  "mediaLibraryFavoriteAdd": "{title} zu Favoriten hinzufügen",
+  "mediaLibraryFavoriteRemove": "{title} aus Favoriten entfernen",
+  "mediaLibraryFavoriteError": "Dieser Favorit konnte nicht gespeichert werden."
 }

@@ -12,12 +12,25 @@ const MEDIA_FALLBACK_TEXT=Object.freeze({
   mediaLibraryStarting:'Starting {title}...',
   mediaLibraryPlayError:'This media could not be started.',
   mediaLibraryUnavailable:'This media tile is not available right now.',
-  mediaLibraryTruncated:'Showing the first 2,000 items.'
+  mediaLibraryTruncated:'Showing the first 2,000 items.',
+  mediaLibraryViews:'Media library views',
+  mediaLibraryAll:'All media',
+  mediaLibraryFavorites:'Favorites',
+  mediaLibraryRecents:'Recently played',
+  mediaLibraryFavoritesEmpty:'No favorites yet. Use the star on a cover to add one.',
+  mediaLibraryRecentsEmpty:'Nothing has been played here yet.',
+  mediaLibraryFavoriteAdd:'Add {title} to favorites',
+  mediaLibraryFavoriteRemove:'Remove {title} from favorites',
+  mediaLibraryFavoriteError:'This favorite could not be saved.'
 });
 
 let mediaText=MEDIA_FALLBACK_TEXT;
 let mediaConfig=null;
 let mediaTileId='';
+let mediaItems=[];
+let mediaFavoriteIds=new Set();
+let mediaRecentIds=[];
+let mediaFilter='all';
 
 function mediaHome(){ window.location='/index.html'; }
 
@@ -63,6 +76,16 @@ function localizeMediaPage(tile){
   document.getElementById('mediaTitle').textContent=title;
   document.getElementById('mediaHint').textContent=mediaText.mediaLibraryHint;
   setIconLabel(document.getElementById('mediaBack'),'back',mediaText.mediaLibraryBack);
+  const filters=document.getElementById('mediaFilters');
+  filters.setAttribute('aria-label',mediaText.mediaLibraryViews);
+  const labels={
+    all:mediaText.mediaLibraryAll,
+    favorites:mediaText.mediaLibraryFavorites,
+    recents:mediaText.mediaLibraryRecents
+  };
+  filters.querySelectorAll('[data-media-filter]').forEach(button=>{
+    button.textContent=labels[button.dataset.mediaFilter];
+  });
 }
 
 function showMediaState(kind,message,retryAction=null){
@@ -97,6 +120,11 @@ function mediaCoverFallback(container,kind){
   container.classList.add('media-cover-fallback');
   const icon=createLocalIcon(kind==='video'?'video':'media');
   container.replaceChildren(...(icon?[icon]:[]),...(playMark?[playMark]:[]));
+}
+
+function mediaFavoriteLabel(item,favorite){
+  return (favorite?mediaText.mediaLibraryFavoriteRemove:mediaText.mediaLibraryFavoriteAdd)
+    .replace('{title}',item.title);
 }
 
 function mediaCard(item){
@@ -137,22 +165,58 @@ function mediaCard(item){
   kind.textContent=item.kind==='video'?mediaText.mediaLibraryVideo:mediaText.mediaLibraryAudio;
   copy.append(title,kind);
   button.append(cover,copy);
-  shell.appendChild(button);
+  const favorite=mediaFavoriteIds.has(item.id);
+  const favoriteButton=document.createElement('button');
+  favoriteButton.type='button';
+  favoriteButton.className='media-favorite';
+  favoriteButton.dataset.favoriteId=item.id;
+  favoriteButton.setAttribute('aria-pressed',favorite?'true':'false');
+  setIconOnly(favoriteButton,'star',mediaFavoriteLabel(item,favorite));
+  favoriteButton.addEventListener('click',()=>toggleMediaFavorite(item,favoriteButton));
+  shell.append(button,favoriteButton);
   return shell;
 }
 
-function renderMediaCatalog(payload){
+function visibleMediaItems(){
+  if(mediaFilter==='favorites'){
+    return mediaItems.filter(item=>mediaFavoriteIds.has(item.id));
+  }
+  if(mediaFilter==='recents'){
+    const byId=new Map(mediaItems.map(item=>[item.id,item]));
+    return mediaRecentIds.map(mediaId=>byId.get(mediaId)).filter(Boolean);
+  }
+  return mediaItems;
+}
+
+function emptyMediaMessage(){
+  if(mediaFilter==='favorites') return mediaText.mediaLibraryFavoritesEmpty;
+  if(mediaFilter==='recents') return mediaText.mediaLibraryRecentsEmpty;
+  return mediaText.mediaLibraryEmpty;
+}
+
+function renderMediaCatalog(){
+  const items=visibleMediaItems();
   const grid=document.getElementById('mediaGrid');
-  grid.replaceChildren(...payload.items.map(mediaCard));
-  grid.hidden=payload.items.length===0;
-  const truncated=document.getElementById('mediaTruncated');
-  truncated.hidden=!payload.truncated;
-  truncated.textContent=payload.truncated?mediaText.mediaLibraryTruncated:'';
-  if(payload.items.length===0){
-    showMediaState('empty',mediaText.mediaLibraryEmpty);
+  grid.replaceChildren(...items.map(mediaCard));
+  grid.hidden=items.length===0;
+  document.querySelectorAll('[data-media-filter]').forEach(button=>{
+    const active=button.dataset.mediaFilter===mediaFilter;
+    button.classList.toggle('is-active',active);
+    button.setAttribute('aria-pressed',active?'true':'false');
+  });
+  if(items.length===0){
+    showMediaState('empty',emptyMediaMessage());
   }else{
     hideMediaState();
   }
+}
+
+function setMediaFilter(filter){
+  if(!['all','favorites','recents'].includes(filter)) return;
+  mediaFilter=filter;
+  renderMediaCatalog();
+  const first=document.querySelector('.media-card');
+  if(first) first.focus();
 }
 
 async function loadMediaCatalog(){
@@ -162,12 +226,48 @@ async function loadMediaCatalog(){
     const response=await fetch('/api/media',{cache:'no-store'});
     if(!response.ok) throw new Error('Catalog unavailable');
     const payload=await response.json();
-    if(!payload||!Array.isArray(payload.items)||typeof payload.truncated!=='boolean'){
+    if(!payload||!Array.isArray(payload.items)||typeof payload.truncated!=='boolean'||
+        !Array.isArray(payload.favoriteIds)||!Array.isArray(payload.recentIds)){
       throw new Error('Invalid catalog');
     }
-    renderMediaCatalog(payload);
+    mediaItems=payload.items;
+    mediaFavoriteIds=new Set(payload.favoriteIds);
+    mediaRecentIds=payload.recentIds;
+    const truncated=document.getElementById('mediaTruncated');
+    truncated.hidden=!payload.truncated;
+    truncated.textContent=payload.truncated?mediaText.mediaLibraryTruncated:'';
+    renderMediaCatalog();
   }catch(e){
     showMediaState('error',mediaText.mediaLibraryError,loadMediaCatalog);
+  }
+}
+
+async function toggleMediaFavorite(item,button){
+  const favorite=!mediaFavoriteIds.has(item.id);
+  button.disabled=true;
+  try{
+    const response=await fetch('/api/media/favorite',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mediaId:item.id,tileId:mediaTileId,favorite:favorite})
+    });
+    if(response.status===403){
+      showMediaState('error',mediaText.mediaLibraryUnavailable);
+      return;
+    }
+    if(!response.ok) throw new Error('Favorite failed');
+    const payload=await response.json();
+    if(!payload||payload.favorite!==favorite) throw new Error('Invalid favorite response');
+    if(favorite) mediaFavoriteIds.add(item.id); else mediaFavoriteIds.delete(item.id);
+    renderMediaCatalog();
+    const updated=Array.from(document.querySelectorAll('[data-favorite-id]'))
+      .find(candidate=>candidate.dataset.favoriteId===item.id);
+    if(updated) updated.focus();
+    else document.querySelector('[data-media-filter="favorites"]').focus();
+  }catch(e){
+    showMediaState('error',mediaText.mediaLibraryFavoriteError);
+  }finally{
+    button.disabled=false;
   }
 }
 
@@ -187,6 +287,8 @@ async function playMedia(item,button){
       return;
     }
     if(!response.ok) throw new Error('Launch failed');
+    mediaRecentIds=[item.id,...mediaRecentIds.filter(mediaId=>mediaId!==item.id)].slice(0,50);
+    if(mediaFilter==='recents') renderMediaCatalog();
     hideMediaState();
   }catch(e){
     button.classList.remove('is-starting');
@@ -213,6 +315,10 @@ function handleMediaKeys(event){
 
 async function initializeMediaLibrary(){
   document.getElementById('mediaBack').addEventListener('click',mediaHome);
+  document.getElementById('mediaFilters').addEventListener('click',event=>{
+    const button=event.target.closest('[data-media-filter]');
+    if(button) setMediaFilter(button.dataset.mediaFilter);
+  });
   document.addEventListener('keydown',handleMediaKeys);
   mediaTileId=new URLSearchParams(window.location.search).get('tile')||'';
   try{

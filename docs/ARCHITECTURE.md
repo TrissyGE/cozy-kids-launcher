@@ -97,6 +97,15 @@ uses the same owned process and activity boundary as other local launches. A
 direct POST to the legacy `/launch/<media-tile>` route still opens the
 all-folder playlist for compatibility.
 
+`media_state.py` owns child-specific library preferences outside the exported
+configuration schema. It stores only opaque media IDs in a private atomic file,
+with independent favorites and most-recent-first history for at most 20
+profiles. Favorites are capped at 200 and history at 50 items. `/api/media`
+filters both lists through the current bounded catalog before returning them,
+and `/api/media/favorite` accepts only a current catalog item plus a visible,
+currently available media tile. A successful individual launch moves that item
+to the active profile's recent list; deleting a profile removes its media state.
+
 `application_launcher.py` owns action normalization and orchestration. It starts
 argument vectors below `process_supervisor.py`, waits for a verified process
 record, and only then starts `overlay.py`. Missing ownership or overlay startup
