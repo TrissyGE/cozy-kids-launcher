@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from urllib.parse import parse_qs, quote, unquote, urlparse
@@ -156,6 +157,7 @@ MEDIA_RESUME_ROOT = os.path.join(
     "{{APP_ID}}",
     "media-resume",
 )
+MEDIA_SESSION_SCRIPT = os.path.join(APP_ROOT, "media_session.py")
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
@@ -926,11 +928,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             player = find_media_player(INDIVIDUAL_MEDIA_PLAYER_CANDIDATES)
             if player:
                 resume_directory = None
-                if player == "mpv":
+                profile_id = cfg.get("activeProfileId", "")
+                if player in ("mpv", "vlc"):
                     try:
                         resume_directory = prepare_profile_resume_directory(
                             MEDIA_RESUME_ROOT,
-                            cfg.get("activeProfileId", ""),
+                            profile_id,
                         )
                     except (OSError, ValueError):
                         log_runtime_event(
@@ -943,6 +946,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     [item["path"]],
                     resume_directory=resume_directory,
                 )
+                if (
+                    player == "vlc"
+                    and resume_directory
+                    and os.path.isfile(MEDIA_SESSION_SCRIPT)
+                ):
+                    command = [
+                        sys.executable,
+                        MEDIA_SESSION_SCRIPT,
+                        "--resume-root",
+                        MEDIA_RESUME_ROOT,
+                        "--profile-id",
+                        profile_id,
+                        "--media-id",
+                        item["id"],
+                        "--media-path",
+                        item["path"],
+                        "--",
+                        *command,
+                    ]
             elif shutil.which("xdg-open"):
                 command = ["xdg-open", item["path"]]
             else:
