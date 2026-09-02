@@ -171,6 +171,15 @@ text() {
     de:media_library_play_error) echo "Dieses Medium konnte nicht gestartet werden." ;;
     de:media_library_unavailable) echo "Diese Medien-Kachel ist gerade nicht verfügbar." ;;
     de:media_library_truncated) echo "Die ersten 2.000 Einträge werden angezeigt." ;;
+    de:media_library_views) echo "Ansichten der Medienbibliothek" ;;
+    de:media_library_all) echo "Alle Medien" ;;
+    de:media_library_favorites) echo "Favoriten" ;;
+    de:media_library_recents) echo "Zuletzt abgespielt" ;;
+    de:media_library_favorites_empty) echo "Noch keine Favoriten. Tippe auf den Stern eines Covers, um eins hinzuzufügen." ;;
+    de:media_library_recents_empty) echo "Hier wurde noch nichts abgespielt." ;;
+    de:media_library_favorite_add) echo "{title} zu Favoriten hinzufügen" ;;
+    de:media_library_favorite_remove) echo "{title} aus Favoriten entfernen" ;;
+    de:media_library_favorite_error) echo "Dieser Favorit konnte nicht gespeichert werden." ;;
     de:admin_title) echo "Eltern-Einstellungen" ;;
     de:admin_nav_label) echo "Bereiche der Eltern-Einstellungen" ;;
     de:admin_overview) echo "Übersicht" ;;
@@ -296,6 +305,15 @@ text() {
     en:media_library_play_error) echo "This media could not be started." ;;
     en:media_library_unavailable) echo "This media tile is not available right now." ;;
     en:media_library_truncated) echo "Showing the first 2,000 items." ;;
+    en:media_library_views) echo "Media library views" ;;
+    en:media_library_all) echo "All media" ;;
+    en:media_library_favorites) echo "Favorites" ;;
+    en:media_library_recents) echo "Recently played" ;;
+    en:media_library_favorites_empty) echo "No favorites yet. Use the star on a cover to add one." ;;
+    en:media_library_recents_empty) echo "Nothing has been played here yet." ;;
+    en:media_library_favorite_add) echo "Add {title} to favorites" ;;
+    en:media_library_favorite_remove) echo "Remove {title} from favorites" ;;
+    en:media_library_favorite_error) echo "This favorite could not be saved." ;;
     en:admin_title) echo "Parent settings" ;;
     en:admin_nav_label) echo "Parent settings sections" ;;
     en:admin_overview) echo "Overview" ;;
@@ -1538,6 +1556,7 @@ install -m 0644 "$SRC_DIR/profile_config.py" "$APP_ROOT/profile_config.py"
 install -m 0644 "$SRC_DIR/schedule_rules.py" "$APP_ROOT/schedule_rules.py"
 install -m 0644 "$SRC_DIR/lifecycle_state.py" "$APP_ROOT/lifecycle_state.py"
 install -m 0644 "$SRC_DIR/media_library.py" "$APP_ROOT/media_library.py"
+install -m 0644 "$SRC_DIR/media_state.py" "$APP_ROOT/media_state.py"
 install -m 0644 "$SRC_DIR/parent_auth.py" "$APP_ROOT/parent_auth.py"
 install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
 install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"

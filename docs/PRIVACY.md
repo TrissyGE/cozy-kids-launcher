@@ -21,6 +21,10 @@ only after resolving an identifier through that same local catalog. Starting
 one item sends its opaque ID and the visible media-tile ID back to localhost;
 the browser never receives the file path. The server resolves it again and
 applies the tile's current availability rule before launching a player.
+Per-profile media favorites and the 50 most recently launched items are kept in
+a separate private local state file containing only profile IDs and opaque
+media IDs—never titles or paths. The catalog API omits stale IDs, and deleting a
+child profile also removes its retained media-library state.
 
 Embedded website tiles are restricted to their configured start origin plus up
 to 20 exact additional origins chosen in Parent settings. The local server binds

@@ -57,6 +57,15 @@ EXTRA_UI_KEYS = {
     "mediaLibraryPlayError": "media_library_play_error",
     "mediaLibraryUnavailable": "media_library_unavailable",
     "mediaLibraryTruncated": "media_library_truncated",
+    "mediaLibraryViews": "media_library_views",
+    "mediaLibraryAll": "media_library_all",
+    "mediaLibraryFavorites": "media_library_favorites",
+    "mediaLibraryRecents": "media_library_recents",
+    "mediaLibraryFavoritesEmpty": "media_library_favorites_empty",
+    "mediaLibraryRecentsEmpty": "media_library_recents_empty",
+    "mediaLibraryFavoriteAdd": "media_library_favorite_add",
+    "mediaLibraryFavoriteRemove": "media_library_favorite_remove",
+    "mediaLibraryFavoriteError": "media_library_favorite_error",
 }
 
 

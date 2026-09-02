@@ -22,6 +22,7 @@ if str(SOURCE_ROOT) not in sys.path:
 
 import lifecycle_state
 import activity_store
+import media_state
 
 
 def frontend_source():
@@ -419,6 +420,7 @@ class ServerApiTests(unittest.TestCase):
         server_module.BACKUP_ROOT = str(root / "backups")
         server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
         server_module.ACTIVITY_FILE = str(root / "state" / "activity.json")
+        server_module.MEDIA_STATE_FILE = str(root / "state" / "media.json")
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
         server_module.BROWSER_PIDFILE = str(cache_dir / "browser.pid")
@@ -515,6 +517,8 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertFalse(data["truncated"])
+        self.assertEqual(data["favoriteIds"], [])
+        self.assertEqual(data["recentIds"], [])
         self.assertEqual(len(data["items"]), 1)
         item = data["items"][0]
         self.assertEqual(item["title"], "My Film")
@@ -592,6 +596,98 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(launch.call_args.args[1], "local")
         self.assertEqual(launch.call_args.kwargs["tile_id"], "music")
         self.assertEqual(launch.call_args.kwargs["profile_id"], "default")
+        _, updated_catalog, _ = self.request("/api/media")
+        self.assertEqual(updated_catalog["recentIds"], [catalog["items"][0]["id"]])
+
+    def test_media_favorites_are_catalog_bounded_and_profile_specific(self):
+        (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+        media_id = catalog["items"][0]["id"]
+
+        status, favorite, _ = self.request(
+            "/api/media/favorite",
+            method="POST",
+            body={"tileId": "music", "mediaId": media_id, "favorite": True},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(favorite, {"status": "ok", "favorite": True})
+        _, catalog, _ = self.request("/api/media")
+        self.assertEqual(catalog["favoriteIds"], [media_id])
+
+        status, created, _ = self.request(
+            "/api/profiles/create",
+            method="POST",
+            body={"name": "Alex", "avatar": "🚀"},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        profile_id = created["profileId"]
+        status, _, _ = self.request(
+            "/api/profiles/select",
+            method="POST",
+            body={"profileId": profile_id},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 200)
+        _, catalog, _ = self.request("/api/media")
+        self.assertEqual(catalog["favoriteIds"], [])
+
+        status, _, _ = self.request(
+            "/api/media/favorite",
+            method="POST",
+            body={"tileId": "music", "mediaId": "a" * 24, "favorite": True},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 404)
+        status, _, _ = self.request(
+            "/api/media/favorite",
+            method="POST",
+            body={"tileId": "music", "mediaId": media_id, "favorite": "yes"},
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 400)
+
+    def test_media_favorite_rechecks_schedule_and_local_origin(self):
+        (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+        request_body = {
+            "tileId": "music",
+            "mediaId": catalog["items"][0]["id"],
+            "favorite": True,
+        }
+
+        status, _, _ = self.request(
+            "/api/media/favorite",
+            method="POST",
+            body=request_body,
+            origin="https://example.com",
+        )
+        self.assertEqual(status, 403)
+        config = server_module.load_cfg()
+        config["weeklySchedule"] = {"enabled": True, "days": {}}
+        server_module.save_cfg(config)
+        status, data, _ = self.request(
+            "/api/media/favorite",
+            method="POST",
+            body=request_body,
+            origin=self.base_url,
+        )
+        self.assertEqual(status, 403)
+        self.assertEqual(data, {"status": "blocked", "reason": "profile_schedule"})
+        self.assertFalse(Path(server_module.MEDIA_STATE_FILE).exists())
 
     def test_media_play_rejects_forged_ids_and_non_media_tiles(self):
         media_file = Path(server_module.VIDEOS) / "Film.mp4"
@@ -1235,6 +1331,16 @@ class ServerApiTests(unittest.TestCase):
             now - 5,
             ended_at=now,
         )
+        media_state.record_media_play(
+            server_module.MEDIA_STATE_FILE,
+            profile_id,
+            "1" * 24,
+        )
+        media_state.record_media_play(
+            server_module.MEDIA_STATE_FILE,
+            "default",
+            "2" * 24,
+        )
 
         status, deleted, _ = self.request(
             "/api/profiles/delete",
@@ -1247,6 +1353,20 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(
             [record["profileId"] for record in activity_store.read_activity(server_module.ACTIVITY_FILE)],
             ["default"],
+        )
+        self.assertEqual(
+            media_state.media_state_payload(
+                server_module.MEDIA_STATE_FILE,
+                "default",
+            )["recentIds"],
+            ["2" * 24],
+        )
+        self.assertEqual(
+            media_state.media_state_payload(
+                server_module.MEDIA_STATE_FILE,
+                profile_id,
+            )["recentIds"],
+            [],
         )
 
     def test_profile_api_rejects_deleting_the_active_profile(self):
@@ -1718,7 +1838,11 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertNotRegex(page, r"<script(?![^>]*\bsrc=)[^>]*>")
         self.assertIn("fetch('/api/media'", script)
         self.assertIn("fetch('/api/media/play'", script)
+        self.assertIn("fetch('/api/media/favorite'", script)
         self.assertIn("body:JSON.stringify({mediaId:item.id,tileId:mediaTileId})", script)
+        self.assertIn("mediaFavoriteIds=new Set(payload.favoriteIds)", script)
+        self.assertIn("mediaRecentIds=payload.recentIds", script)
+        self.assertIn("favoriteButton.setAttribute('aria-pressed'", script)
         self.assertIn("title.textContent=item.title", script)
         self.assertIn("image.src=item.coverUrl", script)
         self.assertNotIn("innerHTML", script)
@@ -1729,10 +1853,15 @@ class FrontendSafetyTests(unittest.TestCase):
         for label in (
             "Filme & Musik",
             "Deine Medien werden gesucht",
+            "Zuletzt abgespielt",
             "Movies & music",
             "Looking for your media",
+            "Recently played",
         ):
             self.assertIn(label, installer)
+        self.assertIn('id="mediaFilters"', page)
+        self.assertIn('.media-favorite[aria-pressed="true"]', styles)
+        self.assertIn('install -m 0644 "$SRC_DIR/media_state.py"', installer)
         for asset in ("media.html", "media-library.css", "media-library.js"):
             self.assertIn(asset, installer)
 
