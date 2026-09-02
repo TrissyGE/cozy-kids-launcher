@@ -1,6 +1,6 @@
 # Screenshot guide
 
-The four images used by the GitHub landing page are generated from the real launcher UI with a clean, deterministic demo profile.
+The images used by the GitHub landing page and cozykids.org are generated from the real launcher UI with clean, deterministic demo profiles.
 
 ## Regenerate the README images
 
@@ -26,7 +26,7 @@ wsl.exe -d Ubuntu --cd /path/to/cozy-kids-launcher -- python3 scripts/take-scree
 The script:
 
 1. installs the current checkout into a temporary home directory;
-2. writes a curated English configuration containing no personal data;
+2. writes curated English profiles, local media placeholders, and activity records containing no personal data;
 3. starts the local launcher server on an ephemeral port;
 4. captures real browser renders at 1440×900;
 5. removes the temporary profile and browser data.
@@ -39,8 +39,13 @@ It does not read or change the developer's installed launcher configuration.
 |---|---|
 | `screenshots/screenshot-home-default.png` | Pink theme and four-tile kids home |
 | `screenshots/screenshot-home-world.png` | Illustrated ocean theme |
-| `screenshots/screenshot-admin-general.png` | Parent settings and tile management |
+| `screenshots/screenshot-admin-general.png` | Parent overview and opt-in local activity |
 | `screenshots/screenshot-theme-picker.png` | Localized theme selection overlay |
+| `screenshots/screenshot-profile-picker.png` | Child-facing profile selection |
+| `screenshots/screenshot-admin-children.png` | Separate child profile management |
+| `screenshots/screenshot-admin-screen-time.png` | Weekly and per-app availability schedules |
+| `screenshots/screenshot-admin-appearance.png` | Themes, feedback, celebrations, and accessibility presets |
+| `screenshots/screenshot-media-library.png` | Local cover library with favorites and recents |
 
 Use `--browser <command>` to select a specific Chromium-family browser or `--output-dir <directory>` for a review run that should not replace the checked-in images.
 
@@ -53,7 +58,7 @@ Before committing regenerated images, verify:
 - no usernames, paths, network names, browser history, or other personal data appear;
 - tiles and controls are not clipped;
 - the world-theme background and theme thumbnails loaded;
-- all four images have the same 1440×900 dimensions.
+- all images have the same 1440×900 dimensions.
 
 Commit screenshot changes only when the interface or the curated demo content changed. Avoid re-encoding unchanged images.
 
