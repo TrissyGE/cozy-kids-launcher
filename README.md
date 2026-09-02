@@ -37,13 +37,21 @@ See the [installation guide](docs/INSTALL.md) for language, browser, launch-mode
 
 ## More screenshots
 
-| Illustrated world theme | Parent settings |
+| Child profile picker | Local media library |
 |---|---|
-| ![Ocean theme](screenshots/screenshot-home-world.png) | ![Parent settings](screenshots/screenshot-admin-general.png) |
+| ![Three local child profiles](screenshots/screenshot-profile-picker.png) | ![Local cover library with favorites and recents](screenshots/screenshot-media-library.png) |
 
-| Theme picker |
-|---|
-| ![Theme picker](screenshots/screenshot-theme-picker.png) |
+| Private activity overview | Child profile management |
+|---|---|
+| ![Opt-in local activity overview](screenshots/screenshot-admin-general.png) | ![Parent settings for separate child profiles](screenshots/screenshot-admin-children.png) |
+
+| Weekly and per-app schedules | Feedback and accessibility |
+|---|---|
+| ![Parent settings for weekly and per-app schedules](screenshots/screenshot-admin-screen-time.png) | ![Appearance settings with audio feedback, celebrations, and accessibility presets](screenshots/screenshot-admin-appearance.png) |
+
+| Illustrated world theme | Theme picker |
+|---|---|
+| ![Ocean theme](screenshots/screenshot-home-world.png) | ![Theme picker](screenshots/screenshot-theme-picker.png) |
 
 The screenshots use a clean, generated demo profile. Maintainers can recreate them with `python3 scripts/take-screenshots.py`; see the [screenshot guide](docs/SCREENSHOTS.md).
 

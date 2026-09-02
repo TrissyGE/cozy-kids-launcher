@@ -39,7 +39,7 @@ On Linux or in WSL with a Chromium-family browser installed:
 python3 scripts/take-screenshots.py
 ```
 
-The script installs the current checkout into a temporary home, creates a clean English demo configuration, and writes the four README images at 1440×900. It does not read or modify the current user's launcher profile. See [SCREENSHOTS.md](SCREENSHOTS.md).
+The script installs the current checkout into a temporary home, creates clean English demo profiles and content, and writes the public gallery images at 1440×900. It does not read or modify the current user's launcher profile. See [SCREENSHOTS.md](SCREENSHOTS.md).
 
 ## Release gate
 
