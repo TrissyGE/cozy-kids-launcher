@@ -82,7 +82,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
     - [x] Keep Celluloid, Totem, and desktop openers as explicit start-over fallbacks
 - [x] Add animated world themes and optional time-of-day variants
 - [x] Add subtle navigation, launch, success, and return transitions
-- [ ] Add optional local sounds and Linux text-to-speech feedback
+- [x] Add optional local sounds and Linux text-to-speech feedback
 - [ ] Add accessibility presets for larger text, contrast, reduced motion, and keyboard-only operation
 - [ ] Add optional, non-manipulative celebration moments without engagement scoring
 

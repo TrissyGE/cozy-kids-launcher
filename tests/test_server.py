@@ -36,6 +36,7 @@ def frontend_source():
         frontend_root / "icons.js",
         frontend_root / "dialogs.js",
         frontend_root / "theme-runtime.js",
+        frontend_root / "feedback-runtime.js",
         frontend_root / "transition-runtime.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
@@ -932,6 +933,63 @@ class ServerApiTests(unittest.TestCase):
             track_activity=True,
         )
 
+    def test_speech_feedback_uses_only_a_visible_server_resolved_tile(self):
+        config = server_module.load_cfg()
+        config["speechFeedbackEnabled"] = True
+        server_module.save_cfg(config)
+        feedback = mock.Mock()
+        feedback.speak.return_value = "spoken"
+        with mock.patch.object(server_module, "speech_feedback", return_value=feedback):
+            status, data, _ = self.request(
+                "/api/feedback/speak",
+                method="POST",
+                body={"tileId": "paint"},
+                origin=self.base_url,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(data, {"status": "spoken"})
+            feedback.speak.assert_called_once_with("Paint", "en")
+
+            status, data, _ = self.request(
+                "/api/feedback/speak",
+                method="POST",
+                body={"tileId": "paint", "text": "arbitrary speech"},
+                origin=self.base_url,
+            )
+            self.assertEqual(status, 400)
+            self.assertIn("Only a tile identifier", data["message"])
+
+            config = server_module.load_cfg()
+            config["tiles"][0]["visible"] = False
+            server_module.save_cfg(config)
+            status, data, _ = self.request(
+                "/api/feedback/speak",
+                method="POST",
+                body={"tileId": "paint"},
+                origin=self.base_url,
+            )
+            self.assertEqual(status, 404)
+            self.assertIsNone(data)
+        feedback.speak.assert_called_once()
+
+    def test_speech_feedback_is_optional_and_reports_local_availability(self):
+        feedback = mock.Mock()
+        feedback.available.return_value = True
+        with mock.patch.object(server_module, "speech_feedback", return_value=feedback):
+            status, data, _ = self.request("/api/features")
+            self.assertEqual(status, 200)
+            self.assertTrue(data["speechFeedbackAvailable"])
+
+            status, data, _ = self.request(
+                "/api/feedback/speak",
+                method="POST",
+                body={"tileId": "paint"},
+                origin=self.base_url,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(data, {"status": "disabled"})
+        feedback.speak.assert_not_called()
+
     def test_activity_api_is_opt_in_parent_only_and_removable(self):
         self.enable_pin()
         status, _, _ = self.request("/api/activity")
@@ -1626,6 +1684,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/icons.js",
             "/frontend/dialogs.js",
             "/frontend/theme-runtime.js",
+            "/frontend/feedback-runtime.js",
             "/frontend/transition-runtime.js",
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
@@ -1647,12 +1706,13 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "feedback-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_FEEDBACK_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_TRANSITION_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_SCHEDULE_FILE"', installer)
@@ -2142,11 +2202,42 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('de:started_app) echo "{app} ist bereit"', installer)
         self.assertIn('en:started_app) echo "{app} is ready"', installer)
 
+    def test_local_feedback_is_optional_bounded_and_dependency_free(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
+        runtime = (frontend / "feedback-runtime.js").read_text(encoding="utf-8")
+        page = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        server = (REPOSITORY_ROOT / "src" / "server.py").read_text(encoding="utf-8")
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("window.AudioContext||window.webkitAudioContext", runtime)
+        self.assertIn("cfg.soundFeedbackEnabled!==true", runtime)
+        self.assertIn("cfg.speechFeedbackEnabled!==true", runtime)
+        self.assertIn("features.speechFeedbackAvailable", runtime)
+        self.assertIn("/^[A-Za-z0-9_-]{1,80}$/", runtime)
+        self.assertIn("fetch('/api/feedback/speak'", runtime)
+        self.assertIn("body:JSON.stringify({tileId})", runtime)
+        self.assertNotIn("http://", runtime)
+        self.assertNotIn("https://", runtime)
+        self.assertIn('set(body) != {"tileId"}', server)
+        self.assertIn("configured_feedback_tile(cfg, body.get(\"tileId\"))", server)
+        self.assertIn('role="status"', page)
+        self.assertIn('<script defer src="/frontend/feedback-runtime.js"></script>', page)
+        self.assertIn('de:speech_unavailable)', installer)
+        self.assertIn('en:speech_unavailable)', installer)
+        self.assertIn('"soundFeedbackEnabled": False', installer)
+        self.assertIn('"speechFeedbackEnabled": False', installer)
+        self.assertIn("soundFeedbackEnabled", profile_config.PROFILE_FIELDS)
+        self.assertIn("speechFeedbackEnabled", profile_config.PROFILE_FIELDS)
+
     def test_keyboard_and_touch_navigation_respect_ui_boundaries(self):
         source = frontend_source()
         self.assertIn("const el=document.createElement('button')", source)
         self.assertIn("el.setAttribute('aria-pressed'", source)
-        self.assertIn("btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); }", source)
+        self.assertIn(
+            "btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); scheduleTileSpeech(tile.id); }",
+            source,
+        )
         self.assertIn("btn.focus({preventScroll:true})", source)
         self.assertIn("pinReturnFocus.focus()", source)
         self.assertIn("const tileFocused=document.activeElement", source)

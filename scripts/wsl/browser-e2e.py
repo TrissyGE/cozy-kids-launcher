@@ -438,6 +438,18 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.click("[data-admin-section='appearance']")
     saved_theme = browser.evaluate("cfg.theme")
     saved_layout = browser.evaluate("cfg.layoutMode")
+    assert_js(
+        browser,
+        "document.getElementById('feedbackOptionsTitle').textContent===uiText.feedbackOptions && "
+        "document.getElementById('soundFeedbackLabel').textContent===uiText.soundFeedback && "
+        "document.getElementById('speechFeedbackLabel').textContent===uiText.speechFeedback && "
+        "document.getElementById('speechFeedbackStatus').getAttribute('role')==='status' && "
+        "document.getElementById('speechFeedbackStatus').textContent==="
+        "(features.speechFeedbackAvailable?uiText.speechAvailable:uiText.speechUnavailable) && "
+        "document.getElementById('cfgSoundFeedbackEnabled').checked===false && "
+        "document.getElementById('cfgSpeechFeedbackEnabled').checked===false",
+        "Optional local feedback did not render its localized default-off state",
+    )
     browser.click("#openThemeBtn")
     browser.wait_for("!document.getElementById('themeOverlay').classList.contains('hidden')")
     chosen = browser.evaluate(
@@ -471,6 +483,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     )
     browser.click("#cfgThemeMotionEnabled")
     browser.click("#cfgThemeTimeOfDayEnabled")
+    browser.click("#cfgSoundFeedbackEnabled")
+    browser.click("#cfgSpeechFeedbackEnabled")
     assert_js(
         browser,
         "document.getElementById('appearancePreview').classList.contains('theme-world-motion') && "
@@ -520,11 +534,52 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "theme": "weltraum",
         "themeMotionEnabled": True,
         "themeTimeOfDayEnabled": True,
+        "soundFeedbackEnabled": True,
+        "speechFeedbackEnabled": True,
         "parentLabel": "Family controls",
     }
     if any(saved_config.get(key) != value for key, value in expected.items()):
         raise AssertionError(f"Saved config does not match the UI: {saved_config!r}")
-    log_scenario("settings and theme selection persist and re-render")
+    feedback_result = browser.evaluate(
+        "(()=>{window.__toneStarts=0;cozyFeedbackAudioContext=null;"
+        "window.AudioContext=class{constructor(){this.state='running';this.currentTime=0;"
+        "this.destination={};}resume(){return Promise.resolve();}createOscillator(){return "
+        "{type:'',frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},"
+        "connect(){},disconnect(){},start(){window.__toneStarts+=1;},"
+        "stop(){if(this.onended)this.onended();}};}createGain(){return "
+        "{gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},"
+        "connect(){},disconnect(){}};}};return playFeedbackSound('success')&&"
+        "window.__toneStarts===1;})()"
+    )
+    if feedback_result is not True:
+        raise AssertionError("The dependency-free local feedback tone did not start")
+    browser.evaluate(
+        "window.__feedbackOriginalFetch=window.fetch.bind(window);"
+        "window.__speechBody=null;features.speechFeedbackAvailable=true;"
+        "window.fetch=(input,options)=>String(input)==='/api/feedback/speak'"
+        " ? (window.__speechBody=JSON.parse(options.body),"
+        "Promise.resolve(new Response('{\"status\":\"spoken\"}',{status:200,"
+        "headers:{'Content-Type':'application/json'}})))"
+        " : window.__feedbackOriginalFetch(input,options);"
+        "document.querySelector('#grid .tile[data-tile-id=\"music\"]').focus()"
+    )
+    browser.wait_for(
+        "window.__speechBody!==null",
+        message="Focused-tile speech feedback did not call its local endpoint",
+    )
+    assert_js(
+        browser,
+        "JSON.stringify(window.__speechBody)===JSON.stringify({tileId:'music'})",
+        "Speech feedback sent more than the opaque tile identifier",
+    )
+    browser.evaluate(
+        "(async()=>{cancelTileSpeech();window.fetch=window.__feedbackOriginalFetch;"
+        "delete window.__feedbackOriginalFetch;delete window.__speechBody;"
+        "features.speechFeedbackAvailable=false;cfg.soundFeedbackEnabled=false;"
+        "cfg.speechFeedbackEnabled=false;await persistConfig();})()",
+        await_promise=True,
+    )
+    log_scenario("settings, themes, and optional local feedback persist safely")
 
     enter_parent_settings(browser)
     browser.wait_for(

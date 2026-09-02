@@ -44,6 +44,10 @@ function renderLocalizedChrome(){
   document.getElementById('themeMotionLabel').textContent=uiText.themeMotion||'Gentle background motion';
   document.getElementById('themeTimeOfDayLabel').textContent=uiText.themeTimeOfDay||'Match the local time of day';
   document.getElementById('worldThemeOptionsHint').textContent=uiText.worldThemeHint||'Available for illustrated worlds. The device reduced-motion preference always takes priority.';
+  document.getElementById('feedbackOptionsTitle').textContent=uiText.feedbackOptions||'Audio feedback';
+  document.getElementById('soundFeedbackLabel').textContent=uiText.soundFeedback||'Gentle local sounds';
+  document.getElementById('speechFeedbackLabel').textContent=uiText.speechFeedback||'Read app names aloud (Linux)';
+  document.getElementById('feedbackOptionsHint').textContent=uiText.feedbackHint||'Both options are per child and off by default.';
   document.getElementById('cfgTimerCustom').placeholder=uiText.timerMinutes;
   document.getElementById('cfgPin').placeholder=uiText.pinSet;
   document.getElementById('cfgPinConfirm').placeholder=uiText.pinConfirm;

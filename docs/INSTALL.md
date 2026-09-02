@@ -18,6 +18,10 @@ It downloads the launcher, installs it for your user, and sets everything up aut
 - `flock` from `util-linux` (preinstalled on Ubuntu, Linux Mint, and Zorin OS)
 - Internet connection for the download
 
+Spoken app names are optional. If a parent enables them, the launcher uses an
+already installed `spd-say`, `espeak-ng`, or `espeak` command. No speech package
+is installed automatically, and all other launcher features work without one.
+
 ## What Happens After Installing
 
 1. **Log out and log back in** — the kids launcher opens automatically

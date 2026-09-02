@@ -114,6 +114,7 @@ from runtime_diagnostics import (
     log_runtime_event,
 )
 from schedule_rules import availability_summary, tile_availability
+from speech_feedback import SpeechFeedback
 from timer_state import (
     clear_timer as remove_timer_state,
     load_timer as read_timer_state,
@@ -191,6 +192,8 @@ MAX_JSON_BODY_BYTES = 512 * 1024
 _tile_launch_lock = threading.Lock()
 _activity_sessions_lock = threading.Lock()
 _activity_sessions = None
+_speech_feedback_lock = threading.Lock()
+_speech_feedback = None
 
 
 def has_media(path):
@@ -371,6 +374,24 @@ def configured_media_tile(cfg, tile_id):
     return tile if action["type"] == "media" else None
 
 
+def configured_feedback_tile(cfg, tile_id):
+    """Resolve one visible tile without accepting a client-provided label."""
+    if (
+        not isinstance(tile_id, str)
+        or len(tile_id) > 80
+        or not re.fullmatch(r"[A-Za-z0-9_-]+", tile_id)
+    ):
+        return None
+    return next(
+        (
+            tile
+            for tile in cfg.get("tiles", [])
+            if tile.get("id") == tile_id and tile.get("visible", True)
+        ),
+        None,
+    )
+
+
 def find_media_player(candidates=None):
     if candidates is None:
         return detect_media_player(which=shutil.which)
@@ -530,6 +551,14 @@ def application_launcher():
         activity_file=ACTIVITY_FILE,
         lock=_tile_launch_lock,
     )
+
+
+def speech_feedback():
+    global _speech_feedback
+    with _speech_feedback_lock:
+        if _speech_feedback is None:
+            _speech_feedback = SpeechFeedback()
+        return _speech_feedback
 
 
 def embedded_activity_sessions():
@@ -778,7 +807,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             shutdown_ok = bool(
                 shutil.which("systemctl") or shutil.which("loginctl")
             )
-            return self.json_response({"shutdownAvailable": shutdown_ok})
+            return self.json_response({
+                "shutdownAvailable": shutdown_ok,
+                "speechFeedbackAvailable": speech_feedback().available(),
+            })
         if self.path == "/api/browsers":
             return self.json_response(
                 browser_statuses(BROWSER_CANDIDATES, which=shutil.which)
@@ -861,6 +893,38 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action == "api/feedback/speak":
+            body = self.read_json_body()
+            if body is None:
+                return
+            if set(body) != {"tileId"}:
+                self.json_response(
+                    {"status": "error", "message": "Only a tile identifier is accepted"},
+                    400,
+                )
+                return
+            cfg = load_cfg()
+            if cfg.get("speechFeedbackEnabled") is not True:
+                self.json_response({"status": "disabled"})
+                return
+            tile = configured_feedback_tile(cfg, body.get("tileId"))
+            if tile is None:
+                self.send_response(404)
+                self.end_headers()
+                return
+            try:
+                status = speech_feedback().speak(
+                    tile.get("label", ""),
+                    cfg.get("language", "en"),
+                )
+            except ValueError:
+                self.json_response(
+                    {"status": "error", "message": "Tile label cannot be spoken"},
+                    400,
+                )
+                return
+            self.json_response({"status": status})
+            return
         if action == "api/media/favorite":
             body = self.read_json_body()
             if body is None:
@@ -1593,6 +1657,8 @@ def main():
         raise
     finally:
         embedded_activity_sessions().finish_all()
+        if _speech_feedback is not None:
+            _speech_feedback.close()
         remove_process_record(PIDFILE, expected_pid=os.getpid())
         log_runtime_event("server.stopped")
         close_runtime_logging()

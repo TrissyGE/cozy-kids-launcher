@@ -41,7 +41,7 @@ python3 scripts/wsl/browser-e2e.py
 
 echo "[3/6] Python, JSON, and shell validation"
 python3 -m py_compile \
-  src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py \
+  src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/speech_feedback.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py \
   scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 python3 -m json.tool examples/config.example.json >/dev/null
 python3 -m json.tool src/recommendations.json >/dev/null
@@ -76,6 +76,7 @@ test -f "$TEST_HOME/.local/share/cozy-kids-launcher/media_state.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/media_resume.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/media_session.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/parent_auth.py"
+test -f "$TEST_HOME/.local/share/cozy-kids-launcher/speech_feedback.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/runtime_diagnostics.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/process_state.py"
 test -x "$TEST_HOME/.local/share/cozy-kids-launcher/process_supervisor.py"
@@ -83,6 +84,7 @@ test -f "$TEST_HOME/.local/share/cozy-kids-launcher/timer_state.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/update_manager.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/frontend/icons.js"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/frontend/theme-runtime.js"
+test -f "$TEST_HOME/.local/share/cozy-kids-launcher/frontend/feedback-runtime.js"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/frontend/transition-runtime.js"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/media.html"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/frontend/media-library.css"

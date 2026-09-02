@@ -342,6 +342,11 @@ function renderAdmin(){
   document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}';
   document.getElementById('cfgThemeMotionEnabled').checked=cfg.themeMotionEnabled===true;
   document.getElementById('cfgThemeTimeOfDayEnabled').checked=cfg.themeTimeOfDayEnabled===true;
+  document.getElementById('cfgSoundFeedbackEnabled').checked=cfg.soundFeedbackEnabled===true;
+  document.getElementById('cfgSpeechFeedbackEnabled').checked=cfg.speechFeedbackEnabled===true;
+  document.getElementById('speechFeedbackStatus').textContent=features.speechFeedbackAvailable
+    ?(uiText.speechAvailable||'Local Linux speech is available on this device.')
+    :(uiText.speechUnavailable||'Install Speech Dispatcher or eSpeak to use speech feedback.');
   // Browser dropdown
   const browserSel=document.getElementById('cfgBrowser');
   browserSel.innerHTML='';

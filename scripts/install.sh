@@ -621,6 +621,18 @@ text() {
     en:theme_time_of_day) echo "Match the local time of day" ;;
     de:world_theme_hint) echo "Nur für illustrierte Welten. Die Einstellung für reduzierte Bewegung des Geräts hat immer Vorrang." ;;
     en:world_theme_hint) echo "Available for illustrated worlds. The device reduced-motion preference always takes priority." ;;
+    de:feedback_options) echo "Akustisches Feedback" ;;
+    en:feedback_options) echo "Audio feedback" ;;
+    de:sound_feedback) echo "Sanfte lokale Klänge" ;;
+    en:sound_feedback) echo "Gentle local sounds" ;;
+    de:speech_feedback) echo "App-Namen vorlesen (Linux)" ;;
+    en:speech_feedback) echo "Read app names aloud (Linux)" ;;
+    de:speech_available) echo "Lokale Linux-Sprachausgabe ist auf diesem Gerät verfügbar." ;;
+    en:speech_available) echo "Local Linux speech is available on this device." ;;
+    de:speech_unavailable) echo "Installiere Speech Dispatcher oder eSpeak, um die Sprachausgabe zu verwenden." ;;
+    en:speech_unavailable) echo "Install Speech Dispatcher or eSpeak to use speech feedback." ;;
+    de:feedback_hint) echo "Beide Optionen gelten pro Kinderprofil und sind standardmäßig ausgeschaltet." ;;
+    en:feedback_hint) echo "Both options are per child and off by default." ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -1014,6 +1026,7 @@ FRONTEND_LOCALES_DIR="$FRONTEND_DIR/locales"
 FRONTEND_ICONS_FILE="$FRONTEND_DIR/icons.js"
 FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
 FRONTEND_THEME_RUNTIME_FILE="$FRONTEND_DIR/theme-runtime.js"
+FRONTEND_FEEDBACK_RUNTIME_FILE="$FRONTEND_DIR/feedback-runtime.js"
 FRONTEND_TRANSITION_RUNTIME_FILE="$FRONTEND_DIR/transition-runtime.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_PROFILES_FILE="$FRONTEND_DIR/profiles.js"
@@ -1079,7 +1092,7 @@ render_template() {
   export LABEL_VISIBLE LABEL_SPECIAL_MEDIA LABEL_NO_APP LABEL_CUSTOM_CMD
   export LABEL_MOVE_UP LABEL_MOVE_DOWN LABEL_DELETE DEFAULT_NEW_TILE_LABEL
   export LABEL_COPY_COMMAND LABEL_CLOSE
-  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG LABEL_EXPORT_DIAGNOSTICS IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP STARTED_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT
+  export LABEL_EXPORT_CONFIG LABEL_IMPORT_CONFIG LABEL_EXPORT_DIAGNOSTICS IMPORT_SUCCESS IMPORT_ERROR INVALID_CONFIG IMPORT_CONFIRM LABEL_PREVIEW_TITLE STARTING_APP STARTED_APP EMPTY_STATE_EMOJI EMPTY_STATE_TEXT FEEDBACK_OPTIONS SOUND_FEEDBACK SPEECH_FEEDBACK SPEECH_AVAILABLE SPEECH_UNAVAILABLE FEEDBACK_HINT
   export BACKUP_TITLE BACKUP_RESTORE BACKUP_EMPTY BACKUP_LOADING BACKUP_LOAD_ERROR BACKUP_RESTORING BACKUP_CONFIRM BACKUP_SUCCESS BACKUP_ERROR BACKUP_INSTALLER BACKUP_PRE_RESTORE BACKUP_PIN_PRESERVED
   export JSON_BROWSER_PAGE JSON_WEB_MODE_EMBEDDED JSON_WEB_MODE_EXTERNAL JSON_BROWSER_ALLOWLIST_LABEL JSON_BROWSER_BOUNDARY_EMBEDDED JSON_BROWSER_BOUNDARY_EXTERNAL JSON_BROWSER_ALLOWLIST_INVALID
   export BROWSER_BOUNDARY_TITLE BROWSER_BOUNDARY_BODY BROWSER_BOUNDARY_STAY
@@ -1108,7 +1121,7 @@ render_template() {
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
   export TIMER_LABEL TIMER_OFF TIMER_15 TIMER_30 TIMER_60 TIMER_CUSTOM TIMER_START TIMER_STOP TIMER_ACTIVE TIMER_EXPIRED TIMER_REMAINING TIMER_WARNING_TITLE TIMER_WARNING_TEXT TIMER_ENTER_PIN TIMER_EXTEND TIMER_EXIT TIMER_WRONG_PIN TIMER_EXTENDED TIMER_EXPIRED_TITLE TIMER_EXPIRED_BODY TIMER_MINUTES
-  export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_STARTED_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE
+  export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_STARTED_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE JSON_FEEDBACK_OPTIONS JSON_SOUND_FEEDBACK JSON_SPEECH_FEEDBACK JSON_SPEECH_AVAILABLE JSON_SPEECH_UNAVAILABLE JSON_FEEDBACK_HINT
   export JSON_SCHEDULE_WEEKLY_TITLE JSON_SCHEDULE_WEEKLY_HINT JSON_SCHEDULE_ENABLED JSON_SCHEDULE_APP_TITLE JSON_SCHEDULE_APP_HINT JSON_SCHEDULE_SELECT_APP JSON_SCHEDULE_ADD_WINDOW JSON_SCHEDULE_REMOVE_WINDOW JSON_SCHEDULE_START JSON_SCHEDULE_END JSON_SCHEDULE_CLEAR_APP JSON_SCHEDULE_NO_WINDOWS JSON_SCHEDULE_BLOCKED_TITLE JSON_SCHEDULE_PROFILE_BLOCKED JSON_SCHEDULE_APP_BLOCKED JSON_SCHEDULE_OPEN_PARENTS
   export JSON_WEEKDAY_MONDAY JSON_WEEKDAY_TUESDAY JSON_WEEKDAY_WEDNESDAY JSON_WEEKDAY_THURSDAY JSON_WEEKDAY_FRIDAY JSON_WEEKDAY_SATURDAY JSON_WEEKDAY_SUNDAY
   export APP_NAME
@@ -1344,6 +1357,12 @@ STARTED_APP="$(text started_app)"
 EMPTY_STATE_EMOJI="$(text empty_state_emoji)"
 EMPTY_STATE_TEXT="$(text empty_state_text)"
 PREVIEW_TITLE="$(text preview_title)"
+FEEDBACK_OPTIONS="$(text feedback_options)"
+SOUND_FEEDBACK="$(text sound_feedback)"
+SPEECH_FEEDBACK="$(text speech_feedback)"
+SPEECH_AVAILABLE="$(text speech_available)"
+SPEECH_UNAVAILABLE="$(text speech_unavailable)"
+FEEDBACK_HINT="$(text feedback_hint)"
 
 JSON_ADMIN_TITLE="$(json_text "$ADMIN_TITLE")"
 JSON_ADMIN_NAV_LABEL="$(json_text "$ADMIN_NAV_LABEL")"
@@ -1529,6 +1548,12 @@ JSON_STARTED_APP="$(json_text "$STARTED_APP")"
 JSON_EMPTY_STATE_EMOJI="$(json_text "$EMPTY_STATE_EMOJI")"
 JSON_EMPTY_STATE_TEXT="$(json_text "$EMPTY_STATE_TEXT")"
 JSON_PREVIEW_TITLE="$(json_text "$PREVIEW_TITLE")"
+JSON_FEEDBACK_OPTIONS="$(json_text "$FEEDBACK_OPTIONS")"
+JSON_SOUND_FEEDBACK="$(json_text "$SOUND_FEEDBACK")"
+JSON_SPEECH_FEEDBACK="$(json_text "$SPEECH_FEEDBACK")"
+JSON_SPEECH_AVAILABLE="$(json_text "$SPEECH_AVAILABLE")"
+JSON_SPEECH_UNAVAILABLE="$(json_text "$SPEECH_UNAVAILABLE")"
+JSON_FEEDBACK_HINT="$(json_text "$FEEDBACK_HINT")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
@@ -1541,6 +1566,7 @@ backup_if_exists "$FRONTEND_LOCALES_DIR"
 backup_if_exists "$FRONTEND_ICONS_FILE"
 backup_if_exists "$FRONTEND_DIALOGS_FILE"
 backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"
+backup_if_exists "$FRONTEND_FEEDBACK_RUNTIME_FILE"
 backup_if_exists "$FRONTEND_TRANSITION_RUNTIME_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_PROFILES_FILE"
@@ -1576,6 +1602,7 @@ install -m 0644 "$SRC_DIR/media_state.py" "$APP_ROOT/media_state.py"
 install -m 0644 "$SRC_DIR/media_resume.py" "$APP_ROOT/media_resume.py"
 install -m 0644 "$SRC_DIR/media_session.py" "$APP_ROOT/media_session.py"
 install -m 0644 "$SRC_DIR/parent_auth.py" "$APP_ROOT/parent_auth.py"
+install -m 0644 "$SRC_DIR/speech_feedback.py" "$APP_ROOT/speech_feedback.py"
 install -m 0644 "$SRC_DIR/runtime_diagnostics.py" "$APP_ROOT/runtime_diagnostics.py"
 install -m 0644 "$SRC_DIR/process_state.py" "$APP_ROOT/process_state.py"
 install -m 0755 "$SRC_DIR/process_supervisor.py" "$APP_ROOT/process_supervisor.py"
@@ -1592,6 +1619,7 @@ install -m 0644 "$SRC_DIR/frontend/locales/en.json" "$FRONTEND_LOCALES_DIR/en.js
 render_template "$SRC_DIR/frontend/icons.js" "$FRONTEND_ICONS_FILE" 0644
 render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 install -m 0644 "$SRC_DIR/frontend/theme-runtime.js" "$FRONTEND_THEME_RUNTIME_FILE"
+install -m 0644 "$SRC_DIR/frontend/feedback-runtime.js" "$FRONTEND_FEEDBACK_RUNTIME_FILE"
 install -m 0644 "$SRC_DIR/frontend/transition-runtime.js" "$FRONTEND_TRANSITION_RUNTIME_FILE"
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
@@ -1640,6 +1668,8 @@ config = {
         "theme": theme,
         "themeMotionEnabled": True,
         "themeTimeOfDayEnabled": False,
+        "soundFeedbackEnabled": False,
+        "speechFeedbackEnabled": False,
         "layoutMode": layout,
         "currentPage": 0,
         "timerMinutes": 0,

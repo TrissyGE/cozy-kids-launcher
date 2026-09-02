@@ -200,6 +200,8 @@ async function saveConfig(){
   cfg.theme=document.getElementById('cfgTheme').value;
   cfg.themeMotionEnabled=document.getElementById('cfgThemeMotionEnabled').checked;
   cfg.themeTimeOfDayEnabled=document.getElementById('cfgThemeTimeOfDayEnabled').checked;
+  cfg.soundFeedbackEnabled=document.getElementById('cfgSoundFeedbackEnabled').checked;
+  cfg.speechFeedbackEnabled=document.getElementById('cfgSpeechFeedbackEnabled').checked;
   cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
   cfg.parentLabel=document.getElementById('cfgParentLabel').value;
   cfg.exitLabel=document.getElementById('cfgExitLabel').value;
