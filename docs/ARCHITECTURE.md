@@ -106,6 +106,18 @@ and `/api/media/favorite` accepts only a current catalog item plus a visible,
 currently available media tile. A successful individual launch moves that item
 to the active profile's recent list; deleting a profile removes its media state.
 
+Individual media playback prefers MPV when it is installed, while the legacy
+all-folder route keeps its established VLC-first player order. For individual
+MPV launches, `media_resume.py` creates a private native
+`watch-later` directory for the active profile. MPV is told to retain only its
+`start` property, to check the source modification time before resuming, and not
+to write filenames into those files. The directory path and playback position
+remain outside the HTTP API and exported configuration. If the private
+directory cannot be prepared, playback continues without resume; VLC and other
+player commands retain their previous behavior until they have an equally
+dependable per-profile contract. Deleting a profile removes its native resume
+directory without following symbolic links.
+
 `application_launcher.py` owns action normalization and orchestration. It starts
 argument vectors below `process_supervisor.py`, waits for a verified process
 record, and only then starts `overlay.py`. Missing ownership or overlay startup

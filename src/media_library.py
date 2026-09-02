@@ -20,6 +20,7 @@ SUPPORTED_MEDIA_PATTERNS = (
 )
 
 MEDIA_PLAYER_CANDIDATES = ("vlc", "mpv", "celluloid", "totem")
+INDIVIDUAL_MEDIA_PLAYER_CANDIDATES = ("mpv", "vlc", "celluloid", "totem")
 MAX_MEDIA_ITEMS = 2000
 MAX_MEDIA_COVER_BYTES = 10 * 1024 * 1024
 MAX_MEDIA_SCAN_DIRECTORIES = 5000
@@ -198,8 +199,8 @@ def find_media_player(candidates=MEDIA_PLAYER_CANDIDATES, which=None):
     return None
 
 
-def media_player_command(player, locations):
-    """Build the existing fullscreen command for a supported media player."""
+def media_player_command(player, locations, resume_directory=None):
+    """Build a fullscreen command, optionally isolating MPV resume state."""
     if player == "vlc":
         return [
             player,
@@ -209,5 +210,14 @@ def media_player_command(player, locations):
             *locations,
         ]
     if player == "mpv":
-        return [player, "--fullscreen", *locations]
+        command = [player, "--fullscreen"]
+        if resume_directory:
+            command.extend([
+                "--save-position-on-quit",
+                f"--watch-later-dir={os.fspath(resume_directory)}",
+                "--watch-later-options=start",
+                "--resume-playback=yes",
+                "--resume-playback-check-mtime=yes",
+            ])
+        return [*command, *locations]
     return [player, *locations]

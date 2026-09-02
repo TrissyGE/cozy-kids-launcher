@@ -146,7 +146,12 @@ with open(path, encoding="utf-8") as handle:
     config = json.load(handle)
 config["setupCompleted"] = True
 config["browser"] = browser
-config["tiles"].extend([
+profile = next(
+    profile
+    for profile in config["profiles"]
+    if profile["id"] == config["activeProfileId"]
+)
+profile["tiles"].extend([
     {
         "id": "wsl-embedded",
         "label": "Embedded web test",
