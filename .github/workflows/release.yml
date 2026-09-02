@@ -121,6 +121,9 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/timer_state.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/schedule_rules.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/update_manager.py"
+          test -f "$test_home/.local/share/cozy-kids-launcher/media.html"
+          test -f "$test_home/.local/share/cozy-kids-launcher/frontend/media-library.css"
+          test -f "$test_home/.local/share/cozy-kids-launcher/frontend/media-library.js"
           cmp VERSION "$test_home/.local/share/cozy-kids-launcher/version"
 
       - name: Build release archives and checksums

@@ -29,7 +29,7 @@ See the [installation guide](docs/INSTALL.md) for language, browser, launch-mode
 
 - **Made for kids:** fullscreen interface, large touch-friendly tiles, keyboard navigation, multiple pages, and 4- or 9-tile layouts
 - **Made for parents:** optional PIN, editable and reorderable tiles, configuration import/export and restore, an opt-in local activity overview, privacy-safe diagnostics, desktop exit, and safe shutdown
-- **Apps and media:** one consistent launch path for Linux apps, exact-origin-bounded embedded websites, local music, and local video
+- **Apps and media:** one consistent launch path for Linux apps, exact-origin-bounded embedded websites, and a local cover library for music and video
 - **Screen time:** timer controls, weekly and per-app schedules, remaining-time overlay, warning state, and PIN-protected block screens
 - **Personal:** German and English interfaces, color themes, illustrated worlds, and a custom theme
 - **Local-first:** configuration and browser profiles stay on the device

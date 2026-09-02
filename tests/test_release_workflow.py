@@ -231,8 +231,19 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertTrue((frontend_root / "localization.js").is_file())
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())
+            self.assertTrue((frontend_root / "media-library.css").is_file())
+            self.assertTrue((frontend_root / "media-library.js").is_file())
             self.assertTrue((frontend_root / "locales" / "de.json").is_file())
             self.assertTrue((frontend_root / "locales" / "en.json").is_file())
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
+                    / "media.html"
+                ).is_file()
+            )
             self.assertTrue(
                 (
                     Path(home)

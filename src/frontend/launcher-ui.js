@@ -1,5 +1,8 @@
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
+function isMediaLibraryTile(tile){
+  return !!tile&&Array.isArray(tile.cmd)&&tile.cmd.length===1&&tile.cmd[0]==='special:filme-musik';
+}
 function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageSize())); }
 function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }
 async function loadConfig(){
@@ -214,14 +217,22 @@ function renderKids(){
       const tile=tiles[i];
       const btn=document.createElement('button');
       btn.className='tile'+(tile.id===lastLaunched?' last-launched':'');
+      btn.dataset.tileId=tile.id;
       if(blocked.has(tile.id)){
         btn.classList.add('unavailable');
         btn.setAttribute('aria-disabled','true');
       }
       btn.style.position='relative';
-      btn.onclick=()=>blocked.has(tile.id)?showAvailabilityBlock(
-        availabilityStatus.profileAllowed?'app_schedule':'profile_schedule'
-      ):launchTile(tile.id);
+      btn.onclick=event=>{
+        if(tileClickSuppressed(event)) return;
+        if(blocked.has(tile.id)){
+          showAvailabilityBlock(
+            availabilityStatus.profileAllowed?'app_schedule':'profile_schedule'
+          );
+        }else{
+          launchTile(tile.id);
+        }
+      };
       btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); };
       const tileEmoji=createTileVisual(tile.emoji,'emoji');
       const tileLabel=document.createElement('div');
@@ -257,6 +268,11 @@ function showStartFeedback(tile){
 async function launchTile(id){
   const tile=cfg.tiles.find(t=>t.id===id);
   if(!tile) return;
+  if(isMediaLibraryTile(tile)){
+    try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
+    window.location='/media.html?tile='+encodeURIComponent(id);
+    return;
+  }
   showStartFeedback(tile);
   try{
     const response=await fetch('/launch/'+encodeURIComponent(id), {method:'POST'});

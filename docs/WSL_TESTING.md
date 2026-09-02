@@ -22,7 +22,7 @@ The fast, headless browser journeys do not require a visible WSLg session:
 python3 scripts/wsl/browser-e2e.py
 ```
 
-They cover guided first run with live language switching, home rendering, PIN setup and rejection, child-profile management and PIN-gated selection, saved settings, theme selection, timer start/stop, and current/available/error update states against local fixtures. The same run exercises keyboard-only and touch navigation, reduced motion, forced colors, and the 800x600 setup, home, and Parent layouts. Output is kept under `.test-artifacts/browser-e2e/`.
+They cover guided first run with live language switching, home and local cover-library rendering, PIN setup and rejection, child-profile management and PIN-gated selection, saved settings, theme selection, timer start/stop, and current/available/error update states against local fixtures. The same run exercises keyboard-only and touch navigation, reduced motion, forced colors, and the 800x600 setup, home, and Parent layouts. Output is kept under `.test-artifacts/browser-e2e/`.
 
 For the full multimedia and WSLg integration test, run:
 
