@@ -98,24 +98,12 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [ ] Preserve install progress and recoverable error state across a launcher restart without collecting package or family telemetry
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
 
-### Packaging and lifecycle
+### Lifecycle and reach
 
 - [ ] Add more installer and interface languages beyond German and English
-- [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
-  - [ ] Add a package-managed runtime mode that leaves updates to the system package manager
-  - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
-- [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
-- [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable
-- [ ] Evaluate a classic-confined Snap and request Snap Store approval if host-app launching remains reliable
-- [ ] Treat Flatpak as a feasibility track: prefer a reduced or self-hosted build unless sandbox integration and current Flathub policy become compatible with the launcher
-- [ ] Pursue official Debian/Ubuntu and Arch repository adoption only as a long-term downstream-maintainer goal, not a release commitment
 - [ ] Add a supported user-service lifecycle with useful status and recovery commands
 - [ ] Add stable and opt-in preview update channels without weakening immutable releases
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
-
-Packaging therefore proceeds in the practical order DEB/APT, AUR, classic Snap,
-then Flatpak feasibility. Every package format must preserve local configuration,
-desktop integration, host-app launching, and the stable-`main` updater contract.
 
 ## v0.9.0 — Living Room
 
@@ -127,6 +115,24 @@ desktop integration, host-app launching, and the stable-`main` updater contract.
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
 
 ## v1.0.0 — Long-term Stable
+
+### Packaging and downstream distribution
+
+- [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
+  - [ ] Add a package-managed runtime mode that leaves updates to the system package manager
+  - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
+- [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
+- [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable
+- [ ] Evaluate a classic-confined Snap and request Snap Store approval if host-app launching remains reliable
+- [ ] Treat Flatpak as a feasibility track: prefer a reduced or self-hosted build unless sandbox integration and current Flathub policy become compatible with the launcher
+- [ ] Pursue official Debian/Ubuntu and Arch repository adoption only as a long-term downstream-maintainer goal, not a release commitment
+
+Packaging therefore proceeds in the practical order DEB/APT, RPM repositories,
+AUR, classic Snap, then Flatpak feasibility. Every package format must preserve
+local configuration, desktop integration, host-app launching, and the
+stable-`main` updater contract.
+
+### Stability contract
 
 - [ ] Publish a compatibility policy for configuration schemas, the loopback API, package migrations, and update channels
 - [ ] Complete a documented threat model and security review of Parent authentication, local HTTP boundaries, imports, updates, and process launching
