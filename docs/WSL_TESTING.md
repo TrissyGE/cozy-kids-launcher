@@ -12,7 +12,7 @@ In an Ubuntu WSL shell, from the repository root:
 sudo bash scripts/wsl/setup-test-env.sh
 ```
 
-This installs Tk, X11 diagnostics, Mesa diagnostics, PulseAudio tools, VLC, FFmpeg, a small Python WebSocket client for deterministic DevTools screenshots, window-control tools, and Google Chrome Stable on amd64. Pass `--without-chrome` if a supported Chromium-family browser is already installed.
+This installs Tk, X11 diagnostics, Mesa diagnostics, PulseAudio tools, VLC, MPV, FFmpeg, a small Python WebSocket client for deterministic DevTools screenshots, window-control tools, and Google Chrome Stable on amd64. Pass `--without-chrome` if a supported Chromium-family browser is already installed.
 
 ## Run the smoke test
 
@@ -42,6 +42,18 @@ The test:
 8. probes every recommended website and records current iframe policies.
 
 The normal user installation under `~/.config/cozy-kids-launcher` and `~/.local/share/cozy-kids-launcher` is not modified.
+
+The isolated native MPV resume contract can also be checked independently:
+
+```bash
+bash scripts/wsl/check-mpv-resume.sh
+```
+
+This creates a temporary media fixture, ends MPV the same way as an owned
+launcher process, verifies that the private profile directory contains only a
+playback position and MPV's path-free redirect markers, and confirms that a
+second launch consumes the position. All temporary files are removed when the
+test exits.
 
 Use `--headless` to skip the short visible external-browser window. Use `--visible-seconds N` to change how long it stays open. Results are written to:
 

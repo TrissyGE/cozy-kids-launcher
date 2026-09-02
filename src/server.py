@@ -60,6 +60,7 @@ from lifecycle_state import (
     write_lifecycle_request,
 )
 from media_library import (
+    INDIVIDUAL_MEDIA_PLAYER_CANDIDATES,
     MAX_MEDIA_COVER_BYTES,
     SUPPORTED_MEDIA_PATTERNS,
     catalog_item,
@@ -75,6 +76,10 @@ from media_state import (
     record_media_play,
     remove_profile_media_state,
     set_media_favorite,
+)
+from media_resume import (
+    prepare_profile_resume_directory,
+    remove_profile_resume_directory,
 )
 from parent_auth import (
     ADMIN_COOKIE_NAME,
@@ -144,6 +149,13 @@ BACKUP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}-backups")
 LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
 ACTIVITY_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "activity.json")
 MEDIA_STATE_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "media.json")
+MEDIA_RESUME_ROOT = os.path.join(
+    HOME,
+    ".local",
+    "state",
+    "{{APP_ID}}",
+    "media-resume",
+)
 PORT = int(os.environ.get("COZY_KIDS_PORT", "{{DEFAULT_PORT}}"))
 PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "server.pid")
 BROWSER_PIDFILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "browser.pid")
@@ -357,8 +369,10 @@ def configured_media_tile(cfg, tile_id):
     return tile if action["type"] == "media" else None
 
 
-def find_media_player():
-    return detect_media_player(which=shutil.which)
+def find_media_player(candidates=None):
+    if candidates is None:
+        return detect_media_player(which=shutil.which)
+    return detect_media_player(candidates=candidates, which=shutil.which)
 
 
 def get_version():
@@ -909,9 +923,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(404)
                 self.end_headers()
                 return
-            player = find_media_player()
+            player = find_media_player(INDIVIDUAL_MEDIA_PLAYER_CANDIDATES)
             if player:
-                command = media_player_command(player, [item["path"]])
+                resume_directory = None
+                if player == "mpv":
+                    try:
+                        resume_directory = prepare_profile_resume_directory(
+                            MEDIA_RESUME_ROOT,
+                            cfg.get("activeProfileId", ""),
+                        )
+                    except (OSError, ValueError):
+                        log_runtime_event(
+                            "media.resume.unavailable",
+                            level="warning",
+                            actionType="media",
+                        )
+                command = media_player_command(
+                    player,
+                    [item["path"]],
+                    resume_directory=resume_directory,
+                )
             elif shutil.which("xdg-open"):
                 command = ["xdg-open", item["path"]]
             else:
@@ -1039,6 +1070,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 stored = remove_profile(stored, body.get("profileId"))
                 remove_profile_activity(ACTIVITY_FILE, body.get("profileId"))
                 remove_profile_media_state(MEDIA_STATE_FILE, body.get("profileId"))
+                remove_profile_resume_directory(
+                    MEDIA_RESUME_ROOT,
+                    body.get("profileId"),
+                )
                 stored = save_stored_cfg(stored)
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)

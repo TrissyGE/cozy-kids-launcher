@@ -145,9 +145,17 @@ class MediaDiscoveryTests(unittest.TestCase):
 
 class MediaPlayerTests(unittest.TestCase):
     def test_player_detection_uses_the_existing_fallback_order(self):
-        available = {"mpv", "totem"}
+        available = {"vlc", "mpv", "totem"}
         player = media_library.find_media_player(
             which=lambda name: f"/usr/bin/{name}" if name in available else None
+        )
+        self.assertEqual(player, "vlc")
+
+    def test_individual_media_prefers_the_player_with_isolated_resume(self):
+        available = {"vlc", "mpv"}
+        player = media_library.find_media_player(
+            media_library.INDIVIDUAL_MEDIA_PLAYER_CANDIDATES,
+            which=lambda name: f"/usr/bin/{name}" if name in available else None,
         )
         self.assertEqual(player, "mpv")
 
@@ -166,6 +174,23 @@ class MediaPlayerTests(unittest.TestCase):
         self.assertEqual(
             media_library.media_player_command("mpv", locations),
             ["mpv", "--fullscreen", *locations],
+        )
+        self.assertEqual(
+            media_library.media_player_command(
+                "mpv",
+                locations,
+                resume_directory="/home/kid/.local/state/resume/default",
+            ),
+            [
+                "mpv",
+                "--fullscreen",
+                "--save-position-on-quit",
+                "--watch-later-dir=/home/kid/.local/state/resume/default",
+                "--watch-later-options=start",
+                "--resume-playback=yes",
+                "--resume-playback-check-mtime=yes",
+                *locations,
+            ],
         )
         self.assertEqual(
             media_library.media_player_command("totem", locations),

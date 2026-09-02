@@ -421,6 +421,7 @@ class ServerApiTests(unittest.TestCase):
         server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
         server_module.ACTIVITY_FILE = str(root / "state" / "activity.json")
         server_module.MEDIA_STATE_FILE = str(root / "state" / "media.json")
+        server_module.MEDIA_RESUME_ROOT = str(root / "state" / "media-resume")
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
         server_module.BROWSER_PIDFILE = str(cache_dir / "browser.pid")
@@ -598,6 +599,66 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(launch.call_args.kwargs["profile_id"], "default")
         _, updated_catalog, _ = self.request("/api/media")
         self.assertEqual(updated_catalog["recentIds"], [catalog["items"][0]["id"]])
+
+    def test_media_play_isolates_native_mpv_resume_state_by_active_profile(self):
+        media_file = Path(server_module.VIDEOS) / "Film.mp4"
+        media_file.write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+
+        with mock.patch.object(server_module, "find_media_player", return_value="mpv"), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, _, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": catalog["items"][0]["id"]},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 204)
+        command = launch.call_args.args[0]
+        resume_directory = Path(server_module.MEDIA_RESUME_ROOT) / "default"
+        self.assertIn(f"--watch-later-dir={resume_directory}", command)
+        self.assertIn("--watch-later-options=start", command)
+        self.assertIn("--resume-playback-check-mtime=yes", command)
+        self.assertEqual(command[-1], str(media_file))
+        self.assertTrue(resume_directory.is_dir())
+
+    def test_media_play_falls_back_when_mpv_resume_storage_is_unavailable(self):
+        (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+
+        with mock.patch.object(server_module, "find_media_player", return_value="mpv"), \
+                mock.patch.object(
+                    server_module,
+                    "prepare_profile_resume_directory",
+                    side_effect=OSError("read only"),
+                ), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, _, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": catalog["items"][0]["id"]},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 204)
+        self.assertEqual(launch.call_args.args[0][:2], ["mpv", "--fullscreen"])
+        self.assertFalse(any(
+            option.startswith("--watch-later-dir=")
+            for option in launch.call_args.args[0]
+        ))
 
     def test_media_favorites_are_catalog_bounded_and_profile_specific(self):
         (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
@@ -1341,6 +1402,12 @@ class ServerApiTests(unittest.TestCase):
             "default",
             "2" * 24,
         )
+        removed_resume = Path(server_module.MEDIA_RESUME_ROOT) / profile_id
+        retained_resume = Path(server_module.MEDIA_RESUME_ROOT) / "default"
+        removed_resume.mkdir(parents=True)
+        retained_resume.mkdir()
+        (removed_resume / "position").write_text("start=15", encoding="utf-8")
+        (retained_resume / "position").write_text("start=30", encoding="utf-8")
 
         status, deleted, _ = self.request(
             "/api/profiles/delete",
@@ -1368,6 +1435,8 @@ class ServerApiTests(unittest.TestCase):
             )["recentIds"],
             [],
         )
+        self.assertFalse(removed_resume.exists())
+        self.assertTrue((retained_resume / "position").is_file())
 
     def test_profile_api_rejects_deleting_the_active_profile(self):
         status, data, _ = self.request(
@@ -1862,6 +1931,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('id="mediaFilters"', page)
         self.assertIn('.media-favorite[aria-pressed="true"]', styles)
         self.assertIn('install -m 0644 "$SRC_DIR/media_state.py"', installer)
+        self.assertIn('install -m 0644 "$SRC_DIR/media_resume.py"', installer)
         for asset in ("media.html", "media-library.css", "media-library.js"):
             self.assertIn(asset, installer)
 

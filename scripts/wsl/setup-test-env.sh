@@ -32,6 +32,7 @@ echo "Installing WSLg test dependencies..."
   fonts-noto-color-emoji \
   jq \
   mesa-utils \
+  mpv \
   pulseaudio-utils \
   python3 \
   python3-tk \

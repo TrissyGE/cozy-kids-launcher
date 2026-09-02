@@ -70,6 +70,13 @@ class StableMainReleaseContractTests(unittest.TestCase):
         self.assertEqual(example["activeProfileId"], "default")
         self.assertEqual(len(example["profiles"]), 1)
 
+    def test_wsl_smoke_extends_the_active_profile_in_versioned_configs(self):
+        smoke = (
+            REPOSITORY_ROOT / "scripts" / "wsl" / "run-gui-smoke.sh"
+        ).read_text(encoding="utf-8")
+        self.assertIn('profile["tiles"].extend', smoke)
+        self.assertNotIn('config["tiles"].extend', smoke)
+
     @unittest.skipUnless(os.name == "posix", "Installer smoke test requires Linux")
     def test_isolated_installer_writes_the_current_config_schema(self):
         with tempfile.TemporaryDirectory() as home:
@@ -210,6 +217,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "share"
                     / "cozy-kids-launcher"
                     / "media_state.py"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
+                    / "media_resume.py"
                 ).is_file()
             )
             self.assertTrue(
