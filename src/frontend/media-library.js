@@ -40,7 +40,8 @@ function mediaTile(config,tileId){
 }
 
 function applyMediaTheme(config){
-  document.body.className='media-page theme-'+(config.theme||'rosa');
+  applyThemeRuntime(document.body,config,['media-page']);
+  scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,['media-page']);
   const background=document.getElementById('themeBg');
   if(config.theme!=='custom'){
     background.style.backgroundImage='';

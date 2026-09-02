@@ -15,6 +15,8 @@ PROFILE_FIELDS = (
     "theme",
     "customColors",
     "customBackground",
+    "themeMotionEnabled",
+    "themeTimeOfDayEnabled",
     "layoutMode",
     "currentPage",
     "timerMinutes",

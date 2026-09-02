@@ -155,7 +155,8 @@ function applyDynamicTheme(){
 }
 function renderAll(){
   renderLocalizedChrome();
-  document.body.className='theme-'+(cfg.theme||'{{DEFAULT_THEME}}');
+  applyThemeRuntime(document.body,cfg);
+  scheduleThemeRuntimeRefresh(document.body,()=>cfg);
   applyDynamicTheme();
   document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}';
   const isAdmin=!document.getElementById('admin').classList.contains('hidden');

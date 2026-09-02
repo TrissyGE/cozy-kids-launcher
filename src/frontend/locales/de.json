@@ -213,5 +213,9 @@
   "mediaLibraryRecentsEmpty": "Hier wurde noch nichts abgespielt.",
   "mediaLibraryFavoriteAdd": "{title} zu Favoriten hinzufügen",
   "mediaLibraryFavoriteRemove": "{title} aus Favoriten entfernen",
-  "mediaLibraryFavoriteError": "Dieser Favorit konnte nicht gespeichert werden."
+  "mediaLibraryFavoriteError": "Dieser Favorit konnte nicht gespeichert werden.",
+  "worldThemeOptions": "Effekte für Weltthemes",
+  "themeMotion": "Sanfte Hintergrundbewegung",
+  "themeTimeOfDay": "An lokale Tageszeit anpassen",
+  "worldThemeHint": "Nur für illustrierte Welten. Die Einstellung für reduzierte Bewegung des Geräts hat immer Vorrang."
 }

@@ -54,6 +54,10 @@ profile and are evaluated only against the device's local time. Availability
 polling stays on the launcher's loopback API; no schedule or usage information
 is uploaded.
 
+Optional world-theme day periods use only the current hour reported by the
+device. The launcher does not request location data, contact an external time
+service, or store a history of theme periods.
+
 Optional activity tracking is disabled by default. When a parent enables it,
 the launcher stores only profile and tile identifiers, a start time, and the
 completed duration in `~/.local/state/cozy-kids-launcher/activity.json`. It does

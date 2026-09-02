@@ -198,6 +198,8 @@ async function saveConfig(){
   cfg.name=document.getElementById('cfgProfileName').value.trim();
   cfg.avatar=document.getElementById('cfgProfileAvatar').value.trim();
   cfg.theme=document.getElementById('cfgTheme').value;
+  cfg.themeMotionEnabled=document.getElementById('cfgThemeMotionEnabled').checked;
+  cfg.themeTimeOfDayEnabled=document.getElementById('cfgThemeTimeOfDayEnabled').checked;
   cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
   cfg.parentLabel=document.getElementById('cfgParentLabel').value;
   cfg.exitLabel=document.getElementById('cfgExitLabel').value;

@@ -67,6 +67,8 @@ class ProfileConfigTests(unittest.TestCase):
         stored = profile_config.select_profile(stored, second_id)
         alex = profile_config.active_config(stored)
         alex["theme"] = "blau"
+        alex["themeMotionEnabled"] = True
+        alex["themeTimeOfDayEnabled"] = True
         alex["tiles"][0]["label"] = "Alex Paint"
         alex["favorites"] = ["paint"]
         alex["appLimits"] = {"paint": 20}
@@ -91,6 +93,9 @@ class ProfileConfigTests(unittest.TestCase):
         self.assertEqual(default["tiles"][0]["label"], "Paint")
         self.assertEqual(default["favorites"], [])
         self.assertEqual(alex["theme"], "blau")
+        self.assertNotIn("themeMotionEnabled", default)
+        self.assertTrue(alex["themeMotionEnabled"])
+        self.assertTrue(alex["themeTimeOfDayEnabled"])
         self.assertEqual(alex["favorites"], ["paint"])
         self.assertEqual(alex["appLimits"], {"paint": 20})
         self.assertTrue(alex["weeklySchedule"]["enabled"])

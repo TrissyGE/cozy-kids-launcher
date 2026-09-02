@@ -134,7 +134,17 @@ function renderAppearancePreview(){
   const theme=ALL_THEMES.find(item=>item.id===themeId)||ALL_THEMES[0];
   const layout=document.getElementById('cfgLayoutMode').value==='klein'?'klein':'gross';
   const title=document.getElementById('cfgTitle').value||cfg.title||'{{DEFAULT_TITLE}}';
-  preview.className='launcher-preview theme-'+theme.id;
+  const world=theme.type==='world';
+  const motionInput=document.getElementById('cfgThemeMotionEnabled');
+  const timeInput=document.getElementById('cfgThemeTimeOfDayEnabled');
+  document.getElementById('worldThemeOptions').classList.toggle('is-disabled',!world);
+  motionInput.disabled=!world;
+  timeInput.disabled=!world;
+  applyThemeRuntime(preview,{
+    theme:theme.id,
+    themeMotionEnabled:motionInput.checked,
+    themeTimeOfDayEnabled:timeInput.checked
+  },['launcher-preview']);
   for(const token of ['--bg1','--bg2','--text','--btn','--card']){
     preview.style.removeProperty(token);
   }
@@ -327,6 +337,8 @@ function renderAdmin(){
   document.getElementById('cfgCustomCard').value=c.card||'#ffffff';
   document.getElementById('cfgCustomBg').value=cfg.customBackground||'';
   document.getElementById('cfgLayoutMode').value=cfg.layoutMode||'{{DEFAULT_LAYOUT}}';
+  document.getElementById('cfgThemeMotionEnabled').checked=cfg.themeMotionEnabled===true;
+  document.getElementById('cfgThemeTimeOfDayEnabled').checked=cfg.themeTimeOfDayEnabled===true;
   // Browser dropdown
   const browserSel=document.getElementById('cfgBrowser');
   browserSel.innerHTML='';

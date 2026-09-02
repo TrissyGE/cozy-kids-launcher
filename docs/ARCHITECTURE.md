@@ -32,12 +32,15 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/state.js` contains shared state and localized UI strings
 - `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
+- `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/media.html` and `src/frontend/media-library.*` render the local cover library and submit only opaque media IDs
 - `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing, recommendations, and updates
 - `src/frontend/runtime-controls.js` owns timer flows, device status, import/export, backups, and keyboard control
 
 The installer renders or copies these files below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager or bundler.
+
+World effects are two additive, profile-scoped booleans in the existing version 2 configuration. Missing values remain disabled for upgrade compatibility, while new installations enable only gentle motion. The runtime uses CSS animation, schedules a class refresh at the next local day-period boundary, and never calls a time or location service. The operating system's reduced-motion preference always suppresses the animation.
 
 Asynchronous frontend resources use explicit loading, empty, error, and success
 states. Configuration remains the only startup-critical request: a failure leaves

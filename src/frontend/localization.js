@@ -40,6 +40,10 @@ function renderLocalizedChrome(){
   document.getElementById('timerOptionCustom').textContent=uiText.timerCustom;
   document.getElementById('layoutOptionLarge').textContent=uiText.layoutLarge;
   document.getElementById('layoutOptionSmall').textContent=uiText.layoutSmall;
+  document.getElementById('worldThemeOptionsTitle').textContent=uiText.worldThemeOptions||'World theme effects';
+  document.getElementById('themeMotionLabel').textContent=uiText.themeMotion||'Gentle background motion';
+  document.getElementById('themeTimeOfDayLabel').textContent=uiText.themeTimeOfDay||'Match the local time of day';
+  document.getElementById('worldThemeOptionsHint').textContent=uiText.worldThemeHint||'Available for illustrated worlds. The device reduced-motion preference always takes priority.';
   document.getElementById('cfgTimerCustom').placeholder=uiText.timerMinutes;
   document.getElementById('cfgPin').placeholder=uiText.pinSet;
   document.getElementById('cfgPinConfirm').placeholder=uiText.pinConfirm;

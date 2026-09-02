@@ -611,6 +611,14 @@ text() {
     en:empty_state_text) echo "Ask Mom or Dad to add apps!" ;;
     de:preview_title) echo "Vorschau" ;;
     en:preview_title) echo "Preview" ;;
+    de:world_theme_options) echo "Effekte für Weltthemes" ;;
+    en:world_theme_options) echo "World theme effects" ;;
+    de:theme_motion) echo "Sanfte Hintergrundbewegung" ;;
+    en:theme_motion) echo "Gentle background motion" ;;
+    de:theme_time_of_day) echo "An lokale Tageszeit anpassen" ;;
+    en:theme_time_of_day) echo "Match the local time of day" ;;
+    de:world_theme_hint) echo "Nur für illustrierte Welten. Die Einstellung für reduzierte Bewegung des Geräts hat immer Vorrang." ;;
+    en:world_theme_hint) echo "Available for illustrated worlds. The device reduced-motion preference always takes priority." ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -1003,6 +1011,7 @@ FRONTEND_LOCALIZATION_FILE="$FRONTEND_DIR/localization.js"
 FRONTEND_LOCALES_DIR="$FRONTEND_DIR/locales"
 FRONTEND_ICONS_FILE="$FRONTEND_DIR/icons.js"
 FRONTEND_DIALOGS_FILE="$FRONTEND_DIR/dialogs.js"
+FRONTEND_THEME_RUNTIME_FILE="$FRONTEND_DIR/theme-runtime.js"
 FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_PROFILES_FILE="$FRONTEND_DIR/profiles.js"
 FRONTEND_SCHEDULE_FILE="$FRONTEND_DIR/schedule-controls.js"
@@ -1526,6 +1535,7 @@ backup_if_exists "$FRONTEND_LOCALIZATION_FILE"
 backup_if_exists "$FRONTEND_LOCALES_DIR"
 backup_if_exists "$FRONTEND_ICONS_FILE"
 backup_if_exists "$FRONTEND_DIALOGS_FILE"
+backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"
 backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_PROFILES_FILE"
 backup_if_exists "$FRONTEND_SCHEDULE_FILE"
@@ -1575,6 +1585,7 @@ install -m 0644 "$SRC_DIR/frontend/locales/de.json" "$FRONTEND_LOCALES_DIR/de.js
 install -m 0644 "$SRC_DIR/frontend/locales/en.json" "$FRONTEND_LOCALES_DIR/en.json"
 render_template "$SRC_DIR/frontend/icons.js" "$FRONTEND_ICONS_FILE" 0644
 render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
+install -m 0644 "$SRC_DIR/frontend/theme-runtime.js" "$FRONTEND_THEME_RUNTIME_FILE"
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
 render_template "$SRC_DIR/frontend/schedule-controls.js" "$FRONTEND_SCHEDULE_FILE" 0644
@@ -1620,6 +1631,8 @@ config = {
         "avatar": "🌈",
         "title": title,
         "theme": theme,
+        "themeMotionEnabled": True,
+        "themeTimeOfDayEnabled": False,
         "layoutMode": layout,
         "currentPage": 0,
         "timerMinutes": 0,

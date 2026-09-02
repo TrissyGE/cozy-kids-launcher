@@ -78,7 +78,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
     - [x] Isolate MPV's documented native resume state per child profile
     - [x] Capture VLC positions through a supervised local adapter without using global viewing history
     - [x] Keep Celluloid, Totem, and desktop openers as explicit start-over fallbacks
-- [ ] Add animated world themes and optional time-of-day variants
+- [x] Add animated world themes and optional time-of-day variants
 - [ ] Add subtle navigation, launch, success, and return transitions
 - [ ] Add optional local sounds and Linux text-to-speech feedback
 - [ ] Add accessibility presets for larger text, contrast, reduced motion, and keyboard-only operation

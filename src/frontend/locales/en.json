@@ -213,5 +213,9 @@
   "mediaLibraryRecentsEmpty": "Nothing has been played here yet.",
   "mediaLibraryFavoriteAdd": "Add {title} to favorites",
   "mediaLibraryFavoriteRemove": "Remove {title} from favorites",
-  "mediaLibraryFavoriteError": "This favorite could not be saved."
+  "mediaLibraryFavoriteError": "This favorite could not be saved.",
+  "worldThemeOptions": "World theme effects",
+  "themeMotion": "Gentle background motion",
+  "themeTimeOfDay": "Match the local time of day",
+  "worldThemeHint": "Available for illustrated worlds. The device reduced-motion preference always takes priority."
 }

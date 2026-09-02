@@ -23,6 +23,7 @@ if str(SOURCE_ROOT) not in sys.path:
 import lifecycle_state
 import activity_store
 import media_state
+import profile_config
 
 
 def frontend_source():
@@ -34,6 +35,7 @@ def frontend_source():
         frontend_root / "localization.js",
         frontend_root / "icons.js",
         frontend_root / "dialogs.js",
+        frontend_root / "theme-runtime.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
         frontend_root / "schedule-controls.js",
@@ -1622,6 +1624,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/localization.js",
             "/frontend/icons.js",
             "/frontend/dialogs.js",
+            "/frontend/theme-runtime.js",
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
             "/frontend/schedule-controls.js",
@@ -1642,11 +1645,12 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_SCHEDULE_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ACTIVITY_FILE"', installer)
@@ -1736,7 +1740,8 @@ class FrontendSafetyTests(unittest.TestCase):
         ]
         self.assertIn('id="appearancePreview"', source)
         self.assertIn('id="appearancePreviewGrid"', source)
-        self.assertIn("preview.className='launcher-preview theme-'", preview)
+        self.assertIn("applyThemeRuntime(preview,{", preview)
+        self.assertIn("},['launcher-preview'])", preview)
         self.assertIn("previewGrid.replaceChildren()", preview)
         self.assertIn("createTileVisual(tile.emoji,'preview-tile-emoji')", preview)
         self.assertIn("label.textContent=tile.label||''", preview)
@@ -2084,6 +2089,27 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("border:2px solid ButtonText", styles)
         self.assertIn("@media (max-width:900px), (max-height:700px)", styles)
         self.assertIn("#admin .wrap { max-height:calc(100vh - 76px)", styles)
+
+    def test_world_theme_effects_are_profile_scoped_optional_and_time_local(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
+        source = frontend_source()
+        runtime = (frontend / "theme-runtime.js").read_text(encoding="utf-8")
+        media = (frontend / "media-library.js").read_text(encoding="utf-8")
+        styles = (frontend / "styles.css").read_text(encoding="utf-8")
+        page = (REPOSITORY_ROOT / "src" / "media.html").read_text(encoding="utf-8")
+        self.assertIn("themeMotionEnabled", profile_config.PROFILE_FIELDS)
+        self.assertIn("themeTimeOfDayEnabled", profile_config.PROFILE_FIELDS)
+        self.assertIn("function themePeriodAt(value=new Date())", runtime)
+        self.assertIn("value.getHours()", runtime)
+        self.assertNotIn("fetch(", runtime)
+        self.assertIn("config.themeMotionEnabled===true", runtime)
+        self.assertIn("config.themeTimeOfDayEnabled===true", runtime)
+        self.assertIn("scheduleThemeRuntimeRefresh(document.body,()=>cfg)", source)
+        self.assertIn("scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig", media)
+        self.assertIn("@keyframes worldThemeDrift", styles)
+        self.assertIn("body.theme-world-motion #themeBg", styles)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", styles)
+        self.assertIn('<script defer src="/frontend/theme-runtime.js"></script>', page)
 
     def test_keyboard_and_touch_navigation_respect_ui_boundaries(self):
         source = frontend_source()

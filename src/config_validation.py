@@ -120,7 +120,13 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
             ):
                 raise ValueError(f"{field} must be between {minimum} and {maximum}")
 
-    for field in ("autoScanDone", "setupCompleted", "activityTrackingEnabled"):
+    for field in (
+        "autoScanDone",
+        "setupCompleted",
+        "activityTrackingEnabled",
+        "themeMotionEnabled",
+        "themeTimeOfDayEnabled",
+    ):
         if field in result and not isinstance(result[field], bool):
             raise ValueError(f"{field} must be a boolean")
 
