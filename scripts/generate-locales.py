@@ -66,6 +66,10 @@ EXTRA_UI_KEYS = {
     "mediaLibraryFavoriteAdd": "media_library_favorite_add",
     "mediaLibraryFavoriteRemove": "media_library_favorite_remove",
     "mediaLibraryFavoriteError": "media_library_favorite_error",
+    "worldThemeOptions": "world_theme_options",
+    "themeMotion": "theme_motion",
+    "themeTimeOfDay": "theme_time_of_day",
+    "worldThemeHint": "world_theme_hint",
 }
 
 

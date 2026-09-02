@@ -69,6 +69,10 @@ class StableMainReleaseContractTests(unittest.TestCase):
         self.assertFalse(example["activityTrackingEnabled"])
         self.assertEqual(example["activeProfileId"], "default")
         self.assertEqual(len(example["profiles"]), 1)
+        self.assertFalse(example["profiles"][0]["themeMotionEnabled"])
+        self.assertFalse(example["profiles"][0]["themeTimeOfDayEnabled"])
+        self.assertIn('"themeMotionEnabled": True', installer)
+        self.assertIn('"themeTimeOfDayEnabled": False', installer)
 
     def test_wsl_smoke_extends_the_active_profile_in_versioned_configs(self):
         smoke = (
@@ -108,6 +112,8 @@ class StableMainReleaseContractTests(unittest.TestCase):
                 ).read_text(encoding="utf-8")
             )
             self.assertFalse(installed["setupCompleted"])
+            self.assertTrue(installed["profiles"][0]["themeMotionEnabled"])
+            self.assertFalse(installed["profiles"][0]["themeTimeOfDayEnabled"])
             config_path = (
                 Path(home)
                 / ".config"
@@ -265,6 +271,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertTrue((frontend_root / "localization.js").is_file())
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())
+            self.assertTrue((frontend_root / "theme-runtime.js").is_file())
             self.assertTrue((frontend_root / "media-library.css").is_file())
             self.assertTrue((frontend_root / "media-library.js").is_file())
             self.assertTrue((frontend_root / "locales" / "de.json").is_file())

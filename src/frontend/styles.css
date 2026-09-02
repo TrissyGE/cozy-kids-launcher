@@ -22,7 +22,7 @@
   body.theme-bauernhof .tile { border:2px solid #e57373; border-radius:28px; }
   body.theme-katzen .tile { border-radius:36px; box-shadow:0 8px 24px rgba(251,140,0,.15), var(--shadow); }
   body.theme-hunde .tile { border-radius:36px; box-shadow:0 8px 24px rgba(141,110,99,.15), var(--shadow); }
-  #themeBg { position:fixed; inset:0; z-index:-1; opacity:0; transition:opacity var(--motion-slow) ease; pointer-events:none; background-size:cover; background-position:center; }
+  #themeBg { position:fixed; inset:0; z-index:-1; opacity:0; overflow:hidden; transition:opacity var(--motion-slow) ease; pointer-events:none; background-size:cover; background-position:center; transform-origin:center; }
   body.theme-wald #themeBg { background-image:url('/themes/forrest.jpg'); opacity:1; }
   body.theme-weltraum #themeBg { background-image:url('/themes/space.jpg'); opacity:1; }
   body.theme-ocean #themeBg { background-image:url('/themes/ocean.jpg'); opacity:1; }
@@ -32,6 +32,45 @@
   body.theme-bauernhof #themeBg { background-image:url('/themes/farm.jpg'); opacity:1; }
   body.theme-katzen #themeBg { background-image:url('/themes/cats.jpg'); opacity:1; }
   body.theme-hunde #themeBg { background-image:url('/themes/dogs.jpg'); opacity:1; }
+  .theme-world {
+    --world-time-overlay:linear-gradient(transparent,transparent);
+    --world-particles:
+      radial-gradient(circle at 12% 22%,rgba(255,255,255,.58) 0 2px,transparent 3px),
+      radial-gradient(circle at 74% 18%,rgba(255,255,255,.44) 0 3px,transparent 4px),
+      radial-gradient(circle at 42% 72%,rgba(255,255,255,.38) 0 2px,transparent 3px),
+      radial-gradient(circle at 88% 82%,rgba(255,255,255,.48) 0 2px,transparent 3px);
+  }
+  .theme-world.theme-time-morning { --world-time-overlay:linear-gradient(135deg,rgba(255,220,145,.24),rgba(255,255,255,.04) 62%); }
+  .theme-world.theme-time-day { --world-time-overlay:linear-gradient(rgba(255,255,255,.08),rgba(255,255,255,.02)); }
+  .theme-world.theme-time-evening { --world-time-overlay:linear-gradient(135deg,rgba(255,170,94,.18),rgba(85,55,132,.12)); }
+  .theme-world.theme-time-night { --world-time-overlay:linear-gradient(rgba(20,34,82,.30),rgba(12,25,70,.38)); }
+  body.theme-weltraum, .launcher-preview.theme-weltraum {
+    --world-particles:
+      radial-gradient(circle at 10% 16%,rgba(255,255,255,.86) 0 1px,transparent 2px),
+      radial-gradient(circle at 34% 68%,rgba(255,255,255,.68) 0 2px,transparent 3px),
+      radial-gradient(circle at 66% 24%,rgba(255,255,255,.78) 0 1px,transparent 2px),
+      radial-gradient(circle at 90% 74%,rgba(255,255,255,.62) 0 2px,transparent 3px);
+  }
+  body.theme-ocean, .launcher-preview.theme-ocean {
+    --world-particles:
+      radial-gradient(circle at 16% 84%,transparent 0 5px,rgba(225,248,255,.52) 6px 7px,transparent 8px),
+      radial-gradient(circle at 50% 58%,transparent 0 3px,rgba(225,248,255,.46) 4px 5px,transparent 6px),
+      radial-gradient(circle at 82% 76%,transparent 0 6px,rgba(225,248,255,.48) 7px 8px,transparent 9px);
+  }
+  body.theme-world #themeBg::before, body.theme-world #themeBg::after,
+  .launcher-preview.theme-world::before, .launcher-preview.theme-world::after { content:''; position:absolute; inset:0; pointer-events:none; }
+  body.theme-world #themeBg::before, .launcher-preview.theme-world::before { z-index:0; background:var(--world-time-overlay); }
+  body.theme-world #themeBg::after, .launcher-preview.theme-world::after { z-index:0; background-image:var(--world-particles); opacity:0; }
+  body.theme-world-motion #themeBg { animation:worldThemeDrift 30s ease-in-out infinite alternate; }
+  body.theme-world-motion #themeBg::after, .launcher-preview.theme-world-motion::after { opacity:.38; animation:worldThemeFloat 22s linear infinite; }
+  @keyframes worldThemeDrift {
+    from { transform:scale(1.035) translate3d(-.6%,-.35%,0); }
+    to { transform:scale(1.055) translate3d(.6%,.35%,0); }
+  }
+  @keyframes worldThemeFloat {
+    from { background-position:0 0,0 0,0 0,0 0; }
+    to { background-position:22px -44px,-18px -58px,14px -36px,-24px -50px; }
+  }
   * { box-sizing:border-box; }
   body { margin:0; min-height:100vh; font-family:system-ui,sans-serif; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--text); overflow:hidden; }
   .screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px 80px; }
@@ -111,7 +150,14 @@
   .appearance-settings-grid { display:grid; grid-template-columns:minmax(260px,.75fr) minmax(380px,1.25fr); gap:var(--space-4); align-items:start; }
   .appearance-preview-shell { min-width:0; }
   .appearance-preview-shell h4 { margin:0 0 var(--space-2); }
-  .launcher-preview { min-height:320px; padding:var(--space-4); border:2px solid var(--btn); border-radius:var(--radius-surface); color:var(--text); overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
+  .world-theme-options { min-width:0; margin:var(--space-4) 0 0; padding:var(--space-3); border:1px solid var(--input-border); border-radius:var(--radius-control); display:grid; gap:var(--space-2); }
+  .world-theme-options legend { padding:0 var(--space-1); font-weight:800; }
+  .world-theme-options .chk { min-height:44px; margin:0; }
+  .world-theme-options .chk input { width:24px; height:24px; flex:none; margin:0; }
+  .world-theme-options .muted { margin:0; line-height:1.4; }
+  .world-theme-options.is-disabled { opacity:.62; }
+  .launcher-preview { position:relative; isolation:isolate; min-height:320px; padding:var(--space-4); border:2px solid var(--btn); border-radius:var(--radius-surface); color:var(--text); overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.55); }
+  .launcher-preview > * { position:relative; z-index:1; }
   .preview-launcher-title { width:max-content; max-width:100%; margin:0 auto var(--space-3); padding:var(--space-2) var(--space-3); border-radius:var(--radius-field); background:var(--card); font-size:1rem; font-weight:800; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .preview-launcher-grid { display:grid; gap:var(--space-2); }
   .preview-launcher-grid.gross { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -281,6 +327,7 @@
 
   @media (forced-colors: active) {
     #themeBg { display:none; }
+    .launcher-preview::before, .launcher-preview::after { display:none; }
     .tile, .smallbtn, .nav, .theme-thumb, .admin-tab, .overview-card, .admin-bulk-toolbar, .launcher-preview, .preview-tile, .panel, .pinbox, .install-box, .timerbox, .confirm-box,
     .backup-panel, .rec-card, .ui-state, .profile-list-panel, .profile-editor, .profile-create, .profile-card, .profile-picker, .profile-choice, .first-run-box, .first-run-choice, .first-run-app-choice, .schedule-panel, .schedule-day, .activity-panel, .activity-metric, .activity-item, input, select, textarea, label.chk {
       background:Canvas;

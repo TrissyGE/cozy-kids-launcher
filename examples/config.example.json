@@ -13,6 +13,8 @@
       "avatar": "🌈",
       "title": "Hallo Kiddo 🌈",
       "theme": "rosa",
+      "themeMotionEnabled": false,
+      "themeTimeOfDayEnabled": false,
       "customColors": {
         "bg1": "#ffd6e8",
         "bg2": "#ffeef6",

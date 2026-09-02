@@ -127,6 +127,7 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/media.html"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/media-library.css"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/media-library.js"
+          test -f "$test_home/.local/share/cozy-kids-launcher/frontend/theme-runtime.js"
           cmp VERSION "$test_home/.local/share/cozy-kids-launcher/version"
 
       - name: Build release archives and checksums

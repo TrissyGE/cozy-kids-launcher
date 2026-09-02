@@ -353,6 +353,18 @@
                   <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
                   <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
                 </div>
+                <fieldset id="worldThemeOptions" class="world-theme-options">
+                  <legend id="worldThemeOptionsTitle"></legend>
+                  <label class="chk" for="cfgThemeMotionEnabled">
+                    <input id="cfgThemeMotionEnabled" type="checkbox" onchange="renderAppearancePreview()">
+                    <span id="themeMotionLabel"></span>
+                  </label>
+                  <label class="chk" for="cfgThemeTimeOfDayEnabled">
+                    <input id="cfgThemeTimeOfDayEnabled" type="checkbox" onchange="renderAppearancePreview()">
+                    <span id="themeTimeOfDayLabel"></span>
+                  </label>
+                  <p id="worldThemeOptionsHint" class="muted"></p>
+                </fieldset>
               </div>
               <section class="appearance-preview-shell" aria-labelledby="appearancePreviewHeading">
                 <h4 id="appearancePreviewHeading">{{LABEL_PREVIEW_TITLE}}</h4>
@@ -412,6 +424,7 @@
 <script defer src="/frontend/localization.js"></script>
 <script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
+<script defer src="/frontend/theme-runtime.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>
 <script defer src="/frontend/schedule-controls.js"></script>

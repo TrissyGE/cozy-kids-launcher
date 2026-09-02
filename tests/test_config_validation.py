@@ -121,6 +121,20 @@ class ConfigValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "activityTrackingEnabled must be a boolean"):
             config_validation.validate_config(data)
 
+        for field in ("themeMotionEnabled", "themeTimeOfDayEnabled"):
+            with self.subTest(field=field):
+                data = base_config()
+                data[field] = "yes"
+                with self.assertRaisesRegex(ValueError, f"{field} must be a boolean"):
+                    config_validation.validate_config(data)
+
+        data = base_config()
+        data["themeMotionEnabled"] = True
+        data["themeTimeOfDayEnabled"] = False
+        validated = config_validation.validate_config(data)
+        self.assertTrue(validated["themeMotionEnabled"])
+        self.assertFalse(validated["themeTimeOfDayEnabled"])
+
     def test_schedule_collections_are_bounded_and_validated(self):
         data = base_config()
         data["weeklySchedule"] = {

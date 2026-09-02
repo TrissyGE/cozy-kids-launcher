@@ -97,6 +97,8 @@ def write_demo_config(config_path, browser_name):
     config["profiles"][0].update({
         "title": "E2E Home",
         "theme": "rosa",
+        "themeMotionEnabled": False,
+        "themeTimeOfDayEnabled": False,
         "layoutMode": "gross",
         "currentPage": 0,
         "timerMinutes": 0,
@@ -408,10 +410,36 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         browser,
         "document.getElementById('appearancePreview').classList.contains('theme-weltraum') && "
         "document.getElementById('appearancePreview').style.background.includes('space.jpg') && "
+        "!document.getElementById('cfgThemeMotionEnabled').disabled && "
+        "!document.getElementById('cfgThemeTimeOfDayEnabled').disabled && "
+        "document.getElementById('cfgThemeMotionEnabled').checked===false && "
+        "document.getElementById('cfgThemeTimeOfDayEnabled').checked===false && "
+        "!document.getElementById('appearancePreview').classList.contains('theme-world-motion') && "
+        "document.getElementById('appearancePreview').dataset.themePeriod===undefined && "
         f"cfg.theme==={json.dumps(saved_theme)} && "
         f"document.body.classList.contains('theme-{saved_theme}')",
         "Theme preview changed the saved or active launcher theme",
     )
+    assert_js(
+        browser,
+        "themePeriodAt(new Date(2026,0,1,6))==='morning' && "
+        "themePeriodAt(new Date(2026,0,1,12))==='day' && "
+        "themePeriodAt(new Date(2026,0,1,18))==='evening' && "
+        "themePeriodAt(new Date(2026,0,1,23))==='night'",
+        "World theme periods do not follow the documented local-time boundaries",
+    )
+    browser.click("#cfgThemeMotionEnabled")
+    browser.click("#cfgThemeTimeOfDayEnabled")
+    assert_js(
+        browser,
+        "document.getElementById('appearancePreview').classList.contains('theme-world-motion') && "
+        "document.getElementById('appearancePreview').dataset.themePeriod===themePeriodAt() && "
+        "Array.from(document.getElementById('appearancePreview').classList)"
+        ".some(name=>name.startsWith('theme-time-')) && "
+        f"cfg.theme==={json.dumps(saved_theme)} && cfg.themeMotionEnabled!==true",
+        "Optional world effects did not stay inside the unsaved preview",
+    )
+    browser.screenshot(artifacts / "world-theme-effects.png")
     browser.set_value("#cfgLayoutMode", "klein")
     assert_js(
         browser,
@@ -449,6 +477,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "title": "Polished E2E Home",
         "layoutMode": "klein",
         "theme": "weltraum",
+        "themeMotionEnabled": True,
+        "themeTimeOfDayEnabled": True,
         "parentLabel": "Family controls",
     }
     if any(saved_config.get(key) != value for key, value in expected.items()):
@@ -1092,7 +1122,9 @@ def run_accessibility_scenarios(browser, artifacts):
         browser,
         "matchMedia('(prefers-reduced-motion: reduce)').matches && "
         "parseFloat(getComputedStyle(document.querySelector('.tile')).transitionDuration)<=0.001 && "
-        "parseFloat(getComputedStyle(document.querySelector('.startbox .emoji')).animationDuration)<=0.001",
+        "parseFloat(getComputedStyle(document.querySelector('.startbox .emoji')).animationDuration)<=0.001 && "
+        "document.body.classList.contains('theme-world-motion') && "
+        "parseFloat(getComputedStyle(document.getElementById('themeBg')).animationDuration)<=0.001",
         "Reduced-motion preference did not suppress launcher movement",
     )
     log_scenario("reduced-motion preference suppresses transitions and animations")
