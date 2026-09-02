@@ -4,7 +4,7 @@ The release desktop matrix must be run in complete Linux desktop sessions. WSLg,
 
 ## Required environments
 
-Use disposable virtual machines or dedicated test devices. The minimum v0.5.0 evidence is one passing report from each primary row:
+Use disposable virtual machines or dedicated test devices. The minimum release evidence is one passing report from each primary row:
 
 | Desktop | Primary session | Browser and launch mode | Additional coverage |
 | --- | --- | --- | --- |

@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-02
+
 ### Media library
 
 - Added a bounded local media catalog API with stable opaque IDs, audio/video metadata, sidecar and folder-cover discovery, and path-private cover delivery while preserving the existing playlist launch behavior
 - Added a child-facing, theme-aware cover library with keyboard navigation and safe individual-item launching through the existing supervised media-player boundary
 - Added bounded per-profile media favorites and recent-item views backed by a private, path-free local state file
+- Added isolated per-profile MPV resume state and a supervised VLC adapter that records only bounded path-free playback positions
+- Kept Celluloid, Totem, and desktop openers as explicit start-over fallbacks when a controllable local player contract is unavailable
 
 ### Family profiles
 
@@ -23,6 +27,19 @@ All notable changes to this project will be documented in this file.
 - Added a bilingual Parent activity overview with bounded recent entries, local-only totals, privacy-minimized JSON export, and confirmed removal controls
 - Added exact-origin allowlists for embedded website tiles, server-bound wrapper URLs, CSP navigation enforcement, and a child-friendly blocked-link message; external mode is now explicitly identified as outside this boundary
 - Extended configuration export, import, backup, restore, installer, diagnostics, and privacy documentation for complete multi-profile data
+
+### Personalization and accessibility
+
+- Added gently animated illustrated world themes with optional local time-of-day variants and operating-system reduced-motion precedence
+- Added brief navigation, launch, success, and return transitions that never delay state or focus changes
+- Added default-off synthesized interface sounds and optional local Linux speech through allowlisted Speech Dispatcher or eSpeak argument vectors
+- Added combinable per-profile presets for larger text, high contrast, reduced motion, and a prominent keyboard-focus marker
+- Added a default-off fixed celebration after successful app and media starts without random rewards, points, streaks, counters, progress, or telemetry
+
+### Test confidence
+
+- Expanded browser journeys for first run, profiles, the local cover library, activity, schedules, allowlists, themes, feedback, celebrations, accessibility, touch, keyboard navigation, and 800×600 layouts
+- Extended configuration, installer, release-asset, privacy, and compatibility coverage while retaining dependency-free production assets
 
 ## [0.5.0] - 2026-09-01
 
