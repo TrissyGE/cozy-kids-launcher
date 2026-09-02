@@ -112,11 +112,22 @@ MPV launches, `media_resume.py` creates a private native
 `watch-later` directory for the active profile. MPV is told to retain only its
 `start` property, to check the source modification time before resuming, and not
 to write filenames into those files. The directory path and playback position
-remain outside the HTTP API and exported configuration. If the private
-directory cannot be prepared, playback continues without resume; VLC and other
-player commands retain their previous behavior until they have an equally
-dependable per-profile contract. Deleting a profile removes its native resume
-directory without following symbolic links.
+remain outside the HTTP API and exported configuration.
+
+When MPV is unavailable, `media_session.py` starts a dedicated VLC instance
+with its bundled stdin remote-control interface, samples time and duration, and
+stores the final useful position through `media_resume.py`. The private atomic
+record is capped at 200 items and 64 KiB, and contains only opaque media IDs,
+whole seconds, file size, and modification time. It never stores a path or
+title, ignores stale positions when a file changes, and clears positions near
+the beginning or end. VLC's global recent-play and continue-playback features
+are disabled for this launch. Celluloid, Totem, and desktop openers continue to
+start from the beginning because they do not provide an equally controlled
+dependency-free contract. A missing adapter or unavailable storage skips resume
+and uses normal playback, while position read/write failures do not interrupt
+an already started player.
+Deleting a profile removes all of its resume data without following symbolic
+links.
 
 `application_launcher.py` owns action normalization and orchestration. It starts
 argument vectors below `process_supervisor.py`, waits for a verified process

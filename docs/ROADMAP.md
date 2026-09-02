@@ -70,13 +70,14 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 ## v0.7.0 — Delight
 
-- [ ] Add a cover-based local media library with favorites, recents, and resume support
+- [x] Add a cover-based local media library with favorites, recents, and resume support
   - [x] Add a bounded, path-private local catalog API with sidecar and folder-cover discovery
   - [x] Add the child-facing cover library and launch individual media items
   - [x] Add bounded per-profile media favorites and recents
-  - [ ] Add reliable per-profile resume positions across supported players
+  - [x] Add reliable per-profile resume positions where a player exposes a controllable local contract
     - [x] Isolate MPV's documented native resume state per child profile
-    - [ ] Define a dependable VLC and desktop-player strategy without relying on global viewing history
+    - [x] Capture VLC positions through a supervised local adapter without using global viewing history
+    - [x] Keep Celluloid, Totem, and desktop openers as explicit start-over fallbacks
 - [ ] Add animated world themes and optional time-of-day variants
 - [ ] Add subtle navigation, launch, success, and return transitions
 - [ ] Add optional local sounds and Linux text-to-speech feedback

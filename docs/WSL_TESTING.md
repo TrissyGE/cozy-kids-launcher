@@ -43,10 +43,11 @@ The test:
 
 The normal user installation under `~/.config/cozy-kids-launcher` and `~/.local/share/cozy-kids-launcher` is not modified.
 
-The isolated native MPV resume contract can also be checked independently:
+The isolated native-player resume contracts can also be checked independently:
 
 ```bash
 bash scripts/wsl/check-mpv-resume.sh
+bash scripts/wsl/check-vlc-resume.sh
 ```
 
 This creates a temporary media fixture, ends MPV the same way as an owned
@@ -54,6 +55,11 @@ launcher process, verifies that the private profile directory contains only a
 playback position and MPV's path-free redirect markers, and confirms that a
 second launch consumes the position. All temporary files are removed when the
 test exits.
+
+The VLC check exercises the local standard-library adapter against VLC 3's
+stdin remote-control interface. It verifies that an owned stop produces a
+bounded, path-free position record and that the second VLC process receives the
+saved start time and advances from it.
 
 Use `--headless` to skip the short visible external-browser window. Use `--visible-seconds N` to change how long it stays open. Results are written to:
 

@@ -422,6 +422,8 @@ class ServerApiTests(unittest.TestCase):
         server_module.ACTIVITY_FILE = str(root / "state" / "activity.json")
         server_module.MEDIA_STATE_FILE = str(root / "state" / "media.json")
         server_module.MEDIA_RESUME_ROOT = str(root / "state" / "media-resume")
+        server_module.MEDIA_SESSION_SCRIPT = str(app_root / "media_session.py")
+        Path(server_module.MEDIA_SESSION_SCRIPT).touch()
         server_module.TIMER_FILE = str(cache_dir / "timer.json")
         server_module.PIDFILE = str(cache_dir / "server.pid")
         server_module.BROWSER_PIDFILE = str(cache_dir / "browser.pid")
@@ -587,7 +589,20 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 204)
         self.assertIsNone(data)
         command = launch.call_args.args[0]
-        self.assertEqual(command[:4], [
+        self.assertEqual(command[:10], [
+            sys.executable,
+            server_module.MEDIA_SESSION_SCRIPT,
+            "--resume-root",
+            server_module.MEDIA_RESUME_ROOT,
+            "--profile-id",
+            "default",
+            "--media-id",
+            catalog["items"][0]["id"],
+            "--media-path",
+            str(media_file),
+        ])
+        separator = command.index("--")
+        self.assertEqual(command[separator + 1:separator + 5], [
             "vlc",
             "--fullscreen",
             "--play-and-exit",
@@ -599,6 +614,35 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(launch.call_args.kwargs["profile_id"], "default")
         _, updated_catalog, _ = self.request("/api/media")
         self.assertEqual(updated_catalog["recentIds"], [catalog["items"][0]["id"]])
+
+    def test_media_play_keeps_vlc_working_when_the_resume_adapter_is_missing(self):
+        media_file = Path(server_module.VIDEOS) / "Film.mp4"
+        media_file.write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+        Path(server_module.MEDIA_SESSION_SCRIPT).unlink()
+
+        with mock.patch.object(server_module, "find_media_player", return_value="vlc"), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, _, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": catalog["items"][0]["id"]},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 204)
+        self.assertEqual(launch.call_args.args[0][:4], [
+            "vlc",
+            "--fullscreen",
+            "--play-and-exit",
+            "--no-video-title-show",
+        ])
 
     def test_media_play_isolates_native_mpv_resume_state_by_active_profile(self):
         media_file = Path(server_module.VIDEOS) / "Film.mp4"
@@ -1932,6 +1976,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('.media-favorite[aria-pressed="true"]', styles)
         self.assertIn('install -m 0644 "$SRC_DIR/media_state.py"', installer)
         self.assertIn('install -m 0644 "$SRC_DIR/media_resume.py"', installer)
+        self.assertIn('install -m 0644 "$SRC_DIR/media_session.py"', installer)
         for asset in ("media.html", "media-library.css", "media-library.js"):
             self.assertIn(asset, installer)
 
