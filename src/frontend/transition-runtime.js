@@ -61,6 +61,7 @@ function playLauncherReturn(tileId){
   const tile=Array.from(document.querySelectorAll('#grid .tile[data-tile-id]'))
     .find(element=>element.dataset.tileId===tileId);
   if(tile) replayMotionClass(tile,'return-highlight',900);
+  playFeedbackSound('return');
 }
 
 function rememberLauncherPageReturn(profileId,tileId){

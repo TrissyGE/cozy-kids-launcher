@@ -126,6 +126,8 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         "activityTrackingEnabled",
         "themeMotionEnabled",
         "themeTimeOfDayEnabled",
+        "soundFeedbackEnabled",
+        "speechFeedbackEnabled",
     ):
         if field in result and not isinstance(result[field], bool):
             raise ValueError(f"{field} must be a boolean")

@@ -365,6 +365,19 @@
                   </label>
                   <p id="worldThemeOptionsHint" class="muted"></p>
                 </fieldset>
+                <fieldset id="feedbackOptions" class="world-theme-options feedback-options">
+                  <legend id="feedbackOptionsTitle"></legend>
+                  <label class="chk" for="cfgSoundFeedbackEnabled">
+                    <input id="cfgSoundFeedbackEnabled" type="checkbox">
+                    <span id="soundFeedbackLabel"></span>
+                  </label>
+                  <label class="chk" for="cfgSpeechFeedbackEnabled">
+                    <input id="cfgSpeechFeedbackEnabled" type="checkbox">
+                    <span id="speechFeedbackLabel"></span>
+                  </label>
+                  <p id="feedbackOptionsHint" class="muted"></p>
+                  <p id="speechFeedbackStatus" class="muted" role="status"></p>
+                </fieldset>
               </div>
               <section class="appearance-preview-shell" aria-labelledby="appearancePreviewHeading">
                 <h4 id="appearancePreviewHeading">{{LABEL_PREVIEW_TITLE}}</h4>
@@ -425,6 +438,7 @@
 <script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/theme-runtime.js"></script>
+<script defer src="/frontend/feedback-runtime.js"></script>
 <script defer src="/frontend/transition-runtime.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>

@@ -249,6 +249,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / ".local"
                     / "share"
                     / "cozy-kids-launcher"
+                    / "speech_feedback.py"
+                ).is_file()
+            )
+            self.assertTrue(
+                (
+                    Path(home)
+                    / ".local"
+                    / "share"
+                    / "cozy-kids-launcher"
                     / "timer_state.py"
                 ).is_file()
             )
@@ -272,6 +281,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())
             self.assertTrue((frontend_root / "theme-runtime.js").is_file())
+            self.assertTrue((frontend_root / "feedback-runtime.js").is_file())
             self.assertTrue((frontend_root / "transition-runtime.js").is_file())
             self.assertTrue((frontend_root / "media-library.css").is_file())
             self.assertTrue((frontend_root / "media-library.js").is_file())

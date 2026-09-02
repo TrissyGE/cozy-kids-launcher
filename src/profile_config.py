@@ -17,6 +17,8 @@ PROFILE_FIELDS = (
     "customBackground",
     "themeMotionEnabled",
     "themeTimeOfDayEnabled",
+    "soundFeedbackEnabled",
+    "speechFeedbackEnabled",
     "layoutMode",
     "currentPage",
     "timerMinutes",

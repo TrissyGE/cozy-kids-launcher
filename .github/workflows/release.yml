@@ -83,7 +83,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Compile Python templates
-        run: python -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/generate-locales.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
+        run: python -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/speech_feedback.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/generate-locales.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
 
       - name: Validate data and shell syntax
         shell: bash
@@ -121,6 +121,7 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/media_resume.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/media_session.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/parent_auth.py"
+          test -f "$test_home/.local/share/cozy-kids-launcher/speech_feedback.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/timer_state.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/schedule_rules.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/update_manager.py"
@@ -128,6 +129,7 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/media-library.css"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/media-library.js"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/theme-runtime.js"
+          test -f "$test_home/.local/share/cozy-kids-launcher/frontend/feedback-runtime.js"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/transition-runtime.js"
           cmp VERSION "$test_home/.local/share/cozy-kids-launcher/version"
 

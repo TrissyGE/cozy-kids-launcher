@@ -33,6 +33,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
 - `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview
+- `src/frontend/feedback-runtime.js` owns opt-in synthesized UI tones and sends only focused tile IDs to the local speech endpoint
 - `src/frontend/transition-runtime.js` owns dependency-free navigation, launch, success, and return motion without delaying state or focus changes
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/media.html` and `src/frontend/media-library.*` render the local cover library and submit only opaque media IDs
@@ -49,6 +50,15 @@ active profile and tile IDs in session storage until the next launcher page load
 native app returns use memory-only focus tracking. No label, command, URL, or path
 is retained, and the operating system's reduced-motion preference suppresses all
 transition animation.
+
+Audio feedback is represented by two additive, profile-scoped booleans that are
+off by default. Gentle UI tones are synthesized with the browser's Web Audio API
+and require no files, service, or network request. Optional Linux speech accepts
+only a bounded visible tile ID over localhost; the server resolves the current
+label and `speech_feedback.py` starts only an allowlisted Speech Dispatcher or
+eSpeak executable as an argument vector. Missing providers and failed speech are
+nonfatal, arbitrary client-provided text is rejected, and the launcher owns and
+limits the lifetime of its speech process.
 
 Asynchronous frontend resources use explicit loading, empty, error, and success
 states. Configuration remains the only startup-critical request: a failure leaves
@@ -79,7 +89,7 @@ A tiny Python HTTP server:
 kept in focused standard-library modules: configuration storage and validation,
 Parent authentication, app/browser discovery, embedded-browser policy, application launching, media
 discovery, timer state, update discovery/triggering, lifecycle state, process
-ownership, backups, and privacy-safe diagnostics. The server supplies installed
+ownership, bounded local speech feedback, backups, and privacy-safe diagnostics. The server supplies installed
 paths and turns module results into the existing HTTP responses; the modules do
 not depend on the HTTP handler.
 

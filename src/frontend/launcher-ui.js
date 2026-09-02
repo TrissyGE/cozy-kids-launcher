@@ -52,7 +52,10 @@ async function loadFeatures(){
     const response=await fetch('/api/features',{cache:'no-store'});
     if(!response.ok) return;
     const data=await response.json();
-    if(data&&typeof data==='object') features=data;
+    if(data&&typeof data==='object'){
+      features=data;
+      announceFocusedTile();
+    }
   }catch(e){}
 }
 async function loadBrowsers(refreshAdmin=false){
@@ -228,6 +231,7 @@ function renderKids(){
       btn.onclick=event=>{
         if(tileClickSuppressed(event)) return;
         if(blocked.has(tile.id)){
+          playFeedbackSound('blocked');
           showAvailabilityBlock(
             availabilityStatus.profileAllowed?'app_schedule':'profile_schedule'
           );
@@ -235,7 +239,7 @@ function renderKids(){
           launchTile(tile.id);
         }
       };
-      btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); };
+      btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); scheduleTileSpeech(tile.id); };
       const tileEmoji=createTileVisual(tile.emoji,'emoji');
       const tileLabel=document.createElement('div');
       tileLabel.textContent=tile.label||'';
@@ -264,6 +268,7 @@ function changePage(dir){
   focusedTileIndex=0;
   renderAll();
   playLauncherPageTransition(dir);
+  playFeedbackSound('navigate');
 }
 let startFeedbackTimer=null;
 function hideStartFeedback(){
@@ -289,12 +294,15 @@ function showLaunchSuccess(tile){
   renderTileVisual(document.getElementById('startEmoji'),'✨','start-tile-visual');
   document.getElementById('startText').textContent=(uiText.startedApp||'{app} is ready').replace('{app}',tile.label||'');
   setLaunchMotionState(overlay,'success');
+  playFeedbackSound('success');
   if(startFeedbackTimer!==null) clearTimeout(startFeedbackTimer);
   startFeedbackTimer=setTimeout(hideStartFeedback,900);
 }
 async function launchTile(id){
   const tile=cfg.tiles.find(t=>t.id===id);
   if(!tile) return;
+  cancelTileSpeech();
+  playFeedbackSound('launch');
   if(isMediaLibraryTile(tile)){
     try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
     rememberLauncherPageReturn(cfg.activeProfileId||'default',id);
@@ -333,7 +341,7 @@ function showPin(){ pinReturnFocus=document.activeElement; document.getElementBy
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
 function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; if(pinReturnFocus&&pinReturnFocus.isConnected) pinReturnFocus.focus(); pinReturnFocus=null; }
 async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); pinReturnFocus=null; if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
-function enterAdmin(){ adminPage=cfg.currentPage; adminSection='overview'; adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); document.getElementById('kids').classList.add('hidden'); const admin=document.getElementById('admin'); admin.classList.remove('hidden'); document.querySelector('.cornerbar').classList.add('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); renderNav(); playScreenTransition(admin); document.getElementById('adminNavOverview').focus(); loadBackups(); loadActivityDashboard(); }
+function enterAdmin(){ cancelTileSpeech(); adminPage=cfg.currentPage; adminSection='overview'; adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); document.getElementById('kids').classList.add('hidden'); const admin=document.getElementById('admin'); admin.classList.remove('hidden'); document.querySelector('.cornerbar').classList.add('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); renderNav(); playScreenTransition(admin); document.getElementById('adminNavOverview').focus(); loadBackups(); loadActivityDashboard(); }
 function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); const kids=document.getElementById('kids'); kids.classList.remove('hidden'); document.querySelector('.cornerbar').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); playScreenTransition(kids,true); }
 function shutdownNow(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
 function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }

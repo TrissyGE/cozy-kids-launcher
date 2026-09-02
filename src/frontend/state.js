@@ -1,5 +1,5 @@
 let cfg=null, appOptions=[], recommendations=[], backups=[], adminPage=0, adminSection='overview', adminTileQuery='', adminTileVisibility='all', adminSelectedTileIds=new Set(), pinCallback=null, pinReturnFocus=null;
-let features={shutdownAvailable:false};
+let features={shutdownAvailable:false,speechFeedbackAvailable:false};
 let timerPollInterval=null, lastTimerStatus={};
 let availabilityPollInterval=null, availabilityStatus={profileAllowed:true,blockedTileIds:[]}, selectedAppScheduleId='';
 let updateAvailable=false, remoteVersion='';
@@ -116,6 +116,12 @@ let uiText = {
   importConfirm: {{JSON_IMPORT_CONFIRM}},
   startingApp: {{JSON_STARTING_APP}},
   startedApp: {{JSON_STARTED_APP}},
+  feedbackOptions: {{JSON_FEEDBACK_OPTIONS}},
+  soundFeedback: {{JSON_SOUND_FEEDBACK}},
+  speechFeedback: {{JSON_SPEECH_FEEDBACK}},
+  speechAvailable: {{JSON_SPEECH_AVAILABLE}},
+  speechUnavailable: {{JSON_SPEECH_UNAVAILABLE}},
+  feedbackHint: {{JSON_FEEDBACK_HINT}},
   emptyStateEmoji: {{JSON_EMPTY_STATE_EMOJI}},
   emptyStateText: {{JSON_EMPTY_STATE_TEXT}},
   previewTitle: {{JSON_PREVIEW_TITLE}},

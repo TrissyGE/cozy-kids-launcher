@@ -15,6 +15,8 @@
       "theme": "rosa",
       "themeMotionEnabled": false,
       "themeTimeOfDayEnabled": false,
+      "soundFeedbackEnabled": false,
+      "speechFeedbackEnabled": false,
       "customColors": {
         "bg1": "#ffd6e8",
         "bg2": "#ffeef6",
