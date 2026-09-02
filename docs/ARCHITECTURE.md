@@ -33,6 +33,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
 - `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview
+- `src/frontend/transition-runtime.js` owns dependency-free navigation, launch, success, and return motion without delaying state or focus changes
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/media.html` and `src/frontend/media-library.*` render the local cover library and submit only opaque media IDs
 - `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing, recommendations, and updates
@@ -41,6 +42,13 @@ The frontend stays dependency-free and is split by responsibility:
 The installer renders or copies these files below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager or bundler.
 
 World effects are two additive, profile-scoped booleans in the existing version 2 configuration. Missing values remain disabled for upgrade compatibility, while new installations enable only gentle motion. The runtime uses CSS animation, schedules a class refresh at the next local day-period boundary, and never calls a time or location service. The operating system's reduced-motion preference always suppresses the animation.
+
+Launcher transitions are visual-only classes applied after navigation, rendering,
+and focus changes. Full-page media or embedded-browser launches retain only the
+active profile and tile IDs in session storage until the next launcher page load;
+native app returns use memory-only focus tracking. No label, command, URL, or path
+is retained, and the operating system's reduced-motion preference suppresses all
+transition animation.
 
 Asynchronous frontend resources use explicit loading, empty, error, and success
 states. Configuration remains the only startup-critical request: a failure leaves

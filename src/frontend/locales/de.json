@@ -101,6 +101,7 @@
   "invalidConfig": "Ungültige Konfigurationsdatei",
   "importConfirm": "Dies überschreibt die gesamte Konfiguration. Fortfahren?",
   "startingApp": "Starte {app}...",
+  "startedApp": "{app} ist bereit",
   "emptyStateEmoji": "🤔",
   "emptyStateText": "Frag Mama oder Papa, um Apps hinzuzufügen!",
   "previewTitle": "Vorschau",

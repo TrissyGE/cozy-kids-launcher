@@ -36,6 +36,7 @@ def frontend_source():
         frontend_root / "icons.js",
         frontend_root / "dialogs.js",
         frontend_root / "theme-runtime.js",
+        frontend_root / "transition-runtime.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
         frontend_root / "schedule-controls.js",
@@ -1625,6 +1626,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/icons.js",
             "/frontend/dialogs.js",
             "/frontend/theme-runtime.js",
+            "/frontend/transition-runtime.js",
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
             "/frontend/schedule-controls.js",
@@ -1645,12 +1647,13 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_TRANSITION_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_SCHEDULE_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ACTIVITY_FILE"', installer)
@@ -2110,6 +2113,34 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("body.theme-world-motion #themeBg", styles)
         self.assertIn("@media (prefers-reduced-motion: reduce)", styles)
         self.assertIn('<script defer src="/frontend/theme-runtime.js"></script>', page)
+
+    def test_subtle_transitions_are_local_bounded_and_reduced_motion_safe(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
+        source = frontend_source()
+        runtime = (frontend / "transition-runtime.js").read_text(encoding="utf-8")
+        styles = (frontend / "styles.css").read_text(encoding="utf-8")
+        page = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        self.assertNotIn("fetch(", runtime)
+        self.assertIn("sessionStorage.setItem(COZY_RETURN_MARKER", runtime)
+        self.assertIn("/^[A-Za-z0-9_-]{1,80}$/", runtime)
+        self.assertIn("raw.length>200", runtime)
+        self.assertIn("sessionStorage.removeItem(COZY_RETURN_MARKER)", runtime)
+        self.assertIn("function armLauncherFocusReturn(tileId)", runtime)
+        self.assertIn("renderAll();\n  playLauncherPageTransition(dir)", source)
+        for animation in (
+            "pageEnterNext",
+            "screenEnterReturn",
+            "panelEnter",
+            "successSettle",
+            "returnHighlight",
+        ):
+            self.assertIn(f"@keyframes {animation}", styles)
+        self.assertIn("animation-duration:.01ms !important", styles)
+        self.assertIn('role="status" aria-live="polite"', page)
+        self.assertIn('<script defer src="/frontend/transition-runtime.js"></script>', page)
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
+        self.assertIn('de:started_app) echo "{app} ist bereit"', installer)
+        self.assertIn('en:started_app) echo "{app} is ready"', installer)
 
     def test_keyboard_and_touch_navigation_respect_ui_boundaries(self):
         source = frontend_source()

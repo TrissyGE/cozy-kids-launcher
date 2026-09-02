@@ -115,6 +115,7 @@ let uiText = {
   invalidConfig: {{JSON_INVALID_CONFIG}},
   importConfirm: {{JSON_IMPORT_CONFIRM}},
   startingApp: {{JSON_STARTING_APP}},
+  startedApp: {{JSON_STARTED_APP}},
   emptyStateEmoji: {{JSON_EMPTY_STATE_EMOJI}},
   emptyStateText: {{JSON_EMPTY_STATE_TEXT}},
   previewTitle: {{JSON_PREVIEW_TITLE}},

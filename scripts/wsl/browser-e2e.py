@@ -190,7 +190,11 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         message="The setup language choice did not restore the English interface locale",
     )
     browser.click("#firstRunNextBtn")
-    browser.wait_for("document.getElementById('firstRunChildName')!==null")
+    browser.wait_for(
+        "document.getElementById('firstRunChildName')!==null && "
+        "document.getElementById('firstRunContent').classList.contains('setup-step-next')",
+        message="The guided setup did not render and transition to its next step",
+    )
     browser.set_value("#firstRunChildName", "Kiddo")
     browser.set_value("#firstRunChildAvatar", "🌈")
     browser.set_value("#firstRunHomeTitle", "E2E Home")
@@ -292,8 +296,45 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.click("#mediaBack")
     browser.wait_for(
         "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg!==null && "
-        "bootstrapPromise===null && document.querySelectorAll('#grid .tile:not(.placeholder)').length===2",
+        "bootstrapPromise===null && document.querySelectorAll('#grid .tile:not(.placeholder)').length===2 && "
+        "document.getElementById('kids').classList.contains('screen-returning') && "
+        "document.querySelector('#grid .tile[data-tile-id=\"music\"]')"
+        ".classList.contains('return-highlight')",
         message="The media library did not return to the launcher",
+    )
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,250))", await_promise=True)
+    browser.screenshot(artifacts / "launcher-return.png")
+    browser.evaluate(
+        "window.__transitionOriginalFetch=window.fetch.bind(window);"
+        "window.fetch=(input,options)=>String(input)==='/launch/paint'"
+        " ? new Promise(resolve=>{window.__completeTransitionLaunch=()=>"
+        "resolve(new Response(null,{status:204}));})"
+        " : window.__transitionOriginalFetch(input,options)"
+    )
+    browser.click('#grid .tile[data-tile-id="paint"]')
+    browser.wait_for(
+        "document.getElementById('startOverlay').classList.contains('launch-starting') && "
+        "document.getElementById('startText').textContent.includes('Paint')",
+        message="A pending local launch did not expose its visual status",
+    )
+    browser.evaluate("window.__completeTransitionLaunch()")
+    browser.wait_for(
+        "document.getElementById('startOverlay').classList.contains('launch-success') && "
+        "document.getElementById('startText').textContent.includes('Paint') && "
+        "document.getElementById('startText').textContent.includes('ready')",
+        message="A successful local launch did not expose its visual status",
+    )
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,250))", await_promise=True)
+    browser.screenshot(artifacts / "launch-success.png")
+    browser.wait_for(
+        "document.getElementById('startOverlay').classList.contains('hidden')",
+        timeout=3,
+        message="Successful launch feedback did not close automatically",
+    )
+    browser.evaluate(
+        "window.fetch=window.__transitionOriginalFetch;"
+        "delete window.__transitionOriginalFetch;"
+        "delete window.__completeTransitionLaunch"
     )
     log_scenario("home and the local cover media library render safely")
 
@@ -1052,7 +1093,8 @@ def run_accessibility_scenarios(browser, artifacts):
         browser,
         "document.activeElement.id==='adminNavAppearance' && "
         "document.querySelector('[data-admin-panel=\"appearance\"]')"
-        ".hidden===false",
+        ".hidden===false && document.querySelector('[data-admin-panel=\"appearance\"]')"
+        ".classList.contains('admin-panel-enter')",
         "Arrow navigation did not activate the Appearance section",
     )
     browser.key_press("Tab")
@@ -1092,12 +1134,14 @@ def run_accessibility_scenarios(browser, artifacts):
     browser.evaluate("cfg.currentPage=0; focusedTileIndex=0; renderAll()")
     browser.touch_swipe(700, 400, 100, 400)
     browser.wait_for(
-        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===1",
+        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===1 && "
+        "document.getElementById('grid').classList.contains('page-enter-next')",
         message="Left swipe did not advance the page without activating a tile",
     )
     browser.touch_swipe(100, 400, 700, 400)
     browser.wait_for(
-        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===0",
+        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===0 && "
+        "document.getElementById('grid').classList.contains('page-enter-back')",
         message="Right swipe did not return the page without activating a tile",
     )
     browser.evaluate("showPin()")
@@ -1118,11 +1162,14 @@ def run_accessibility_scenarios(browser, artifacts):
     log_scenario("touch swipes navigate pages and stop at modal boundaries")
 
     browser.set_emulated_media([("prefers-reduced-motion", "reduce")])
+    browser.evaluate("playLauncherPageTransition(1)")
     assert_js(
         browser,
         "matchMedia('(prefers-reduced-motion: reduce)').matches && "
         "parseFloat(getComputedStyle(document.querySelector('.tile')).transitionDuration)<=0.001 && "
         "parseFloat(getComputedStyle(document.querySelector('.startbox .emoji')).animationDuration)<=0.001 && "
+        "document.getElementById('grid').classList.contains('page-enter-next') && "
+        "parseFloat(getComputedStyle(document.getElementById('grid')).animationDuration)<=0.001 && "
         "document.body.classList.contains('theme-world-motion') && "
         "parseFloat(getComputedStyle(document.getElementById('themeBg')).animationDuration)<=0.001",
         "Reduced-motion preference did not suppress launcher movement",

@@ -117,6 +117,7 @@ async function bootstrapLauncher(){
     await pollAvailability();
     if(availabilityPollInterval===null) availabilityPollInterval=setInterval(pollAvailability,10000);
     await startupUpdateCheck();
+    playStoredLauncherReturn(cfg.activeProfileId||'default');
     return true;
   })();
   try{
@@ -256,7 +257,22 @@ function renderKids(){
   updateTileFocus();
 }
 function renderNav(){ const homeHidden=document.getElementById('kids').classList.contains('hidden'); document.getElementById('navLeft').classList.toggle('hidden', homeHidden||cfg.currentPage<=0); document.getElementById('navRight').classList.toggle('hidden', homeHidden||cfg.currentPage>=pageCount()-1); }
-function changePage(dir){ cfg.currentPage=Math.max(0,Math.min(pageCount()-1,cfg.currentPage+dir)); focusedTileIndex=0; renderAll(); }
+function changePage(dir){
+  const nextPage=Math.max(0,Math.min(pageCount()-1,cfg.currentPage+dir));
+  if(nextPage===cfg.currentPage) return;
+  cfg.currentPage=nextPage;
+  focusedTileIndex=0;
+  renderAll();
+  playLauncherPageTransition(dir);
+}
+let startFeedbackTimer=null;
+function hideStartFeedback(){
+  if(startFeedbackTimer!==null) clearTimeout(startFeedbackTimer);
+  startFeedbackTimer=null;
+  const overlay=document.getElementById('startOverlay');
+  overlay.classList.add('hidden');
+  overlay.classList.remove('launch-starting','launch-success');
+}
 function showStartFeedback(tile){
   const overlay=document.getElementById('startOverlay');
   const emoji=document.getElementById('startEmoji');
@@ -264,30 +280,49 @@ function showStartFeedback(tile){
   renderTileVisual(emoji,tile.emoji,'start-tile-visual');
   text.textContent=(uiText.startingApp||'Starte {app}...').replace('{app}',tile.label||'');
   overlay.classList.remove('hidden');
-  setTimeout(()=>overlay.classList.add('hidden'),1500);
+  setLaunchMotionState(overlay,'starting');
+  if(startFeedbackTimer!==null) clearTimeout(startFeedbackTimer);
+  startFeedbackTimer=setTimeout(hideStartFeedback,1500);
+}
+function showLaunchSuccess(tile){
+  const overlay=document.getElementById('startOverlay');
+  renderTileVisual(document.getElementById('startEmoji'),'✨','start-tile-visual');
+  document.getElementById('startText').textContent=(uiText.startedApp||'{app} is ready').replace('{app}',tile.label||'');
+  setLaunchMotionState(overlay,'success');
+  if(startFeedbackTimer!==null) clearTimeout(startFeedbackTimer);
+  startFeedbackTimer=setTimeout(hideStartFeedback,900);
 }
 async function launchTile(id){
   const tile=cfg.tiles.find(t=>t.id===id);
   if(!tile) return;
   if(isMediaLibraryTile(tile)){
     try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
+    rememberLauncherPageReturn(cfg.activeProfileId||'default',id);
     window.location='/media.html?tile='+encodeURIComponent(id);
     return;
   }
   showStartFeedback(tile);
+  armLauncherFocusReturn(id);
   try{
     const response=await fetch('/launch/'+encodeURIComponent(id), {method:'POST'});
     if(response.status===403){
-      document.getElementById('startOverlay').classList.add('hidden');
+      cancelLauncherFocusReturn();
+      hideStartFeedback();
       const data=await response.json();
       showAvailabilityBlock(data.reason||'profile_schedule');
       await pollAvailability();
       return;
     }
-    if(!response.ok&&!response.redirected) return;
+    if(!response.ok&&!response.redirected){ cancelLauncherFocusReturn(); return; }
     try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
-    if(response.redirected) window.location=response.url;
-  }catch(e){}
+    if(response.redirected){
+      cancelLauncherFocusReturn();
+      rememberLauncherPageReturn(cfg.activeProfileId||'default',id);
+      window.location=response.url;
+      return;
+    }
+    showLaunchSuccess(tile);
+  }catch(e){ cancelLauncherFocusReturn(); }
 }
 
 // PIN handling
@@ -298,8 +333,8 @@ function showPin(){ pinReturnFocus=document.activeElement; document.getElementBy
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
 function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; if(pinReturnFocus&&pinReturnFocus.isConnected) pinReturnFocus.focus(); pinReturnFocus=null; }
 async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); pinReturnFocus=null; if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
-function enterAdmin(){ adminPage=cfg.currentPage; adminSection='overview'; adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); document.getElementById('kids').classList.add('hidden'); document.getElementById('admin').classList.remove('hidden'); document.querySelector('.cornerbar').classList.add('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); renderNav(); document.getElementById('adminNavOverview').focus(); loadBackups(); loadActivityDashboard(); }
-function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); document.getElementById('kids').classList.remove('hidden'); document.querySelector('.cornerbar').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); }
+function enterAdmin(){ adminPage=cfg.currentPage; adminSection='overview'; adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); document.getElementById('kids').classList.add('hidden'); const admin=document.getElementById('admin'); admin.classList.remove('hidden'); document.querySelector('.cornerbar').classList.add('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); renderNav(); playScreenTransition(admin); document.getElementById('adminNavOverview').focus(); loadBackups(); loadActivityDashboard(); }
+function closeAdmin(){ document.getElementById('admin').classList.add('hidden'); const kids=document.getElementById('kids'); kids.classList.remove('hidden'); document.querySelector('.cornerbar').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); playScreenTransition(kids,true); }
 function shutdownNow(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
 function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
 
