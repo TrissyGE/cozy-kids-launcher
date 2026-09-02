@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movies &amp; music · Cozy Kids Launcher</title>
+<link rel="stylesheet" href="/frontend/design-system.css">
+<link rel="stylesheet" href="/frontend/styles.css">
+<link rel="stylesheet" href="/frontend/media-library.css">
+</head>
+<body class="media-page theme-rosa">
+<div id="themeBg"></div>
+<main class="media-library-screen">
+  <div class="media-library-shell">
+    <header class="media-library-header">
+      <button id="mediaBack" class="smallbtn" type="button" data-local-icon="back">Back</button>
+      <div class="media-library-heading">
+        <h1 id="mediaTitle">Movies &amp; music</h1>
+        <p id="mediaHint">Choose something to play</p>
+      </div>
+      <span id="mediaTruncated" class="media-truncated" hidden></span>
+    </header>
+    <section id="mediaState" class="ui-state ui-state-loading media-library-state" role="status" aria-live="polite" aria-busy="true">
+      <span class="ui-state-message">Looking for your media...</span>
+    </section>
+    <section id="mediaGrid" class="media-library-grid" role="list" hidden></section>
+  </div>
+</main>
+<script defer src="/frontend/icons.js"></script>
+<script defer src="/frontend/media-library.js"></script>
+</body>
+</html>

@@ -157,6 +157,20 @@ text() {
     de:no_media_title) echo "Keine Medien gefunden" ;;
     de:no_media_body) echo "Hier wurden noch keine Musik- oder Videodateien gefunden." ;;
     de:no_media_back) echo "Zurück zur Startseite" ;;
+    de:media_library_title) echo "Filme & Musik" ;;
+    de:media_library_hint) echo "Such dir etwas zum Abspielen aus" ;;
+    de:media_library_back) echo "Zurück zur Startseite" ;;
+    de:media_library_loading) echo "Deine Medien werden gesucht..." ;;
+    de:media_library_empty) echo "Hier wurden noch keine Musik- oder Videodateien gefunden." ;;
+    de:media_library_error) echo "Die Medienbibliothek konnte nicht geladen werden." ;;
+    de:media_library_retry) echo "Erneut versuchen" ;;
+    de:media_library_video) echo "Video" ;;
+    de:media_library_audio) echo "Musik" ;;
+    de:media_library_play) echo "{title} abspielen" ;;
+    de:media_library_starting) echo "{title} wird gestartet..." ;;
+    de:media_library_play_error) echo "Dieses Medium konnte nicht gestartet werden." ;;
+    de:media_library_unavailable) echo "Diese Medien-Kachel ist gerade nicht verfügbar." ;;
+    de:media_library_truncated) echo "Die ersten 2.000 Einträge werden angezeigt." ;;
     de:admin_title) echo "Eltern-Einstellungen" ;;
     de:admin_nav_label) echo "Bereiche der Eltern-Einstellungen" ;;
     de:admin_overview) echo "Übersicht" ;;
@@ -268,6 +282,20 @@ text() {
     en:no_media_title) echo "No media found" ;;
     en:no_media_body) echo "No music or video files were found here yet." ;;
     en:no_media_back) echo "Back to home screen" ;;
+    en:media_library_title) echo "Movies & music" ;;
+    en:media_library_hint) echo "Choose something to play" ;;
+    en:media_library_back) echo "Back to home" ;;
+    en:media_library_loading) echo "Looking for your media..." ;;
+    en:media_library_empty) echo "No music or videos were found here yet." ;;
+    en:media_library_error) echo "The media library could not be loaded." ;;
+    en:media_library_retry) echo "Try again" ;;
+    en:media_library_video) echo "Video" ;;
+    en:media_library_audio) echo "Music" ;;
+    en:media_library_play) echo "Play {title}" ;;
+    en:media_library_starting) echo "Starting {title}..." ;;
+    en:media_library_play_error) echo "This media could not be started." ;;
+    en:media_library_unavailable) echo "This media tile is not available right now." ;;
+    en:media_library_truncated) echo "Showing the first 2,000 items." ;;
     en:admin_title) echo "Parent settings" ;;
     en:admin_nav_label) echo "Parent settings sections" ;;
     en:admin_overview) echo "Overview" ;;
@@ -961,10 +989,13 @@ FRONTEND_LAUNCHER_FILE="$FRONTEND_DIR/launcher-ui.js"
 FRONTEND_PROFILES_FILE="$FRONTEND_DIR/profiles.js"
 FRONTEND_SCHEDULE_FILE="$FRONTEND_DIR/schedule-controls.js"
 FRONTEND_ACTIVITY_FILE="$FRONTEND_DIR/activity-dashboard.js"
+FRONTEND_MEDIA_LIBRARY_STYLES_FILE="$FRONTEND_DIR/media-library.css"
+FRONTEND_MEDIA_LIBRARY_FILE="$FRONTEND_DIR/media-library.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
 FRONTEND_FIRST_RUN_FILE="$FRONTEND_DIR/first-run.js"
 FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
 MEDIA_FILE="$APP_ROOT/no-media.html"
+MEDIA_LIBRARY_PAGE="$APP_ROOT/media.html"
 UPDATE_SCRIPT="$APP_ROOT/update.sh"
 AUTOSTART_FILE="$AUTOSTART_DIR/$AUTOSTART_FILE_ID"
 DESKTOP_FILE="$DESKTOP_DIR/$DESKTOP_SHORTCUT_ID"
@@ -1481,10 +1512,13 @@ backup_if_exists "$FRONTEND_LAUNCHER_FILE"
 backup_if_exists "$FRONTEND_PROFILES_FILE"
 backup_if_exists "$FRONTEND_SCHEDULE_FILE"
 backup_if_exists "$FRONTEND_ACTIVITY_FILE"
+backup_if_exists "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
+backup_if_exists "$FRONTEND_MEDIA_LIBRARY_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
 backup_if_exists "$FRONTEND_FIRST_RUN_FILE"
 backup_if_exists "$FRONTEND_RUNTIME_FILE"
 backup_if_exists "$MEDIA_FILE"
+backup_if_exists "$MEDIA_LIBRARY_PAGE"
 backup_if_exists "$UPDATE_SCRIPT"
 backup_if_exists "$CONFIG_FILE"
 backup_if_exists "$AUTOSTART_FILE"
@@ -1524,10 +1558,13 @@ render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 064
 render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
 render_template "$SRC_DIR/frontend/schedule-controls.js" "$FRONTEND_SCHEDULE_FILE" 0644
 render_template "$SRC_DIR/frontend/activity-dashboard.js" "$FRONTEND_ACTIVITY_FILE" 0644
+install -m 0644 "$SRC_DIR/frontend/media-library.css" "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
+install -m 0644 "$SRC_DIR/frontend/media-library.js" "$FRONTEND_MEDIA_LIBRARY_FILE"
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
+install -m 0644 "$SRC_DIR/media.html" "$MEDIA_LIBRARY_PAGE"
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
 render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644
 render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755

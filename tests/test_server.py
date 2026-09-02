@@ -556,6 +556,120 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(error.exception.code, 404)
 
+    def test_media_play_launches_only_a_catalog_item_for_a_visible_media_tile(self):
+        media_file = Path(server_module.VIDEOS) / "Film.mp4"
+        media_file.write_bytes(b"video")
+        config = base_config()
+        config["tiles"].append({
+            "id": "music",
+            "label": "Music",
+            "emoji": "🎵",
+            "cmd": ["special:filme-musik"],
+            "visible": True,
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+
+        with mock.patch.object(server_module, "find_media_player", return_value="vlc"), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, data, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": catalog["items"][0]["id"]},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 204)
+        self.assertIsNone(data)
+        command = launch.call_args.args[0]
+        self.assertEqual(command[:4], [
+            "vlc",
+            "--fullscreen",
+            "--play-and-exit",
+            "--no-video-title-show",
+        ])
+        self.assertEqual(command[-1], str(media_file))
+        self.assertEqual(launch.call_args.args[1], "local")
+        self.assertEqual(launch.call_args.kwargs["tile_id"], "music")
+        self.assertEqual(launch.call_args.kwargs["profile_id"], "default")
+
+    def test_media_play_rejects_forged_ids_and_non_media_tiles(self):
+        media_file = Path(server_module.VIDEOS) / "Film.mp4"
+        media_file.write_bytes(b"video")
+        _, catalog, _ = self.request("/api/media")
+        media_id = catalog["items"][0]["id"]
+
+        with mock.patch.object(server_module, "launch_owned_tile") as launch:
+            unknown_status, _, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "paint", "mediaId": media_id},
+                origin=self.base_url,
+            )
+            config = base_config()
+            config["tiles"][0].update({
+                "id": "music",
+                "cmd": ["special:filme-musik"],
+            })
+            server_module.save_cfg(config)
+            forged_status, _, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": "a" * 24},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(unknown_status, 404)
+        self.assertEqual(forged_status, 404)
+        launch.assert_not_called()
+
+    def test_media_play_reports_a_missing_player_without_starting_a_process(self):
+        (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+
+        with mock.patch.object(server_module, "find_media_player", return_value=None), \
+                mock.patch.object(server_module.shutil, "which", return_value=None), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, data, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": catalog["items"][0]["id"]},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 503)
+        self.assertIn("media player", data["message"])
+        launch.assert_not_called()
+
+    def test_media_play_rechecks_the_media_tile_schedule(self):
+        (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
+        config = base_config()
+        config["tiles"][0].update({
+            "id": "music",
+            "cmd": ["special:filme-musik"],
+        })
+        config["weeklySchedule"] = {"enabled": True, "days": {}}
+        server_module.save_cfg(config)
+        _, catalog, _ = self.request("/api/media")
+
+        with mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, data, _ = self.request(
+                "/api/media/play",
+                method="POST",
+                body={"tileId": "music", "mediaId": catalog["items"][0]["id"]},
+                origin=self.base_url,
+            )
+
+        self.assertEqual(status, 403)
+        self.assertEqual(data, {"status": "blocked", "reason": "profile_schedule"})
+        launch.assert_not_called()
+
     def test_app_discovery_endpoint_preserves_public_payload(self):
         expected = [{"name": "Paint", "exec": "paint-app --kids"}]
         with mock.patch.object(
@@ -1580,12 +1694,47 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("setIconLabel(shutdownBtn,'power'", source)
         self.assertIn("setIconLabel(badge,clockIconName(h)", source)
 
-    def test_every_tile_uses_the_same_launch_endpoint(self):
+    def test_tiles_keep_the_shared_launch_endpoint_with_a_local_media_ui_entry(self):
         source = frontend_source()
         launch_function = source[source.index("function launchTile"):source.index("// PIN handling")]
         self.assertIn("fetch('/launch/'", launch_function)
+        self.assertIn("isMediaLibraryTile(tile)", launch_function)
+        self.assertIn("window.location='/media.html?tile='", launch_function)
         self.assertNotIn("special:browser:", launch_function)
         self.assertNotIn("special:external-browser:", launch_function)
+
+    def test_cover_media_library_is_local_bilingual_and_safe_dom_rendered(self):
+        root = REPOSITORY_ROOT / "src"
+        page = (root / "media.html").read_text(encoding="utf-8")
+        script = (root / "frontend" / "media-library.js").read_text(encoding="utf-8")
+        styles = (root / "frontend" / "media-library.css").read_text(encoding="utf-8")
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('/frontend/media-library.css', page)
+        self.assertIn('/frontend/media-library.js', page)
+        self.assertIn('id="mediaGrid"', page)
+        self.assertNotIn("<style", page)
+        self.assertNotRegex(page, r"<script(?![^>]*\bsrc=)[^>]*>")
+        self.assertIn("fetch('/api/media'", script)
+        self.assertIn("fetch('/api/media/play'", script)
+        self.assertIn("body:JSON.stringify({mediaId:item.id,tileId:mediaTileId})", script)
+        self.assertIn("title.textContent=item.title", script)
+        self.assertIn("image.src=item.coverUrl", script)
+        self.assertNotIn("innerHTML", script)
+        self.assertNotIn("https://", script)
+        self.assertIn("object-fit:cover", styles)
+        self.assertIn("@media (forced-colors:active)", styles)
+        self.assertIn("@media (max-width:800px), (max-height:700px)", styles)
+        for label in (
+            "Filme & Musik",
+            "Deine Medien werden gesucht",
+            "Movies & music",
+            "Looking for your media",
+        ):
+            self.assertIn(label, installer)
+        for asset in ("media.html", "media-library.css", "media-library.js"):
+            self.assertIn(asset, installer)
 
     def test_frontend_uses_the_local_update_status_endpoint(self):
         source = frontend_source()
@@ -1701,6 +1850,13 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("pinReturnFocus.focus()", source)
         self.assertIn("const tileFocused=document.activeElement", source)
         self.assertIn("function homeGestureAllowed()", source)
+        self.assertIn("function tileClickSuppressed(event)", source)
+        self.assertIn("suppressTileClicksUntil=Math.max", source)
+        self.assertIn("document.addEventListener('touchmove'", source)
+        self.assertIn("e.preventDefault()", source)
+        self.assertIn("},{passive:false})", source)
+        self.assertIn("event.stopImmediatePropagation()", source)
+        self.assertIn("if(tileClickSuppressed(event)) return", source)
         self.assertIn("touchStartX===null||touchStartY===null", source)
         self.assertIn("homeHidden||cfg.currentPage<=0", source)
 

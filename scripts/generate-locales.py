@@ -43,6 +43,20 @@ EXTRA_UI_KEYS = {
     "tileMusic": "tile_music",
     "tileBrowser": "tile_browser",
     "exportDiagnostics": "export_diagnostics",
+    "mediaLibraryTitle": "media_library_title",
+    "mediaLibraryHint": "media_library_hint",
+    "mediaLibraryBack": "media_library_back",
+    "mediaLibraryLoading": "media_library_loading",
+    "mediaLibraryEmpty": "media_library_empty",
+    "mediaLibraryError": "media_library_error",
+    "mediaLibraryRetry": "media_library_retry",
+    "mediaLibraryVideo": "media_library_video",
+    "mediaLibraryAudio": "media_library_audio",
+    "mediaLibraryPlay": "media_library_play",
+    "mediaLibraryStarting": "media_library_starting",
+    "mediaLibraryPlayError": "media_library_play_error",
+    "mediaLibraryUnavailable": "media_library_unavailable",
+    "mediaLibraryTruncated": "media_library_truncated",
 }
 
 

@@ -190,5 +190,19 @@
   "tilePaint": "Malen",
   "tileGames": "Lernspiele",
   "tileMusic": "Filme und Musik",
-  "tileBrowser": "Kinder-Internet"
+  "tileBrowser": "Kinder-Internet",
+  "mediaLibraryTitle": "Filme & Musik",
+  "mediaLibraryHint": "Such dir etwas zum Abspielen aus",
+  "mediaLibraryBack": "Zurück zur Startseite",
+  "mediaLibraryLoading": "Deine Medien werden gesucht...",
+  "mediaLibraryEmpty": "Hier wurden noch keine Musik- oder Videodateien gefunden.",
+  "mediaLibraryError": "Die Medienbibliothek konnte nicht geladen werden.",
+  "mediaLibraryRetry": "Erneut versuchen",
+  "mediaLibraryVideo": "Video",
+  "mediaLibraryAudio": "Musik",
+  "mediaLibraryPlay": "{title} abspielen",
+  "mediaLibraryStarting": "{title} wird gestartet...",
+  "mediaLibraryPlayError": "Dieses Medium konnte nicht gestartet werden.",
+  "mediaLibraryUnavailable": "Diese Medien-Kachel ist gerade nicht verfügbar.",
+  "mediaLibraryTruncated": "Die ersten 2.000 Einträge werden angezeigt."
 }

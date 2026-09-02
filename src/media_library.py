@@ -146,7 +146,9 @@ def scan_media_catalog(locations, limit=MAX_MEDIA_ITEMS):
                 if len(entries) >= limit:
                     return entries, True
                 seen_files.add(path)
-                title = os.path.splitext(filename)[0].replace("_", " ").strip()
+                title = " ".join(
+                    os.path.splitext(filename)[0].replace("_", " ").split()
+                )
                 entries.append({
                     "id": _media_id(path),
                     "title": title or filename,

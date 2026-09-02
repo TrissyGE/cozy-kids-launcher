@@ -329,6 +329,27 @@ def media_catalog():
     return scan_media_catalog((VIDEOS, MUSIC, ALT_MUSIC))
 
 
+def configured_media_tile(cfg, tile_id):
+    """Resolve one visible media tile without trusting a client-supplied command."""
+    if not isinstance(tile_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", tile_id):
+        return None
+    tile = next(
+        (
+            candidate
+            for candidate in cfg.get("tiles", [])
+            if candidate.get("id") == tile_id and candidate.get("visible", True)
+        ),
+        None,
+    )
+    if not tile:
+        return None
+    try:
+        action = resolve_tile_action(tile)
+    except ValueError:
+        return None
+    return tile if action["type"] == "media" else None
+
+
 def find_media_player():
     return detect_media_player(which=shutil.which)
 
@@ -807,6 +828,70 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action == "api/media/play":
+            body = self.read_json_body()
+            if body is None:
+                return
+            cfg = load_cfg()
+            tile_id = body.get("tileId")
+            if not configured_media_tile(cfg, tile_id):
+                self.send_response(404)
+                self.end_headers()
+                return
+            availability = tile_availability(cfg, tile_id)
+            if not availability["allowed"]:
+                self.json_response({
+                    "status": "blocked",
+                    "reason": availability["reason"],
+                }, 403)
+                return
+            entries, _ = media_catalog()
+            item = catalog_item(entries, body.get("mediaId"))
+            if not item:
+                self.send_response(404)
+                self.end_headers()
+                return
+            player = find_media_player()
+            if player:
+                command = media_player_command(player, [item["path"]])
+            elif shutil.which("xdg-open"):
+                command = ["xdg-open", item["path"]]
+            else:
+                log_runtime_event(
+                    "launch.failed",
+                    level="warning",
+                    actionType="media",
+                    result="missing",
+                )
+                self.json_response(
+                    {"status": "error", "message": "No supported media player found"},
+                    503,
+                )
+                return
+            log_runtime_event("launch.started", actionType="media")
+            try:
+                launch_owned_tile(
+                    command,
+                    "local",
+                    tile_id=tile_id,
+                    profile_id=cfg.get("activeProfileId", ""),
+                    track_activity=cfg.get("activityTrackingEnabled", False),
+                )
+            except OSError:
+                log_runtime_event(
+                    "launch.failed",
+                    level="warning",
+                    actionType="media",
+                    result="failure",
+                )
+                self.json_response(
+                    {"status": "error", "message": "Media process could not be started"},
+                    503,
+                )
+                return
+            self.send_response(204)
+            self.end_headers()
+            return
         if action == "api/activity/finish":
             body = self.read_json_body()
             if body is None:

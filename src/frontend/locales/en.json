@@ -190,5 +190,19 @@
   "tilePaint": "Paint",
   "tileGames": "Learning games",
   "tileMusic": "Movies and music",
-  "tileBrowser": "Kids browser"
+  "tileBrowser": "Kids browser",
+  "mediaLibraryTitle": "Movies & music",
+  "mediaLibraryHint": "Choose something to play",
+  "mediaLibraryBack": "Back to home",
+  "mediaLibraryLoading": "Looking for your media...",
+  "mediaLibraryEmpty": "No music or videos were found here yet.",
+  "mediaLibraryError": "The media library could not be loaded.",
+  "mediaLibraryRetry": "Try again",
+  "mediaLibraryVideo": "Video",
+  "mediaLibraryAudio": "Music",
+  "mediaLibraryPlay": "Play {title}",
+  "mediaLibraryStarting": "Starting {title}...",
+  "mediaLibraryPlayError": "This media could not be started.",
+  "mediaLibraryUnavailable": "This media tile is not available right now.",
+  "mediaLibraryTruncated": "Showing the first 2,000 items."
 }

@@ -33,10 +33,11 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
+- `src/media.html` and `src/frontend/media-library.*` render the local cover library and submit only opaque media IDs
 - `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing, recommendations, and updates
 - `src/frontend/runtime-controls.js` owns timer flows, device status, import/export, backups, and keyboard control
 
-The installer renders template values into these files and installs them below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager, bundler, or generated files in the repository.
+The installer renders or copies these files below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager or bundler.
 
 Asynchronous frontend resources use explicit loading, empty, error, and success
 states. Configuration remains the only startup-critical request: a failure leaves
@@ -88,8 +89,13 @@ stable opaque IDs, display titles, media kinds, and optional local cover
 URLs—never filesystem paths. Cover requests are resolved back through a fresh
 bounded catalog and can serve only adjacent `.jpg`, `.jpeg`, `.png`, or `.webp`
 sidecars and conventional `cover`/`folder` images of at most 10 MiB. The
-existing media tile still opens the legacy all-folder playlist; individual-item
-launching will be introduced separately.
+Launcher UI opens `media.html` for the existing media command and renders the
+catalog with dependency-free, keyboard-accessible HTML. `/api/media/play`
+accepts only an opaque catalog ID plus a currently visible media-tile ID,
+rechecks that tile's schedule, resolves the file through a fresh scan, and then
+uses the same owned process and activity boundary as other local launches. A
+direct POST to the legacy `/launch/<media-tile>` route still opens the
+all-folder playlist for compatibility.
 
 `application_launcher.py` owns action normalization and orchestration. It starts
 argument vectors below `process_supervisor.py`, waits for a verified process

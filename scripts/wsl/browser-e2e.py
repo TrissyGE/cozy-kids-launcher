@@ -6,6 +6,7 @@ import getpass
 import http.server
 import json
 import os
+import shutil
 import socket
 import subprocess
 import tempfile
@@ -111,7 +112,7 @@ def write_demo_config(config_path, browser_name):
                 "id": "music",
                 "label": "Music",
                 "emoji": "🎵",
-                "cmd": ["true"],
+                "cmd": ["special:filme-musik"],
                 "visible": True,
             },
         ],
@@ -222,7 +223,44 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         ".map(tile => tile.textContent.trim()).join('|').includes('Paint')",
         "Home title or tiles are incorrect",
     )
-    log_scenario("home renders title and app tiles")
+    browser.click('#grid .tile[data-tile-id="music"]')
+    browser.wait_for(
+        "location.pathname==='/media.html' && "
+        "document.querySelectorAll('#mediaGrid .media-card').length===2 && "
+        "document.getElementById('mediaTitle').textContent==="
+        "mediaTile(mediaConfig,mediaTileId).label",
+        message="The cover media library did not finish rendering",
+    )
+    browser.wait_for(
+        "document.querySelector('.media-card img')!==null && "
+        "document.querySelector('.media-card img').complete && "
+        "document.querySelector('.media-card img').naturalWidth>0",
+        message="The local media cover did not finish loading",
+    )
+    assert_js(
+        browser,
+        "document.documentElement.lang==='en' && "
+        "document.querySelectorAll('.media-cover-fallback > .ui-icon').length===1 && "
+        "document.body.textContent.includes('E2E Film') && "
+        "document.body.textContent.includes('Bedtime Song') && "
+        "!document.body.textContent.includes('/Videos/')",
+        "The media library did not render safe localized covers and fallbacks",
+    )
+    browser.evaluate("document.querySelector('.media-card').focus()")
+    browser.key_press("ArrowRight")
+    assert_js(
+        browser,
+        "document.activeElement===document.querySelectorAll('.media-card')[1]",
+        "Arrow-key navigation did not move between media cards",
+    )
+    browser.screenshot(artifacts / "media-library.png")
+    browser.click("#mediaBack")
+    browser.wait_for(
+        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg!==null && "
+        "bootstrapPromise===null && document.querySelectorAll('#grid .tile:not(.placeholder)').length===2",
+        message="The media library did not return to the launcher",
+    )
+    log_scenario("home and the local cover media library render safely")
 
     icon_metrics = browser.evaluate(
         "({tiles:document.querySelectorAll('#grid .tile:not(.placeholder) .local-tile-icon').length,"
@@ -881,10 +919,11 @@ def run_accessibility_scenarios(browser, artifacts):
         "(() => {"
         " if(!document.getElementById('admin').classList.contains('hidden')) closeAdmin();"
         " cfg.layoutMode='gross'; cfg.currentPage=0;"
-        " cfg.tiles=cfg.tiles.slice(0,2).concat(["
+        " cfg.tiles=cfg.tiles.slice(0,1).concat(["
         "  {id:'reading',label:'Reading',emoji:'📚',cmd:['true'],visible:true},"
         "  {id:'puzzles',label:'Puzzles',emoji:'🧩',cmd:['true'],visible:true},"
-        "  {id:'drawing',label:'Drawing',emoji:'✏️',cmd:['true'],visible:true}"
+        "  {id:'drawing',label:'Drawing',emoji:'✏️',cmd:['true'],visible:true},"
+        "  {id:'science',label:'Science',emoji:'🔬',cmd:['true'],visible:true}"
         " ]); focusedTileIndex=0; renderAll();"
         " return visibleTiles().length===5 && pageCount()===2 && "
         "document.querySelectorAll('#grid .tile:not(.placeholder)').length===4;"
@@ -989,9 +1028,15 @@ def run_accessibility_scenarios(browser, artifacts):
 
     browser.evaluate("cfg.currentPage=0; focusedTileIndex=0; renderAll()")
     browser.touch_swipe(700, 400, 100, 400)
-    browser.wait_for("cfg.currentPage===1", message="Left swipe did not advance the page")
+    browser.wait_for(
+        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===1",
+        message="Left swipe did not advance the page without activating a tile",
+    )
     browser.touch_swipe(100, 400, 700, 400)
-    browser.wait_for("cfg.currentPage===0", message="Right swipe did not return the page")
+    browser.wait_for(
+        "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===0",
+        message="Right swipe did not return the page without activating a tile",
+    )
     browser.evaluate("showPin()")
     browser.touch_swipe(700, 400, 100, 400)
     assert_js(
@@ -1160,6 +1205,16 @@ def main():
 
             app_root = test_home / ".local" / "share" / "cozy-kids-launcher"
             config_path = test_home / ".config" / "cozy-kids-launcher" / "config.json"
+            videos = test_home / "Videos"
+            music = test_home / "Music"
+            videos.mkdir(exist_ok=True)
+            music.mkdir(exist_ok=True)
+            (videos / "E2E_Film.mp4").write_bytes(b"video fixture")
+            shutil.copyfile(
+                app_root / "themes" / "ocean.jpg",
+                videos / "E2E_Film.jpg",
+            )
+            (music / "Bedtime_Song.ogg").write_bytes(b"audio fixture")
             write_demo_config(config_path, browser_name)
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = installed_version

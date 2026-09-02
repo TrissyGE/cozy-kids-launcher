@@ -99,7 +99,19 @@ async function extendFromBlock(minutes){
 }
 
 // Touch swipe
-let touchStartX=null, touchStartY=null;
+let touchStartX=null, touchStartY=null, suppressTileClicksUntil=0;
+function suppressTileClicks(){
+  suppressTileClicksUntil=Math.max(suppressTileClicksUntil,performance.now()+1500);
+}
+function tileClickSuppressed(event){
+  if(!event||performance.now()>suppressTileClicksUntil) return false;
+  event.preventDefault();
+  return true;
+}
+document.addEventListener('click',function(event){
+  if(!event.target.closest('#grid .tile')||!tileClickSuppressed(event)) return;
+  event.stopImmediatePropagation();
+},true);
 function homeGestureAllowed(){
   return !document.getElementById('kids').classList.contains('hidden') &&
     document.getElementById('pin').classList.contains('hidden') &&
@@ -119,6 +131,14 @@ document.addEventListener('touchstart',function(e){
   touchStartX=e.touches[0].clientX;
   touchStartY=e.touches[0].clientY;
 },false);
+document.addEventListener('touchmove',function(e){
+  if(touchStartX===null||touchStartY===null||e.touches.length!==1) return;
+  const dx=e.touches[0].clientX-touchStartX;
+  const dy=e.touches[0].clientY-touchStartY;
+  if(Math.abs(dx)<10||Math.abs(dy)>Math.abs(dx)) return;
+  suppressTileClicks();
+  e.preventDefault();
+},{passive:false});
 document.addEventListener('touchend',function(e){
   if(touchStartX===null||touchStartY===null) return;
   const startX=touchStartX, startY=touchStartY;
@@ -127,8 +147,10 @@ document.addEventListener('touchend',function(e){
   const dx=e.changedTouches[0].clientX-startX;
   const dy=e.changedTouches[0].clientY-startY;
   if(Math.abs(dx)<50 || Math.abs(dy)>Math.abs(dx)) return;
+  e.preventDefault();
+  suppressTileClicks();
   if(dx>0) changePage(-1); else changePage(1);
-},false);
+},{passive:false});
 
 // Clock
 function clockIconName(h){
