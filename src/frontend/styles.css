@@ -332,6 +332,16 @@
   .startoverlay.launch-starting .startbox { animation:startBoxEnter .32s ease-out; }
   .startoverlay.launch-success .startbox { animation:successSettle .42s ease-out; box-shadow:0 14px 46px rgba(39,174,96,.24); }
   .startoverlay.launch-success .emoji { animation:successSettle .42s ease-out; }
+  /* Optional fixed celebration: visual-only, brief, and never scored or persisted. */
+  .celebration-layer { position:fixed; inset:0; z-index:70; overflow:hidden; pointer-events:none; }
+  .celebration-layer[hidden] { display:none; }
+  .celebration-star { position:absolute; top:50%; left:50%; color:#ffd447; font-size:clamp(1.35rem,4vw,2.6rem); line-height:1; opacity:0; text-shadow:0 2px 0 #9b6d00,0 5px 14px rgba(70,36,0,.28); transform:translate(-50%,-50%) scale(.45); }
+  .celebration-layer.is-active .celebration-star { animation:celebrationBurst .78s cubic-bezier(.2,.72,.2,1) var(--celebrate-delay) both; }
+  @keyframes celebrationBurst {
+    0% { opacity:0; transform:translate(-50%,-50%) scale(.45) rotate(0); }
+    18% { opacity:1; }
+    100% { opacity:0; transform:translate(calc(-50% + var(--celebrate-x)),calc(-50% + var(--celebrate-y))) scale(var(--celebrate-scale)) rotate(var(--celebrate-rotate)); }
+  }
   /* Clock & battery badges */
   #clockBadge { position:fixed; top:18px; right:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 14px; font-weight:700; font-size:1rem; color:var(--text); box-shadow:var(--shadow); display:flex; align-items:center; gap:6px; }
   #batteryBadge { position:fixed; top:18px; left:18px; z-index:50; background:rgba(255,255,255,.92); border-radius:16px; padding:8px 14px; font-weight:700; font-size:1rem; color:var(--text); box-shadow:var(--shadow); display:none; align-items:center; gap:4px; }
@@ -387,6 +397,7 @@
   .access-reduced-motion .theme-thumb.active,
   .access-reduced-motion .media-card:hover,
   .access-reduced-motion .media-card:active { transform:none; }
+  .access-reduced-motion .celebration-layer { display:none !important; }
 
   .access-keyboard-focus button:focus,
   .access-keyboard-focus input:focus,
@@ -406,6 +417,7 @@
       transition-duration:.01ms !important;
     }
     .tile:hover, .tile:active, .theme-thumb.active { transform:none; }
+    .celebration-layer { display:none !important; }
   }
 
   @media (forced-colors: active) {

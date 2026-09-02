@@ -84,7 +84,7 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 - [x] Add subtle navigation, launch, success, and return transitions
 - [x] Add optional local sounds and Linux text-to-speech feedback
 - [x] Add accessibility presets for larger text, contrast, reduced motion, and keyboard-only operation
-- [ ] Add optional, non-manipulative celebration moments without engagement scoring
+- [x] Add optional, non-manipulative celebration moments without engagement scoring
 
 ## v0.8.0 — Platform
 

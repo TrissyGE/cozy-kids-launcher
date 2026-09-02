@@ -296,6 +296,7 @@ function showLaunchSuccess(tile){
   document.getElementById('startText').textContent=(uiText.startedApp||'{app} is ready').replace('{app}',tile.label||'');
   setLaunchMotionState(overlay,'success');
   playFeedbackSound('success');
+  playCelebrationMoment(cfg);
   if(startFeedbackTimer!==null) clearTimeout(startFeedbackTimer);
   startFeedbackTimer=setTimeout(hideStartFeedback,900);
 }

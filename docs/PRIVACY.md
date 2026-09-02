@@ -70,6 +70,11 @@ also stored only as booleans in each local child profile. They do not inspect or
 infer a disability, send accessibility choices elsewhere, or override stronger
 operating-system forced-colors and reduced-motion preferences.
 
+The optional celebration setting is one local boolean per child. Its brief fixed
+effect runs only in the current page after a successful start and creates no
+score, streak, reward history, usage count, or network request. Reduced-motion
+preferences prevent the effect from running.
+
 Returning from the local media library or embedded browser uses one session-only
 marker containing the active profile and tile identifiers. It contains no child
 name, label, command, URL, or filesystem path and is removed when the launcher

@@ -126,6 +126,7 @@ class ConfigValidationTests(unittest.TestCase):
             "themeTimeOfDayEnabled",
             "soundFeedbackEnabled",
             "speechFeedbackEnabled",
+            "celebrationEnabled",
             "accessibilityLargeText",
             "accessibilityHighContrast",
             "accessibilityReducedMotion",
@@ -142,6 +143,7 @@ class ConfigValidationTests(unittest.TestCase):
         data["themeTimeOfDayEnabled"] = False
         data["soundFeedbackEnabled"] = True
         data["speechFeedbackEnabled"] = False
+        data["celebrationEnabled"] = True
         data["accessibilityLargeText"] = True
         data["accessibilityHighContrast"] = False
         data["accessibilityReducedMotion"] = True
@@ -151,6 +153,7 @@ class ConfigValidationTests(unittest.TestCase):
         self.assertFalse(validated["themeTimeOfDayEnabled"])
         self.assertTrue(validated["soundFeedbackEnabled"])
         self.assertFalse(validated["speechFeedbackEnabled"])
+        self.assertTrue(validated["celebrationEnabled"])
         self.assertTrue(validated["accessibilityLargeText"])
         self.assertFalse(validated["accessibilityHighContrast"])
         self.assertTrue(validated["accessibilityReducedMotion"])

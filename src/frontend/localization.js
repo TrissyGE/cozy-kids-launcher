@@ -48,6 +48,9 @@ function renderLocalizedChrome(){
   document.getElementById('soundFeedbackLabel').textContent=uiText.soundFeedback||'Gentle local sounds';
   document.getElementById('speechFeedbackLabel').textContent=uiText.speechFeedback||'Read app names aloud (Linux)';
   document.getElementById('feedbackOptionsHint').textContent=uiText.feedbackHint||'Both options are per child and off by default.';
+  document.getElementById('celebrationOptionsTitle').textContent=uiText.celebrationOptions||'Positive feedback';
+  document.getElementById('celebrationEnabledLabel').textContent=uiText.celebrationEnabled||'Briefly celebrate successful starts';
+  document.getElementById('celebrationOptionsHint').textContent=uiText.celebrationHint||'One short, consistent effect — without points, streaks, or rewards.';
   document.getElementById('accessibilityOptionsTitle').textContent=uiText.accessibilityOptions||'Accessibility presets';
   document.getElementById('accessibilityLargeTextLabel').textContent=uiText.accessibilityLargeText||'Larger text';
   document.getElementById('accessibilityHighContrastLabel').textContent=uiText.accessibilityHighContrast||'High contrast';

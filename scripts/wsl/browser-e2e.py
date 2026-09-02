@@ -490,6 +490,20 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.click("#cfgThemeTimeOfDayEnabled")
     browser.click("#cfgSoundFeedbackEnabled")
     browser.click("#cfgSpeechFeedbackEnabled")
+    browser.click("#cfgCelebrationEnabled")
+    celebration_result = browser.evaluate(
+        "playCelebrationMoment({...cfg,celebrationEnabled:true,accessibilityReducedMotion:false})"
+        " && !document.getElementById('celebrationLayer').hidden"
+        " && document.querySelectorAll('#celebrationLayer .celebration-star').length===8"
+    )
+    if celebration_result is not True:
+        raise AssertionError("The fixed opt-in celebration moment did not start")
+    browser.screenshot(artifacts / "celebration-moment.png")
+    browser.wait_for(
+        "document.getElementById('celebrationLayer').hidden && "
+        "document.getElementById('celebrationLayer').childElementCount===0",
+        message="The celebration moment did not clean itself up",
+    )
     assert_js(
         browser,
         "document.getElementById('appearancePreview').classList.contains('theme-world-motion') && "
@@ -516,6 +530,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         ".getPropertyValue('--text').trim()==='#111' && "
         "getComputedStyle(document.querySelector('#appearancePreview .preview-tile'))"
         ".outlineWidth==='6px' && "
+        "playCelebrationMoment({...cfg,celebrationEnabled:true,accessibilityReducedMotion:true})===false && "
+        "document.getElementById('celebrationLayer').hidden && "
         "!document.documentElement.classList.contains('access-large-text')",
         "Accessibility presets did not stay inside the unsaved preview",
     )
@@ -561,6 +577,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "themeTimeOfDayEnabled": True,
         "soundFeedbackEnabled": True,
         "speechFeedbackEnabled": True,
+        "celebrationEnabled": True,
         "accessibilityLargeText": True,
         "accessibilityHighContrast": True,
         "accessibilityReducedMotion": True,
@@ -615,11 +632,12 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "delete window.__feedbackOriginalFetch;delete window.__speechBody;"
         "features.speechFeedbackAvailable=false;cfg.soundFeedbackEnabled=false;"
         "cfg.speechFeedbackEnabled=false;cfg.accessibilityLargeText=false;"
+        "cfg.celebrationEnabled=false;"
         "cfg.accessibilityHighContrast=false;cfg.accessibilityReducedMotion=false;"
         "cfg.accessibilityKeyboardFocus=false;await persistConfig();renderAll();})()",
         await_promise=True,
     )
-    log_scenario("settings, themes, local feedback, and accessibility presets persist safely")
+    log_scenario("settings, themes, local feedback, celebrations, and accessibility presets persist safely")
 
     enter_parent_settings(browser)
     browser.wait_for(

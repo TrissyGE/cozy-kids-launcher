@@ -38,6 +38,7 @@ def frontend_source():
         frontend_root / "theme-runtime.js",
         frontend_root / "accessibility-runtime.js",
         frontend_root / "feedback-runtime.js",
+        frontend_root / "celebration-runtime.js",
         frontend_root / "transition-runtime.js",
         frontend_root / "launcher-ui.js",
         frontend_root / "profiles.js",
@@ -1687,6 +1688,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/theme-runtime.js",
             "/frontend/accessibility-runtime.js",
             "/frontend/feedback-runtime.js",
+            "/frontend/celebration-runtime.js",
             "/frontend/transition-runtime.js",
             "/frontend/launcher-ui.js",
             "/frontend/profiles.js",
@@ -1708,7 +1710,7 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "accessibility-runtime.js", "feedback-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "accessibility-runtime.js", "feedback-runtime.js", "celebration-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
@@ -1716,6 +1718,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ACCESSIBILITY_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_FEEDBACK_RUNTIME_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_CELEBRATION_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_TRANSITION_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_SCHEDULE_FILE"', installer)
@@ -2269,6 +2272,35 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('"speechFeedbackEnabled": False', installer)
         self.assertIn("soundFeedbackEnabled", profile_config.PROFILE_FIELDS)
         self.assertIn("speechFeedbackEnabled", profile_config.PROFILE_FIELDS)
+
+    def test_celebration_is_optional_fixed_unscored_and_reduced_motion_safe(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
+        runtime = (frontend / "celebration-runtime.js").read_text(encoding="utf-8")
+        launcher = (frontend / "launcher-ui.js").read_text(encoding="utf-8")
+        media = (frontend / "media-library.js").read_text(encoding="utf-8")
+        styles = (frontend / "styles.css").read_text(encoding="utf-8")
+        index = (REPOSITORY_ROOT / "src" / "index.html").read_text(encoding="utf-8")
+        media_page = (REPOSITORY_ROOT / "src" / "media.html").read_text(encoding="utf-8")
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
+        self.assertIn("celebrationEnabled", profile_config.PROFILE_FIELDS)
+        self.assertIn("config.celebrationEnabled!==true", runtime)
+        self.assertIn("config.accessibilityReducedMotion===true", runtime)
+        self.assertIn("matchMedia('(prefers-reduced-motion: reduce)')", runtime)
+        self.assertIn("const COZY_CELEBRATION_POINTS=Object.freeze", runtime)
+        self.assertIn("},900)", runtime)
+        for forbidden in ("fetch(", "localStorage", "sessionStorage", "Math.random", "score", "streak", "counter"):
+            self.assertNotIn(forbidden, runtime)
+        self.assertIn("playCelebrationMoment(cfg);", launcher)
+        self.assertIn("playCelebrationMoment(mediaConfig);", media)
+        self.assertIn("@keyframes celebrationBurst", styles)
+        self.assertIn(".access-reduced-motion .celebration-layer", styles)
+        self.assertIn('id="celebrationLayer"', index)
+        self.assertIn('id="celebrationLayer"', media_page)
+        self.assertIn('<script defer src="/frontend/celebration-runtime.js"></script>', index)
+        self.assertIn('<script defer src="/frontend/celebration-runtime.js"></script>', media_page)
+        self.assertIn('"celebrationEnabled": False', installer)
+        self.assertIn("ohne Punkte, Serien oder Belohnungen", installer)
+        self.assertIn("without points, streaks, or rewards", installer)
 
     def test_keyboard_and_touch_navigation_respect_ui_boundaries(self):
         source = frontend_source()

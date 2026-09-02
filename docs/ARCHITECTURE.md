@@ -35,6 +35,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview
 - `src/frontend/accessibility-runtime.js` applies combinable profile presets to the launcher, media library, and isolated Parent preview
 - `src/frontend/feedback-runtime.js` owns opt-in synthesized UI tones and sends only focused tile IDs to the local speech endpoint
+- `src/frontend/celebration-runtime.js` owns the fixed opt-in success burst and its reduced-motion gate without scores or progress state
 - `src/frontend/transition-runtime.js` owns dependency-free navigation, launch, success, and return motion without delaying state or focus changes
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/media.html` and `src/frontend/media-library.*` render the local cover library and submit only opaque media IDs
@@ -68,6 +69,12 @@ motion suppression, and an always-prominent keyboard focus marker. The same
 classes are applied to the full launcher, the media library, and the unsaved
 Appearance preview. Operating-system reduced-motion and forced-colors media
 queries remain active and take precedence over the profile palette.
+
+The optional celebration is one additive, profile-scoped boolean that remains off
+when missing from an older configuration. A fixed local star burst runs only after
+the server has accepted a native app or media start, never delays that start, and
+is suppressed by either reduced-motion preference. It has no random schedule,
+score, streak, badge, counter, history, or network request.
 
 Asynchronous frontend resources use explicit loading, empty, error, and success
 states. Configuration remains the only startup-critical request: a failure leaves
