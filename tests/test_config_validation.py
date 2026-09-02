@@ -126,6 +126,10 @@ class ConfigValidationTests(unittest.TestCase):
             "themeTimeOfDayEnabled",
             "soundFeedbackEnabled",
             "speechFeedbackEnabled",
+            "accessibilityLargeText",
+            "accessibilityHighContrast",
+            "accessibilityReducedMotion",
+            "accessibilityKeyboardFocus",
         ):
             with self.subTest(field=field):
                 data = base_config()
@@ -138,11 +142,19 @@ class ConfigValidationTests(unittest.TestCase):
         data["themeTimeOfDayEnabled"] = False
         data["soundFeedbackEnabled"] = True
         data["speechFeedbackEnabled"] = False
+        data["accessibilityLargeText"] = True
+        data["accessibilityHighContrast"] = False
+        data["accessibilityReducedMotion"] = True
+        data["accessibilityKeyboardFocus"] = False
         validated = config_validation.validate_config(data)
         self.assertTrue(validated["themeMotionEnabled"])
         self.assertFalse(validated["themeTimeOfDayEnabled"])
         self.assertTrue(validated["soundFeedbackEnabled"])
         self.assertFalse(validated["speechFeedbackEnabled"])
+        self.assertTrue(validated["accessibilityLargeText"])
+        self.assertFalse(validated["accessibilityHighContrast"])
+        self.assertTrue(validated["accessibilityReducedMotion"])
+        self.assertFalse(validated["accessibilityKeyboardFocus"])
 
     def test_schedule_collections_are_bounded_and_validated(self):
         data = base_config()

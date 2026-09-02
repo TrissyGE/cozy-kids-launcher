@@ -385,6 +385,26 @@
                   <div id="appearancePreviewTitle" class="preview-launcher-title"></div>
                   <div id="appearancePreviewGrid" class="preview-launcher-grid"></div>
                 </div>
+                <fieldset id="accessibilityOptions" class="world-theme-options accessibility-options">
+                  <legend id="accessibilityOptionsTitle"></legend>
+                  <label class="chk" for="cfgAccessibilityLargeText">
+                    <input id="cfgAccessibilityLargeText" type="checkbox" onchange="renderAppearancePreview()">
+                    <span id="accessibilityLargeTextLabel"></span>
+                  </label>
+                  <label class="chk" for="cfgAccessibilityHighContrast">
+                    <input id="cfgAccessibilityHighContrast" type="checkbox" onchange="renderAppearancePreview()">
+                    <span id="accessibilityHighContrastLabel"></span>
+                  </label>
+                  <label class="chk" for="cfgAccessibilityReducedMotion">
+                    <input id="cfgAccessibilityReducedMotion" type="checkbox" onchange="renderAppearancePreview()">
+                    <span id="accessibilityReducedMotionLabel"></span>
+                  </label>
+                  <label class="chk" for="cfgAccessibilityKeyboardFocus">
+                    <input id="cfgAccessibilityKeyboardFocus" type="checkbox" onchange="renderAppearancePreview()">
+                    <span id="accessibilityKeyboardFocusLabel"></span>
+                  </label>
+                  <p id="accessibilityOptionsHint" class="muted"></p>
+                </fieldset>
               </section>
             </div>
           </section>
@@ -438,6 +458,7 @@
 <script defer src="/frontend/icons.js"></script>
 <script defer src="/frontend/dialogs.js"></script>
 <script defer src="/frontend/theme-runtime.js"></script>
+<script defer src="/frontend/accessibility-runtime.js"></script>
 <script defer src="/frontend/feedback-runtime.js"></script>
 <script defer src="/frontend/transition-runtime.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>

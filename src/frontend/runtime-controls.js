@@ -202,6 +202,10 @@ async function saveConfig(){
   cfg.themeTimeOfDayEnabled=document.getElementById('cfgThemeTimeOfDayEnabled').checked;
   cfg.soundFeedbackEnabled=document.getElementById('cfgSoundFeedbackEnabled').checked;
   cfg.speechFeedbackEnabled=document.getElementById('cfgSpeechFeedbackEnabled').checked;
+  cfg.accessibilityLargeText=document.getElementById('cfgAccessibilityLargeText').checked;
+  cfg.accessibilityHighContrast=document.getElementById('cfgAccessibilityHighContrast').checked;
+  cfg.accessibilityReducedMotion=document.getElementById('cfgAccessibilityReducedMotion').checked;
+  cfg.accessibilityKeyboardFocus=document.getElementById('cfgAccessibilityKeyboardFocus').checked;
   cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
   cfg.parentLabel=document.getElementById('cfgParentLabel').value;
   cfg.exitLabel=document.getElementById('cfgExitLabel').value;

@@ -48,6 +48,12 @@ function renderLocalizedChrome(){
   document.getElementById('soundFeedbackLabel').textContent=uiText.soundFeedback||'Gentle local sounds';
   document.getElementById('speechFeedbackLabel').textContent=uiText.speechFeedback||'Read app names aloud (Linux)';
   document.getElementById('feedbackOptionsHint').textContent=uiText.feedbackHint||'Both options are per child and off by default.';
+  document.getElementById('accessibilityOptionsTitle').textContent=uiText.accessibilityOptions||'Accessibility presets';
+  document.getElementById('accessibilityLargeTextLabel').textContent=uiText.accessibilityLargeText||'Larger text';
+  document.getElementById('accessibilityHighContrastLabel').textContent=uiText.accessibilityHighContrast||'High contrast';
+  document.getElementById('accessibilityReducedMotionLabel').textContent=uiText.accessibilityReducedMotion||'Reduce motion';
+  document.getElementById('accessibilityKeyboardFocusLabel').textContent=uiText.accessibilityKeyboardFocus||'Keyboard mode with a strong focus marker';
+  document.getElementById('accessibilityOptionsHint').textContent=uiText.accessibilityHint||'Combine any options for this child profile.';
   document.getElementById('cfgTimerCustom').placeholder=uiText.timerMinutes;
   document.getElementById('cfgPin').placeholder=uiText.pinSet;
   document.getElementById('cfgPinConfirm').placeholder=uiText.pinConfirm;

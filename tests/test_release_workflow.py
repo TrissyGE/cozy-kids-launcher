@@ -71,8 +71,16 @@ class StableMainReleaseContractTests(unittest.TestCase):
         self.assertEqual(len(example["profiles"]), 1)
         self.assertFalse(example["profiles"][0]["themeMotionEnabled"])
         self.assertFalse(example["profiles"][0]["themeTimeOfDayEnabled"])
+        self.assertFalse(example["profiles"][0]["accessibilityLargeText"])
+        self.assertFalse(example["profiles"][0]["accessibilityHighContrast"])
+        self.assertFalse(example["profiles"][0]["accessibilityReducedMotion"])
+        self.assertFalse(example["profiles"][0]["accessibilityKeyboardFocus"])
         self.assertIn('"themeMotionEnabled": True', installer)
         self.assertIn('"themeTimeOfDayEnabled": False', installer)
+        self.assertIn('"accessibilityLargeText": False', installer)
+        self.assertIn('"accessibilityHighContrast": False', installer)
+        self.assertIn('"accessibilityReducedMotion": False', installer)
+        self.assertIn('"accessibilityKeyboardFocus": False', installer)
 
     def test_wsl_smoke_extends_the_active_profile_in_versioned_configs(self):
         smoke = (
@@ -114,6 +122,10 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertFalse(installed["setupCompleted"])
             self.assertTrue(installed["profiles"][0]["themeMotionEnabled"])
             self.assertFalse(installed["profiles"][0]["themeTimeOfDayEnabled"])
+            self.assertFalse(installed["profiles"][0]["accessibilityLargeText"])
+            self.assertFalse(installed["profiles"][0]["accessibilityHighContrast"])
+            self.assertFalse(installed["profiles"][0]["accessibilityReducedMotion"])
+            self.assertFalse(installed["profiles"][0]["accessibilityKeyboardFocus"])
             config_path = (
                 Path(home)
                 / ".config"
@@ -281,6 +293,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())
             self.assertTrue((frontend_root / "theme-runtime.js").is_file())
+            self.assertTrue((frontend_root / "accessibility-runtime.js").is_file())
             self.assertTrue((frontend_root / "feedback-runtime.js").is_file())
             self.assertTrue((frontend_root / "transition-runtime.js").is_file())
             self.assertTrue((frontend_root / "media-library.css").is_file())
