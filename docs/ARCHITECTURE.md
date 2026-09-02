@@ -33,6 +33,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
 - `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview
+- `src/frontend/accessibility-runtime.js` applies combinable profile presets to the launcher, media library, and isolated Parent preview
 - `src/frontend/feedback-runtime.js` owns opt-in synthesized UI tones and sends only focused tile IDs to the local speech endpoint
 - `src/frontend/transition-runtime.js` owns dependency-free navigation, launch, success, and return motion without delaying state or focus changes
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
@@ -59,6 +60,14 @@ label and `speech_feedback.py` starts only an allowlisted Speech Dispatcher or
 eSpeak executable as an argument vector. Missing providers and failed speech are
 nonfatal, arbitrary client-provided text is rejected, and the launcher owns and
 limits the lifetime of its speech process.
+
+Accessibility presets are four independent, profile-scoped booleans and remain
+off when missing from an older configuration. The dependency-free runtime maps
+them to local CSS classes for 112.5% root text, a solid high-contrast palette,
+motion suppression, and an always-prominent keyboard focus marker. The same
+classes are applied to the full launcher, the media library, and the unsaved
+Appearance preview. Operating-system reduced-motion and forced-colors media
+queries remain active and take precedence over the profile palette.
 
 Asynchronous frontend resources use explicit loading, empty, error, and success
 states. Configuration remains the only startup-critical request: a failure leaves

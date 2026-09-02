@@ -36,6 +36,7 @@ def frontend_source():
         frontend_root / "icons.js",
         frontend_root / "dialogs.js",
         frontend_root / "theme-runtime.js",
+        frontend_root / "accessibility-runtime.js",
         frontend_root / "feedback-runtime.js",
         frontend_root / "transition-runtime.js",
         frontend_root / "launcher-ui.js",
@@ -1684,6 +1685,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "/frontend/icons.js",
             "/frontend/dialogs.js",
             "/frontend/theme-runtime.js",
+            "/frontend/accessibility-runtime.js",
             "/frontend/feedback-runtime.js",
             "/frontend/transition-runtime.js",
             "/frontend/launcher-ui.js",
@@ -1706,12 +1708,13 @@ class FrontendSafetyTests(unittest.TestCase):
         installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
-        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "feedback-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
+        for asset in ("design-system.css", "styles.css", "state.js", "localization.js", "icons.js", "dialogs.js", "theme-runtime.js", "accessibility-runtime.js", "feedback-runtime.js", "transition-runtime.js", "launcher-ui.js", "profiles.js", "schedule-controls.js", "activity-dashboard.js", "parent-settings.js", "first-run.js", "runtime-controls.js"):
             self.assertIn(f'$SRC_DIR/frontend/{asset}', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DESIGN_SYSTEM_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_ICONS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_DIALOGS_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_THEME_RUNTIME_FILE"', installer)
+        self.assertIn('backup_if_exists "$FRONTEND_ACCESSIBILITY_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_FEEDBACK_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_TRANSITION_RUNTIME_FILE"', installer)
         self.assertIn('backup_if_exists "$FRONTEND_PROFILES_FILE"', installer)
@@ -2143,7 +2146,19 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('en:backup_title) echo "Backups"', installer)
 
     def test_accessibility_preferences_and_compact_layout_are_explicit(self):
+        frontend = REPOSITORY_ROOT / "src" / "frontend"
         styles = (REPOSITORY_ROOT / "src" / "frontend" / "styles.css").read_text(
+            encoding="utf-8"
+        )
+        runtime = (frontend / "accessibility-runtime.js").read_text(
+            encoding="utf-8"
+        )
+        source = frontend_source()
+        media = (frontend / "media-library.js").read_text(encoding="utf-8")
+        page = (REPOSITORY_ROOT / "src" / "media.html").read_text(
+            encoding="utf-8"
+        )
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
         self.assertIn("@media (prefers-reduced-motion: reduce)", styles)
@@ -2152,6 +2167,31 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("border:2px solid ButtonText", styles)
         self.assertIn("@media (max-width:900px), (max-height:700px)", styles)
         self.assertIn("#admin .wrap { max-height:calc(100vh - 76px)", styles)
+        for field in (
+            "accessibilityLargeText",
+            "accessibilityHighContrast",
+            "accessibilityReducedMotion",
+            "accessibilityKeyboardFocus",
+        ):
+            self.assertIn(field, profile_config.PROFILE_FIELDS)
+            self.assertIn(field, runtime)
+        self.assertIn("element===document.body?document.documentElement:element", runtime)
+        self.assertNotIn("fetch(", runtime)
+        self.assertIn("html.access-large-text { font-size:112.5%; }", styles)
+        self.assertIn("html.access-high-contrast body", styles)
+        self.assertIn(".access-reduced-motion *", styles)
+        self.assertIn(".access-keyboard-focus button:focus", styles)
+        self.assertIn("applyAccessibilityRuntime(document.body,cfg)", source)
+        self.assertIn("applyAccessibilityRuntime(document.body,config)", media)
+        self.assertIn('role="img"', source)
+        self.assertIn('<script defer src="/frontend/accessibility-runtime.js"></script>', page)
+        for label in (
+            "Bedienungshilfen",
+            "Tastaturmodus mit deutlichem Fokus",
+            "Accessibility presets",
+            "Keyboard mode with a strong focus marker",
+        ):
+            self.assertIn(label, installer)
 
     def test_world_theme_effects_are_profile_scoped_optional_and_time_local(self):
         frontend = REPOSITORY_ROOT / "src" / "frontend"

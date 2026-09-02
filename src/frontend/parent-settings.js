@@ -148,6 +148,12 @@ function renderAppearancePreview(){
     themeMotionEnabled:motionInput.checked,
     themeTimeOfDayEnabled:timeInput.checked
   },['launcher-preview']);
+  applyAccessibilityRuntime(preview,{
+    accessibilityLargeText:document.getElementById('cfgAccessibilityLargeText').checked,
+    accessibilityHighContrast:document.getElementById('cfgAccessibilityHighContrast').checked,
+    accessibilityReducedMotion:document.getElementById('cfgAccessibilityReducedMotion').checked,
+    accessibilityKeyboardFocus:document.getElementById('cfgAccessibilityKeyboardFocus').checked
+  });
   for(const token of ['--bg1','--bg2','--text','--btn','--card']){
     preview.style.removeProperty(token);
   }
@@ -344,6 +350,10 @@ function renderAdmin(){
   document.getElementById('cfgThemeTimeOfDayEnabled').checked=cfg.themeTimeOfDayEnabled===true;
   document.getElementById('cfgSoundFeedbackEnabled').checked=cfg.soundFeedbackEnabled===true;
   document.getElementById('cfgSpeechFeedbackEnabled').checked=cfg.speechFeedbackEnabled===true;
+  document.getElementById('cfgAccessibilityLargeText').checked=cfg.accessibilityLargeText===true;
+  document.getElementById('cfgAccessibilityHighContrast').checked=cfg.accessibilityHighContrast===true;
+  document.getElementById('cfgAccessibilityReducedMotion').checked=cfg.accessibilityReducedMotion===true;
+  document.getElementById('cfgAccessibilityKeyboardFocus').checked=cfg.accessibilityKeyboardFocus===true;
   document.getElementById('speechFeedbackStatus').textContent=features.speechFeedbackAvailable
     ?(uiText.speechAvailable||'Local Linux speech is available on this device.')
     :(uiText.speechUnavailable||'Install Speech Dispatcher or eSpeak to use speech feedback.');

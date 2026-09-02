@@ -446,9 +446,14 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "document.getElementById('speechFeedbackStatus').getAttribute('role')==='status' && "
         "document.getElementById('speechFeedbackStatus').textContent==="
         "(features.speechFeedbackAvailable?uiText.speechAvailable:uiText.speechUnavailable) && "
+        "document.getElementById('accessibilityOptionsTitle').textContent===uiText.accessibilityOptions && "
+        "document.getElementById('accessibilityKeyboardFocusLabel').textContent==="
+        "uiText.accessibilityKeyboardFocus && "
         "document.getElementById('cfgSoundFeedbackEnabled').checked===false && "
-        "document.getElementById('cfgSpeechFeedbackEnabled').checked===false",
-        "Optional local feedback did not render its localized default-off state",
+        "document.getElementById('cfgSpeechFeedbackEnabled').checked===false && "
+        "['LargeText','HighContrast','ReducedMotion','KeyboardFocus'].every(name=>"
+        "document.getElementById('cfgAccessibility'+name).checked===false)",
+        "Optional local feedback and accessibility presets did not render their default-off state",
     )
     browser.click("#openThemeBtn")
     browser.wait_for("!document.getElementById('themeOverlay').classList.contains('hidden')")
@@ -495,6 +500,26 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "Optional world effects did not stay inside the unsaved preview",
     )
     browser.screenshot(artifacts / "world-theme-effects.png")
+    for selector in (
+        "#cfgAccessibilityLargeText",
+        "#cfgAccessibilityHighContrast",
+        "#cfgAccessibilityReducedMotion",
+        "#cfgAccessibilityKeyboardFocus",
+    ):
+        browser.click(selector)
+    assert_js(
+        browser,
+        "['access-large-text','access-high-contrast','access-reduced-motion',"
+        "'access-keyboard-focus'].every(name=>"
+        "document.getElementById('appearancePreview').classList.contains(name)) && "
+        "getComputedStyle(document.getElementById('appearancePreview'))"
+        ".getPropertyValue('--text').trim()==='#111' && "
+        "getComputedStyle(document.querySelector('#appearancePreview .preview-tile'))"
+        ".outlineWidth==='6px' && "
+        "!document.documentElement.classList.contains('access-large-text')",
+        "Accessibility presets did not stay inside the unsaved preview",
+    )
+    browser.screenshot(artifacts / "accessibility-presets.png")
     browser.set_value("#cfgLayoutMode", "klein")
     assert_js(
         browser,
@@ -536,10 +561,23 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "themeTimeOfDayEnabled": True,
         "soundFeedbackEnabled": True,
         "speechFeedbackEnabled": True,
+        "accessibilityLargeText": True,
+        "accessibilityHighContrast": True,
+        "accessibilityReducedMotion": True,
+        "accessibilityKeyboardFocus": True,
         "parentLabel": "Family controls",
     }
     if any(saved_config.get(key) != value for key, value in expected.items()):
         raise AssertionError(f"Saved config does not match the UI: {saved_config!r}")
+    assert_js(
+        browser,
+        "['access-large-text','access-high-contrast','access-reduced-motion',"
+        "'access-keyboard-focus'].every(name=>document.documentElement.classList.contains(name)) && "
+        "getComputedStyle(document.documentElement).fontSize==='18px' && "
+        "getComputedStyle(document.body).getPropertyValue('--text').trim()==='#111' && "
+        "getComputedStyle(document.querySelector('#grid .tile')).outlineWidth==='6px'",
+        "Saved accessibility presets were not applied to the launcher",
+    )
     feedback_result = browser.evaluate(
         "(()=>{window.__toneStarts=0;cozyFeedbackAudioContext=null;"
         "window.AudioContext=class{constructor(){this.state='running';this.currentTime=0;"
@@ -576,10 +614,12 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "(async()=>{cancelTileSpeech();window.fetch=window.__feedbackOriginalFetch;"
         "delete window.__feedbackOriginalFetch;delete window.__speechBody;"
         "features.speechFeedbackAvailable=false;cfg.soundFeedbackEnabled=false;"
-        "cfg.speechFeedbackEnabled=false;await persistConfig();})()",
+        "cfg.speechFeedbackEnabled=false;cfg.accessibilityLargeText=false;"
+        "cfg.accessibilityHighContrast=false;cfg.accessibilityReducedMotion=false;"
+        "cfg.accessibilityKeyboardFocus=false;await persistConfig();renderAll();})()",
         await_promise=True,
     )
-    log_scenario("settings, themes, and optional local feedback persist safely")
+    log_scenario("settings, themes, local feedback, and accessibility presets persist safely")
 
     enter_parent_settings(browser)
     browser.wait_for(

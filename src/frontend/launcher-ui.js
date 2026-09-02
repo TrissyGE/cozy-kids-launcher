@@ -160,6 +160,7 @@ function applyDynamicTheme(){
 function renderAll(){
   renderLocalizedChrome();
   applyThemeRuntime(document.body,cfg);
+  applyAccessibilityRuntime(document.body,cfg);
   scheduleThemeRuntimeRefresh(document.body,()=>cfg);
   applyDynamicTheme();
   document.getElementById('title').textContent=cfg.title||'{{DEFAULT_TITLE}}';

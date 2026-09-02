@@ -71,6 +71,10 @@ class ProfileConfigTests(unittest.TestCase):
         alex["themeTimeOfDayEnabled"] = True
         alex["soundFeedbackEnabled"] = True
         alex["speechFeedbackEnabled"] = True
+        alex["accessibilityLargeText"] = True
+        alex["accessibilityHighContrast"] = True
+        alex["accessibilityReducedMotion"] = True
+        alex["accessibilityKeyboardFocus"] = True
         alex["tiles"][0]["label"] = "Alex Paint"
         alex["favorites"] = ["paint"]
         alex["appLimits"] = {"paint": 20}
@@ -97,10 +101,15 @@ class ProfileConfigTests(unittest.TestCase):
         self.assertEqual(alex["theme"], "blau")
         self.assertNotIn("themeMotionEnabled", default)
         self.assertNotIn("soundFeedbackEnabled", default)
+        self.assertNotIn("accessibilityLargeText", default)
         self.assertTrue(alex["themeMotionEnabled"])
         self.assertTrue(alex["themeTimeOfDayEnabled"])
         self.assertTrue(alex["soundFeedbackEnabled"])
         self.assertTrue(alex["speechFeedbackEnabled"])
+        self.assertTrue(alex["accessibilityLargeText"])
+        self.assertTrue(alex["accessibilityHighContrast"])
+        self.assertTrue(alex["accessibilityReducedMotion"])
+        self.assertTrue(alex["accessibilityKeyboardFocus"])
         self.assertEqual(alex["favorites"], ["paint"])
         self.assertEqual(alex["appLimits"], {"paint": 20})
         self.assertTrue(alex["weeklySchedule"]["enabled"])

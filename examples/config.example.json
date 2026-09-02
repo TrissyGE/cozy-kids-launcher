@@ -17,6 +17,10 @@
       "themeTimeOfDayEnabled": false,
       "soundFeedbackEnabled": false,
       "speechFeedbackEnabled": false,
+      "accessibilityLargeText": false,
+      "accessibilityHighContrast": false,
+      "accessibilityReducedMotion": false,
+      "accessibilityKeyboardFocus": false,
       "customColors": {
         "bg1": "#ffd6e8",
         "bg2": "#ffeef6",

@@ -128,6 +128,10 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         "themeTimeOfDayEnabled",
         "soundFeedbackEnabled",
         "speechFeedbackEnabled",
+        "accessibilityLargeText",
+        "accessibilityHighContrast",
+        "accessibilityReducedMotion",
+        "accessibilityKeyboardFocus",
     ):
         if field in result and not isinstance(result[field], bool):
             raise ValueError(f"{field} must be a boolean")

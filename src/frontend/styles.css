@@ -340,6 +340,64 @@
   .empty-state .emoji { font-size:5rem; }
   .empty-state p { font-size:1.3rem; text-align:center; max-width:500px; }
 
+  html.access-large-text { font-size:112.5%; }
+  .launcher-preview.access-large-text .preview-launcher-title { font-size:1.25rem; }
+  .launcher-preview.access-large-text .preview-tile { font-size:1rem; }
+
+  html.access-high-contrast body,
+  .launcher-preview.access-high-contrast {
+    --bg1:#fff;
+    --bg2:#fff;
+    --card:#fff;
+    --text:#111;
+    --btn:#004f9e;
+    --btn-text:#fff;
+    --smallbtn-bg:#fff;
+    --input-border:#111;
+    --surface-solid:#fff;
+    --surface-panel:#fff;
+    --shadow:0 0 0 2px #111;
+    --rec-shadow:rgba(0,0,0,.18);
+  }
+  html.access-high-contrast body.theme-world #themeBg { display:none; }
+  .launcher-preview.access-high-contrast { background:#fff !important; }
+  .launcher-preview.access-high-contrast::before,
+  .launcher-preview.access-high-contrast::after { display:none; }
+  html.access-high-contrast body .tile,
+  html.access-high-contrast body .smallbtn,
+  html.access-high-contrast body .nav,
+  .launcher-preview.access-high-contrast .preview-tile {
+    border:2px solid #111;
+    box-shadow:none;
+  }
+
+  .access-reduced-motion,
+  .access-reduced-motion::before,
+  .access-reduced-motion::after,
+  .access-reduced-motion *,
+  .access-reduced-motion *::before,
+  .access-reduced-motion *::after {
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    scroll-behavior:auto !important;
+    transition-duration:.01ms !important;
+  }
+  .access-reduced-motion .tile:hover,
+  .access-reduced-motion .tile:active,
+  .access-reduced-motion .theme-thumb.active,
+  .access-reduced-motion .media-card:hover,
+  .access-reduced-motion .media-card:active { transform:none; }
+
+  .access-keyboard-focus button:focus,
+  .access-keyboard-focus input:focus,
+  .access-keyboard-focus select:focus,
+  .access-keyboard-focus textarea:focus,
+  .access-keyboard-focus .tile.focused,
+  .launcher-preview.access-keyboard-focus .preview-tile:first-child {
+    outline:6px solid var(--btn) !important;
+    outline-offset:5px !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration:.01ms !important;

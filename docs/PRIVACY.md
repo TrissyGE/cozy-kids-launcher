@@ -65,6 +65,11 @@ up the current visible tile label and passes that short label to an installed
 Speech Dispatcher or eSpeak process without a shell. It does not accept arbitrary
 speech text, record audio, contact a speech service, or retain spoken labels.
 
+The larger-text, high-contrast, reduced-motion, and keyboard-focus presets are
+also stored only as booleans in each local child profile. They do not inspect or
+infer a disability, send accessibility choices elsewhere, or override stronger
+operating-system forced-colors and reduced-motion preferences.
+
 Returning from the local media library or embedded browser uses one session-only
 marker containing the active profile and tile identifiers. It contains no child
 name, label, command, URL, or filesystem path and is removed when the launcher
@@ -103,6 +108,7 @@ settings. Parent diagnostics apply the same fixed allowlist.
 - whether a web browser is enabled
 - whether weekly or per-app availability windows are appropriate
 - whether local tones or spoken app names are appropriate for each child
+- whether an accessibility preset makes the launcher easier for each child
 - whether shutdown should be available
 - whether parent settings should be protected with a PIN
 

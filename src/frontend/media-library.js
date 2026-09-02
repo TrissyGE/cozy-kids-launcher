@@ -41,6 +41,7 @@ function mediaTile(config,tileId){
 
 function applyMediaTheme(config){
   applyThemeRuntime(document.body,config,['media-page']);
+  applyAccessibilityRuntime(document.body,config);
   scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,['media-page']);
   const background=document.getElementById('themeBg');
   if(config.theme!=='custom'){
