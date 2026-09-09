@@ -10,6 +10,7 @@
     "desc_en": "A colorful paint program for kids with funny stamps and magic effects.",
     "cmd": ["tuxpaint","--fullscreen=yes"],
     "package": "tuxpaint",
+    "packages": {"apt": "tuxpaint", "dnf": "tuxpaint"},
     "category": "creative"
   },
   {
@@ -64,6 +65,7 @@
     "cmd": ["kstart","--fullscreen","kturtle"],
     "alt_cmds": ["kturtle"],
     "package": "kturtle",
+    "packages": {"apt": "kturtle", "dnf": "kturtle", "pacman": "kturtle"},
     "category": "learning"
   },
   {

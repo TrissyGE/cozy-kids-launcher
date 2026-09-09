@@ -4,6 +4,32 @@ const COZY_WORLD_THEME_IDS=Object.freeze([
 
 let cozyThemeRefreshTimer=null;
 
+const COZY_CUSTOM_THEME_TOKENS=Object.freeze({
+  bg1:'--bg1',bg2:'--bg2',text:'--text',btn:'--btn',card:'--card',
+  btnText:'--btn-text',smallbtnBg:'--smallbtn-bg',inputBorder:'--input-border',
+  recShadow:'--rec-shadow',shadow:'--shadow'
+});
+
+function applyCustomThemeRuntime(element,config,background){
+  // Clear the previous profile/theme's inline values before applying the next.
+  for(const variable of Object.values(COZY_CUSTOM_THEME_TOKENS)){
+    element.style.removeProperty(variable);
+  }
+  if(background){
+    background.style.removeProperty('background-image');
+    background.style.removeProperty('opacity');
+  }
+  if(!config||config.theme!=='custom'||config.accessibilityHighContrast===true) return;
+  const colors=config.customColors||{};
+  for(const [name,variable] of Object.entries(COZY_CUSTOM_THEME_TOKENS)){
+    if(colors[name]) element.style.setProperty(variable,colors[name]);
+  }
+  if(background&&config.customBackground){
+    background.style.backgroundImage='url('+JSON.stringify(config.customBackground)+')';
+    background.style.opacity='1';
+  }
+}
+
 function isWorldTheme(themeId){
   return COZY_WORLD_THEME_IDS.includes(themeId);
 }

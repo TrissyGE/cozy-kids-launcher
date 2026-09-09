@@ -43,22 +43,7 @@ function applyMediaTheme(config){
   applyThemeRuntime(document.body,config,['media-page']);
   applyAccessibilityRuntime(document.body,config);
   scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,['media-page']);
-  const background=document.getElementById('themeBg');
-  if(config.theme!=='custom'){
-    background.style.backgroundImage='';
-    return;
-  }
-  const colors=config.customColors||{};
-  for(const [name,variable] of Object.entries({
-    bg1:'--bg1',bg2:'--bg2',text:'--text',btn:'--btn',card:'--card',
-    btnText:'--btn-text',smallbtnBg:'--smallbtn-bg',inputBorder:'--input-border',
-    recShadow:'--rec-shadow',shadow:'--shadow'
-  })){
-    if(colors[name]) document.body.style.setProperty(variable,colors[name]);
-  }
-  background.style.backgroundImage=config.customBackground?
-    'url('+JSON.stringify(config.customBackground)+')':'';
-  background.style.opacity=config.customBackground?'1':'0';
+  applyCustomThemeRuntime(document.body,config,document.getElementById('themeBg'));
 }
 
 async function loadMediaText(language){

@@ -10,6 +10,7 @@ import threading
 import time
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
+from package_provider import prepare_install
 from app_detection import (
     BROWSER_CANDIDATES,
     browser_statuses,
@@ -1440,13 +1441,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if data is None:
                 return
             package = data.get("package", "")
-            recs = load_recommendations()
-            valid_packages = {r["package"] for r in recs if r.get("package")}
-            if not package or package not in valid_packages:
-                self.json_response({"status": "error", "message": "Invalid package"}, 400)
-                return
-            command = f"sudo apt install -y {package}"
-            self.json_response({"status": "manual", "command": command})
+            try:
+                plan = prepare_install(package, load_recommendations())
+            except ValueError as error:
+                self.json_response({"status": "error", "message": str(error)}, 400)
+            else:
+                self.json_response(plan)
             return
         if action.startswith("launch/"):
             tile_id = unquote(action.split("/", 1)[1])

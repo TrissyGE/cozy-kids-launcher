@@ -423,7 +423,11 @@ text() {
     de:copy_command) echo "Kopieren" ;;
     de:command_copied) echo "Kopiert!" ;;
     de:install_started) echo "Installation gestartet. Suche nach einem Passwort-Dialog, oder führe den Befehl aus:" ;;
-    de:install_manual) echo "Bitte führe diesen Befehl im Terminal aus:" ;;
+    de:install_manual) echo "Es wurde noch nichts installiert. Führe diesen Befehl im Terminal aus und prüfe die vorgeschlagenen Änderungen. Aktualisiere danach die App-Liste:" ;;
+    de:install_loading) echo "Installationsanleitung wird vorbereitet …" ;;
+    de:install_error) echo "Die Installationsanleitung konnte nicht geladen werden. Es wurde nichts installiert. Bitte erneut versuchen oder den Elternbereich neu öffnen." ;;
+    de:install_unsupported) echo "Für diese App und dein System ist noch keine geprüfte Paketzuordnung hinterlegt oder die Paketverwaltung ist nicht verfügbar. Nutze die Softwareverwaltung deiner Distribution." ;;
+    de:update_start_error) echo "Das Update konnte nicht gestartet werden. Der Launcher bleibt geöffnet. Bitte erneut versuchen oder den Elternbereich neu öffnen." ;;
     de:close) echo "Schließen" ;;
     de:export_config) echo "Konfiguration exportieren" ;;
     de:import_config) echo "Konfiguration importieren" ;;
@@ -473,7 +477,11 @@ text() {
     en:copy_command) echo "Copy" ;;
     en:command_copied) echo "Copied!" ;;
     en:install_started) echo "Installation started. Watch for a password dialog, or run the command below:" ;;
-    en:install_manual) echo "Please run this command in a terminal:" ;;
+    en:install_manual) echo "Nothing has been installed yet. Run this command in a terminal and review the proposed changes. Then refresh the app list:" ;;
+    en:install_loading) echo "Preparing installation instructions …" ;;
+    en:install_error) echo "Installation instructions could not be loaded. Nothing was installed. Please retry or reopen Parent settings." ;;
+    en:install_unsupported) echo "No reviewed package mapping is available for this app and system yet, or the package manager is unavailable. Use your distribution's software manager." ;;
+    en:update_start_error) echo "The update could not be started. The launcher stays open. Please retry or reopen Parent settings." ;;
     en:close) echo "Close" ;;
     en:export_config) echo "Export config" ;;
     en:import_config) echo "Import config" ;;
@@ -1140,6 +1148,7 @@ render_template() {
   export RECOMMENDED_TITLE RECOMMENDED_INSTALLED RECOMMENDED_NOT_INSTALLED RECOMMENDED_PROMPT
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
+  export JSON_INSTALL_LOADING JSON_INSTALL_ERROR JSON_INSTALL_UNSUPPORTED JSON_UPDATE_START_ERROR
   export TIMER_LABEL TIMER_OFF TIMER_15 TIMER_30 TIMER_60 TIMER_CUSTOM TIMER_START TIMER_STOP TIMER_ACTIVE TIMER_EXPIRED TIMER_REMAINING TIMER_WARNING_TITLE TIMER_WARNING_TEXT TIMER_ENTER_PIN TIMER_EXTEND TIMER_EXIT TIMER_WRONG_PIN TIMER_EXTENDED TIMER_EXPIRED_TITLE TIMER_EXPIRED_BODY TIMER_MINUTES
   export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_STARTED_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE JSON_FEEDBACK_OPTIONS JSON_SOUND_FEEDBACK JSON_SPEECH_FEEDBACK JSON_SPEECH_AVAILABLE JSON_SPEECH_UNAVAILABLE JSON_FEEDBACK_HINT JSON_CELEBRATION_OPTIONS JSON_CELEBRATION_ENABLED JSON_CELEBRATION_HINT JSON_ACCESSIBILITY_OPTIONS JSON_ACCESSIBILITY_LARGE_TEXT JSON_ACCESSIBILITY_HIGH_CONTRAST JSON_ACCESSIBILITY_REDUCED_MOTION JSON_ACCESSIBILITY_KEYBOARD_FOCUS JSON_ACCESSIBILITY_HINT
   export JSON_SCHEDULE_WEEKLY_TITLE JSON_SCHEDULE_WEEKLY_HINT JSON_SCHEDULE_ENABLED JSON_SCHEDULE_APP_TITLE JSON_SCHEDULE_APP_HINT JSON_SCHEDULE_SELECT_APP JSON_SCHEDULE_ADD_WINDOW JSON_SCHEDULE_REMOVE_WINDOW JSON_SCHEDULE_START JSON_SCHEDULE_END JSON_SCHEDULE_CLEAR_APP JSON_SCHEDULE_NO_WINDOWS JSON_SCHEDULE_BLOCKED_TITLE JSON_SCHEDULE_PROFILE_BLOCKED JSON_SCHEDULE_APP_BLOCKED JSON_SCHEDULE_OPEN_PARENTS
@@ -1286,6 +1295,10 @@ LABEL_COPY_COMMAND="$(text copy_command)"
 LABEL_COMMAND_COPIED="$(text command_copied)"
 LABEL_INSTALL_STARTED="$(text install_started)"
 LABEL_INSTALL_MANUAL="$(text install_manual)"
+INSTALL_LOADING="$(text install_loading)"
+INSTALL_ERROR="$(text install_error)"
+INSTALL_UNSUPPORTED="$(text install_unsupported)"
+UPDATE_START_ERROR="$(text update_start_error)"
 LABEL_CLOSE="$(text close)"
 LABEL_EXPORT_CONFIG="$(text export_config)"
 LABEL_IMPORT_CONFIG="$(text import_config)"
@@ -1489,6 +1502,10 @@ JSON_COPY_COMMAND="$(json_text "$LABEL_COPY_COMMAND")"
 JSON_COMMAND_COPIED="$(json_text "$LABEL_COMMAND_COPIED")"
 JSON_INSTALL_STARTED="$(json_text "$LABEL_INSTALL_STARTED")"
 JSON_INSTALL_MANUAL="$(json_text "$LABEL_INSTALL_MANUAL")"
+JSON_INSTALL_LOADING="$(json_text "$INSTALL_LOADING")"
+JSON_INSTALL_ERROR="$(json_text "$INSTALL_ERROR")"
+JSON_INSTALL_UNSUPPORTED="$(json_text "$INSTALL_UNSUPPORTED")"
+JSON_UPDATE_START_ERROR="$(json_text "$UPDATE_START_ERROR")"
 JSON_CLOSE="$(json_text "$LABEL_CLOSE")"
 JSON_EXPORT_CONFIG="$(json_text "$LABEL_EXPORT_CONFIG")"
 JSON_IMPORT_CONFIG="$(json_text "$LABEL_IMPORT_CONFIG")"
@@ -1628,6 +1645,7 @@ backup_if_exists "$APP_DESKTOP_FILE"
 # Render templates from src/
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/app_detection.py" "$APP_ROOT/app_detection.py"
+install -m 0644 "$SRC_DIR/package_provider.py" "$APP_ROOT/package_provider.py"
 install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launcher.py"
 install -m 0644 "$SRC_DIR/activity_store.py" "$APP_ROOT/activity_store.py"
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"

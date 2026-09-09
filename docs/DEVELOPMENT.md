@@ -7,23 +7,61 @@ Cozy Kids Launcher intentionally uses the Python standard library and plain HTML
 From the repository root:
 
 ```bash
-python3 -m unittest discover -s tests -v
-python3 scripts/wsl/browser-e2e.py
-python3 -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/speech_feedback.py src/process_state.py src/process_supervisor.py src/runtime_diagnostics.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/generate-locales.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py
-bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/check-mpv-resume.sh scripts/wsl/check-vlc-resume.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
-python3 -m py_compile scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
-python3 -m json.tool examples/config.example.json >/dev/null
-python3 -m json.tool src/recommendations.json >/dev/null
-python3 -m json.tool src/frontend/locales/de.json >/dev/null
-python3 -m json.tool src/frontend/locales/en.json >/dev/null
-python3 scripts/generate-locales.py --check
+python3 scripts/check.py
 ```
+
+This non-publishing command is the shared entry point for development, CI, and
+the automated part of the release gate. It stops on failure. Python templates,
+JSON, and **each** shell script under `src`, `scripts`, `tests`, and `examples`
+are discovered automatically, followed by locale freshness, unit/integration,
+and browser tests. JavaScript behavior is exercised in Chromium, not compiled
+by the static Python check. Never pass multiple scripts to one `bash -n` call:
+only the first is checked.
+
+For targeted iteration (run the complete command before handing off a PR):
+
+```bash
+python3 scripts/check.py --only static
+python3 scripts/check.py --only unit
+python3 scripts/check.py --only browser
+python3 scripts/wsl/browser-e2e.py --suite regressions --artifacts .test-artifacts/regressions
+```
+
+On Windows, run these inside WSL, for example
+`wsl.exe --cd /mnt/c/path/to/cozy-kids-launcher python3 scripts/check.py`.
+Do not start a full desktop VM for unit or headless-browser changes. Real
+compositor, login, audio, DRM, and package-manager claims still require the
+relevant disposable environment.
 
 The test suite renders the server template with test values, starts it on an ephemeral localhost port, and exercises the HTTP API against temporary config and cache directories. On Linux it also serves synthetic release and legacy archives from an ephemeral local HTTP server to test successful verification, checksum rejection, compatibility fallback, and fail-closed behavior. The launcher lifecycle tests perform isolated installations and drive real startup, successful and failed update, shutdown, logout, server recovery, and exhausted-recovery flows while checking that every owned process is cleaned up. A separate process-supervisor test follows a forked child that ignores `SIGTERM` while proving an unrelated instance of the same executable remains alive. It does not touch an installed launcher.
 
 `scripts/wsl/browser-e2e.py` creates another isolated installation and drives guided first run with live language switching, home, PIN, child-profile management and selection, the opt-in activity dashboard and privacy-minimized export, Parent settings, schedules, timer, theme, and update-state journeys through real Chromium. It also sends real keyboard and emulated touch input, applies reduced-motion and forced-colors preferences, and checks first run, home, and Parent settings at 800x600. It needs a supported Chromium-family browser plus the Python `websocket-client` package (`python3-websocket` in the WSL test environment). Diagnostics and screenshots are written below `.test-artifacts/browser-e2e/`.
 
 GitHub Actions runs the API checks on every pull request and on pushes to `main` and `develop` with the oldest and newest supported Python versions. A separate Chromium job runs the browser journeys, and the release workflow repeats them before publishing.
+
+The browser suite also covers custom-theme resets and accessibility precedence
+in the launcher, Parent preview, and media library, plus rejected, offline,
+malformed, pending, and acknowledged update/install requests. These mutations
+use local fixtures: no real update or system package installation is started.
+Bounded rendering assertions report individual observed values on failure;
+retrying an entire failed journey is not a substitute for diagnosing it.
+
+## Small, verifiable iterations
+
+1. Inspect `git status`, current `develop`, open PRs, and the latest CI result.
+   Do not infer the current implementation from an old chat or roadmap alone.
+2. Work on one topic branch from `develop`; preserve unrelated local edits.
+3. Reproduce the issue, add focused tests, then use the complete shared check.
+4. Update the changelog and roadmap with the exact implemented scope and test
+   evidence. A mocked provider plan is not a tested native installation.
+5. Push and use `gh pr create --base develop`, then `gh pr checks` to inspect
+   the actual PR checks. After an approved merge, inspect the new `develop`
+   CI run too. A green older PR does not establish current branch health.
+
+Merging and publishing are separate decisions. Keep `VERSION`, tags, and
+`main` unchanged during ordinary development. See [ROADMAP.md](ROADMAP.md)
+for the current execution order and [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md)
+for the first platform increment's limits.
 
 ## Branch model
 
