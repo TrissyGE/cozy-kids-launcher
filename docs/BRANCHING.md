@@ -27,6 +27,13 @@ Create these from `develop`:
 
 Use a short lowercase topic separated with hyphens, for example `feature/timer-presets` or `fix/browser-overlay-focus`. Open the pull request against `develop` and delete the branch after merge.
 
+If a follow-up depends on an open PR, it may temporarily use that PR's branch
+as its base and open a **draft stacked PR**. Name the dependency prominently and
+do not merge the follow-up into the parent topic branch. After the parent lands,
+rebase the follow-up as needed, retarget it to `develop`, inspect the resulting
+diff, and rerun CI before marking it ready. Never merge a parent merely to unblock
+new development without the maintainer's approval.
+
 ## Release branches
 
 A release branch is optional but recommended once a version is being stabilized:
@@ -67,7 +74,7 @@ Do not repair a published release by replacing its files or force-moving its tag
 Every pull request should:
 
 - explain the user-visible problem and the chosen change;
-- target `develop`, except for repository-maintenance work that explicitly documents another target;
+- target `develop` before merge; draft stacked PRs and repository-maintenance work must explicitly document any temporary different target;
 - include tests or explain why no automated test is practical;
 - include updated screenshots when the visible interface changes;
 - preserve old configuration formats and the updater compatibility contract;

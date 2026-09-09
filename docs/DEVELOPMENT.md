@@ -2,6 +2,11 @@
 
 Cozy Kids Launcher intentionally uses the Python standard library and plain HTML, CSS, and JavaScript. A development checkout therefore has no package-install step.
 
+The optional terminal-free app installer uses the distribution's PackageKitGlib
+and PyGObject bindings at runtime. Core tests use injected backends and do not
+require these libraries or install real packages. See
+[PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for the separate real-desktop test.
+
 ## Run the automated checks
 
 From the repository root:

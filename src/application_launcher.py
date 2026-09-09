@@ -9,7 +9,7 @@ import time
 
 from app_detection import browser_family
 from browser_policy import is_safe_web_url
-from process_state import owned_process_alive, terminate_owned_process
+from process_state import owned_process, owned_process_alive, terminate_owned_process
 
 
 def resolve_tile_action(tile):
@@ -74,6 +74,21 @@ def direct_app_command(command):
     return command
 
 
+def needs_managed_fullscreen(command, environment):
+    """Keep TuxMath fullscreen without SDL 1.2's exclusive X11 mouse grab.
+
+    Explicit windowed arguments and non-X11 driver overrides remain untouched.
+    Other apps keep their own fullscreen implementations until individually
+    tested; this is not a universal forced-fullscreen wrapper.
+    """
+    return bool(
+        command and os.path.basename(command[0]) == "tuxmath"
+        and "--fullscreen" in command and "--windowed" not in command
+        and environment.get("DISPLAY")
+        and environment.get("SDL_VIDEODRIVER", "x11") == "x11"
+    )
+
+
 class ApplicationLauncher:
     """Start and stop only process trees owned by one launcher tile."""
 
@@ -110,15 +125,21 @@ class ApplicationLauncher:
         )
 
     @staticmethod
-    def _wait_for_owned_process(path, role, marker, process, timeout=1.5):
+    def _wait_for_owned_process(path, role, marker, process, timeout=1.5, require_ready=False):
+        def is_ready():
+            if not require_ready:
+                return owned_process_alive(path, role, marker)
+            record = owned_process(path, role, marker)
+            return bool(record and record.get("ready") is True)
+
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            if owned_process_alive(path, role, marker):
+            if is_ready():
                 return True
             if process.poll() is not None:
                 break
             time.sleep(0.05)
-        return owned_process_alive(path, role, marker)
+        return is_ready()
 
     @staticmethod
     def _terminate_started_process(process):
@@ -187,6 +208,9 @@ class ApplicationLauncher:
                 "--marker",
                 self.process_supervisor,
             ]
+            managed_fullscreen = mode == "local" and needs_managed_fullscreen(command, os.environ)
+            if managed_fullscreen:
+                wrapped.append("--managed-fullscreen")
             if track_activity and self.activity_file and profile_id and tile_id:
                 wrapped.extend([
                     "--activity-file",
@@ -209,6 +233,8 @@ class ApplicationLauncher:
                 "tile-process",
                 self.process_supervisor,
                 process,
+                timeout=30 if managed_fullscreen else 1.5,
+                require_ready=managed_fullscreen,
             ):
                 self._terminate_started_process(process)
                 raise OSError("Tile process ownership could not be established")

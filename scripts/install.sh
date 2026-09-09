@@ -425,6 +425,60 @@ text() {
     de:install_started) echo "Installation gestartet. Suche nach einem Passwort-Dialog, oder führe den Befehl aus:" ;;
     de:install_manual) echo "Es wurde noch nichts installiert. Führe diesen Befehl im Terminal aus und prüfe die vorgeschlagenen Änderungen. Aktualisiere danach die App-Liste:" ;;
     de:install_loading) echo "Installationsanleitung wird vorbereitet …" ;;
+    de:package_check) echo "Die Installation wird geprüft …" ;;
+    en:package_check) echo "Checking the installation …" ;;
+    de:package_review) echo "Bereit zur Installation" ;;
+    en:package_review) echo "Ready to install" ;;
+    de:package_download) echo "Download: {size}" ;;
+    en:package_download) echo "Download: {size}" ;;
+    de:package_count) echo "{count} Pakete einschließlich benötigter Komponenten" ;;
+    en:package_count) echo "{count} packages including required components" ;;
+    de:package_unknown_size) echo "Größe noch nicht verfügbar" ;;
+    en:package_unknown_size) echo "Size not available yet" ;;
+    de:package_consent) echo "Linux fragt bei Bedarf nach deinem Systempasswort. Das ist nicht der Eltern-PIN. Cozy Kids sieht oder speichert dieses Passwort nicht." ;;
+    en:package_consent) echo "Linux may ask for your system password. This is not your Parent PIN. Cozy Kids never sees or stores this password." ;;
+    de:package_installing) echo "Wird installiert …" ;;
+    en:package_installing) echo "Installing …" ;;
+    de:package_waiting) echo "Warten auf die Softwareverwaltung …" ;;
+    en:package_waiting) echo "Waiting for the software manager …" ;;
+    de:package_auth) echo "Bitte bestätige die Installation im Linux-Passwortdialog." ;;
+    en:package_auth) echo "Please approve the installation in the Linux password dialog." ;;
+    de:package_downloading) echo "Die App wird heruntergeladen …" ;;
+    en:package_downloading) echo "Downloading the app …" ;;
+    de:package_complete) echo "Die App ist installiert und bereit." ;;
+    en:package_complete) echo "The app is installed and ready." ;;
+    de:package_add) echo "Zum Kinderbildschirm hinzufügen" ;;
+    en:package_add) echo "Add to the kids screen" ;;
+    de:package_keep_open) echo "Du kannst dieses Fenster schließen. Eine gestartete Installation läuft über die Linux-Softwareverwaltung weiter." ;;
+    en:package_keep_open) echo "You can close this window. An installation that has started continues through the Linux software manager." ;;
+    de:package_status) echo "Installationsstatus anzeigen" ;;
+    en:package_status) echo "View installation status" ;;
+    de:package_network) echo "Der Download ist fehlgeschlagen. Prüfe die Internetverbindung und versuche es erneut." ;;
+    en:package_network) echo "The download failed. Check your internet connection and try again." ;;
+    de:package_authorization) echo "Die Installation wurde nicht freigegeben. Versuche es erneut und bestätige den Linux-Passwortdialog. Falls kein Dialog erscheint, nutze die Softwareverwaltung deines Systems." ;;
+    en:package_authorization) echo "Installation was not authorized. Try again and approve the Linux password dialog. If no dialog appears, use your system software manager." ;;
+    de:package_busy) echo "Die Softwareverwaltung arbeitet gerade. Warte, bis sie fertig ist, und prüfe dann erneut." ;;
+    en:package_busy) echo "The software manager is busy. Wait for it to finish, then check again." ;;
+    de:package_not_found) echo "Diese App ist in den eingerichteten Paketquellen nicht verfügbar. Prüfe sie in der Softwareverwaltung deines Systems." ;;
+    en:package_not_found) echo "This app is not available in the configured package sources. Check your system software manager." ;;
+    de:package_unsupported) echo "Direktes Installieren ist hier noch nicht verfügbar. Unterstützt wird zunächst PackageKit auf Ubuntu, Linux Mint und Zorin. Nutze bis dahin die grafische Softwareverwaltung deines Systems." ;;
+    en:package_unsupported) echo "Direct installation is not available here yet. Initial support requires PackageKit on Ubuntu, Linux Mint, or Zorin. Use your graphical system software manager for now." ;;
+    de:package_changes) echo "Diese Installation benötigt weitere Systemänderungen. Bitte nutze dafür die Softwareverwaltung deines Systems." ;;
+    en:package_changes) echo "This installation requires additional system changes. Please use your system software manager for this app." ;;
+    de:package_changed) echo "Der Installationsplan hat sich geändert oder ist abgelaufen. Bitte prüfe die Installation erneut." ;;
+    en:package_changed) echo "The installation plan changed or expired. Please review the installation again." ;;
+    de:package_failed) echo "Die Installation konnte nicht abgeschlossen werden. Prüfe die App erneut oder öffne die Softwareverwaltung deines Systems." ;;
+    en:package_failed) echo "The installation could not be completed. Check the app again or open your system software manager." ;;
+    de:package_interrupted) echo "Der aktuelle Installationsstatus ist unklar. Es wurde nichts automatisch erneut gestartet. Prüfe den Status oder die App im Katalog erneut." ;;
+    en:package_interrupted) echo "The current installation status is unclear. Nothing was restarted automatically. Check the status or the app in the catalog again." ;;
+    de:package_storage) echo "Der Installationsstatus konnte nicht sicher gespeichert werden. Prüfe den freien Speicherplatz und die Zugriffsrechte." ;;
+    en:package_storage) echo "The installation status could not be saved safely. Check free disk space and access permissions." ;;
+    de:package_list) echo "Enthaltene Pakete anzeigen" ;;
+    en:package_list) echo "Show included packages" ;;
+    de:package_confirm) echo "Jetzt installieren" ;;
+    en:package_confirm) echo "Install now" ;;
+    de:package_add_error) echo "Die App ist installiert, aber die Kachel konnte nicht gespeichert werden. Bitte versuche das Hinzufügen erneut." ;;
+    en:package_add_error) echo "The app is installed, but its tile could not be saved. Please try adding it again." ;;
     de:install_error) echo "Die Installationsanleitung konnte nicht geladen werden. Es wurde nichts installiert. Bitte erneut versuchen oder den Elternbereich neu öffnen." ;;
     de:install_unsupported) echo "Für diese App und dein System ist noch keine geprüfte Paketzuordnung hinterlegt oder die Paketverwaltung ist nicht verfügbar. Nutze die Softwareverwaltung deiner Distribution." ;;
     de:update_start_error) echo "Das Update konnte nicht gestartet werden. Der Launcher bleibt geöffnet. Bitte erneut versuchen oder den Elternbereich neu öffnen." ;;
@@ -1149,6 +1203,7 @@ render_template() {
   export JSON_RECOMMENDED_TITLE JSON_RECOMMENDED_INSTALLED JSON_RECOMMENDED_NOT_INSTALLED JSON_RECOMMENDED_PROMPT
   export JSON_APP_BROWSER_TITLE JSON_INSTALL JSON_ADDED JSON_INSTALLED JSON_NOT_INSTALLED JSON_COPY_COMMAND JSON_COMMAND_COPIED JSON_INSTALL_STARTED JSON_INSTALL_MANUAL JSON_CLOSE
   export JSON_INSTALL_LOADING JSON_INSTALL_ERROR JSON_INSTALL_UNSUPPORTED JSON_UPDATE_START_ERROR
+  export JSON_PACKAGE_CHECK JSON_PACKAGE_REVIEW JSON_PACKAGE_DOWNLOAD JSON_PACKAGE_COUNT JSON_PACKAGE_UNKNOWN_SIZE JSON_PACKAGE_CONSENT JSON_PACKAGE_INSTALLING JSON_PACKAGE_WAITING JSON_PACKAGE_AUTH JSON_PACKAGE_DOWNLOADING JSON_PACKAGE_COMPLETE JSON_PACKAGE_ADD JSON_PACKAGE_KEEP_OPEN JSON_PACKAGE_STATUS JSON_PACKAGE_NETWORK JSON_PACKAGE_AUTHORIZATION JSON_PACKAGE_BUSY JSON_PACKAGE_NOT_FOUND JSON_PACKAGE_UNSUPPORTED JSON_PACKAGE_CHANGES JSON_PACKAGE_CHANGED JSON_PACKAGE_FAILED JSON_PACKAGE_INTERRUPTED JSON_PACKAGE_STORAGE JSON_PACKAGE_LIST JSON_PACKAGE_CONFIRM JSON_PACKAGE_ADD_ERROR
   export TIMER_LABEL TIMER_OFF TIMER_15 TIMER_30 TIMER_60 TIMER_CUSTOM TIMER_START TIMER_STOP TIMER_ACTIVE TIMER_EXPIRED TIMER_REMAINING TIMER_WARNING_TITLE TIMER_WARNING_TEXT TIMER_ENTER_PIN TIMER_EXTEND TIMER_EXIT TIMER_WRONG_PIN TIMER_EXTENDED TIMER_EXPIRED_TITLE TIMER_EXPIRED_BODY TIMER_MINUTES
   export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_STARTED_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE JSON_FEEDBACK_OPTIONS JSON_SOUND_FEEDBACK JSON_SPEECH_FEEDBACK JSON_SPEECH_AVAILABLE JSON_SPEECH_UNAVAILABLE JSON_FEEDBACK_HINT JSON_CELEBRATION_OPTIONS JSON_CELEBRATION_ENABLED JSON_CELEBRATION_HINT JSON_ACCESSIBILITY_OPTIONS JSON_ACCESSIBILITY_LARGE_TEXT JSON_ACCESSIBILITY_HIGH_CONTRAST JSON_ACCESSIBILITY_REDUCED_MOTION JSON_ACCESSIBILITY_KEYBOARD_FOCUS JSON_ACCESSIBILITY_HINT
   export JSON_SCHEDULE_WEEKLY_TITLE JSON_SCHEDULE_WEEKLY_HINT JSON_SCHEDULE_ENABLED JSON_SCHEDULE_APP_TITLE JSON_SCHEDULE_APP_HINT JSON_SCHEDULE_SELECT_APP JSON_SCHEDULE_ADD_WINDOW JSON_SCHEDULE_REMOVE_WINDOW JSON_SCHEDULE_START JSON_SCHEDULE_END JSON_SCHEDULE_CLEAR_APP JSON_SCHEDULE_NO_WINDOWS JSON_SCHEDULE_BLOCKED_TITLE JSON_SCHEDULE_PROFILE_BLOCKED JSON_SCHEDULE_APP_BLOCKED JSON_SCHEDULE_OPEN_PARENTS
@@ -1506,6 +1561,60 @@ JSON_INSTALL_LOADING="$(json_text "$INSTALL_LOADING")"
 JSON_INSTALL_ERROR="$(json_text "$INSTALL_ERROR")"
 JSON_INSTALL_UNSUPPORTED="$(json_text "$INSTALL_UNSUPPORTED")"
 JSON_UPDATE_START_ERROR="$(json_text "$UPDATE_START_ERROR")"
+PACKAGE_CHECK="$(text package_check)"
+JSON_PACKAGE_CHECK="$(json_text "$PACKAGE_CHECK")"
+PACKAGE_REVIEW="$(text package_review)"
+JSON_PACKAGE_REVIEW="$(json_text "$PACKAGE_REVIEW")"
+PACKAGE_DOWNLOAD="$(text package_download)"
+JSON_PACKAGE_DOWNLOAD="$(json_text "$PACKAGE_DOWNLOAD")"
+PACKAGE_COUNT="$(text package_count)"
+JSON_PACKAGE_COUNT="$(json_text "$PACKAGE_COUNT")"
+PACKAGE_UNKNOWN_SIZE="$(text package_unknown_size)"
+JSON_PACKAGE_UNKNOWN_SIZE="$(json_text "$PACKAGE_UNKNOWN_SIZE")"
+PACKAGE_CONSENT="$(text package_consent)"
+JSON_PACKAGE_CONSENT="$(json_text "$PACKAGE_CONSENT")"
+PACKAGE_INSTALLING="$(text package_installing)"
+JSON_PACKAGE_INSTALLING="$(json_text "$PACKAGE_INSTALLING")"
+PACKAGE_WAITING="$(text package_waiting)"
+JSON_PACKAGE_WAITING="$(json_text "$PACKAGE_WAITING")"
+PACKAGE_AUTH="$(text package_auth)"
+JSON_PACKAGE_AUTH="$(json_text "$PACKAGE_AUTH")"
+PACKAGE_DOWNLOADING="$(text package_downloading)"
+JSON_PACKAGE_DOWNLOADING="$(json_text "$PACKAGE_DOWNLOADING")"
+PACKAGE_COMPLETE="$(text package_complete)"
+JSON_PACKAGE_COMPLETE="$(json_text "$PACKAGE_COMPLETE")"
+PACKAGE_ADD="$(text package_add)"
+JSON_PACKAGE_ADD="$(json_text "$PACKAGE_ADD")"
+PACKAGE_KEEP_OPEN="$(text package_keep_open)"
+JSON_PACKAGE_KEEP_OPEN="$(json_text "$PACKAGE_KEEP_OPEN")"
+PACKAGE_STATUS="$(text package_status)"
+JSON_PACKAGE_STATUS="$(json_text "$PACKAGE_STATUS")"
+PACKAGE_NETWORK="$(text package_network)"
+JSON_PACKAGE_NETWORK="$(json_text "$PACKAGE_NETWORK")"
+PACKAGE_AUTHORIZATION="$(text package_authorization)"
+JSON_PACKAGE_AUTHORIZATION="$(json_text "$PACKAGE_AUTHORIZATION")"
+PACKAGE_BUSY="$(text package_busy)"
+JSON_PACKAGE_BUSY="$(json_text "$PACKAGE_BUSY")"
+PACKAGE_NOT_FOUND="$(text package_not_found)"
+JSON_PACKAGE_NOT_FOUND="$(json_text "$PACKAGE_NOT_FOUND")"
+PACKAGE_UNSUPPORTED="$(text package_unsupported)"
+JSON_PACKAGE_UNSUPPORTED="$(json_text "$PACKAGE_UNSUPPORTED")"
+PACKAGE_CHANGES="$(text package_changes)"
+JSON_PACKAGE_CHANGES="$(json_text "$PACKAGE_CHANGES")"
+PACKAGE_CHANGED="$(text package_changed)"
+JSON_PACKAGE_CHANGED="$(json_text "$PACKAGE_CHANGED")"
+PACKAGE_FAILED="$(text package_failed)"
+JSON_PACKAGE_FAILED="$(json_text "$PACKAGE_FAILED")"
+PACKAGE_INTERRUPTED="$(text package_interrupted)"
+JSON_PACKAGE_INTERRUPTED="$(json_text "$PACKAGE_INTERRUPTED")"
+PACKAGE_STORAGE="$(text package_storage)"
+JSON_PACKAGE_STORAGE="$(json_text "$PACKAGE_STORAGE")"
+PACKAGE_LIST="$(text package_list)"
+JSON_PACKAGE_LIST="$(json_text "$PACKAGE_LIST")"
+PACKAGE_CONFIRM="$(text package_confirm)"
+JSON_PACKAGE_CONFIRM="$(json_text "$PACKAGE_CONFIRM")"
+PACKAGE_ADD_ERROR="$(text package_add_error)"
+JSON_PACKAGE_ADD_ERROR="$(json_text "$PACKAGE_ADD_ERROR")"
 JSON_CLOSE="$(json_text "$LABEL_CLOSE")"
 JSON_EXPORT_CONFIG="$(json_text "$LABEL_EXPORT_CONFIG")"
 JSON_IMPORT_CONFIG="$(json_text "$LABEL_IMPORT_CONFIG")"
@@ -1646,7 +1755,10 @@ backup_if_exists "$APP_DESKTOP_FILE"
 render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/app_detection.py" "$APP_ROOT/app_detection.py"
 install -m 0644 "$SRC_DIR/package_provider.py" "$APP_ROOT/package_provider.py"
+install -m 0644 "$SRC_DIR/package_install.py" "$APP_ROOT/package_install.py"
+install -m 0644 "$SRC_DIR/packagekit_backend.py" "$APP_ROOT/packagekit_backend.py"
 install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launcher.py"
+install -m 0644 "$SRC_DIR/app_display.py" "$APP_ROOT/app_display.py"
 install -m 0644 "$SRC_DIR/activity_store.py" "$APP_ROOT/activity_store.py"
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/browser_policy.py" "$APP_ROOT/browser_policy.py"
@@ -1688,6 +1800,7 @@ render_template "$SRC_DIR/frontend/activity-dashboard.js" "$FRONTEND_ACTIVITY_FI
 install -m 0644 "$SRC_DIR/frontend/media-library.css" "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
 install -m 0644 "$SRC_DIR/frontend/media-library.js" "$FRONTEND_MEDIA_LIBRARY_FILE"
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
+install -m 0644 "$SRC_DIR/frontend/package-catalog.js" "$FRONTEND_DIR/package-catalog.js"
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644

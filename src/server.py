@@ -11,6 +11,8 @@ import time
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from package_provider import prepare_install
+from package_install import PackageInstaller
+from packagekit_backend import InstallError
 from app_detection import (
     BROWSER_CANDIDATES,
     browser_statuses,
@@ -205,12 +207,14 @@ def load_stored_cfg():
     data = read_config(CFG)
     data, migrated = migrate_config(data)
     recs = load_recommendations()
-    rec_by_first_cmd = {}
+    rec_by_command = {}
     for rec in recs:
         if rec.get("cmd"):
-            rec_by_first_cmd[rec["cmd"][0]] = rec["cmd"]
-        for alt in rec.get("alt_cmds", []):
-            rec_by_first_cmd[alt] = rec["cmd"]
+            rec_by_command[(rec["cmd"][0],)] = rec["cmd"]
+            for alt in rec.get("alt_cmds", []):
+                rec_by_command[(alt,)] = rec["cmd"]
+            for legacy in rec.get("legacy_cmds", []):
+                rec_by_command[tuple(legacy)] = rec["cmd"]
     for profile in data.get("profiles", []):
         for tile in profile.get("tiles", []):
             cmd = tile.get("cmd", [])
@@ -219,11 +223,14 @@ def load_stored_cfg():
                 cmd = tile["cmd"]
                 migrated = True
             if (
-                cmd
-                and cmd[0] in rec_by_first_cmd
-                and cmd != rec_by_first_cmd[cmd[0]]
+                isinstance(cmd, list)
+                and all(isinstance(part, str) for part in cmd)
+                and tuple(cmd) in rec_by_command
+                and cmd != rec_by_command[tuple(cmd)]
             ):
-                tile["cmd"] = rec_by_first_cmd[cmd[0]]
+                # Migrate only exact known defaults. Matching the executable
+                # alone silently discarded Parent-selected flags on every read.
+                tile["cmd"] = list(rec_by_command[tuple(cmd)])
                 migrated = True
     if "autoScanDone" not in data:
         data["autoScanDone"] = True
@@ -737,6 +744,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         request_url = urlparse(self.path)
+        if request_url.path == "/api/packages/status":
+            if self.require_admin():
+                self.json_response(self.server.package_installer.snapshot())
+            return
         if request_url.path == "/browser.html":
             try:
                 self.browser_content_security_policy = browser_wrapper_policy(
@@ -894,6 +905,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action in ("api/packages/prepare", "api/packages/install"):
+            if not self.require_admin():
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            try:
+                if action.endswith("/prepare") and set(body) == {"appId"}:
+                    result = self.server.package_installer.prepare(body["appId"], load_recommendations())
+                elif action.endswith("/install") and set(body) == {"jobId", "confirmationToken"}:
+                    result = self.server.package_installer.start(body["jobId"], body["confirmationToken"])
+                else:
+                    raise ValueError("Invalid package action")
+                self.json_response(result, 202)
+            except ValueError:
+                self.json_response({"status": "error", "error": "invalid"}, 400)
+            except InstallError as error:
+                self.json_response({"status": "error", "error": error.code}, 409)
+            return
         if action == "api/feedback/speak":
             body = self.read_json_body()
             if body is None:
@@ -1614,7 +1644,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 def create_server(host="127.0.0.1", port=PORT):
-    return http.server.ThreadingHTTPServer((host, port), Handler)
+    server = http.server.ThreadingHTTPServer((host, port), Handler)
+    server.package_installer = PackageInstaller(os.path.join(os.path.dirname(LOG_FILE), "package-install.json"))
+    return server
 
 
 def main():

@@ -138,6 +138,13 @@
   .admin-empty-state { padding:var(--space-6) var(--space-4); border:1px dashed var(--input-border); border-radius:var(--radius-control); color:var(--text); text-align:center; }
   .admin-empty-state[hidden] { display:none; }
   .ui-state { width:100%; min-height:52px; margin:var(--space-2) 0; padding:var(--space-3); border:1px solid var(--input-border); border-radius:var(--radius-control); background:var(--smallbtn-bg); color:var(--text); display:flex; align-items:center; justify-content:center; gap:var(--space-3); text-align:center; }
+  .package-box { width:min(620px,94vw); max-height:92vh; overflow-y:auto; }
+  .package-box progress { width:100%; margin:12px 0; accent-color:var(--btn); }
+  .package-box details { text-align:left; margin:12px 0; }
+  .package-box summary { cursor:pointer; min-height:44px; padding:10px 0; }
+  #packageList { max-height:180px; overflow-y:auto; overflow-wrap:anywhere; }
+  .package-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .package-box [hidden] { display:none; }
   .ui-state[hidden] { display:none; }
   .ui-state-loading::before { content:'◌'; flex:none; font-size:1.4rem; line-height:1; animation:uiStateSpin .9s linear infinite; }
   .ui-state-empty { border-style:dashed; }
