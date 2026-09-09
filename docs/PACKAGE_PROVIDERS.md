@@ -137,13 +137,34 @@ With `--windowed`, the same overlay click terminated TuxMath and the launcher
 became visible again. The comparison used the full launcher entry point (with
 owned browser records), not the initial installation-only server/browser pair.
 
-TuxMath's catalog command now uses `--windowed`; `legacy_cmds` records its exact
-old `["tuxmath", "--fullscreen"]` default for migration. Configuration reads
-previously overwrote *all* argument variants sharing a catalog executable, even
-undoing a manually selected windowed mode. They now migrate only bare commands,
-bare aliases and explicitly listed complete legacy vectors, preserving custom
-arguments in every child profile. This is not a global fullscreen restriction;
-other apps and customized launch commands still need their own desktop tests.
+The user correctly rejected a permanent windowed default. The catalog again
+requests `["tuxmath", "--fullscreen"]`. For an X11/XWayland launch without an
+explicit different SDL driver, the owned supervisor starts SDL ungrabbed and
+requests [_NET_WM_STATE_FULLSCREEN](https://specifications.freedesktop.org/wm/latest/ar01s05.html)
+on its own normal window. This is actual undecorated, screen-filling fullscreen,
+not a maximized or small desktop window. Xlib is used directly; no new wmctrl,
+keyboard-grab or privileged dependency is required. The supervisor reports
+`ready: false` while starting so shutdown can still cancel it, and reports ready
+only after the window manager confirms fullscreen. Unsupported window managers,
+early exit, cancellation or a 20-second confirmation timeout clean up the owned
+app instead of silently accepting window mode. Explicit native Wayland driver
+choices are preserved; a native Wayland fullscreen comparison also closed
+successfully on this VM. This does not certify arbitrary SDL builds/backends.
+
+The integrated KDE/Wayland test launched TuxMath from the fullscreen Chrome kiosk
+tile, confirmed a 1600x900 `_NET_WM_STATE_FULLSCREEN` window, entered a number
+exercise, accepted Linux XTest keyboard input and scored a correct answer. A real
+pointer click on the overlay closed the game and returned to the fullscreen
+launcher. Windows-automated keystrokes did not reach the VM; physical host keyboard
+acceptance remains open and is not inferred from the Linux XTest result.
+
+Configuration reads previously overwrote *all* argument variants sharing a
+catalog executable. They now migrate only bare commands, bare aliases and
+explicit complete legacy vectors, preserving custom arguments in every profile.
+TuxMath no longer has a fullscreen-to-windowed migration. Its temporary test-VM
+setting was restored explicitly; genuine Parent-selected windowed arguments
+remain unchanged. Other apps, especially legacy KDE wrappers, still need their
+own fullscreen/return audit; see the roadmap's fullscreen product contract.
 
 Full-desktop failure scenarios and Mint/Zorin acceptance are still open. Do not
 treat this successful Ubuntu installation and corrected return path as

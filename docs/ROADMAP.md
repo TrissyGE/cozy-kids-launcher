@@ -25,8 +25,10 @@ publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
    progress, and offer adding the installed app as a tile. No terminal is part
    of the normal catalog flow. Implemented for review; real TuxMath installation
    passed on Ubuntu KDE/Wayland. Tile addition and start passed; a real return
-   failure led to a TuxMath windowed-mode correction, after which overlay close
-   and return passed. Further desktop failure scenarios and Mint/Zorin
+   failure first exposed an SDL input grab. The windowed workaround was rejected:
+   TuxMath now uses confirmed, compositor-managed fullscreen on X11/XWayland.
+   Launching from the kiosk-fullscreen launcher, entering a game and returning
+   through the overlay passed in the KDE/Wayland VM. Further desktop failure scenarios and Mint/Zorin
    acceptance remain open release gates.
 4. **Then expand the catalog:** searchable, categorized Parent catalog with
    app details, honest availability, age/offline/privacy/input metadata, and
@@ -38,6 +40,19 @@ publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
    an interrupted installation; uncertain state is reported honestly.
 6. Continue living-room and packaging milestones below after their prerequisites
    pass. Refresh desktop evidence whenever the affected runtime changes.
+
+### Fullscreen product contract
+
+Fullscreen is the default for both the launcher and child apps. Window mode is
+an explicit Parent/developer choice, not a stability workaround counted as a pass.
+The installer already defaults to chrome-free `kiosk`; graphical acceptance must
+test that default too, not only the windowed diagnostic harness.
+
+- [x] Restore the TuxMath fullscreen recipe without overwriting explicit custom arguments
+- [x] Verify TuxMath fullscreen, menu-to-game transition, overlay close and return to a fullscreen launcher on the current KDE/Wayland VM
+- [ ] Repeat the corrected TuxMath flow on native X11 and GNOME Wayland, including physical keyboard/touch input
+- [ ] Audit every catalog app's actual fullscreen behavior before catalog expansion; in particular, replace the stripped legacy `kstart --fullscreen` request with an owned, verified equivalent
+- [ ] Require fullscreen, usable game input, a reachable close control and launcher return together in per-app desktop acceptance
 
 The current increment is tracked under **Unreleased** in the changelog. Historical
 release checkboxes below remain historical; an old desktop report does not

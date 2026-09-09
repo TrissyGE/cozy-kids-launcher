@@ -91,18 +91,40 @@ The user's next test confirmed tile addition and launch but exposed a real
 return failure: TuxMath's fullscreen SDL mode captured input even though the
 close overlay was visible. A windowed comparison using the complete launcher
 entry point allowed the overlay to terminate the owned game and return to the
-launcher. The catalog now uses `--windowed` for TuxMath and migrates the exact old
-fullscreen default. A related configuration bug also needed correction: the
+launcher. That temporary workaround was rejected as a product default; see the
+fullscreen correction below. A related configuration bug also needed correction: the
 old executable-name-only migration overwrote customized arguments on every read.
 Migration now matches complete known default vectors, preserving Parent choices;
 new regressions cover multiple profiles and idempotent reloads.
 
-The correction passed **301 local unit/integration tests** and static checks.
+The initial windowed comparison passed **301 local unit/integration tests** and static checks.
 The VM repeated launch and real pointer-click overlay close successfully with
 the corrected server. TuxMath, its supervisor and overlay exited; the full
 launcher remained running and visible. A separate Chrome crash report had the
 timestamp of the harness's earlier service restart, not this close action; no
 report was sent. This restart observation is not a clean-shutdown matrix pass.
+
+The final product behavior keeps fullscreen: the catalog requests TuxMath
+`--fullscreen`, while the X11/XWayland supervisor uses ungrabbed SDL rendering
+inside a compositor-confirmed fullscreen window. Explicit windowed commands and
+different SDL driver overrides remain unchanged. Ownership is available during
+startup, but readiness is withheld until fullscreen is confirmed; timeout and
+cancellation clean up the owned process. Unit coverage exercises the policy,
+PID-scoped EWMH requests, dialog/unrelated-window exclusion, delayed readiness,
+timeout/cancellation cleanup, argument preservation and installer deployment.
+
+The KDE/Wayland VM now uses the installer's normal Chrome `kiosk` mode instead
+of its earlier diagnostic `window` setting. A real click on Rechnen launched a
+1600x900 fullscreen TuxMath window, confirmed by the WM state and visual
+inspection. Fullscreen persisted into a number exercise. Linux XTest digit and
+Return input scored a correct answer; Windows-automated key input did not reach
+the guest and is a separate physical-input acceptance gap. A real pointer click
+on the Home overlay ended the owned game and returned to the fullscreen launcher.
+This is not a new native-X11/GNOME matrix certification or proof for every app.
+
+The fullscreen correction passed **314 local unit/integration tests** and static
+checks. The integrated kiosk-to-game-to-kiosk pointer-close test passed twice;
+the game, its supervisor and overlay left no active ownership records afterward.
 
 Remaining desktop failure scenarios still need acceptance. These results must
 not be described as full Ubuntu/Mint/Zorin certification; see

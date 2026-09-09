@@ -36,8 +36,7 @@
     "name_en": "TuxMath",
     "desc_de": "Mathe-Übungsspiel mit dem Pinguin Tux: Plus, Minus, Mal und Geteilt.",
     "desc_en": "Math practice game with penguin Tux: addition, subtraction, multiplication and division.",
-    "cmd": ["tuxmath","--windowed"],
-    "legacy_cmds": [["tuxmath","--fullscreen"]],
+    "cmd": ["tuxmath","--fullscreen"],
     "package": "tuxmath",
     "category": "learning"
   },

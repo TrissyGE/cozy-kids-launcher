@@ -158,6 +158,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
                     / "application_launcher.py"
                 ).is_file()
             )
+            self.assertTrue((Path(home) / ".local/share/cozy-kids-launcher/app_display.py").is_file())
             self.assertTrue(
                 (
                     Path(home)

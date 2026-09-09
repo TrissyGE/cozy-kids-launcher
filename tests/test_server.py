@@ -239,20 +239,23 @@ class LaunchActionTests(unittest.TestCase):
                     write.assert_not_called()
                 self.assertEqual(path.read_bytes(), before)
 
-    def test_tuxmath_fullscreen_default_migrates_to_closeable_windowed_mode(self):
+    def test_tuxmath_defaults_to_fullscreen_without_overwriting_custom_window_mode(self):
         recommendations = json.loads((SOURCE_ROOT / "recommendations.json").read_text(encoding="utf-8"))
         recipe = next(item for item in recommendations if item["id"] == "tuxmath")
-        self.assertEqual(recipe["cmd"], ["tuxmath", "--windowed"])
-        self.assertIn(["tuxmath", "--fullscreen"], recipe["legacy_cmds"])
+        self.assertEqual(recipe["cmd"], ["tuxmath", "--fullscreen"])
         with tempfile.TemporaryDirectory() as temp_dir:
             config = base_config()
-            config["tiles"][0].update(id="tuxmath", cmd=["tuxmath", "--fullscreen"])
+            config["tiles"][0].update(id="tuxmath", cmd=["tuxmath"])
             path = Path(temp_dir) / "config.json"
             path.write_text(json.dumps(config), encoding="utf-8")
             with mock.patch.object(server_module, "CFG", str(path)), \
                     mock.patch.object(server_module, "load_recommendations", return_value=recommendations), \
                     mock.patch.object(server_module, "log_runtime_event"):
                 self.assertEqual(server_module.load_cfg()["tiles"][0]["cmd"], recipe["cmd"])
+                config["tiles"][0]["cmd"] = ["tuxmath", "--windowed"]
+                path.write_text(json.dumps(config), encoding="utf-8")
+                self.assertEqual(server_module.load_cfg()["tiles"][0]["cmd"],
+                                 ["tuxmath", "--windowed"])
 
     def test_obsolete_web_targets_are_migrated(self):
         with tempfile.TemporaryDirectory() as temp_dir:
