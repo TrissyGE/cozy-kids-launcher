@@ -34,22 +34,13 @@ if [[ -n "$(git status --short)" ]]; then
 fi
 
 echo "[1/6] Unit and integration tests"
-python3 -m unittest discover -s tests -v
+python3 scripts/check.py --only unit
 
 echo "[2/6] Browser end-to-end test"
-python3 scripts/wsl/browser-e2e.py
+python3 scripts/check.py --only browser
 
 echo "[3/6] Python, JSON, and shell validation"
-python3 -m py_compile \
-  src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/speech_feedback.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py \
-  scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
-python3 -m json.tool examples/config.example.json >/dev/null
-python3 -m json.tool src/recommendations.json >/dev/null
-bash -n \
-  scripts/install.sh scripts/update.sh scripts/deploy.sh \
-  scripts/wsl/setup-test-env.sh scripts/wsl/check-mpv-resume.sh \
-  scripts/wsl/check-vlc-resume.sh \
-  scripts/wsl/run-gui-smoke.sh src/launcher.sh
+python3 scripts/check.py --only static
 
 echo "[4/6] Isolated installer smoke test"
 TEST_HOME="$(mktemp -d)"
@@ -64,6 +55,7 @@ bash scripts/install.sh \
 test -x "$TEST_HOME/.local/bin/cozy-kids-launcher"
 test -x "$TEST_HOME/.local/share/cozy-kids-launcher/update.sh"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/app_detection.py"
+test -f "$TEST_HOME/.local/share/cozy-kids-launcher/package_provider.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/application_launcher.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/backup_store.py"
 test -f "$TEST_HOME/.local/share/cozy-kids-launcher/browser_policy.py"

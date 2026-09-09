@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Corrections
+
+- Clear custom palette/background overrides when switching themes or child profiles, and respect high contrast in the launcher, Parent preview, and media library
+- Keep the media play symbol visible for titles without cover artwork by scoping fallback-icon styling to the placeholder itself
+- Only show the update-start overlay after a successful server acknowledgement; retain the launcher on errors and provide retry instead of issuing an unconditional exit
+- Stop guessing APT instructions after package-assistance failures, reject malformed package input, and ignore late responses to closed install dialogs
+
+### Platform foundation
+
+- Detect native APT, DNF, Pacman, and Zypper environments and prepare Parent-protected, allowlisted manual installation plans without auto-confirming package-manager changes
+- Add reviewed Fedora Tux Paint/KTurtle and Arch KTurtle mappings; explicitly report unmapped/unsupported and immutable-host combinations rather than promising an installation
+- Keep automatic package transactions, update/removal, Flatpak, and real cross-distribution validation as separate upcoming work
+
+### Development
+
+- Share one non-publishing check command between development, CI, and release gates, automatically discover source files, and syntax-check every shell script individually
+- Add focused browser regressions for theme resets and failed/pending update/install actions, plus bounded accessibility assertions with exact observed-value diagnostics
+- Bound CI job duration, cancel superseded PR runs, and align the roadmap and contribution workflow with the already-published v0.6.0 implementation
+
 ## [0.6.0] - 2026-09-02
 
 ### Media library
