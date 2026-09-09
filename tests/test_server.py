@@ -208,6 +208,52 @@ class PinTests(unittest.TestCase):
 
 
 class LaunchActionTests(unittest.TestCase):
+    def test_catalog_migrates_known_defaults_but_preserves_parent_arguments(self):
+        recommendations = [{
+            "cmd": ["paint", "--fullscreen"], "alt_cmds": ["old-paint"],
+            "legacy_cmds": [["paint", "--old-default"]],
+        }]
+        commands = [["paint"], ["old-paint"], ["paint", "--old-default"],
+                    ["paint", "--windowed", "--nosound"], ["old-paint", "--custom"]]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "config.json"
+            config, _ = server_module.migrate_config(base_config())
+            config["profiles"][0]["tiles"] = [
+                dict(base_config()["tiles"][0], id=f"tile-{index}", cmd=command)
+                for index, command in enumerate(commands)
+            ]
+            second = copy.deepcopy(config["profiles"][0])
+            second.update(id="second", name="Second")
+            config["profiles"].append(second)
+            path.write_text(json.dumps(config), encoding="utf-8")
+            with mock.patch.object(server_module, "CFG", str(path)), \
+                    mock.patch.object(server_module, "load_recommendations", return_value=recommendations), \
+                    mock.patch.object(server_module, "log_runtime_event"):
+                loaded = server_module.load_stored_cfg()
+                for profile in loaded["profiles"]:
+                    self.assertEqual([tile["cmd"] for tile in profile["tiles"]],
+                                     [["paint", "--fullscreen"]] * 3 + commands[3:])
+                before = path.read_bytes()
+                with mock.patch.object(server_module, "atomic_write_config") as write:
+                    self.assertEqual(server_module.load_stored_cfg(), loaded)
+                    write.assert_not_called()
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_tuxmath_fullscreen_default_migrates_to_closeable_windowed_mode(self):
+        recommendations = json.loads((SOURCE_ROOT / "recommendations.json").read_text(encoding="utf-8"))
+        recipe = next(item for item in recommendations if item["id"] == "tuxmath")
+        self.assertEqual(recipe["cmd"], ["tuxmath", "--windowed"])
+        self.assertIn(["tuxmath", "--fullscreen"], recipe["legacy_cmds"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = base_config()
+            config["tiles"][0].update(id="tuxmath", cmd=["tuxmath", "--fullscreen"])
+            path = Path(temp_dir) / "config.json"
+            path.write_text(json.dumps(config), encoding="utf-8")
+            with mock.patch.object(server_module, "CFG", str(path)), \
+                    mock.patch.object(server_module, "load_recommendations", return_value=recommendations), \
+                    mock.patch.object(server_module, "log_runtime_event"):
+                self.assertEqual(server_module.load_cfg()["tiles"][0]["cmd"], recipe["cmd"])
+
     def test_obsolete_web_targets_are_migrated(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_path = str(Path(temp_dir) / "config.json")

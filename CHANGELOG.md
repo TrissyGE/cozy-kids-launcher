@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Corrections
 
+- Start TuxMath in windowed mode so its SDL fullscreen input grab cannot swallow clicks intended for the launcher close overlay; migrate its exact old fullscreen default
+- Preserve Parent-customized app arguments when loading configuration; migrate only bare catalog commands, bare aliases and explicitly recorded old defaults
 - Clear custom palette/background overrides when switching themes or child profiles, and respect high contrast in the launcher, Parent preview, and media library
 - Keep the media play symbol visible for titles without cover artwork by scoping fallback-icon styling to the placeholder itself
 - Only show the update-start overlay after a successful server acknowledgement; retain the launcher on errors and provide retry instead of issuing an unconditional exit

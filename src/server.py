@@ -207,12 +207,14 @@ def load_stored_cfg():
     data = read_config(CFG)
     data, migrated = migrate_config(data)
     recs = load_recommendations()
-    rec_by_first_cmd = {}
+    rec_by_command = {}
     for rec in recs:
         if rec.get("cmd"):
-            rec_by_first_cmd[rec["cmd"][0]] = rec["cmd"]
-        for alt in rec.get("alt_cmds", []):
-            rec_by_first_cmd[alt] = rec["cmd"]
+            rec_by_command[(rec["cmd"][0],)] = rec["cmd"]
+            for alt in rec.get("alt_cmds", []):
+                rec_by_command[(alt,)] = rec["cmd"]
+            for legacy in rec.get("legacy_cmds", []):
+                rec_by_command[tuple(legacy)] = rec["cmd"]
     for profile in data.get("profiles", []):
         for tile in profile.get("tiles", []):
             cmd = tile.get("cmd", [])
@@ -221,11 +223,14 @@ def load_stored_cfg():
                 cmd = tile["cmd"]
                 migrated = True
             if (
-                cmd
-                and cmd[0] in rec_by_first_cmd
-                and cmd != rec_by_first_cmd[cmd[0]]
+                isinstance(cmd, list)
+                and all(isinstance(part, str) for part in cmd)
+                and tuple(cmd) in rec_by_command
+                and cmd != rec_by_command[tuple(cmd)]
             ):
-                tile["cmd"] = rec_by_first_cmd[cmd[0]]
+                # Migrate only exact known defaults. Matching the executable
+                # alone silently discarded Parent-selected flags on every read.
+                tile["cmd"] = list(rec_by_command[tuple(cmd)])
                 migrated = True
     if "autoScanDone" not in data:
         data["autoScanDone"] = True

@@ -87,9 +87,25 @@ media tile expected by the next check. Restoring both server and client fixture
 snapshots fixed it without weakening the media assertion; the complete rerun
 passed. German/English 800x600 catalog review screenshots were visually checked.
 
-Real tile addition/launch/return and remaining desktop failure scenarios still
-need acceptance. These results must not be described as full Ubuntu/Mint/Zorin
-certification; see
+The user's next test confirmed tile addition and launch but exposed a real
+return failure: TuxMath's fullscreen SDL mode captured input even though the
+close overlay was visible. A windowed comparison using the complete launcher
+entry point allowed the overlay to terminate the owned game and return to the
+launcher. The catalog now uses `--windowed` for TuxMath and migrates the exact old
+fullscreen default. A related configuration bug also needed correction: the
+old executable-name-only migration overwrote customized arguments on every read.
+Migration now matches complete known default vectors, preserving Parent choices;
+new regressions cover multiple profiles and idempotent reloads.
+
+The correction passed **301 local unit/integration tests** and static checks.
+The VM repeated launch and real pointer-click overlay close successfully with
+the corrected server. TuxMath, its supervisor and overlay exited; the full
+launcher remained running and visible. A separate Chrome crash report had the
+timestamp of the harness's earlier service restart, not this close action; no
+report was sent. This restart observation is not a clean-shutdown matrix pass.
+
+Remaining desktop failure scenarios still need acceptance. These results must
+not be described as full Ubuntu/Mint/Zorin certification; see
 [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for boundaries and remaining checks.
 
 ## Completed foundation

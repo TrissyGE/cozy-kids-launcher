@@ -129,9 +129,25 @@ passed. The German/English review screenshots were visually checked. The browser
 fixture restores its saved config after exercising tile persistence so later
 media checks remain independent of earlier unsaved UI changes.
 
-Adding the real TuxMath tile, launching/returning, full-desktop failure scenarios
-and Mint/Zorin acceptance are still open. Do not treat this single successful
-Ubuntu installation as certification of the complete release matrix.
+The user also added the real TuxMath tile and launched it, but reported that it
+could not be closed. The red overlay was visible; real pointer clicks did not
+terminate the fullscreen game. The installed SDL 1.2 compatibility implementation
+[grabs input in fullscreen](https://github.com/libsdl-org/sdl12-compat/blob/release-1.2.68/src/SDL12_compat.c#L6914).
+With `--windowed`, the same overlay click terminated TuxMath and the launcher
+became visible again. The comparison used the full launcher entry point (with
+owned browser records), not the initial installation-only server/browser pair.
+
+TuxMath's catalog command now uses `--windowed`; `legacy_cmds` records its exact
+old `["tuxmath", "--fullscreen"]` default for migration. Configuration reads
+previously overwrote *all* argument variants sharing a catalog executable, even
+undoing a manually selected windowed mode. They now migrate only bare commands,
+bare aliases and explicitly listed complete legacy vectors, preserving custom
+arguments in every child profile. This is not a global fullscreen restriction;
+other apps and customized launch commands still need their own desktop tests.
+
+Full-desktop failure scenarios and Mint/Zorin acceptance are still open. Do not
+treat this successful Ubuntu installation and corrected return path as
+certification of the complete release matrix.
 
 Read-only developer smoke check:
 
