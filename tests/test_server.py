@@ -534,6 +534,41 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(data["status"], "unsupported")
         self.assertNotIn("command", data)
 
+    def test_native_install_api_requires_parent_origin_and_exact_confirmation(self):
+        self.enable_pin()
+        installer = mock.Mock()
+        self.httpd.package_installer = installer
+        for path, method, body in (("/api/packages/status", "GET", None),
+                                   ("/api/packages/prepare", "POST", {"appId": "tuxpaint"}),
+                                   ("/api/packages/install", "POST", {"jobId": "j", "confirmationToken": "t"})):
+            status, _, _ = self.request(path, method=method, body=body, origin=self.base_url)
+            self.assertEqual(status, 403)
+        installer.prepare.assert_not_called()
+        installer.start.assert_not_called()
+        cookie = self.authenticate()
+        status, _, _ = self.request('/api/packages/prepare', method='POST', body={'appId': 'tuxpaint'},
+                                    origin='https://evil.example', cookie=cookie)
+        self.assertEqual(status, 403)
+        for body in ({'command': 'sudo anything'}, {'appId': 'tuxpaint', 'package': 'arbitrary'}):
+            status, _, _ = self.request('/api/packages/prepare', method='POST', body=body,
+                                        origin=self.base_url, cookie=cookie)
+            self.assertEqual(status, 400)
+        installer.prepare.return_value = {'status': 'checking', 'jobId': 'safe'}
+        status, data, _ = self.request('/api/packages/prepare', method='POST', body={'appId': 'tuxpaint'},
+                                       origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        self.assertEqual(data['jobId'], 'safe')
+        installer.start.return_value = {'status': 'installing'}
+        status, _, _ = self.request('/api/packages/install', method='POST',
+                                    body={'jobId': 'safe', 'confirmationToken': 'consent'},
+                                    origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        installer.start.assert_called_once_with('safe', 'consent')
+        installer.snapshot.return_value = {'status': 'complete'}
+        status, data, _ = self.request('/api/packages/status', cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(data['status'], 'complete')
+
     def test_config_endpoint_hides_hash_and_sends_security_headers(self):
         self.enable_pin()
         status, data, headers = self.request("/api/config")

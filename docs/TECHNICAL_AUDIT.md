@@ -53,12 +53,30 @@ also passed Python 3.9, Python 3.13, and the complete Chromium suite on the firs
 run of this change. This establishes the tested result, not proof that the
 baseline's intermittent accessibility failure can never recur.
 
-Next: review catalog metadata and desktop-entry parsing, add the searchable
-catalog/detail UX, then implement and verify the package lifecycle on real
-distributions. [ROADMAP.md](ROADMAP.md) records the execution order;
+At the user's request, the next increment prioritizes terminal-free catalog
+installation before the searchable catalog/detail UX. [ROADMAP.md](ROADMAP.md)
+records the execution order;
 [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) records the deliberately limited
 first provider mappings. This review is not a complete security audit or a new
 GNOME/KDE/XFCE certification.
+
+### Follow-up: terminal-free catalog installation (in review)
+
+The separate `feature/catalog-install` branch builds on PR #59 without merging
+it or changing `main`, `VERSION`, or published releases. It adds an optional typed
+PackageKit bridge for APT on the initial Ubuntu/Mint/Zorin targets. The normal
+desktop user reviews a simulated package plan, explicitly confirms one-use
+consent, and authorizes the system-owned password dialog. Background progress,
+safe errors, reconnecting the dialog and adding a child-screen tile are covered
+by focused tests. Private restart state never replays consent or an installation.
+
+Real Ubuntu WSL resolution/simulation passed for Tux Paint and KTurtle. An actual
+WSL install request failed safely with `authorization` when no suitable desktop
+agent was available. The complete Ubuntu 24.04.4 test VM also prepared KTurtle
+successfully (one package, 2,145,680 download bytes). A successful graphical
+authorization/install/add/launch acceptance test is still pending. These results
+must not be described as full Ubuntu/Mint/Zorin certification; see
+[PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for boundaries and remaining checks.
 
 ## Completed foundation
 

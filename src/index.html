@@ -96,6 +96,20 @@
     <button id="installCloseBtn" class="smallbtn" data-local-icon="close" onclick="closeInstallOverlay()">{{LABEL_CLOSE}}</button>
   </div>
 </div>
+<div id="packageOverlay" class="install-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="packageTitle">
+  <div class="install-box package-box">
+    <h2 id="packageTitle"></h2>
+    <div id="packageMessage" aria-live="polite"></div>
+    <progress id="packageProgress" max="100" hidden></progress>
+    <p id="packageSummary" hidden></p>
+    <details id="packageDetails" hidden><summary id="packageDetailsLabel"></summary><ul id="packageList"></ul></details>
+    <p id="packageHint" class="muted"></p>
+    <div class="package-actions">
+      <button id="packageAction" class="smallbtn save" type="button" hidden></button>
+      <button id="packageClose" class="smallbtn" type="button" onclick="closePackageOverlay()"></button>
+    </div>
+  </div>
+</div>
 <div id="themeOverlay" class="install-overlay hidden">
   <div class="install-box" style="max-width:900px;">
     <h2 id="themePickerTitle">Theme</h2>
@@ -476,6 +490,7 @@
 <script defer src="/frontend/schedule-controls.js"></script>
 <script defer src="/frontend/activity-dashboard.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
+<script defer src="/frontend/package-catalog.js"></script>
 <script defer src="/frontend/first-run.js"></script>
 <script defer src="/frontend/runtime-controls.js"></script>
 </body>

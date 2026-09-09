@@ -117,6 +117,7 @@ function homeGestureAllowed(){
     document.getElementById('pin').classList.contains('hidden') &&
     document.getElementById('themeOverlay').classList.contains('hidden') &&
     document.getElementById('installOverlay').classList.contains('hidden') &&
+    document.getElementById('packageOverlay').classList.contains('hidden') &&
     document.getElementById('profileOverlay').classList.contains('hidden') &&
     document.getElementById('firstRunOverlay').classList.contains('hidden') &&
     document.getElementById('availabilityBlock').classList.contains('hidden') &&

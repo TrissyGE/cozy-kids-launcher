@@ -1,12 +1,63 @@
 # Package-provider foundation
 
-This first v0.8 platform increment prepares **manual instructions only**. Opening
-the Parent install dialog does not install anything, request privilege, download
-scripts, or modify repositories. Parents review and run the displayed command
-in their terminal, review their package manager's proposed changes, then refresh
-the app list. Automatic actions and progress/recovery need a separate design.
+The default catalog flow implements **terminal-free** installation for the initial
+Ubuntu, Linux Mint and Zorin targets with the APT PackageKit backend. Full desktop
+acceptance is still a release gate; implementation is not certification of all
+three distributions. Parents review the app's
+required packages and download size, explicitly confirm, approve the system
+password dialog if requested, and follow progress. On success they can add a
+tile to the current child's screen. Nothing is installed merely by opening an
+app or its review. The manual-plan API from the first increment remains
+compatible, but is no longer the catalog's primary Install action.
 
-## Detection and supported plans
+## Terminal-free runtime and boundaries
+
+The core launcher remains usable with only its existing dependencies. Direct
+installation additionally needs the distribution's `packagekit`, `python3-gi`,
+`gir1.2-packagekitglib-1.0`, a working system D-Bus, and a graphical Polkit agent
+in a complete desktop session. These are system packages, not pip dependencies.
+Missing services or unsupported systems get a localized explanation directing
+parents to the graphical system software manager. There is no automatic sudo,
+root HTTP server, custom privileged helper, or package-source modification.
+
+`packagekit_backend.py` uses the typed PackageKitGlib client over system D-Bus:
+
+1. Resolve an exact catalog-controlled native name for the native architecture.
+2. Simulate a trusted installation; reject ambiguous results, more than 200
+   packages, or a plan involving removals/upgrades/downgrades. On the APT
+   backend, details provide the sum of archive download sizes (not disk usage).
+3. Keep a ten-minute plan and random single-use confirmation token in memory.
+4. After confirmation, simulate again and compare exact IDs, dependencies and
+   size. A changed plan requires a fresh review. Run `InstallPackages` with
+   `ONLY_TRUSTED` and interactive system authorization, then verify the target
+   package is installed before reporting success.
+
+Resolution and execution are separate PackageKit transactions, not an atomic
+reservation of the system package database. Another package manager can change
+system state between them. The system backend remains responsible for locking
+and consistency; this layer does not offer a universal rollback guarantee.
+
+`package_install.py` owns one background job. Double clicks, concurrent requests,
+lost HTTP replies, stale tokens and unreviewed client-supplied package IDs cannot
+start a second job. A private atomic journal records only job ID, catalog app ID
+and status; it never stores passwords, confirmation tokens or executable plans.
+After a launcher restart it reports uncertainty and never replays an action.
+Before preparing another plan, the backend checks for existing transactions.
+Closing the dialog does not terminate the system package manager. In-place
+reconnection after closing/reopening the dialog works; full daemon-transaction
+reattachment across process restarts is future work.
+
+The existing local-origin and Parent-session guards protect all new routes:
+
+- `POST /api/packages/prepare` accepts only `{appId}` and returns a background job.
+- `GET /api/packages/status` returns only the current Parent-visible job.
+- `POST /api/packages/install` accepts only `{jobId, confirmationToken}`.
+
+PackageKit/Polkit owns system authentication. The Parent PIN is not the Linux
+password. Cozy Kids does not collect, store or send that password. No Polkit
+policy is weakened or installed by this feature.
+
+## Compatible manual-plan API
 
 `src/package_provider.py` parses `/etc/os-release`, falling back to
 `/usr/lib/os-release` only when necessary. Values are data, never sourced into a
@@ -44,7 +95,7 @@ the human-readable command; no shell or subprocess is executed by the module.
 - The dialog distinguishes loading/manual/unsupported/error, offers retry on
   error, never guesses a command, and ignores responses after close/replacement.
 
-## Evidence and next steps
+## Evidence and remaining release checks
 
 Unit tests cover native selection, immutable-host exclusions, data-only parsing,
 all four plan builders, missing mappings, and hostile input. HTTP tests exercise
@@ -52,13 +103,41 @@ the Parent boundary. Browser tests exercise acknowledgement, errors, retry,
 loading, and stale responses through local fixtures. These are **not** real
 Fedora/Arch/openSUSE installation tests or a full distribution support promise.
 
-Before enabling a new mapping, record its official package source and verify
-installation/discovery in a disposable supported distribution. Before adding
-automatic transactions, define privilege separation, confirmation, progress,
-restart recovery, update/removal, and rollback boundaries.
+Additional unit/API tests cover preparation without execution, native simulation
+flags, dependency changes, one-use/expired consent, concurrent jobs, restart
+behavior, installed-state verification and authentication. Browser fixtures
+exercise the real UI, progress, lost replies, adding a tile, safe DOM rendering,
+error/recovery states and German/English review at 800x600. They never install
+packages on CI runners.
+
+On Ubuntu 24.04.4 WSL, PackageKit 1.2.8's real APT backend successfully resolved
+and simulated Tux Paint and KTurtle. A real Tux Paint installation request was
+denied without a usable system authorization agent; the UI-facing result was
+`authorization`, not success. No Tux Paint package was installed by that test.
+Successful graphical authorization/install and launch checks in full Ubuntu,
+Mint and Zorin desktops are still required before declaring this release-ready.
+
+Read-only developer smoke check:
+
+```bash
+python3 scripts/linux/packagekit_smoke.py --app tuxpaint
+```
+
+Only in a disposable complete desktop, opt into a **real system installation**:
+
+```bash
+python3 scripts/linux/packagekit_smoke.py --app tuxpaint --install
+```
+
+Run as the normal desktop user, not root. Confirm the system dialog yourself.
+The temporary launcher journal does not sandbox packages: `--install` changes
+that Linux system and leaves the selected app installed. For full acceptance,
+also follow the catalog UI's review → install → add tile → launch flow, deny
+authentication once, test offline/busy states, and record the exact revision.
 
 Primary references checked on September 9, 2026:
 
+- [PackageKit transaction API](https://github.com/PackageKit/PackageKit/blob/main/src/org.freedesktop.PackageKit.Transaction.xml) and [PackageKit architecture](https://github.com/PackageKit/PackageKit)
 - [APT install and no-remove semantics](https://manpages.debian.org/testing/apt/apt-get.8.en.html)
 - [DNF command reference](https://dnf.readthedocs.io/en/latest/command_ref.html)
 - [Pacman manual](https://man.archlinux.org/man/pacman.8.en)
