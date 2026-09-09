@@ -45,6 +45,14 @@ transactions**. No real updates, package installations, or desktop VMs are
 started by this increment's automated checks. Neither `main` nor published
 release tags are changed.
 
+Verification of code commit `fcf7c39`: **286 unit/integration tests passed**,
+the complete local core/accessibility suite passed, and the final focused
+regressions passed with German/English 800x600 and media-icon screenshots
+visually inspected. [PR #59 CI](https://github.com/TrissyGE/cozy-kids-launcher/actions/runs/34323507089)
+also passed Python 3.9, Python 3.13, and the complete Chromium suite on the first
+run of this change. This establishes the tested result, not proof that the
+baseline's intermittent accessibility failure can never recur.
+
 Next: review catalog metadata and desktop-entry parsing, add the searchable
 catalog/detail UX, then implement and verify the package lifecycle on real
 distributions. [ROADMAP.md](ROADMAP.md) records the execution order;
