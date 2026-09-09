@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
 - Add a terminal-free Parent catalog flow for the initial PackageKit/APT targets: review dependencies/download size, explicitly confirm, use the system authorization dialog, follow progress, and add the installed app as a tile
 - Revalidate installation plans, reject simulated removals/upgrades, require expiring single-use consent, verify success, and keep a private no-replay journal across launcher restarts
-- Explain missing desktop services, authorization failures, offline/busy states and uncertain outcomes in German and English; successful full-desktop installation validation remains a release gate
+- Explain missing desktop services, authorization failures, offline/busy states and uncertain outcomes in German and English; a real TuxMath catalog installation passed on Ubuntu KDE/Wayland, while full desktop/distribution acceptance remains a release gate
 - Detect native APT, DNF, Pacman, and Zypper environments and prepare Parent-protected, allowlisted manual installation plans without auto-confirming package-manager changes
 - Add reviewed Fedora Tux Paint/KTurtle and Arch KTurtle mappings; explicitly report unmapped/unsupported and immutable-host combinations rather than promising an installation
 - Keep update/removal, full transaction reattachment, other native backends, Flatpak and real cross-distribution validation as separate upcoming work

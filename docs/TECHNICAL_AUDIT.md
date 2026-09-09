@@ -73,9 +73,23 @@ by focused tests. Private restart state never replays consent or an installation
 Real Ubuntu WSL resolution/simulation passed for Tux Paint and KTurtle. An actual
 WSL install request failed safely with `authorization` when no suitable desktop
 agent was available. The complete Ubuntu 24.04.4 test VM also prepared KTurtle
-successfully (one package, 2,145,680 download bytes). A successful graphical
-authorization/install/add/launch acceptance test is still pending. These results
-must not be described as full Ubuntu/Mint/Zorin certification; see
+successfully (one package, 2,145,680 download bytes). The user then successfully
+installed **TuxMath** through the catalog in the KDE/Wayland session. The launcher
+reported `complete`, and APT history confirms a PackageKit transaction installing
+TuxMath `2.0.3-9build2` plus nine dependencies as the non-admin desktop user. The
+deployed installation engine, bridge and catalog UI hashes match `94811db`.
+
+That code commit passed **299 local unit/integration tests**, static checks,
+the full local browser suite and [all three PR #60 CI jobs](https://github.com/TrissyGE/cozy-kids-launcher/actions/runs/34327132552).
+The full suite initially exposed a test-isolation defect: the catalog tile-save
+fixture persisted an earlier journey's unsaved UI configuration, removing the
+media tile expected by the next check. Restoring both server and client fixture
+snapshots fixed it without weakening the media assertion; the complete rerun
+passed. German/English 800x600 catalog review screenshots were visually checked.
+
+Real tile addition/launch/return and remaining desktop failure scenarios still
+need acceptance. These results must not be described as full Ubuntu/Mint/Zorin
+certification; see
 [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for boundaries and remaining checks.
 
 ## Completed foundation

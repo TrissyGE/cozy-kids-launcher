@@ -23,8 +23,9 @@ publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
    initial Ubuntu/Mint/Zorin targets, review required packages/download size,
    confirm explicitly, authorize through the desktop's system dialog, show real
    progress, and offer adding the installed app as a tile. No terminal is part
-   of the normal catalog flow. Implemented for review; full graphical
-   authorization and real install validation remain a release gate.
+   of the normal catalog flow. Implemented for review; real TuxMath installation
+   passed on Ubuntu KDE/Wayland. Real tile/launch/return, failure scenarios and
+   Mint/Zorin acceptance remain open release gates.
 4. **Then expand the catalog:** searchable, categorized Parent catalog with
    app details, honest availability, age/offline/privacy/input metadata, and
    source-backed package mappings. Audit desktop-entry discovery and existing

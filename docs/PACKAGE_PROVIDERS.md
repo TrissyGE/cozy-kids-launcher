@@ -114,8 +114,24 @@ On Ubuntu 24.04.4 WSL, PackageKit 1.2.8's real APT backend successfully resolved
 and simulated Tux Paint and KTurtle. A real Tux Paint installation request was
 denied without a usable system authorization agent; the UI-facing result was
 `authorization`, not success. No Tux Paint package was installed by that test.
-Successful graphical authorization/install and launch checks in full Ubuntu,
-Mint and Zorin desktops are still required before declaring this release-ready.
+
+On September 9, 2026, the user successfully installed **TuxMath** through the
+catalog in the Ubuntu 24.04.4 KDE/Wayland VM as its non-admin desktop user.
+The launcher returned `complete` with 100%; the APT history independently records
+PackageKit installing TuxMath `2.0.3-9build2` and nine dependencies. The plan
+reported 13,423,526 download bytes. The deployed installer engine, PackageKit
+bridge and catalog UI file hashes match code commit `94811db`. This verifies
+a real desktop installation, not just a simulated transaction.
+
+For that code commit, all 299 local unit/integration tests, static checks, the
+complete local browser suite and [all CI jobs](https://github.com/TrissyGE/cozy-kids-launcher/actions/runs/34327132552)
+passed. The German/English review screenshots were visually checked. The browser
+fixture restores its saved config after exercising tile persistence so later
+media checks remain independent of earlier unsaved UI changes.
+
+Adding the real TuxMath tile, launching/returning, full-desktop failure scenarios
+and Mint/Zorin acceptance are still open. Do not treat this single successful
+Ubuntu installation as certification of the complete release matrix.
 
 Read-only developer smoke check:
 
