@@ -222,7 +222,19 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     )
     if saved_setup.get("setupCompleted") is not True:
         raise AssertionError(f"Guided setup was not persisted: {saved_setup!r}")
+    assert_js(browser, "appOptions.some(app=>app.name==='E2E Discovery App')",
+              "The real desktop-entry fixture was not discovered after setup")
+    browser.evaluate("""(async () => {
+        for(const [language,name] of [['de','E2E App-Erkennung'],['en','E2E Discovery App']]){
+            const updated={...cfg,language};
+            const response=await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
+            if(!response.ok) throw new Error('Language fixture could not be saved');
+            await loadConfig();
+            if(!appOptions.some(app=>app.name===name)) throw new Error('Installed-app labels did not follow the interface language');
+        }
+    })()""", await_promise=True)
     log_scenario("guided first run covers language, child, apps, time, and appearance")
+    log_scenario("real desktop-entry discovery follows German/English config reloads")
     assert_js(
         browser,
         "document.getElementById('title').textContent === 'E2E Home' && "
@@ -1431,6 +1443,13 @@ def main():
 
             app_root = test_home / ".local" / "share" / "cozy-kids-launcher"
             config_path = test_home / ".config" / "cozy-kids-launcher" / "config.json"
+            desktop_entries = test_home / ".local" / "share" / "applications"
+            desktop_entries.mkdir(parents=True, exist_ok=True)
+            (desktop_entries / "e2e-discovery.desktop").write_text(
+                '[Desktop Entry]\nType=Application\nName=E2E Discovery App\n'
+                'Name[de]=E2E App-Erkennung\nExec=/bin/true "lesson with spaces" 50%%\n',
+                encoding="utf-8",
+            )
             videos = test_home / "Videos"
             music = test_home / "Music"
             videos.mkdir(exist_ok=True)

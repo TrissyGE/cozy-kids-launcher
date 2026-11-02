@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Installed-app discovery
+
+- Read only the main graphical desktop-entry group, honor hidden desktop-ID overrides and desktop visibility, and skip unavailable or unsupported launch contracts without crashing on empty TryExec
+- Search XDG application roots plus installed Flatpak/Snap exports, including nested IDs and stable precedence
+- Preserve quoting and percent field-code argument boundaries through the tile editor and owned launcher; bound metadata/scan sizes and ignore malformed entries
+- Localize installed-app names to the saved UI language and refresh them after setup or language-changing configuration reloads
+
 ### App store discovery
 
 - Added local app-store search, combined category/status filters, result counts and keyboard-accessible details with explicit unreviewed metadata

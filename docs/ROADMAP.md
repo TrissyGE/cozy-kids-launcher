@@ -20,6 +20,9 @@ Terminal-free installation was merged in
 increment was merged in [#62](https://github.com/TrissyGE/cozy-kids-launcher/pull/62).
 Remaining distribution and desktop acceptance
 below still applies to release certification.
+Owned KDE fullscreen and the real-app desktop probe were merged in
+[#63](https://github.com/TrissyGE/cozy-kids-launcher/pull/63). The next increment
+audits installed-app discovery before adding curated recipes.
 
 1. **Quality repair — merged in #59:** shared local/CI/release checks,
    diagnosed browser assertions, corrected custom-theme/accessibility
@@ -47,6 +50,9 @@ below still applies to release certification.
    merged discovery increment (#62). Its Install action retains the terminal-free
    review, confirmation and PackageKit flow; copying a command is not the normal
    Parent installation path. New app recipes still require fullscreen acceptance.
+   Installed-app discovery now implements XDG roots/desktop-ID precedence,
+   hidden overrides, locale names and argv-preserving field-code handling in a
+   separate increment; see [scope and evidence](APP_DISCOVERY.md).
 5. **Then broaden package actions:** update/removal and richer restart recovery;
    verify real disposable APT/DNF/Pacman/Zypper environments and evaluate
    Flatpak remotes separately. The current journal never automatically replays

@@ -1000,7 +1000,39 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertEqual(data, expected)
-        discover_apps.assert_called_once_with(server_module.HOME)
+        discover_apps.assert_called_once_with(server_module.HOME, language=server_module.load_cfg()["language"])
+
+    def test_app_discovery_names_follow_the_saved_interface_language(self):
+        discover = server_module.discover_apps
+        with tempfile.TemporaryDirectory() as directory:
+            entry = Path(directory) / "paint.desktop"
+            entry.write_text("[Desktop Entry]\nType=Application\nName=Paint\nName[de]=Malen\nExec=/bin/true\n", encoding="utf-8")
+            with mock.patch.object(server_module, "discover_apps", side_effect=lambda home, language:
+                                   discover(home, [directory], language=language)):
+                for language, expected in (("de", "Malen"), ("en", "Paint")):
+                    config = server_module.load_cfg()
+                    config["language"] = language
+                    server_module.save_cfg(config)
+                    status, data, _ = self.request("/api/apps")
+                    self.assertEqual(status, 200)
+                    self.assertEqual(data, [{"name": expected, "exec": "/bin/true"}])
+
+    def test_discovered_exec_round_trips_through_a_saved_tile_without_a_shell(self):
+        discover = server_module.discover_apps
+        with tempfile.TemporaryDirectory() as directory:
+            entry = Path(directory) / "paint.desktop"
+            entry.write_text('[Desktop Entry]\nType=Application\nName=Paint\nExec=/bin/true "kid\'s picture" 50%% %U\n', encoding="utf-8")
+            with mock.patch.object(server_module, "discover_apps", side_effect=lambda home, language:
+                                   discover(home, [directory], language=language)):
+                status, data, _ = self.request("/api/apps")
+            self.assertEqual(status, 200)
+            config = server_module.load_cfg()
+            config["tiles"][0]["cmd"] = [data[0]["exec"]]
+            server_module.save_cfg(config)
+            with mock.patch.object(server_module, "launch_owned_tile") as launch:
+                status, _, _ = self.request("/launch/paint", method="POST", origin=self.base_url)
+            self.assertEqual(status, 204)
+            self.assertEqual(launch.call_args.args, (["/bin/true", "kid's picture", "50%"], "local"))
 
     def test_browser_endpoint_preserves_candidate_order_and_status(self):
         candidates = ("firefox", "chromium")

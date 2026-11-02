@@ -129,6 +129,12 @@ flow and curated guidance contract.
 
 ### 3. Launch adapters
 
+`app_detection.py` reads only the main group of graphical desktop entries,
+applies XDG desktop-ID precedence and localized names, and serializes supported
+Exec argv without starting a process. `/api/apps` uses the saved UI language.
+The tile editor retains the `{name, exec}` payload and refreshes after language
+changes. See [APP_DISCOVERY.md](APP_DISCOVERY.md) for the supported subset.
+
 Every tile is posted to `/launch/<tile-id>`. The server normalizes the existing command formats into one of three actions:
 
 - **media** — opens every populated media directory as a VLC or MPV playlist, with a desktop opener as fallback

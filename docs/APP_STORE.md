@@ -35,6 +35,10 @@ save restores the previous tile list and displays an error. Removing a tile
 does not uninstall its system package. Search and filters are kept only in the
 current page session.
 
+The tile editor also has an installed-app selector using localized desktop
+entries. Its search roots, override rules and supported launch formats are
+documented in [APP_DISCOVERY.md](APP_DISCOVERY.md).
+
 ## Curated guidance
 
 `src/recommendations.json` stores bilingual descriptions and optional guidance
