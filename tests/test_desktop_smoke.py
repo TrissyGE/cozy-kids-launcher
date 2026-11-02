@@ -26,6 +26,23 @@ def subprocess_result(returncode=0, stdout="", stderr=""):
 
 
 class SmokeConfigTests(unittest.TestCase):
+    def test_snap_firefox_isolation_is_created_under_its_accessible_common_root(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(desktop_smoke.Path, "home", return_value=Path(directory)), \
+                patch.object(desktop_smoke.shutil, "which", return_value="/usr/bin/snap"), \
+                patch.object(desktop_smoke.subprocess, "run", return_value=subprocess_result()) as run:
+            parent = desktop_smoke.temporary_home_parent("/usr/bin/firefox")
+            self.assertEqual(parent, Path(directory) / "snap" / "firefox" / "common")
+            self.assertTrue(parent.is_dir())
+            run.assert_called_once_with(["snap", "list", "firefox"], capture_output=True, text=True, timeout=10)
+
+    def test_other_browsers_and_non_snap_firefox_keep_standard_temporary_homes(self):
+        with patch.object(desktop_smoke.shutil, "which", return_value=None), \
+                patch.object(desktop_smoke.subprocess, "run") as run:
+            self.assertIsNone(desktop_smoke.temporary_home_parent("/usr/bin/google-chrome"))
+            self.assertIsNone(desktop_smoke.temporary_home_parent("/usr/bin/firefox"))
+            run.assert_not_called()
+
     def test_catalog_observation_never_causes_fullscreen_itself(self):
         import sys
         source_root = str(REPOSITORY_ROOT / "src")

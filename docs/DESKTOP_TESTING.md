@@ -43,6 +43,10 @@ Wayland.
 
 The script uses a temporary home directory and does not modify the VM user's normal launcher profile. It checks:
 
+For a Firefox snap, that temporary directory lives under the test user's
+`~/snap/firefox/common/` so confinement permits access. It is removed after the
+run, including its isolated launcher/browser profiles.
+
 1. an isolated install of the current checkout;
 2. syntax and presence of autostart, application-menu, and desktop entries;
 3. startup of the local server and its owned browser;

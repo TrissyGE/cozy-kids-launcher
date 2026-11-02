@@ -569,13 +569,25 @@ def copy_runtime_artifacts(test_home, artifacts):
             shutil.copy2(source, destination)
 
 
+def temporary_home_parent(browser_path):
+    """Keep an isolated Firefox snap profile inside its accessible common root."""
+    if Path(browser_path).name != "firefox" or not shutil.which("snap"):
+        return None
+    result = subprocess.run(["snap", "list", "firefox"], capture_output=True, text=True, timeout=10)
+    if result.returncode != 0:
+        return None
+    parent = Path.home() / "snap" / "firefox" / "common"
+    parent.mkdir(parents=True, exist_ok=True)
+    return parent
+
+
 def run_smoke(args, browser_path, report):
     artifacts = args.artifacts
     artifacts.mkdir(parents=True, exist_ok=True)
     browser_name = Path(browser_path).name
     launcher = None
     launcher_log = None
-    with tempfile.TemporaryDirectory(prefix="cozy-kids-desktop-smoke-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="cozy-kids-desktop-smoke-", dir=temporary_home_parent(browser_path)) as temp_dir:
         test_home = Path(temp_dir)
         environment = dict(os.environ)
         environment.update({
