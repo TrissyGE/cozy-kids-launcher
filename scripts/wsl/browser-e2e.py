@@ -395,7 +395,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     browser.screenshot(artifacts / "startup-error.png")
     browser.click("#startupState .ui-state-retry")
     browser.wait_for(
-        "cfg!==null && document.getElementById('startupState')===null && "
+        "cfg!==null && bootstrapPromise===null && document.getElementById('startupState')===null && "
         "document.querySelectorAll('#grid .tile:not(.placeholder)').length===2 && "
         "!document.querySelector('.cornerbar').classList.contains('hidden')",
         message="Startup retry did not restore the launcher",

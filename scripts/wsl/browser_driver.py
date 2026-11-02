@@ -202,6 +202,7 @@ class BrowserSession:
         self.devtools = DevTools(socket_url, timeout=self.timeout)
         self.devtools.call("Page.enable")
         self.devtools.call("Runtime.enable")
+        self.devtools.call("Emulation.setFocusEmulationEnabled", {"enabled": True})
         self.set_device_metrics(self.width, self.height)
 
     def close(self):
