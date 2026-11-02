@@ -340,7 +340,7 @@ def restore_config_backup(backup_id):
 
 
 def scan_apps():
-    return discover_apps(HOME)
+    return discover_apps(HOME, language=load_cfg().get("language", "en"))
 
 
 def media_location():

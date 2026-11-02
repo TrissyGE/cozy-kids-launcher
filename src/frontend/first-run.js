@@ -255,6 +255,7 @@ async function persistFirstRun(){
   document.querySelectorAll('#firstRunOverlay button').forEach(button=>{ button.disabled=true; });
   try{
     await persistConfig();
+    await loadApps();
     document.getElementById('firstRunOverlay').classList.add('hidden');
     firstRunStep=0;
     focusedTileIndex=0;

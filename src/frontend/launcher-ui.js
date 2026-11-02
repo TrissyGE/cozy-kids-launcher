@@ -6,12 +6,14 @@ function isMediaLibraryTile(tile){
 function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageSize())); }
 function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }
 async function loadConfig(){
+  const previousLanguage=cfg&&cfg.language;
   const response=await fetch('/api/config',{cache:'no-store'});
   if(!response.ok) throw new Error('Config could not be loaded');
   const data=await response.json();
   if(!data||typeof data!=='object'||!Array.isArray(data.tiles)) throw new Error('Invalid config response');
   cfg=data;
   await loadInterfaceLanguage(cfg.language);
+  if(previousLanguage&&previousLanguage!==cfg.language) await loadApps();
   if(typeof cfg.currentPage!=='number') cfg.currentPage=0;
   renderAll();
 }

@@ -1,4 +1,5 @@
 import sys
+import shlex
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,13 +13,39 @@ import app_detection
 
 
 class DesktopApplicationDetectionTests(unittest.TestCase):
+    def test_action_sections_do_not_supply_or_hide_the_main_application(self):
+        with tempfile.TemporaryDirectory() as directory:
+            entry = Path(directory) / "actions.desktop"
+            entry.write_text(
+                "[Desktop Action Debug]\nName=Debug\nExec=/bin/false\nNoDisplay=true\n"
+                "[Desktop Entry]\nType=Application\nName=Main\nExec=/bin/true\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(app_detection.parse_desktop_file(entry), {"name": "Main", "exec": "/bin/true"})
+
+    def test_empty_tryexec_is_skipped_without_crashing_the_scan(self):
+        with tempfile.TemporaryDirectory() as directory:
+            entry = Path(directory) / "empty.desktop"
+            entry.write_text("[Desktop Entry]\nType=Application\nName=Empty\nTryExec=\nExec=/bin/true\n", encoding="utf-8")
+            self.assertIsNone(app_detection.parse_desktop_file(entry))
+
+    def test_user_hidden_override_masks_the_same_system_desktop_id(self):
+        with tempfile.TemporaryDirectory() as directory:
+            user, system = Path(directory) / "user", Path(directory) / "system"
+            user.mkdir(); system.mkdir()
+            (user / "app.desktop").write_text("[Desktop Entry]\nHidden=true\n", encoding="utf-8")
+            (system / "app.desktop").write_text("[Desktop Entry]\nType=Application\nName=System\nExec=/bin/true\n", encoding="utf-8")
+            self.assertEqual(app_detection.scan_apps(directory, [user, system]), [])
+
     def test_desktop_entry_keeps_command_and_removes_field_codes(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             executable = Path(temp_dir) / "paint-app"
             executable.touch()
+            executable.chmod(0o755)
             entry = Path(temp_dir) / "paint.desktop"
             entry.write_text(
                 "[Desktop Entry]\n"
+                "Type=Application\n"
                 "Name=Paint\n"
                 "TryExec=paint-app\n"
                 "Exec=paint-app --open %U --caption %c\n",
@@ -32,19 +59,19 @@ class DesktopApplicationDetectionTests(unittest.TestCase):
 
         self.assertEqual(
             detected,
-            {"name": "Paint", "exec": "paint-app --open  --caption"},
+            {"name": "Paint", "exec": "paint-app --open --caption Paint"},
         )
 
     def test_hidden_and_unavailable_desktop_entries_are_ignored(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             hidden = Path(temp_dir) / "hidden.desktop"
             hidden.write_text(
-                "[Desktop Entry]\nName=Hidden\nNoDisplay=true\nExec=hidden-app\n",
+                "[Desktop Entry]\nType=Application\nName=Hidden\nNoDisplay=true\nExec=hidden-app\n",
                 encoding="utf-8",
             )
             unavailable = Path(temp_dir) / "missing.desktop"
             unavailable.write_text(
-                "[Desktop Entry]\nName=Missing\nTryExec=missing-app\n"
+                "[Desktop Entry]\nType=Application\nName=Missing\nTryExec=missing-app\n"
                 "Exec=missing-app\n",
                 encoding="utf-8",
             )
@@ -62,15 +89,15 @@ class DesktopApplicationDetectionTests(unittest.TestCase):
             applications = Path(temp_dir) / "applications"
             applications.mkdir()
             (applications / "zeta.desktop").write_text(
-                "[Desktop Entry]\nName=Zeta\nExec=shared-app %U\n",
+                "[Desktop Entry]\nType=Application\nName=Zeta\nExec=shared-app %U\n",
                 encoding="utf-8",
             )
             (applications / "alpha.desktop").write_text(
-                "[Desktop Entry]\nName=Alpha\nExec=alpha-app\n",
+                "[Desktop Entry]\nType=Application\nName=Alpha\nExec=alpha-app\n",
                 encoding="utf-8",
             )
             (applications / "duplicate.desktop").write_text(
-                "[Desktop Entry]\nName=Duplicate\nExec=shared-app %F\n",
+                "[Desktop Entry]\nType=Application\nName=Duplicate\nExec=shared-app %F\n",
                 encoding="utf-8",
             )
             (applications / "ignored.txt").write_text(
@@ -81,6 +108,7 @@ class DesktopApplicationDetectionTests(unittest.TestCase):
             detected = app_detection.scan_apps(
                 temp_dir,
                 application_dirs=[applications],
+                which=lambda command: command,
             )
 
         self.assertEqual(
