@@ -139,7 +139,9 @@ def supervise(
         if managed_fullscreen:
             from app_display import X11Fullscreen
             direct = direct_app_command(command)
-            if direct != command:
+            legacy_request = direct != command
+            tuxmath = bool(direct and os.path.basename(direct[0]) == "tuxmath")
+            if legacy_request and not tuxmath:
                 # kstart detaches and may reuse an unrelated application. Start
                 # argv ourselves, then address only the owned X11 main window.
                 platform = environment.get("QT_QPA_PLATFORM", "xcb")
@@ -153,10 +155,13 @@ def supervise(
                     raise OSError("Managed KDE fullscreen requires the X11 xcb platform")
                 environment.setdefault("QT_QPA_PLATFORM", "xcb")
                 command = direct
-            elif (os.path.basename(command[0]) == "tuxmath"
-                  and "--fullscreen" in command and "--windowed" not in command):
+            elif tuxmath and (legacy_request or ("--fullscreen" in command and "--windowed" not in command)):
+                if environment.get("SDL_VIDEODRIVER", "x11") != "x11":
+                    raise OSError("Managed legacy TuxMath fullscreen requires X11")
                 # SDL stays ungrabbed so the independent Home overlay can click.
-                command = ["--windowed" if part == "--fullscreen" else part for part in command]
+                command = ["--windowed" if part == "--fullscreen" else part for part in direct]
+                if "--windowed" not in command:
+                    command.append("--windowed")
                 environment["SDL_VIDEODRIVER"] = "x11"
             else:
                 raise ValueError("Managed fullscreen requires a supported fullscreen request")

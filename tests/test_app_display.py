@@ -133,6 +133,29 @@ class FullscreenWindowTests(unittest.TestCase):
 
 
 class FullscreenStartupTests(unittest.TestCase):
+    def test_legacy_wrapped_tuxmath_retains_its_ungrabbed_sdl_adaptation(self):
+        for arguments in (["--fullscreen", "--nosound"], ["--windowed", "--nosound"], ["--nosound"]):
+            command = ["kstart", "--fullscreen", "tuxmath", *arguments]
+            with self.subTest(arguments=arguments), \
+                    mock.patch.dict(os.environ, {"SDL_VIDEODRIVER": "x11", "QT_QPA_PLATFORM": "wayland"}), \
+                    mock.patch.object(process_supervisor, "_enable_child_subreaper"), \
+                    mock.patch.object(process_supervisor.signal, "signal"), \
+                    mock.patch.object(app_display, "X11Fullscreen"), \
+                    mock.patch.object(process_supervisor.subprocess, "Popen") as popen, \
+                    mock.patch.object(process_supervisor, "_reap_children"), \
+                    mock.patch.object(process_supervisor, "wait_for_fullscreen"), \
+                    mock.patch.object(process_supervisor, "owned_processes", return_value=[]), \
+                    mock.patch.object(process_supervisor, "write_process_record"), \
+                    mock.patch.object(process_supervisor, "remove_process_record"):
+                process_supervisor.supervise(command, "record", "marker", managed_fullscreen=True)
+                actual = popen.call_args.args[0]
+                self.assertEqual(actual[0], "tuxmath")
+                self.assertIn("--windowed", actual)
+                self.assertIn("--nosound", actual)
+                self.assertNotIn("--fullscreen", actual)
+                self.assertEqual(popen.call_args.kwargs["env"]["SDL_VIDEODRIVER"], "x11")
+                self.assertEqual(command, ["kstart", "--fullscreen", "tuxmath", *arguments])
+
     def test_kde_fullscreen_starts_owned_app_directly_on_xcb_and_preserves_arguments(self):
         original = ["kstart5", "--fullscreen", "kturtle", "lesson with spaces.turtle"]
         with mock.patch.dict(os.environ, {"DISPLAY": ":1", "QT_QPA_PLATFORM": "xcb:custom"}), \
