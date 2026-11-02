@@ -1047,6 +1047,16 @@ class ServerApiTests(unittest.TestCase):
             track_activity=True,
         )
 
+    def test_kde_launch_retains_fullscreen_intent_until_process_supervision(self):
+        command = ["kstart", "--fullscreen", "kturtle", "lesson with spaces.turtle"]
+        config = server_module.load_cfg()
+        config["tiles"][0]["cmd"] = command
+        server_module.save_cfg(config)
+        with mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, _, _ = self.request("/launch/paint", method="POST", origin=self.base_url)
+        self.assertEqual(status, 204)
+        self.assertEqual(launch.call_args.args, (command, "local"))
+
     def test_speech_feedback_uses_only_a_visible_server_resolved_tile(self):
         config = server_module.load_cfg()
         config["speechFeedbackEnabled"] = True

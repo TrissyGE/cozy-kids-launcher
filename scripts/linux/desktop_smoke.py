@@ -8,6 +8,7 @@ import os
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -288,7 +289,44 @@ def request(url, method="GET", timeout=10):
         return response.status, body
 
 
-def write_smoke_config(config_path, browser_name):
+def kde_catalog_entry(app_id):
+    entries = json.loads((REPOSITORY_ROOT / "src" / "recommendations.json").read_text(encoding="utf-8"))
+    for entry in entries:
+        command = entry.get("cmd", [])
+        if entry.get("id") == app_id and len(command) >= 3 and command[:2] in (
+            ["kstart", "--fullscreen"], ["kstart5", "--fullscreen"],
+        ):
+            return entry
+    raise ValueError("Choose an existing KDE fullscreen catalog app")
+
+
+def owned_fullscreen_window(supervisor_pid):
+    """Observe the owned app's WM state without requesting fullscreen ourselves."""
+    source_root = str(REPOSITORY_ROOT / "src")
+    if source_root not in sys.path:
+        sys.path.insert(0, source_root)
+    from app_display import X11Fullscreen
+    from process_supervisor import owned_processes
+    display = X11Fullscreen()
+    try:
+        pids = set(owned_processes(supervisor_pid))
+        for window in display.values(display.root, "_NET_CLIENT_LIST", "WINDOW"):
+            owner = display.values(window, "_NET_WM_PID", "CARDINAL")
+            if len(owner) != 1 or owner[0] not in pids:
+                continue
+            if display.values(window, "WM_TRANSIENT_FOR", "WINDOW"):
+                continue
+            types = display.values(window, "_NET_WM_WINDOW_TYPE", "ATOM")
+            if types and types[0] != display.atom("_NET_WM_WINDOW_TYPE_NORMAL"):
+                continue
+            if display.atom("_NET_WM_STATE_FULLSCREEN") in display.values(window, "_NET_WM_STATE", "ATOM"):
+                return window
+        return None
+    finally:
+        display.close()
+
+
+def write_smoke_config(config_path, browser_name, catalog_entry=None):
     with config_path.open(encoding="utf-8") as handle:
         config = json.load(handle)
     config.update({
@@ -311,7 +349,7 @@ def write_smoke_config(config_path, browser_name):
                 "id": "desktop-smoke",
                 "label": "Desktop smoke app",
                 "emoji": "🧪",
-                "cmd": ["sleep", "20"],
+                "cmd": list(catalog_entry["cmd"]) if catalog_entry else ["sleep", "20"],
                 "visible": True,
             }
         ],
@@ -575,7 +613,14 @@ def run_smoke(args, browser_path, report):
             report.pass_check("desktop and autostart files", ", ".join(desktop_files))
 
             config_path = test_home / ".config" / "cozy-kids-launcher" / "config.json"
-            write_smoke_config(config_path, browser_name)
+            entry = getattr(args, "catalog_entry", None)
+            write_smoke_config(config_path, browser_name, entry)
+            if entry:
+                report.data["catalogApp"] = entry["id"]
+                report.data["manualChecks"].append({
+                    "name": "The catalog app accepts meaningful lesson/game keyboard and touch input",
+                    "status": "pending",
+                })
             app_root = test_home / ".local" / "share" / "cozy-kids-launcher"
             runtime = test_home / ".local" / "bin" / "cozy-kids-launcher"
             cache = test_home / ".cache" / "cozy-kids-launcher"
@@ -641,7 +686,7 @@ def run_smoke(args, browser_path, report):
                 raise RuntimeError("second launcher invocation replaced the active browser")
             report.pass_check("single-instance lock")
 
-            if args.session == "x11":
+            if args.session == "x11" or entry:
                 for command in ("wmctrl", "xdotool"):
                     if not shutil.which(command):
                         raise RuntimeError(f"{command} is required for X11 window checks")
@@ -657,10 +702,10 @@ def run_smoke(args, browser_path, report):
                     "compositor-wide window enumeration is intentionally unavailable",
                 )
 
-            status, _ = request(f"{base_url}/launch/desktop-smoke", method="POST")
+            status, _ = request(f"{base_url}/launch/desktop-smoke", method="POST", timeout=45 if entry else 10)
             if status != 204:
                 raise RuntimeError(f"tile launch returned HTTP {status}")
-            wait_until(
+            tile_record = wait_until(
                 lambda: live_process_record(
                     cache / "tile-process.pid",
                     "tile-process",
@@ -674,7 +719,18 @@ def run_smoke(args, browser_path, report):
                 message="app overlay did not start",
             )
             report.pass_check("owned child process and overlay")
-            if args.session == "x11":
+            if entry:
+                window = wait_until(
+                    lambda: owned_fullscreen_window(tile_record["pid"]),
+                    timeout=15,
+                    message="owned catalog app has no confirmed fullscreen main window",
+                )
+                geometry = subprocess.run(
+                    ["xdotool", "getwindowgeometry", "--shell", str(window)],
+                    check=True, capture_output=True, text=True, timeout=5,
+                ).stdout.strip()
+                report.pass_check("owned catalog fullscreen (X11/XWayland)", geometry)
+            if args.session == "x11" or entry:
                 wait_until(
                     lambda: x11_window_present("App Overlay"),
                     timeout=15,
@@ -767,6 +823,7 @@ def main():
     parser.add_argument("--desktop", choices=tuple(DESKTOP_ALIASES), required=True)
     parser.add_argument("--session", choices=("x11", "wayland"), required=True)
     parser.add_argument("--browser", help="Browser executable name")
+    parser.add_argument("--catalog-app", help="Existing KDE catalog ID for real fullscreen/overlay checks on X11/XWayland")
     parser.add_argument(
         "--launch-mode",
         choices=("window", "fullscreen", "kiosk"),
@@ -776,7 +833,7 @@ def main():
     parser.add_argument(
         "--interactive",
         action="store_true",
-        help="Record the six manual VM observations in the JSON report",
+        help="Record the manual VM observations in the JSON report",
     )
     parser.add_argument(
         "--artifacts",
@@ -787,11 +844,15 @@ def main():
         ),
     )
     args = parser.parse_args()
+    try:
+        args.catalog_entry = kde_catalog_entry(args.catalog_app) if args.catalog_app else None
+    except ValueError as error:
+        parser.error(str(error))
     args.artifacts = args.artifacts or (
         REPOSITORY_ROOT
         / ".test-artifacts"
         / "desktop-matrix"
-        / f"{args.desktop}-{args.session}-{args.launch_mode}"
+        / (f"{args.desktop}-{args.session}-{args.launch_mode}" + (f"-{args.catalog_app}" if args.catalog_app else ""))
     )
 
     errors = environment_errors(args.desktop, args.session)

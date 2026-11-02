@@ -10,6 +10,7 @@ import sys
 import time
 
 from activity_store import record_activity
+from application_launcher import direct_app_command
 from process_state import remove_process_record, write_process_record
 
 
@@ -137,13 +138,29 @@ def supervise(
         environment = dict(os.environ)
         if managed_fullscreen:
             from app_display import X11Fullscreen
-            if "--fullscreen" not in command:
-                raise ValueError("Managed fullscreen requires a fullscreen request")
+            direct = direct_app_command(command)
+            if direct != command:
+                # kstart detaches and may reuse an unrelated application. Start
+                # argv ourselves, then address only the owned X11 main window.
+                platform = environment.get("QT_QPA_PLATFORM", "xcb")
+                platforms = [platform]
+                for index, argument in enumerate(direct[1:], 1):
+                    if argument == "-platform":
+                        platforms.append(direct[index + 1] if index + 1 < len(direct) else "")
+                    elif argument.startswith("-platform="):
+                        platforms.append(argument.partition("=")[2])
+                if any(value.split(":", 1)[0] != "xcb" for value in platforms):
+                    raise OSError("Managed KDE fullscreen requires the X11 xcb platform")
+                environment.setdefault("QT_QPA_PLATFORM", "xcb")
+                command = direct
+            elif (os.path.basename(command[0]) == "tuxmath"
+                  and "--fullscreen" in command and "--windowed" not in command):
+                # SDL stays ungrabbed so the independent Home overlay can click.
+                command = ["--windowed" if part == "--fullscreen" else part for part in command]
+                environment["SDL_VIDEODRIVER"] = "x11"
+            else:
+                raise ValueError("Managed fullscreen requires a supported fullscreen request")
             display = X11Fullscreen()
-            # The WM supplies real, undecorated fullscreen and scaling. SDL
-            # itself stays ungrabbed so the independent Home overlay can click.
-            command = ["--windowed" if part == "--fullscreen" else part for part in command]
-            environment["SDL_VIDEODRIVER"] = "x11"
         child = subprocess.Popen(command, env=environment)
         started_at = int(time.time())
         if display:

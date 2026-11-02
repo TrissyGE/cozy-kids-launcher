@@ -1613,9 +1613,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(204)
                 self.end_headers()
                 return
-            clean = direct_app_command(clean)
             try:
-                # The supervisor still launches argv directly and never invokes a shell.
+                # Keep the legacy fullscreen request until the owned supervisor
+                # can replace the wrapper and confirm the compositor's state.
                 launch_owned_tile(
                     clean,
                     "local",

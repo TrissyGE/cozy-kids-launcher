@@ -19,18 +19,22 @@ import process_state
 class FullscreenPolicyTests(unittest.TestCase):
     def test_launcher_passes_fullscreen_request_and_waits_for_acknowledgement(self):
         launcher = application_launcher.ApplicationLauncher('tile', 'overlay', 'supervisor.py', 'overlay.py')
-        with mock.patch.dict(os.environ, {"DISPLAY": ":1", "SDL_VIDEODRIVER": "x11"}), \
-                mock.patch.object(application_launcher.os.path, "isfile", return_value=True), \
-                mock.patch.object(launcher, "stop_existing_overlay"), \
-                mock.patch.object(launcher, "stop_active_tile"), \
-                mock.patch.object(launcher, "start_overlay", return_value=True), \
-                mock.patch.object(launcher, "_wait_for_owned_process", return_value=True) as wait, \
-                mock.patch.object(application_launcher.subprocess, "Popen") as popen:
-            launcher.launch_owned_tile(["tuxmath", "--fullscreen"], "local")
-        self.assertEqual(popen.call_args.args[0][-4:],
-                         ["--managed-fullscreen", "--", "tuxmath", "--fullscreen"])
-        self.assertTrue(wait.call_args.kwargs["require_ready"])
-        self.assertEqual(wait.call_args.kwargs["timeout"], 30)
+        for command in (["tuxmath", "--fullscreen"],
+                        ["kstart", "--fullscreen", "kturtle"],
+                        ["kstart5", "--fullscreen", "kbruch", "lesson with spaces"]):
+            with self.subTest(command=command), \
+                    mock.patch.dict(os.environ, {"DISPLAY": ":1", "SDL_VIDEODRIVER": "x11"}), \
+                    mock.patch.object(application_launcher.os.path, "isfile", return_value=True), \
+                    mock.patch.object(launcher, "stop_existing_overlay"), \
+                    mock.patch.object(launcher, "stop_active_tile"), \
+                    mock.patch.object(launcher, "start_overlay", return_value=True), \
+                    mock.patch.object(launcher, "_wait_for_owned_process", return_value=True) as wait, \
+                    mock.patch.object(application_launcher.subprocess, "Popen") as popen:
+                launcher.launch_owned_tile(command, "local")
+                expected = ["--managed-fullscreen", "--", *command]
+                self.assertEqual(popen.call_args.args[0][-len(expected):], expected)
+                self.assertTrue(wait.call_args.kwargs["require_ready"])
+                self.assertEqual(wait.call_args.kwargs["timeout"], 30)
 
     @unittest.skipUnless(os.path.isdir('/proc'), 'Linux process identity required')
     def test_starting_record_remains_owned_and_can_be_marked_ready(self):
@@ -43,7 +47,7 @@ class FullscreenPolicyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 process_state.write_process_record(path, os.getpid(), 'tile-process', ready='yes')
 
-    def test_only_requested_tuxmath_x11_fullscreen_is_adapted(self):
+    def test_tuxmath_policy_preserves_windowed_and_driver_overrides(self):
         policy = application_launcher.needs_managed_fullscreen
         self.assertTrue(policy(["tuxmath", "--fullscreen"], {"DISPLAY": ":1"}))
         self.assertTrue(policy(["/usr/games/tuxmath", "--fullscreen", "--nosound"],
@@ -54,6 +58,10 @@ class FullscreenPolicyTests(unittest.TestCase):
         for environment in ({}, {"WAYLAND_DISPLAY": "wayland-0"},
                             {"DISPLAY": ":1", "SDL_VIDEODRIVER": "wayland"}):
             self.assertFalse(policy(["tuxmath", "--fullscreen"], environment))
+
+    def test_kde_request_is_not_silently_discarded_without_a_display(self):
+        self.assertTrue(application_launcher.needs_managed_fullscreen(["kstart", "--fullscreen", "kturtle"], {}))
+        self.assertFalse(application_launcher.needs_managed_fullscreen(["kturtle"], {"DISPLAY": ":1"}))
 
     def test_readiness_requires_explicit_fullscreen_acknowledgement(self):
         wait = application_launcher.ApplicationLauncher._wait_for_owned_process
@@ -125,6 +133,46 @@ class FullscreenWindowTests(unittest.TestCase):
 
 
 class FullscreenStartupTests(unittest.TestCase):
+    def test_kde_fullscreen_starts_owned_app_directly_on_xcb_and_preserves_arguments(self):
+        original = ["kstart5", "--fullscreen", "kturtle", "lesson with spaces.turtle"]
+        with mock.patch.dict(os.environ, {"DISPLAY": ":1", "QT_QPA_PLATFORM": "xcb:custom"}), \
+                mock.patch.object(process_supervisor, "_enable_child_subreaper"), \
+                mock.patch.object(process_supervisor.signal, "signal"), \
+                mock.patch.object(app_display, "X11Fullscreen") as factory, \
+                mock.patch.object(process_supervisor.subprocess, "Popen") as popen, \
+                mock.patch.object(process_supervisor, "_reap_children"), \
+                mock.patch.object(process_supervisor, "wait_for_fullscreen"), \
+                mock.patch.object(process_supervisor, "owned_processes", return_value=[]), \
+                mock.patch.object(process_supervisor, "write_process_record") as write, \
+                mock.patch.object(process_supervisor, "remove_process_record"):
+            self.assertEqual(process_supervisor.supervise(original, "record", "marker", managed_fullscreen=True), 0)
+        self.assertEqual(popen.call_args.args[0], original[2:])
+        self.assertEqual(popen.call_args.kwargs["env"]["QT_QPA_PLATFORM"], "xcb:custom")
+        self.assertEqual([call.kwargs['ready'] for call in write.call_args_list], [False, True])
+        factory.return_value.close.assert_called_once()
+        self.assertEqual(original[0:2], ["kstart5", "--fullscreen"])
+
+    def test_kde_native_platform_overrides_fail_before_start_without_being_rewritten(self):
+        for environment, arguments in (
+            ({"QT_QPA_PLATFORM": "wayland"}, []),
+            ({"QT_QPA_PLATFORM": "wayland;xcb"}, []),
+            ({}, ["-platform", "wayland"]),
+            ({}, ["-platform=wayland"]),
+        ):
+            command = ["kstart", "--fullscreen", "kturtle", *arguments]
+            with self.subTest(environment=environment, arguments=arguments), \
+                    mock.patch.dict(os.environ, environment, clear=True), \
+                    mock.patch.object(process_supervisor, "_enable_child_subreaper"), \
+                    mock.patch.object(process_supervisor.signal, "signal"), \
+                    mock.patch.object(app_display, "X11Fullscreen"), \
+                    mock.patch.object(process_supervisor.subprocess, "Popen") as popen, \
+                    mock.patch.object(process_supervisor, "owned_processes", return_value=[]), \
+                    mock.patch.object(process_supervisor, "remove_process_record"):
+                with self.assertRaisesRegex(OSError, "X11|xcb"):
+                    process_supervisor.supervise(command, "record", "marker", managed_fullscreen=True)
+                popen.assert_not_called()
+                self.assertEqual(command, ["kstart", "--fullscreen", "kturtle", *arguments])
+
     def test_readiness_is_published_only_after_fullscreen_confirmation(self):
         with mock.patch.object(process_supervisor, "_enable_child_subreaper"), \
                 mock.patch.object(process_supervisor.signal, "signal"), \
