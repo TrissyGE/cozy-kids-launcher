@@ -42,6 +42,7 @@ It does not read or change the developer's installed launcher configuration.
 | `screenshots/screenshot-admin-general.png` | Parent overview and opt-in local activity |
 | `screenshots/screenshot-theme-picker.png` | Localized theme selection overlay |
 | `screenshots/screenshot-app-store.png` | Searchable app store with curated guidance and direct-install entry point |
+| `screenshots/screenshot-app-details.png` | One filtered result with reviewed parent guidance and source links |
 | `screenshots/screenshot-profile-picker.png` | Child-facing profile selection |
 | `screenshots/screenshot-admin-children.png` | Separate child profile management |
 | `screenshots/screenshot-admin-screen-time.png` | Weekly and per-app availability schedules |
@@ -53,6 +54,9 @@ Use `--browser <command>` to select a specific Chromium-family browser or `--out
 The app-store image uses four existing recommendations with deterministic
 installed/missing flags. It demonstrates the interface and does not imply a
 native package-manager acceptance run on the capture host.
+The app-details image searches the full catalog for KTurtle, opens its real
+guidance, and uses a deterministic missing-package flag. It does not install
+software or reduce the catalog to one entry.
 
 ## Review checklist
 

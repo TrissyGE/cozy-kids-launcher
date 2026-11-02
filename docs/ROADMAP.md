@@ -21,8 +21,10 @@ increment was merged in [#62](https://github.com/TrissyGE/cozy-kids-launcher/pul
 Remaining distribution and desktop acceptance
 below still applies to release certification.
 Owned KDE fullscreen and the real-app desktop probe were merged in
-[#63](https://github.com/TrissyGE/cozy-kids-launcher/pull/63). The next increment
-audits installed-app discovery before adding curated recipes.
+[#63](https://github.com/TrissyGE/cozy-kids-launcher/pull/63), and installed-app
+discovery was merged in [#64](https://github.com/TrissyGE/cozy-kids-launcher/pull/64).
+The current increment expands sourced Parent guidance and makes completed work
+visible in the checklists below; see [review scope](CATALOG_GUIDANCE.md).
 
 1. **Quality repair — merged in #59:** shared local/CI/release checks,
    diagnosed browser assertions, corrected custom-theme/accessibility
@@ -70,15 +72,18 @@ test that default too, not only the windowed diagnostic harness.
 - [x] Restore the TuxMath fullscreen recipe without overwriting explicit custom arguments
 - [x] Verify TuxMath fullscreen, menu-to-game transition, overlay close and return to a fullscreen launcher on the current KDE/Wayland VM
 - [ ] Repeat the corrected TuxMath flow on native X11 and GNOME Wayland, including physical keyboard/touch input
-- [ ] Audit every catalog app's actual fullscreen behavior before catalog expansion; in particular, replace the stripped legacy `kstart --fullscreen` request with an owned, verified equivalent
-  - The legacy KDE request now reaches the owned supervisor, which starts the actual app and confirms compositor fullscreen; see [scope and repeatable real-app probes](CATALOG_FULLSCREEN.md).
-  - Native GNOME/X11, additional catalog apps and physical input remain individual acceptance work.
+- [x] Replace stripped legacy KDE fullscreen requests with owned, compositor-confirmed fullscreen (#63)
+- [x] Add a repeatable real catalog-app desktop probe, including isolated Firefox snap profiles (#63)
+- [x] Record KTurtle/KBruch fullscreen, overlay-close and cleanup automation on KDE/Wayland, with manual gaps explicit (#63; [evidence scope](CATALOG_FULLSCREEN.md))
+- [ ] Complete the per-app fullscreen audit across the remaining catalog and native GNOME/X11 sessions, including physical input
 - [ ] Require fullscreen, usable game input, a reachable close control and launcher return together in per-app desktop acceptance
 
 The current increment is tracked under **Unreleased** in the changelog. Historical
 release checkboxes below remain historical; an old desktop report does not
-certify every later commit. New milestone boxes stay open until the release
-standard at the end of this document is met.
+certify every later commit. Task checkboxes record implemented, tested work;
+partial tasks are split so completed parts can be checked independently.
+Distribution, desktop and publication gates remain separate open tasks until
+their own evidence is complete. See the release standard at the end.
 
 ## v0.4.1 — Project polish
 
@@ -166,20 +171,45 @@ standard at the end of this document is met.
 
 ### Cross-distribution app catalog
 
-- [ ] Redesign the Parent app catalog with search, child-friendly categories, detail views, and clear install, retry, update, and removal states
-- [ ] Expand the curated catalog with more educational, creative, media, and accessible apps such as GCompris, Tux Paint, KolourPaint, KTurtle, KGeography, KStars, and Stellarium where each distribution provides a maintained package
-- [ ] Show age guidance, offline capability, license, input methods, and privacy/network expectations before a parent installs an app
-- [ ] Replace distribution-specific install commands with tested package-provider adapters for APT, DNF, Pacman, Zypper, and suitable Flatpak remotes
-  - Native detection and safe manual-plan preparation are implemented for review; see [provider scope and evidence](PACKAGE_PROVIDERS.md).
-  - Terminal-free PackageKit/APT installation, progress, single-use confirmation, and a no-replay restart journal are implemented for review.
-  - Successful system-password dialog/installation checks on Ubuntu, Mint and Zorin, removal/update, full transaction reattachment, other native backends and Flatpak remain open.
-- [ ] Keep every package action Parent-authenticated, explicitly confirmed, argv-based, allowlisted, and free of downloaded arbitrary shell scripts
-- [ ] Preserve install progress and recoverable error state across a launcher restart without collecting package or family telemetry
+- [x] Add Parent app-store search, category/status filters, counts and keyboard-accessible detail views (#62)
+- [x] Show loading, empty, unavailable and error states with retry for app discovery/install assistance (#59–#62)
+- [x] Prevent duplicate tiles, including hidden ones, and roll back rejected tile saves (#62)
+- [x] Discover installed apps through XDG precedence, desktop-ID overrides, translated names and argv-preserving Exec handling (#64)
+- [x] Add metadata fields for age guidance, offline use, license, input and network expectations, showing unknown values explicitly (#62)
+- [x] Add initial sourced guidance for Tux Paint, GCompris and YouTube Kids (#62)
+- [x] Show localized review dates and supporting HTTPS references in app details, with explicit unknowns and bounded, deduplicated links
+- [x] Add sourced guidance for eight existing KDE recommendations and correct KBlocks' no-time-pressure claim ([review scope](CATALOG_GUIDANCE.md))
+- [ ] Review the remaining catalog guidance and unresolved network/privacy fields; refresh evidence when upstream behavior changes
+- [ ] Add new curated apps such as KolourPaint, KGeography, KStars and Stellarium after package availability and per-app fullscreen/input/return acceptance
+- [x] Detect native APT, DNF, Pacman and Zypper environments and prepare allowlisted manual plans (#59; [provider scope](PACKAGE_PROVIDERS.md))
+- [x] Add terminal-free PackageKit/APT review, consent, system authorization, progress and add-tile flow (#60)
+- [x] Protect existing package routes with Parent/origin checks, catalog-controlled names and expiring single-use confirmation (#60)
+- [x] Add private restart journaling that reports uncertainty and never replays installation consent (#60)
+- [ ] Add explicit update/removal review and progress flows under the same Parent/provider boundaries
+- [ ] Reattach supported system transactions after a launcher restart and recover full progress safely
+- [ ] Implement tested native DNF/Pacman/Zypper and managed Flatpak execution adapters
+- [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
+
+### More languages and extensible translations
+
+- [x] Ship German/English UI resources with generated-locale freshness checks and live language switching
+- [ ] Introduce one language registry for installer, backend validation and all language pickers
+- [ ] Make locale data files the translation source, with reusable English fallback, key/plural/placeholder validation and no per-language logic branches for adding a language
+- [ ] Translate and review Spanish across installer, child UI, Parent settings and recovery messages
+- [ ] Translate and review French across the same surfaces
+- [ ] Translate and review Italian after Spanish/French
+- [x] Make app descriptions, guidance and source labels use locale-key fallbacks so new packs can add translations through data
+- [ ] Document translation contributions, terminology and review ownership; track missing strings without silently claiming a complete language pack
+- [ ] Test longer labels, dates/numbers, keyboard navigation, speech availability and 800×600 layouts for each enabled language
+- [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
+
+The [translation guide](LOCALIZATION.md) explains the current German/English
+pipeline and the planned registry/data-file migration. Spanish, French and
+Italian remain upcoming packs, rather than already-enabled settings options.
 
 ### Lifecycle and reach
 
-- [ ] Add more installer and interface languages beyond German and English
 - [ ] Add a supported user-service lifecycle with useful status and recovery commands
 - [ ] Add stable and opt-in preview update channels without weakening immutable releases
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
@@ -220,12 +250,17 @@ standard at the end of this document is met.
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
 - [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
 - [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable
-- [ ] Evaluate a classic-confined Snap and request Snap Store approval if host-app launching remains reliable
-- [ ] Treat Flatpak as a feasibility track: prefer a reduced or self-hosted build unless sandbox integration and current Flathub policy become compatible with the launcher
+- [ ] Publish the Cozy Kids Launcher itself in the Snap Store
+  - [ ] Build and test an appropriate confinement/runtime model, including host-app launching, process ownership and store approval requirements
+- [ ] Publish the Cozy Kids Launcher itself as a Flatpak on Flathub
+  - [ ] Prototype the sandbox/host-launch boundary and preserve the required Parent, app and media behavior
+  - [ ] Prepare the Flatpak manifest, app metadata, package-managed update behavior and submission/review workflow
 - [ ] Pursue official Debian/Ubuntu and Arch repository adoption only as a long-term downstream-maintainer goal, not a release commitment
 
 Packaging therefore proceeds in the practical order DEB/APT, RPM repositories,
-AUR, classic Snap, then Flatpak feasibility. Every package format must preserve
+AUR, then Snap Store/Flathub preparation. Store publication distributes the
+launcher itself; installed-app discovery and package-provider support are
+separate capabilities. Every package format must preserve
 local configuration, desktop integration, host-app launching, and the
 stable-`main` updater contract.
 
@@ -240,11 +275,14 @@ stable-`main` updater contract.
 
 ## Release standard
 
-A roadmap checkbox is not complete until:
+A work-item checkbox is complete when its stated scope is implemented and:
 
 - automated tests or an explicit manual test cover it;
-- German and English behavior remain aligned;
+- every enabled language has aligned behavior or an explicit, tested fallback;
 - old configurations migrate safely;
 - diagnostics do not expose private family data;
-- relevant documentation and screenshots are updated;
-- the release passes the full gate in [RELEASING.md](RELEASING.md).
+- relevant documentation and screenshots are updated.
+
+A release milestone additionally requires its open distribution/desktop gates
+and the full gate in [RELEASING.md](RELEASING.md). A checked implementation task
+does not substitute for an unperformed release or physical-device acceptance.

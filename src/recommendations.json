@@ -17,14 +17,24 @@
     "category": "creative",
     "guidance": {
       "offline": "yes",
-      "input": ["mouse","keyboard"],
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
       "source": "https://tuxpaint.org/",
       "reviewed": "2026-11-02",
       "age_de": "3–12 Jahre (Projektangabe)",
       "age_en": "Ages 3–12 (project guidance)",
       "license": "GPL",
       "network_de": "Die offiziellen Desktop-Versionen haben laut Projekt keine Netzwerkfunktionen.",
-      "network_en": "The project states that official desktop releases have no networking functionality."
+      "network_en": "The project states that official desktop releases have no networking functionality.",
+      "references": [
+        {
+          "label_de": "Datenschutz des Projekts",
+          "label_en": "Project privacy policy",
+          "url": "https://tuxpaint.org/privacy/"
+        }
+      ]
     }
   },
   {
@@ -42,14 +52,25 @@
     "category": "learning",
     "guidance": {
       "offline": "partial",
-      "input": ["mouse","keyboard","touch"],
+      "input": [
+        "mouse",
+        "keyboard",
+        "touch"
+      ],
       "source": "https://gcompris.net/faq-en.html",
       "reviewed": "2026-11-02",
       "age_de": "2–10 Jahre (Projektangabe)",
       "age_en": "Ages 2–10 (project guidance)",
       "license": "GPL / AGPL",
       "network_de": "Sprachen, Bilder und Musik können nachgeladen werden. Automatische Downloads lassen sich in GCompris abschalten.",
-      "network_en": "Voices, images, and music can be downloaded. Automatic downloads can be disabled in GCompris."
+      "network_en": "Voices, images, and music can be downloaded. Automatic downloads can be disabled in GCompris.",
+      "references": [
+        {
+          "label_de": "Projektübersicht",
+          "label_en": "Project overview",
+          "url": "https://gcompris.net/index-en.html"
+        }
+      ]
     }
   },
   {
@@ -95,7 +116,26 @@
       "dnf": "kturtle",
       "pacman": "kturtle"
     },
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "age_de": "Für erste textbasierte Programmieraufgaben; Lesen und Tippen sind hilfreich (Elternorientierung).",
+      "age_en": "For first text-based programming tasks; reading and typing help (parent guidance).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/kturtle/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/kturtle/kturtle/index.html"
+        }
+      ]
+    }
   },
   {
     "id": "kanagram",
@@ -109,7 +149,33 @@
     "cmd": ["kstart","--fullscreen","kanagram"],
     "alt_cmds": ["kanagram"],
     "package": "kanagram",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "age_de": "Wörter lesen und Buchstaben ordnen können ist hilfreich (Elternorientierung).",
+      "age_en": "Reading words and arranging letters help (parent guidance).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/kanagram/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/kanagram/kanagram/index.html"
+        },
+        {
+          "label_de": "Zusätzliche Wortlisten",
+          "label_en": "Additional word lists",
+          "url": "https://docs.kde.org/stable_kf6/en/kanagram/kanagram/newstuff.html"
+        }
+      ],
+      "network_de": "Enthaltene Wortlisten sind lokal nutzbar. Weitere Listen können über die integrierte Download-Funktion aus dem Internet installiert werden.",
+      "network_en": "Included word lists work locally. More lists can be installed from the Internet through the built-in download feature."
+    }
   },
   {
     "id": "khangman",
@@ -123,7 +189,33 @@
     "cmd": ["kstart","--fullscreen","khangman"],
     "alt_cmds": ["khangman"],
     "package": "khangman",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "age_de": "Ab 6 Jahren (Projektangabe).",
+      "age_en": "Ages 6 and over (project guidance).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/khangman/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/khangman/khangman/index.html"
+        },
+        {
+          "label_de": "Sprachen und Wortdateien",
+          "label_en": "Languages and word files",
+          "url": "https://docs.kde.org/stable_kf6/en/khangman/khangman/languages.html"
+        }
+      ],
+      "network_de": "Mit installierten Wortlisten lokal spielbar. Weitere Sprachen und Wortdateien können aus dem Internet geladen werden.",
+      "network_en": "Playable locally with installed word lists. More languages and word files can be downloaded from the Internet."
+    }
   },
   {
     "id": "supertux",
@@ -265,7 +357,25 @@
     "cmd": ["kstart","--fullscreen","ktuberling"],
     "alt_cmds": ["ktuberling"],
     "package": "ktuberling",
-    "category": "creative"
+    "category": "creative",
+    "guidance": {
+      "age_de": "Für kleine Kinder und auch Erwachsene geeignet (Projektbeschreibung).",
+      "age_en": "Intended for young children and also suitable for adults (project description).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse"
+      ],
+      "source": "https://apps.kde.org/ktuberling/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/ktuberling/ktuberling/index.html"
+        }
+      ]
+    }
   },
   {
     "id": "klettres",
@@ -279,7 +389,33 @@
     "cmd": ["kstart","--fullscreen","klettres"],
     "alt_cmds": ["klettres"],
     "package": "klettres",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "age_de": "Ab etwa 2½ Jahren; auch für Erwachsene zum Sprachenlernen (Projektangabe).",
+      "age_en": "From about 2½ years; also for adults learning a language (project guidance).",
+      "offline": "partial",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/klettres/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/klettres/klettres/index.html"
+        },
+        {
+          "label_de": "Sprachdaten herunterladen",
+          "label_en": "Downloading language data",
+          "url": "https://docs.kde.org/stable_kf6/en/klettres/klettres/Get-new-stuff.html"
+        }
+      ],
+      "network_de": "Installierte Sprach- und Audiodaten sind lokal nutzbar. Zusätzliche Alphabete und Sprachen werden bei Bedarf aus dem Internet geladen.",
+      "network_en": "Installed language and audio data can be used locally. Additional alphabets and languages can be downloaded when needed."
+    }
   },
   {
     "id": "kbruch",
@@ -293,7 +429,26 @@
     "cmd": ["kstart","--fullscreen","kbruch"],
     "alt_cmds": ["kbruch"],
     "package": "kbruch",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "age_de": "Für Kinder, die Brüche und Grundrechenarten üben möchten (Elternorientierung).",
+      "age_en": "For children ready to practise fractions and basic arithmetic (parent guidance).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/kbruch/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/kbruch/kbruch/index.html"
+        }
+      ]
+    }
   },
   {
     "id": "kwordquiz",
@@ -344,12 +499,30 @@
     "label_en": "Blocks",
     "name_de": "KBlocks",
     "name_en": "KBlocks",
-    "desc_de": "Ein entspanntes Block-Puzzle ohne Zeitdruck, bei dem du Reihen löschen musst.",
-    "desc_en": "A relaxed block puzzle without time pressure where you clear lines.",
+    "desc_de": "Fallende Blöcke drehen und stapeln, um vollständige Reihen zu bilden und abzuräumen.",
+    "desc_en": "Rotate and stack falling blocks to complete and clear rows.",
     "cmd": ["kstart","--fullscreen","kblocks"],
     "alt_cmds": ["kblocks"],
     "package": "kblocks",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "age_de": "Fallende Blöcke erfordern zügige Tastatureingaben (Elternorientierung).",
+      "age_en": "Falling blocks require timely keyboard input (parent guidance).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/kblocks/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/kblocks/kblocks/index.html"
+        }
+      ]
+    }
   },
   {
     "id": "kreversi",
@@ -363,7 +536,25 @@
     "cmd": ["kstart","--fullscreen","kreversi"],
     "alt_cmds": ["kreversi"],
     "package": "kreversi",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "age_de": "Für Kinder, die einfache Brettspielregeln und vorausschauende Züge üben möchten (Elternorientierung).",
+      "age_en": "For children ready to practise simple board-game rules and planning moves (parent guidance).",
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse"
+      ],
+      "source": "https://apps.kde.org/kreversi/",
+      "reviewed": "2026-11-02",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "url": "https://docs.kde.org/stable_kf6/en/kreversi/kreversi/index.html"
+        }
+      ]
+    }
   },
   {
     "id": "youtube-kids",

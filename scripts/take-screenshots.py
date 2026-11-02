@@ -345,6 +345,26 @@ def main():
                       return true;
                     })()""",
                 )
+                capture(
+                    browser,
+                    url,
+                    output_dir / "screenshot-app-details.png",
+                    root / "chrome-app-details",
+                    """(async () => {
+                      enterAdmin();
+                      await loadRecommendations();
+                      recommendations=recommendations.map(rec=>({...rec,installed:rec.category==='browser'}));
+                      catalogQuery='KTurtle';catalogCategory='all';catalogStatus='all';
+                      renderRecommendations();
+                      activateAdminSection('apps');
+                      document.querySelector('[data-catalog-id="kturtle"] details').open=true;
+                      const panel=document.getElementById('recommendations');
+                      panel.style.minHeight='calc(100vh - 120px)';
+                      document.getElementById('catalogSearch').focus({preventScroll:true});
+                      panel.scrollIntoView({block:'start'});
+                      return true;
+                    })()""",
+                )
                 write_config(launcher_home, "ocean")
                 capture(
                     browser,

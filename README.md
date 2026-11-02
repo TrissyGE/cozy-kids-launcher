@@ -61,6 +61,11 @@ directly through the desktop's package authorization. See the
 
 ![Parent app store with search, filters, details and direct installation](screenshots/screenshot-app-store.png)
 
+Parent guidance includes its review date and links to the project documentation.
+Unknown network behavior stays explicit rather than implying a privacy audit.
+
+![App details with review date and supporting sources](screenshots/screenshot-app-details.png)
+
 The screenshots use a clean, generated demo profile. Maintainers can recreate them with `python3 scripts/take-screenshots.py`; see the [screenshot guide](docs/SCREENSHOTS.md).
 
 ## How it fits together

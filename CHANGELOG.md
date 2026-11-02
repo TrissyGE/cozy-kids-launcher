@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Catalog guidance and roadmap
+
+- Add sourced Parent guidance to eight existing KDE recommendations, with visible localized review dates and supporting references; preserve unknown network behavior
+- Validate displayed source links, deduplicate them, keep labels as plain text and expand filtered cards to the available width
+- Use data-driven catalog translation keys with an English fallback; document the existing UI translation pipeline and planned Spanish/French/Italian packs
+- Correct KBlocks' misleading no-time-pressure description without changing any package mappings or launch commands
+- Check off implemented roadmap increments separately from remaining desktop/release gates, and clarify first-party Snap Store/Flathub publication goals
+
 ### Installed-app discovery
 
 - Read only the main graphical desktop-entry group, honor hidden desktop-ID overrides and desktop visibility, and skip unavailable or unsupported launch contracts without crashing on empty TryExec

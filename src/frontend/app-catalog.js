@@ -1,7 +1,12 @@
 let catalogQuery='', catalogCategory='all', catalogStatus='all';
 
+function catalogText(record,key){
+  const value=record[key+'_'+cfg.language]||record[key+'_en'];
+  return typeof value==='string'?value:'';
+}
+
 function catalogName(rec){
-  return rec['name_'+cfg.language]||rec['label_'+cfg.language]||rec.id;
+  return catalogText(rec,'name')||catalogText(rec,'label')||rec.id;
 }
 
 function catalogAdded(rec){
@@ -58,7 +63,7 @@ function renderCatalogResults(){
   results.replaceChildren();
   const query=catalogQuery.trim().toLocaleLowerCase(cfg.language);
   const matches=recommendations.filter(rec=>{
-    const text=[catalogName(rec),rec['label_'+cfg.language],rec['desc_'+cfg.language],catalogCategoryLabel(rec.category)].join(' ').toLocaleLowerCase(cfg.language);
+    const text=[catalogName(rec),catalogText(rec,'label'),catalogText(rec,'desc'),catalogCategoryLabel(rec.category)].join(' ').toLocaleLowerCase(cfg.language);
     return (!query||text.includes(query))&&(catalogCategory==='all'||rec.category===catalogCategory)&&
       (catalogStatus==='all'||(catalogStatus==='installed'&&rec.installed)||(catalogStatus==='missing'&&!rec.installed)||(catalogStatus==='added'&&catalogAdded(rec)));
   }).sort((a,b)=>Number(catalogAdded(a))-Number(catalogAdded(b))||Number(b.installed)-Number(a.installed)||catalogName(a).localeCompare(catalogName(b),cfg.language));
@@ -68,7 +73,7 @@ function renderCatalogResults(){
   for(const rec of matches){
     const card=document.createElement('article'); card.className='rec-card'; card.dataset.catalogId=rec.id;
     const name=document.createElement('h3'); name.className='name'; name.textContent=catalogName(rec);
-    const desc=document.createElement('div'); desc.className='desc'; desc.textContent=rec['desc_'+cfg.language]||'';
+    const desc=document.createElement('div'); desc.className='desc'; desc.textContent=catalogText(rec,'desc');
     const state=document.createElement('div'); state.className='status '+(rec.installed?'installed':'missing');
     state.textContent=rec.category==='browser'?uiText.catalogWeb:rec.installed?uiText.installed:uiText.notInstalled;
     const actions=document.createElement('div'); actions.className='actions';
@@ -83,28 +88,50 @@ function renderCatalogResults(){
   results.appendChild(grid);
 }
 
+function catalogReviewDate(value){
+  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)) return uiText.catalogUnknown;
+  const date=new Date(value+'T00:00:00Z');
+  if(Number.isNaN(date.getTime())||date.toISOString().slice(0,10)!==value) return uiText.catalogUnknown;
+  try {return date.toLocaleDateString(cfg.language,{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'});}
+  catch(error){return value;}
+}
+
 function catalogDetails(rec){
   const details=document.createElement('details'); details.className='catalog-details';
   const summary=document.createElement('summary'); summary.textContent=uiText.catalogDetails; details.appendChild(summary);
   const list=document.createElement('dl');
   function row(label,value){const term=document.createElement('dt'); term.textContent=label; const description=document.createElement('dd'); description.textContent=value||uiText.catalogUnknown; list.append(term,description);}
   const info=rec.guidance||{};
-  row(uiText.catalogAge,info['age_'+cfg.language]);
+  row(uiText.catalogAge,catalogText(info,'age'));
   row(uiText.catalogOffline,({yes:uiText.catalogOfflineYes,partial:uiText.catalogOfflinePartial,no:uiText.catalogOfflineNo})[info.offline]);
   row(uiText.catalogLicense,info.license);
   row(uiText.catalogInput,(info.input||[]).map(key=>({mouse:uiText.catalogMouse,keyboard:uiText.catalogKeyboard,touch:uiText.catalogTouch})[key]).filter(Boolean).join(', '));
-  row(uiText.catalogNetwork,[info['network_'+cfg.language],rec.category==='browser'?uiText.catalogWebPrivacy:''].filter(Boolean).join(' '));
+  row(uiText.catalogNetwork,[catalogText(info,'network'),rec.category==='browser'?uiText.catalogWebPrivacy:''].filter(Boolean).join(' '));
+  row(uiText.catalogReviewed,catalogReviewDate(info.reviewed));
   details.appendChild(list);
-  if(typeof info.source==='string'&&/^https:\/\//.test(info.source)){
-    const link=document.createElement('a'); link.href=info.source; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent=uiText.catalogSource;
-    details.appendChild(link);
+  const sources=document.createElement('div'); sources.className='catalog-sources';
+  const seen=new Set();
+  function addSource(value,label){
+    if(typeof value!=='string') return;
+    let url;
+    try {url=new URL(value);}catch(error){return;}
+    if(url.protocol!=='https:'||!url.hostname||url.username||url.password||seen.has(url.href)) return;
+    seen.add(url.href);
+    const link=document.createElement('a'); link.href=url.href; link.target='_blank'; link.rel='noopener noreferrer';
+    link.textContent=label||uiText.catalogSource;
+    sources.appendChild(link);
   }
+  addSource(info.source,uiText.catalogSource);
+  for(const reference of (Array.isArray(info.references)?info.references:[]).slice(0,4)){
+    if(reference&&typeof reference==='object') addSource(reference.url,catalogText(reference,'label'));
+  }
+  if(sources.childElementCount) details.appendChild(sources);
   return details;
 }
 
 async function addCatalogTile(rec,button){
   if(catalogAdded(rec)) return;
-  const tile={id:rec.id,label:rec['label_'+cfg.language]||rec.id,emoji:rec.emoji||'✨',cmd:rec.cmd||[],visible:true};
+  const tile={id:rec.id,label:catalogText(rec,'label')||rec.id,emoji:rec.emoji||'✨',cmd:rec.cmd||[],visible:true};
   cfg.tiles.push(tile); button.disabled=true;
   try {await persistConfig(); renderAll();}
   catch(error){
