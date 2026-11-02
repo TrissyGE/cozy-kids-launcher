@@ -1,6 +1,64 @@
 # Technical audit
 
-This audit captures the modernization priorities identified in August 2026. The goal is to keep Cozy Kids Launcher lightweight and local-first while making releases safer to maintain.
+This audit preserves the August 2026 modernization history and the September 9,
+2026 follow-up review. The goal is to keep Cozy Kids Launcher lightweight and
+local-first while making releases safer to maintain.
+
+## September 9 review: current findings and scope
+
+Reviewed baseline: `develop` at `91b7157` (PR #58), with published v0.6.0 and
+`main` at `01dd9f0`. The working tree was clean. The frontend/server split,
+profiles, schedules, activity, and media work is already present.
+
+The latest baseline [CI run](https://github.com/TrissyGE/cozy-kids-launcher/actions/runs/33668153728)
+passed both Python jobs but failed the saved-accessibility browser assertion.
+An isolated local baseline passed **277 unit/integration tests** and all **18
+core/accessibility journeys**. The failure screenshot showed the intended
+appearance, but does not prove which computed property caused the assertion.
+The follow-up uses a bounded wait for the same exact values and reports each
+observed property; it does not weaken the criteria or retry the entire journey.
+
+Confirmed defects addressed by the current increment:
+
+- Custom theme CSS variables and background opacity survived switches to a
+  built-in theme or a profile with fewer custom values. Custom inline colors
+  could also override high contrast in the launcher, media library, and preview.
+- The media fallback-cover rule also colored its nested play symbol, making the
+  symbol invisible against the play badge. It now targets only the placeholder.
+- The update action displayed success and scheduled an exit even after an HTTP
+  failure or missing acknowledgement. It now requires `status: triggered`;
+  cancellation and failure leave the launcher running with an actionable error.
+- Package assistance always suggested `sudo apt install -y`, and the browser
+  guessed that command even after authorization/network failures. It now shows
+  only the server's native manual plan, or an honest unavailable/error state.
+  Closed dialogs ignore late responses, and malformed package types return 400.
+- Local, CI, and release checks had diverging hardcoded source lists. Their
+  multi-file `bash -n` commands only checked the first file. A shared discovery
+  runner checks every script separately; a deliberately broken second-script
+  regression protects this behavior. CI bounds job duration and cancels only
+  superseded PR runs.
+
+Evidence is generated through `python3 scripts/check.py`, including new focused
+browser regressions in `scripts/wsl/browser_regressions.py`. Native-provider
+fixtures prove selection and command preparation, **not successful package
+transactions**. No real updates, package installations, or desktop VMs are
+started by this increment's automated checks. Neither `main` nor published
+release tags are changed.
+
+Verification of code commit `fcf7c39`: **286 unit/integration tests passed**,
+the complete local core/accessibility suite passed, and the final focused
+regressions passed with German/English 800x600 and media-icon screenshots
+visually inspected. [PR #59 CI](https://github.com/TrissyGE/cozy-kids-launcher/actions/runs/34323507089)
+also passed Python 3.9, Python 3.13, and the complete Chromium suite on the first
+run of this change. This establishes the tested result, not proof that the
+baseline's intermittent accessibility failure can never recur.
+
+Next: review catalog metadata and desktop-entry parsing, add the searchable
+catalog/detail UX, then implement and verify the package lifecycle on real
+distributions. [ROADMAP.md](ROADMAP.md) records the execution order;
+[PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) records the deliberately limited
+first provider mappings. This review is not a complete security audit or a new
+GNOME/KDE/XFCE certification.
 
 ## Completed foundation
 
@@ -45,4 +103,5 @@ browser allowlists, search/bulk editing in Parent settings, opt-in local audio
 feedback, fixed unscored celebration moments, and combinable accessibility
 presets are now covered by the v0.6.0 work.
 
-These features should follow the release and platform work so new behavior is built on a testable base.
+The next product increment is the v0.8.0 catalog and provider work, following
+the post-v0.6.0 quality repairs above.

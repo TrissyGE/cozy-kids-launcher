@@ -369,7 +369,7 @@
     --shadow:0 0 0 2px #111;
     --rec-shadow:rgba(0,0,0,.18);
   }
-  html.access-high-contrast body.theme-world #themeBg { display:none; }
+  html.access-high-contrast #themeBg { display:none; }
   .launcher-preview.access-high-contrast { background:#fff !important; }
   .launcher-preview.access-high-contrast::before,
   .launcher-preview.access-high-contrast::after { display:none; }

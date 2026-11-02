@@ -32,7 +32,7 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/state.js` contains shared state and localized UI strings
 - `src/frontend/icons.js` contains the dependency-free local SVG registry and the safe text fallback for custom tile emoji
 - `src/frontend/dialogs.js` owns accessible confirmation dialogs and focus restoration
-- `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview
+- `src/frontend/theme-runtime.js` applies shared world-theme motion and local time-of-day classes to the launcher, media library, and isolated Parent preview; it also resets/applies custom palette and background overrides for the launcher and media library without overriding high contrast
 - `src/frontend/accessibility-runtime.js` applies combinable profile presets to the launcher, media library, and isolated Parent preview
 - `src/frontend/feedback-runtime.js` owns opt-in synthesized UI tones and sends only focused tile IDs to the local speech endpoint
 - `src/frontend/celebration-runtime.js` owns the fixed opt-in success burst and its reduced-motion gate without scores or progress state
@@ -108,6 +108,13 @@ discovery, timer state, update discovery/triggering, lifecycle state, process
 ownership, bounded local speech feedback, backups, and privacy-safe diagnostics. The server supplies installed
 paths and turns module results into the existing HTTP responses; the modules do
 not depend on the HTTP handler.
+
+`src/package_provider.py` detects the native package manager and prepares manual
+installation plans from catalog keys and explicit provider mappings. It never
+starts a subprocess. The Parent-protected `/api/install-package` route returns
+`manual` with an argv/command plan, `unsupported` without a command, or HTTP 400
+for invalid input. The frontend never manufactures a fallback shell command.
+See [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for supported mappings and limits.
 
 ### 3. Launch adapters
 

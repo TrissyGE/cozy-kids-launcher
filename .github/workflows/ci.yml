@@ -8,10 +8,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -25,25 +30,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run unit and API tests
-        run: python -m unittest discover -s tests -v
+        run: python scripts/check.py --only unit
 
-      - name: Compile Python templates
-        run: python -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/activity_store.py src/backup_store.py src/browser_policy.py src/config_store.py src/config_validation.py src/profile_config.py src/schedule_rules.py src/lifecycle_state.py src/media_library.py src/media_state.py src/media_resume.py src/media_session.py src/parent_auth.py src/speech_feedback.py src/runtime_diagnostics.py src/process_state.py src/process_supervisor.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/generate-locales.py scripts/take-screenshots.py scripts/linux/desktop_smoke.py scripts/wsl/browser_driver.py scripts/wsl/browser-e2e.py scripts/wsl/capture-page.py scripts/wsl/probe-web-targets.py
-
-      - name: Validate JSON data
-        run: |
-          python -m json.tool examples/config.example.json >/dev/null
-          python -m json.tool src/recommendations.json >/dev/null
-          python -m json.tool src/frontend/locales/de.json >/dev/null
-          python -m json.tool src/frontend/locales/en.json >/dev/null
-          python scripts/generate-locales.py --check
-
-      - name: Check shell syntax
-        run: bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh scripts/wsl/setup-test-env.sh scripts/wsl/check-mpv-resume.sh scripts/wsl/check-vlc-resume.sh scripts/wsl/run-gui-smoke.sh src/launcher.sh
+      - name: Validate Python, JSON, locales, and every shell script
+        run: python scripts/check.py --only static
 
   browser-e2e:
     name: Browser end-to-end
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v7
@@ -56,7 +51,7 @@ jobs:
         run: python -m pip install websocket-client==1.8.0
 
       - name: Exercise core browser journeys
-        run: python scripts/wsl/browser-e2e.py
+        run: python scripts/check.py --only browser
 
       - name: Upload browser diagnostics
         if: always()

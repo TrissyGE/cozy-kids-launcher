@@ -56,7 +56,27 @@ async function startupUpdateCheck(){
     }
   }catch(e){}
 }
-async function installUpdate(){ if(!(await requestConfirmation(uiText.updateConfirm||'Close browser and install update now?',uiText.updateNow))) return; try{ await fetch('/api/update',{method:'POST'}); }catch(e){} document.getElementById('updating').classList.remove('hidden'); setTimeout(()=>{ fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }, 3000); }
+let updateTriggerPending=false;
+async function installUpdate(){
+  if(updateTriggerPending) return;
+  updateTriggerPending=true;
+  const button=document.getElementById('updateNowBtn');
+  try{
+    if(!(await requestConfirmation(uiText.updateConfirm,uiText.updateNow))) return;
+    button.disabled=true;
+    const response=await fetch('/api/update',{method:'POST'});
+    if(!response.ok) throw new Error('Update trigger rejected');
+    const result=await response.json();
+    if(result.status!=='triggered') throw new Error('Update trigger not acknowledged');
+    document.getElementById('updating').classList.remove('hidden');
+    // The launcher owns shutdown and execution of the accepted update trigger.
+  }catch(e){
+    renderUiState(document.getElementById('updateMsg'),'error',uiText.updateStartError,installUpdate);
+  }finally{
+    updateTriggerPending=false;
+    button.disabled=false;
+  }
+}
 
 const ADMIN_SECTIONS=[
   ['overview','adminOverview'],
@@ -157,7 +177,9 @@ function renderAppearancePreview(){
   for(const token of ['--bg1','--bg2','--text','--btn','--card']){
     preview.style.removeProperty(token);
   }
-  if(theme.id==='custom'){
+  if(preview.classList.contains('access-high-contrast')){
+    preview.style.background='';
+  }else if(theme.id==='custom'){
     const bg1=document.getElementById('cfgCustomBg1').value||'#ffd6e8';
     const bg2=document.getElementById('cfgCustomBg2').value||'#ffeef6';
     preview.style.setProperty('--bg1',bg1);
@@ -712,36 +734,51 @@ function renderRecommendations(){
   panel.appendChild(disclaimer);
 }
 let pendingInstallCommand='';
-function triggerInstall(rec){
-  pendingInstallCommand='sudo apt install -y '+rec.package;
+let installRequestId=0;
+async function triggerInstall(rec){
+  const requestId=++installRequestId;
+  pendingInstallCommand='';
+  const overlay=document.getElementById('installOverlay');
+  const commandBox=overlay.querySelector('.command-box');
+  const message=document.getElementById('installMessage');
+  commandBox.classList.add('hidden');
+  document.getElementById('installCommand').textContent='';
+  document.getElementById('installCopyBtn').disabled=true;
+  renderUiState(message,'loading',uiText.installLoading);
   document.getElementById('installTitle').textContent=(uiText.install||'Install')+' '+((cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id);
-  fetch('/api/install-package',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:rec.package})})
-    .then(r=>r.json()).then(data=>{
-      const msg=document.getElementById('installMessage');
-      if(data.status==='started'){
-        msg.textContent=uiText.installStarted||'Installation started. Watch for a password dialog, or run the command below:';
-      } else {
-        msg.textContent=uiText.installManual||'Please run this command in a terminal:';
-      }
-      if(data.command) pendingInstallCommand=data.command;
-      document.getElementById('installCommand').textContent=pendingInstallCommand;
-      const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
-      const hintEl=document.getElementById('installHint');
-      hintEl.textContent=hint||'';
-      hintEl.style.display=hint?'block':'none';
-      document.getElementById('installOverlay').classList.remove('hidden');
-    }).catch(()=>{
-      document.getElementById('installMessage').textContent=uiText.installManual||'Please run this command in a terminal:';
-      document.getElementById('installCommand').textContent=pendingInstallCommand;
-      const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
-      const hintEl=document.getElementById('installHint');
-      hintEl.textContent=hint||'';
-      hintEl.style.display=hint?'block':'none';
-      document.getElementById('installOverlay').classList.remove('hidden');
-    });
+  const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
+  const hintEl=document.getElementById('installHint');
+  hintEl.textContent=hint||'';
+  hintEl.style.display=hint?'block':'none';
+  overlay.classList.remove('hidden');
+  document.getElementById('installCloseBtn').focus();
+  try{
+    const response=await fetch('/api/install-package',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:rec.package})});
+    if(!response.ok) throw new Error('Package instructions rejected');
+    const data=await response.json();
+    if(requestId!==installRequestId) return;
+    if(data.status==='unsupported'){
+      renderUiState(message,'empty',uiText.installUnsupported);
+      return;
+    }
+    if(data.status!=='manual'||typeof data.command!=='string'||!data.command.trim()){
+      throw new Error('Invalid package instructions');
+    }
+    pendingInstallCommand=data.command;
+    clearUiState(message);
+    message.textContent=uiText.installManual;
+    message.hidden=false;
+    document.getElementById('installCommand').textContent=pendingInstallCommand;
+    commandBox.classList.remove('hidden');
+    document.getElementById('installCopyBtn').disabled=false;
+  }catch(e){
+    if(requestId!==installRequestId) return;
+    renderUiState(message,'error',uiText.installError,()=>triggerInstall(rec));
+  }
 }
-function closeInstallOverlay(){ document.getElementById('installOverlay').classList.add('hidden'); }
+function closeInstallOverlay(){ ++installRequestId; pendingInstallCommand=''; document.getElementById('installOverlay').classList.add('hidden'); }
 async function copyInstallCommand(){
+  if(!pendingInstallCommand) return;
   try{
     await navigator.clipboard.writeText(pendingInstallCommand);
     const btn=document.querySelector('#installOverlay .command-box .smallbtn');

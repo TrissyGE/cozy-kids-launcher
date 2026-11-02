@@ -16,7 +16,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("branches: [main, develop]", workflow)
-        self.assertIn("src/schedule_rules.py", workflow)
+        self.assertIn("python scripts/check.py --only static", workflow)
 
     def test_release_is_published_before_main_is_promoted(self):
         workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "release.yml").read_text(
@@ -291,6 +291,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
                 / "cozy-kids-launcher"
                 / "frontend"
             )
+            self.assertTrue((frontend_root.parent / "package_provider.py").is_file())
             self.assertTrue((frontend_root / "localization.js").is_file())
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())

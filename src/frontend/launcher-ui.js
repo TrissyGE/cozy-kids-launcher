@@ -130,32 +130,7 @@ async function bootstrapLauncher(){
   }
 }
 function applyDynamicTheme(){
-  const body=document.body;
-  const bg=document.getElementById('themeBg');
-  if(!cfg || cfg.theme!=='custom'){
-    if(bg) bg.style.backgroundImage='';
-    return;
-  }
-  const c=cfg.customColors||{};
-  if(c.bg1) body.style.setProperty('--bg1',c.bg1);
-  if(c.bg2) body.style.setProperty('--bg2',c.bg2);
-  if(c.text) body.style.setProperty('--text',c.text);
-  if(c.btn) body.style.setProperty('--btn',c.btn);
-  if(c.card) body.style.setProperty('--card',c.card);
-  if(c.btnText) body.style.setProperty('--btn-text',c.btnText);
-  if(c.smallbtnBg) body.style.setProperty('--smallbtn-bg',c.smallbtnBg);
-  if(c.inputBorder) body.style.setProperty('--input-border',c.inputBorder);
-  if(c.recShadow) body.style.setProperty('--rec-shadow',c.recShadow);
-  if(c.shadow) body.style.setProperty('--shadow',c.shadow);
-  if(bg){
-    if(cfg.customBackground){
-      bg.style.backgroundImage='url('+cfg.customBackground+')';
-      bg.style.opacity='1';
-    }else{
-      bg.style.backgroundImage='';
-      bg.style.opacity='0';
-    }
-  }
+  applyCustomThemeRuntime(document.body,cfg,document.getElementById('themeBg'));
 }
 function renderAll(){
   renderLocalizedChrome();

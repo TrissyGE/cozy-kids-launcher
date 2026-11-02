@@ -17,12 +17,13 @@ The project has no application dependency-install step. Development requires Pyt
 ## Run the checks
 
 ```bash
-python3 -m unittest discover -s tests -v
-python3 -m py_compile src/server.py src/app_detection.py src/application_launcher.py src/config_store.py src/config_validation.py src/media_library.py src/parent_auth.py src/runtime_diagnostics.py src/process_state.py src/overlay.py src/timer_state.py src/timer_watchdog.py src/update_manager.py scripts/take-screenshots.py
-bash -n scripts/install.sh scripts/update.sh scripts/deploy.sh src/launcher.sh
-python3 -m json.tool examples/config.example.json >/dev/null
-python3 -m json.tool src/recommendations.json >/dev/null
+python3 scripts/check.py
 ```
+
+This runs the same static, unit/integration, and Chromium checks used by CI.
+Browser tests need a Chromium-family browser and `websocket-client`; see
+[Development](docs/DEVELOPMENT.md) for prerequisites and focused test commands.
+No real family profile or system package installation is changed by these tests.
 
 For launcher, browser, audio, or video changes, also use the [WSLg smoke-test environment](docs/WSL_TESTING.md) or a disposable Linux profile.
 

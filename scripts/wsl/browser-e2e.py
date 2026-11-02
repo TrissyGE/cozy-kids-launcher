@@ -17,6 +17,7 @@ import urllib.request
 from pathlib import Path
 
 from browser_driver import BrowserSession, find_browser, stop_process
+from browser_regressions import run_regression_scenarios, wait_for_values
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -82,12 +83,12 @@ def wait_for_server(url, process, timeout=15):
     raise TimeoutError("Launcher server did not become ready")
 
 
-def write_demo_config(config_path, browser_name):
+def write_demo_config(config_path, browser_name, setup_completed=False):
     with config_path.open(encoding="utf-8") as handle:
         config = json.load(handle)
     config.update({
         "language": "en",
-        "setupCompleted": False,
+        "setupCompleted": setup_completed,
         "parentLabel": "Parent",
         "exitLabel": "Exit kids mode",
         "pinHash": "",
@@ -586,15 +587,14 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     }
     if any(saved_config.get(key) != value for key, value in expected.items()):
         raise AssertionError(f"Saved config does not match the UI: {saved_config!r}")
-    assert_js(
-        browser,
-        "['access-large-text','access-high-contrast','access-reduced-motion',"
-        "'access-keyboard-focus'].every(name=>document.documentElement.classList.contains(name)) && "
-        "getComputedStyle(document.documentElement).fontSize==='18px' && "
-        "getComputedStyle(document.body).getPropertyValue('--text').trim()==='#111' && "
-        "getComputedStyle(document.querySelector('#grid .tile')).outlineWidth==='6px'",
-        "Saved accessibility presets were not applied to the launcher",
-    )
+    wait_for_values(browser, """({
+        classes:['access-large-text','access-high-contrast','access-reduced-motion',
+                 'access-keyboard-focus'].every(name=>document.documentElement.classList.contains(name)),
+        fontSize:getComputedStyle(document.documentElement).fontSize,
+        text:getComputedStyle(document.body).getPropertyValue('--text').trim(),
+        outline:getComputedStyle(document.querySelector('#grid .tile')).outlineWidth
+    })""", {"classes": True, "fontSize": "18px", "text": "#111", "outline": "6px"},
+        "Saved accessibility presets were not applied to the launcher")
     feedback_result = browser.evaluate(
         "(()=>{window.__toneStarts=0;cozyFeedbackAudioContext=null;"
         "window.AudioContext=class{constructor(){this.state='running';this.currentTime=0;"
@@ -1383,6 +1383,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
+    parser.add_argument("--suite", choices=("all", "core", "regressions"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -1456,7 +1457,7 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name)
+            write_demo_config(config_path, browser_name, setup_completed=args.suite == "regressions")
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = installed_version
 
@@ -1493,13 +1494,16 @@ def main():
                 height=900,
             ) as browser:
                 try:
-                    run_scenarios(
-                        browser,
-                        ReleaseFixtureHandler,
-                        installed_version,
-                        args.artifacts,
-                    )
-                    run_accessibility_scenarios(browser, args.artifacts)
+                    if args.suite in ("all", "core"):
+                        run_scenarios(
+                            browser,
+                            ReleaseFixtureHandler,
+                            installed_version,
+                            args.artifacts,
+                        )
+                        run_accessibility_scenarios(browser, args.artifacts)
+                    if args.suite in ("all", "regressions"):
+                        run_regression_scenarios(browser, args.artifacts, base_url)
                     browser.screenshot(args.artifacts / "final-state.png")
                 except Exception:
                     browser.screenshot(args.artifacts / "failure.png")
@@ -1513,7 +1517,7 @@ def main():
         release_server.server_close()
         release_thread.join(timeout=5)
 
-    print("Browser E2E passed: 18 core and accessibility journeys", flush=True)
+    print(f"Browser E2E passed: {args.suite} suite", flush=True)
     print(f"Artifacts: {args.artifacts}", flush=True)
 
 

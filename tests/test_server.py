@@ -507,6 +507,33 @@ class ServerApiTests(unittest.TestCase):
         )
         return directory
 
+    def test_package_instructions_require_parent_session_and_validate_input(self):
+        self.enable_pin()
+        Path(server_module.RECOMMENDATIONS_FILE).write_text(
+            json.dumps([{"id": "tuxpaint", "package": "tuxpaint"}]), encoding="utf-8"
+        )
+        status, _, _ = self.request("/api/install-package", method="POST",
+                                    body={"package": "tuxpaint"}, origin=self.base_url)
+        self.assertEqual(status, 403)
+        cookie = self.authenticate()
+        for value in ([], {}, None, "unknown", "tuxpaint;id"):
+            with self.subTest(value=value):
+                status, _, _ = self.request("/api/install-package", method="POST",
+                                            body={"package": value}, origin=self.base_url, cookie=cookie)
+                self.assertEqual(status, 400)
+        with mock.patch("package_provider.detect_native_provider", return_value="apt"):
+            status, data, _ = self.request("/api/install-package", method="POST",
+                                          body={"package": "tuxpaint"}, origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(data["status"], "manual")
+        self.assertEqual(data["command"], "sudo apt install --no-remove tuxpaint")
+        with mock.patch("package_provider.detect_native_provider", return_value=None):
+            status, data, _ = self.request("/api/install-package", method="POST",
+                                          body={"package": "tuxpaint"}, origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(data["status"], "unsupported")
+        self.assertNotIn("command", data)
+
     def test_config_endpoint_hides_hash_and_sends_security_headers(self):
         self.enable_pin()
         status, data, headers = self.request("/api/config")
