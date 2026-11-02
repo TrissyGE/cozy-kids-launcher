@@ -904,7 +904,7 @@ def main():
     if report.data["outcome"] == "passed":
         print("Desktop smoke passed, including all manual VM checks.", flush=True)
     else:
-        print("Desktop automation passed; complete the six manual VM checks.", flush=True)
+        print("Desktop automation passed; complete the pending manual VM checks.", flush=True)
     print(f"Report: {report.path}", flush=True)
 
 

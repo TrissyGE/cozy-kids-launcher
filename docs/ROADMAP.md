@@ -17,8 +17,8 @@ The November 2 continuation merged the quality/provider foundation in
 Python 3.9 runner in [#61](https://github.com/TrissyGE/cozy-kids-launcher/pull/61).
 Terminal-free installation was merged in
 [#60](https://github.com/TrissyGE/cozy-kids-launcher/pull/60). The discovery
-increment in [#62](https://github.com/TrissyGE/cozy-kids-launcher/pull/62) now
-targets `develop` directly. Remaining distribution and desktop acceptance
+increment was merged in [#62](https://github.com/TrissyGE/cozy-kids-launcher/pull/62).
+Remaining distribution and desktop acceptance
 below still applies to release certification.
 
 1. **Quality repair — merged in #59:** shared local/CI/release checks,
@@ -44,7 +44,7 @@ below still applies to release certification.
    source-backed package mappings. Audit desktop-entry discovery and existing
    recommendation wording before expanding the catalog.
    Search, combined filters and sourced detail fields are implemented in a
-   separate review increment. Its Install action retains the terminal-free
+   merged discovery increment (#62). Its Install action retains the terminal-free
    review, confirmation and PackageKit flow; copying a command is not the normal
    Parent installation path. New app recipes still require fullscreen acceptance.
 5. **Then broaden package actions:** update/removal and richer restart recovery;
@@ -65,6 +65,8 @@ test that default too, not only the windowed diagnostic harness.
 - [x] Verify TuxMath fullscreen, menu-to-game transition, overlay close and return to a fullscreen launcher on the current KDE/Wayland VM
 - [ ] Repeat the corrected TuxMath flow on native X11 and GNOME Wayland, including physical keyboard/touch input
 - [ ] Audit every catalog app's actual fullscreen behavior before catalog expansion; in particular, replace the stripped legacy `kstart --fullscreen` request with an owned, verified equivalent
+  - The legacy KDE request now reaches the owned supervisor, which starts the actual app and confirms compositor fullscreen; see [scope and repeatable real-app probes](CATALOG_FULLSCREEN.md).
+  - Native GNOME/X11, additional catalog apps and physical input remain individual acceptance work.
 - [ ] Require fullscreen, usable game input, a reachable close control and launcher return together in per-app desktop acceptance
 
 The current increment is tracked under **Unreleased** in the changelog. Historical

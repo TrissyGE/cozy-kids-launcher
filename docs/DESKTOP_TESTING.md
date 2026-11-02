@@ -63,6 +63,11 @@ Logs, lifecycle evidence, and the privacy-safe report are written below:
 
 An automated run ends with `automation-passed-manual-pending`. That is useful diagnostic evidence, but it is not a completed desktop result.
 
+Use `--catalog-app kturtle` or another existing KDE fullscreen recommendation
+to exercise a real installed app instead of the sleeping fixture. See
+[CATALOG_FULLSCREEN.md](CATALOG_FULLSCREEN.md) for the separate X11/XWayland
+assertions and additional lesson/input acceptance requirement.
+
 ## Manual desktop checks
 
 Restore the VM snapshot and install normally into the disposable user's actual

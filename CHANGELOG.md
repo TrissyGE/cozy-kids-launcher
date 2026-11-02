@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Corrections
 
+- Preserve legacy KDE catalog fullscreen requests through owned supervision, launch the actual app directly on X11/XWayland, and require compositor confirmation instead of silently opening a windowed app
+- Add an optional real KDE catalog-app desktop probe with independent fullscreen observation, overlay-close/cleanup checks and explicit native-Wayland/input acceptance gaps
 - Keep TuxMath fullscreen by requesting and confirming compositor-managed fullscreen on its owned X11/XWayland window, avoiding SDL's exclusive mouse grab; preserve explicit windowed choices and keep launcher kiosk fullscreen as the installation default
 - Preserve Parent-customized app arguments when loading configuration; migrate only bare catalog commands, bare aliases and explicitly recorded old defaults
 - Clear custom palette/background overrides when switching themes or child profiles, and respect high contrast in the launcher, Parent preview, and media library

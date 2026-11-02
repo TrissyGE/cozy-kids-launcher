@@ -135,6 +135,12 @@ Every tile is posted to `/launch/<tile-id>`. The server normalizes the existing 
 - **web** — redirects compatible embedded sites to the wrapper or starts the selected browser in a dedicated external profile
 - **app** — starts an argument vector directly without a shell
 
+Legacy `kstart --fullscreen` requests reach the owned supervisor intact. It
+starts the real app on X11/XWayland and waits for PID-scoped compositor fullscreen
+confirmation instead of detaching a wrapper or discarding its intent. Other
+custom commands retain their arguments. See
+[CATALOG_FULLSCREEN.md](CATALOG_FULLSCREEN.md) for platform limits and acceptance.
+
 Existing `special:` commands and older `xdg-open URL` browser tiles remain compatible. Embedded tiles automatically allow their configured start origin and may carry at most 20 additional exact `http(s)` origins in `browserAllowedOrigins`. `browser_policy.py` canonicalizes that list; the server accepts `browser.html` only when its tile and URL match the active configuration, then emits a per-request `frame-src` Content Security Policy. The wrapper sandbox cannot navigate the launcher top level, and a blocked frame navigation produces a local child-friendly explanation. External mode intentionally sits outside this navigation boundary and is labelled accordingly in Parent settings. Recommended public media sites use external mode because framing policies, login flows, and DRM make third-party iframe behavior unreliable.
 
 The read-only `/api/media` foundation scans only the configured local Videos
