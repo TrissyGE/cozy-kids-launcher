@@ -48,6 +48,11 @@ The browser suite also covers custom-theme resets and accessibility precedence
 in the launcher, Parent preview, and media library, plus rejected, offline,
 malformed, pending, and acknowledged update/install requests. These mutations
 use local fixtures: no real update or system package installation is started.
+App-store regressions exercise combined search/category/status filters,
+keyboard-accessible guidance, hidden-tile duplicate prevention, rejected-save
+rollback, bilingual controls at 800x600 and the real card-to-install-review
+entry point. Package-manager consent/progress fixtures remain separate from
+the native desktop acceptance check.
 Bounded rendering assertions report individual observed values on failure;
 retrying an entire failed journey is not a substitute for diagnosing it.
 

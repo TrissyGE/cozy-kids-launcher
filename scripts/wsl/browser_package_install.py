@@ -15,7 +15,7 @@ def run_catalog_install_scenarios(browser, artifacts):
         window.__pkgStoredConfig=await stored.json();
         window.__pkgFetch=window.fetch.bind(window); window.__pkgInstallCalls=0;
         window.__pkgRec={id:'e2e-catalog',package:'fixture',name_en:'Creative App',name_de:'Kreativ-App',
-            label_en:'Creative App',label_de:'Kreativ-App',emoji:'🎨',cmd:['true','cozy-catalog-fixture'],installed:false};
+            label_en:'Creative App',label_de:'Kreativ-App',emoji:'🎨',category:'creative',cmd:['true','cozy-catalog-fixture'],installed:false};
         window.__pkgRecommendations=[...recommendations,window.__pkgRec]; recommendations=window.__pkgRecommendations;
         window.__pkgReady={status:'ready',jobId:'fixture-job',appId:'e2e-catalog',confirmationToken:'fixture-consent',
             packages:['fixture','<img src=x onerror=alert(1)>'],downloadBytes:10485760};
@@ -46,7 +46,9 @@ def run_catalog_install_scenarios(browser, artifacts):
         enterAdmin(); activateAdminSection('apps');
     })()""", await_promise=True)
     try:
-        browser.evaluate("triggerInstall(window.__pkgRec)", await_promise=True)
+        browser.evaluate("document.querySelector('[data-catalog-id=\"e2e-catalog\"] .actions button').focus()")
+        browser.click('[data-catalog-id="e2e-catalog"] .actions button')
+        browser.wait_for("packageIsOpen() && packageJob.jobId==='fixture-job'")
         check("packageIsOpen() && document.getElementById('packageAction').hidden && window.__pkgInstallCalls===0",
               'A checking plan installed or offered confirmation prematurely')
         browser.evaluate("window.__pkgState=window.__pkgReady; refreshPackageStatus()", await_promise=True)

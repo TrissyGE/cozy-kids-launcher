@@ -232,6 +232,21 @@
   .rec-card .status.installed { background:#d9f7df; color:#24563a; }
   .rec-card .status.missing { background:#ffeef0; color:#c00; }
   .rec-card .actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .catalog-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .catalog-heading h2 { margin:0; }
+  .catalog-controls { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+  .catalog-controls label { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .catalog-controls input, .catalog-controls select { width:100%; min-width:0; min-height:44px; box-sizing:border-box; }
+  .rec-card { min-width:0; }
+  .rec-card h3 { margin:0; }
+  .catalog-details { width:100%; font-size:.85rem; overflow-wrap:anywhere; }
+  .catalog-details summary { cursor:pointer; min-height:44px; display:flex; align-items:center; justify-content:center; text-decoration:underline; }
+  .catalog-details dl { margin:8px 0; }
+  .catalog-details dt { font-weight:700; margin-top:10px; }
+  .catalog-details dd { margin:4px 0; line-height:1.4; }
+  .catalog-details a { color:inherit; display:inline-flex; min-height:44px; align-items:center; }
+  .catalog-heading .smallbtn, .rec-card .smallbtn { min-height:44px; }
+  @media(max-width:900px) { .catalog-controls { grid-template-columns:1fr; } }
   .install-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:200; }
   #profileOverlay { z-index:90; }
   .profile-picker { width:min(680px,92vw); max-height:80vh; overflow:auto; padding:var(--space-6); border-radius:var(--radius-surface); background:var(--surface-solid); box-shadow:var(--shadow); }

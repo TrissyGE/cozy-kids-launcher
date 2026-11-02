@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### App store discovery
+
+- Added local app-store search, combined category/status filters, result counts and keyboard-accessible details with explicit unreviewed metadata
+- Kept direct PackageKit review, confirmation, system authorization, progress and tile addition as the primary Install flow
+- Added initial sourced guidance for Tux Paint, GCompris and YouTube Kids, including correction of the previous blanket ad-free claim
+- Added save-failure rollback for already installed app tiles without changing package mappings or fullscreen recipes
+- Added the planned RetroGameCorner to the Living Room roadmap with Parent guidance and self-supplied ROMs/BIOS files
+
 ### Corrections
 
 - Keep TuxMath fullscreen by requesting and confirming compositor-managed fullscreen on its owned X11/XWayland window, avoiding SDL's exclusive mouse grab; preserve explicit windowed choices and keep launcher kiosk fullscreen as the installation default

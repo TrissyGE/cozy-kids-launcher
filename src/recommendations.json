@@ -10,8 +10,22 @@
     "desc_en": "A colorful paint program for kids with funny stamps and magic effects.",
     "cmd": ["tuxpaint","--fullscreen=yes"],
     "package": "tuxpaint",
-    "packages": {"apt": "tuxpaint", "dnf": "tuxpaint"},
-    "category": "creative"
+    "packages": {
+      "apt": "tuxpaint",
+      "dnf": "tuxpaint"
+    },
+    "category": "creative",
+    "guidance": {
+      "offline": "yes",
+      "input": ["mouse","keyboard"],
+      "source": "https://tuxpaint.org/",
+      "reviewed": "2026-11-02",
+      "age_de": "3–12 Jahre (Projektangabe)",
+      "age_en": "Ages 3–12 (project guidance)",
+      "license": "GPL",
+      "network_de": "Die offiziellen Desktop-Versionen haben laut Projekt keine Netzwerkfunktionen.",
+      "network_en": "The project states that official desktop releases have no networking functionality."
+    }
   },
   {
     "id": "gcompris",
@@ -20,12 +34,23 @@
     "label_en": "Learning games",
     "name_de": "GCompris",
     "name_en": "GCompris",
-    "desc_de": "Über 150 Lernspiele für Kinder jeden Alters: Mathe, Lesen, Logik und mehr.",
-    "desc_en": "Over 150 learning games for kids of all ages: math, reading, logic and more.",
+    "desc_de": "Eine Sammlung von Lernaktivitäten zu Mathe, Lesen, Logik, Natur und mehr.",
+    "desc_en": "A collection of learning activities about math, reading, logic, nature, and more.",
     "cmd": ["gcompris"],
     "alt_cmds": ["gcompris-qt"],
     "package": "gcompris-qt",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "offline": "partial",
+      "input": ["mouse","keyboard","touch"],
+      "source": "https://gcompris.net/faq-en.html",
+      "reviewed": "2026-11-02",
+      "age_de": "2–10 Jahre (Projektangabe)",
+      "age_en": "Ages 2–10 (project guidance)",
+      "license": "GPL / AGPL",
+      "network_de": "Sprachen, Bilder und Musik können nachgeladen werden. Automatische Downloads lassen sich in GCompris abschalten.",
+      "network_en": "Voices, images, and music can be downloaded. Automatic downloads can be disabled in GCompris."
+    }
   },
   {
     "id": "tuxmath",
@@ -65,7 +90,11 @@
     "cmd": ["kstart","--fullscreen","kturtle"],
     "alt_cmds": ["kturtle"],
     "package": "kturtle",
-    "packages": {"apt": "kturtle", "dnf": "kturtle", "pacman": "kturtle"},
+    "packages": {
+      "apt": "kturtle",
+      "dnf": "kturtle",
+      "pacman": "kturtle"
+    },
     "category": "learning"
   },
   {
@@ -343,11 +372,18 @@
     "label_en": "YouTube Kids",
     "name_de": "YouTube Kids",
     "name_en": "YouTube Kids",
-    "desc_de": "Kindgerechte Videos und Musik – ohne Werbung und mit Elternkontrolle.",
-    "desc_en": "Kid-friendly videos and music – no ads with parental controls.",
+    "desc_de": "Videos und Musik mit eigenen Eltern-Einstellungen; der kostenlose Dienst kann Werbung zeigen.",
+    "desc_en": "Videos and music with provider parental controls; the free service may show ads.",
     "cmd": ["special:external-browser:https://www.youtubekids.com"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externer Online-Dienst mit eigenen Datenschutzregeln und möglicher Werbung. Anbieter-Einstellungen gemeinsam prüfen.",
+      "network_en": "External online service with its own privacy rules and possible advertising. Review provider settings together.",
+      "source": "https://support.google.com/youtubekids/answer/6130541?hl=en",
+      "reviewed": "2026-11-02"
+    }
   },
   {
     "id": "netflix-kids",

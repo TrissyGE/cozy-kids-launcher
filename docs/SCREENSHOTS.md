@@ -41,6 +41,7 @@ It does not read or change the developer's installed launcher configuration.
 | `screenshots/screenshot-home-world.png` | Illustrated ocean theme |
 | `screenshots/screenshot-admin-general.png` | Parent overview and opt-in local activity |
 | `screenshots/screenshot-theme-picker.png` | Localized theme selection overlay |
+| `screenshots/screenshot-app-store.png` | Searchable app store with curated guidance and direct-install entry point |
 | `screenshots/screenshot-profile-picker.png` | Child-facing profile selection |
 | `screenshots/screenshot-admin-children.png` | Separate child profile management |
 | `screenshots/screenshot-admin-screen-time.png` | Weekly and per-app availability schedules |
@@ -48,6 +49,10 @@ It does not read or change the developer's installed launcher configuration.
 | `screenshots/screenshot-media-library.png` | Local cover library with favorites and recents |
 
 Use `--browser <command>` to select a specific Chromium-family browser or `--output-dir <directory>` for a review run that should not replace the checked-in images.
+
+The app-store image uses four existing recommendations with deterministic
+installed/missing flags. It demonstrates the interface and does not imply a
+native package-manager acceptance run on the capture host.
 
 ## Review checklist
 

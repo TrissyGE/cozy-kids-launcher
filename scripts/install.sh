@@ -415,7 +415,7 @@ text() {
     en:recommended_installed) echo "installed" ;;
     en:recommended_not_installed) echo "not installed" ;;
     en:recommended_prompt) echo "Create tiles for recommended apps if installed? [y/N]" ;;
-    de:app_browser_title) echo "App-Browser" ;;
+    de:app_browser_title) echo "Appstore" ;;
     de:install) echo "Installieren" ;;
     de:added) echo "Hinzugefügt" ;;
     de:installed) echo "installiert" ;;
@@ -523,7 +523,7 @@ text() {
     de:activity_less_minute) echo "< 1 Min." ;;
     de:activity_minutes) echo "{count} Min." ;;
     de:activity_hours_minutes) echo "{hours} Std. {minutes} Min." ;;
-    en:app_browser_title) echo "App Browser" ;;
+    en:app_browser_title) echo "App store" ;;
     en:install) echo "Install" ;;
     en:added) echo "Added" ;;
     en:installed) echo "installed" ;;
@@ -713,6 +713,60 @@ text() {
     en:accessibility_keyboard_focus) echo "Keyboard mode with a strong focus marker" ;;
     de:accessibility_hint) echo "Die Optionen lassen sich kombinieren und gelten pro Kinderprofil." ;;
     en:accessibility_hint) echo "Combine any options for this child profile." ;;
+    de:catalog_all) echo "Alle" ;;
+    en:catalog_all) echo "All" ;;
+    de:catalog_creative) echo "Kreativ" ;;
+    en:catalog_creative) echo "Create" ;;
+    de:catalog_learning) echo "Lernen & Wissen" ;;
+    en:catalog_learning) echo "Learn & explore" ;;
+    de:catalog_games) echo "Spiele" ;;
+    en:catalog_games) echo "Games" ;;
+    de:catalog_web) echo "Webseiten" ;;
+    en:catalog_web) echo "Websites" ;;
+    de:catalog_refresh) echo "Installierte Apps neu prüfen" ;;
+    en:catalog_refresh) echo "Check installed apps again" ;;
+    de:catalog_search) echo "Im App-Katalog suchen" ;;
+    en:catalog_search) echo "Search the app catalog" ;;
+    de:catalog_category) echo "Kategorie" ;;
+    en:catalog_category) echo "Category" ;;
+    de:catalog_status) echo "Status" ;;
+    en:catalog_status) echo "Status" ;;
+    de:catalog_count) echo "{count} von {total} Apps" ;;
+    en:catalog_count) echo "{count} of {total} apps" ;;
+    de:catalog_no_matches) echo "Keine passenden Apps. Ändere die Suche oder die Filter." ;;
+    en:catalog_no_matches) echo "No matching apps. Change your search or filters." ;;
+    de:catalog_hint) echo "Externe Programme und Webseiten haben eigene Einstellungen. Altersangaben sind Orientierungshilfen, keine Altersfreigaben. Nicht geprüfte Angaben werden ausdrücklich angezeigt." ;;
+    en:catalog_hint) echo "External apps and websites have their own settings. Age guidance is advisory, not an age rating. Unreviewed information is shown explicitly." ;;
+    de:catalog_details) echo "App-Informationen" ;;
+    en:catalog_details) echo "App details" ;;
+    de:catalog_unknown) echo "Noch nicht geprüft" ;;
+    en:catalog_unknown) echo "Not yet reviewed" ;;
+    de:catalog_age) echo "Altersorientierung" ;;
+    en:catalog_age) echo "Age guidance" ;;
+    de:catalog_offline) echo "Ohne Internet" ;;
+    en:catalog_offline) echo "Offline use" ;;
+    de:catalog_offline_yes) echo "Grundfunktionen offline nutzbar" ;;
+    en:catalog_offline_yes) echo "Core features work offline" ;;
+    de:catalog_offline_partial) echo "Nach dem Herunterladen der Inhalte" ;;
+    en:catalog_offline_partial) echo "After downloading content" ;;
+    de:catalog_offline_no) echo "Internet erforderlich" ;;
+    en:catalog_offline_no) echo "Internet required" ;;
+    de:catalog_license) echo "Lizenz" ;;
+    en:catalog_license) echo "License" ;;
+    de:catalog_input) echo "Eingabe" ;;
+    en:catalog_input) echo "Input" ;;
+    de:catalog_mouse) echo "Maus" ;;
+    en:catalog_mouse) echo "Mouse" ;;
+    de:catalog_keyboard) echo "Tastatur" ;;
+    en:catalog_keyboard) echo "Keyboard" ;;
+    de:catalog_touch) echo "Touch" ;;
+    en:catalog_touch) echo "Touch" ;;
+    de:catalog_network) echo "Netzwerk & Datenschutz" ;;
+    en:catalog_network) echo "Network & privacy" ;;
+    de:catalog_web_privacy) echo "Öffnet einen externen Browser. Die Regeln und Konten des Anbieters gelten; die Launcher-Navigationsgrenze gilt dort nicht." ;;
+    en:catalog_web_privacy) echo "Opens an external browser. Provider rules and accounts apply; the launcher navigation boundary does not apply there." ;;
+    de:catalog_source) echo "Offizielle Projektinformationen ↗" ;;
+    en:catalog_source) echo "Official project information ↗" ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -1117,6 +1171,7 @@ FRONTEND_ACTIVITY_FILE="$FRONTEND_DIR/activity-dashboard.js"
 FRONTEND_MEDIA_LIBRARY_STYLES_FILE="$FRONTEND_DIR/media-library.css"
 FRONTEND_MEDIA_LIBRARY_FILE="$FRONTEND_DIR/media-library.js"
 FRONTEND_SETTINGS_FILE="$FRONTEND_DIR/parent-settings.js"
+FRONTEND_APP_CATALOG_FILE="$FRONTEND_DIR/app-catalog.js"
 FRONTEND_FIRST_RUN_FILE="$FRONTEND_DIR/first-run.js"
 FRONTEND_RUNTIME_FILE="$FRONTEND_DIR/runtime-controls.js"
 MEDIA_FILE="$APP_ROOT/no-media.html"
@@ -1208,6 +1263,33 @@ render_template() {
   export JSON_TIMER_LABEL JSON_TIMER_OFF JSON_TIMER_15 JSON_TIMER_30 JSON_TIMER_60 JSON_TIMER_MINUTES JSON_TIMER_CUSTOM JSON_TIMER_START JSON_TIMER_STOP JSON_TIMER_ACTIVE JSON_TIMER_EXPIRED JSON_TIMER_REMAINING JSON_TIMER_WARNING_TITLE JSON_TIMER_WARNING_TEXT JSON_TIMER_ENTER_PIN JSON_TIMER_EXTEND JSON_TIMER_EXIT JSON_TIMER_WRONG_PIN JSON_TIMER_EXTENDED JSON_STARTING_APP JSON_STARTED_APP JSON_EMPTY_STATE_EMOJI JSON_EMPTY_STATE_TEXT JSON_PREVIEW_TITLE JSON_FEEDBACK_OPTIONS JSON_SOUND_FEEDBACK JSON_SPEECH_FEEDBACK JSON_SPEECH_AVAILABLE JSON_SPEECH_UNAVAILABLE JSON_FEEDBACK_HINT JSON_CELEBRATION_OPTIONS JSON_CELEBRATION_ENABLED JSON_CELEBRATION_HINT JSON_ACCESSIBILITY_OPTIONS JSON_ACCESSIBILITY_LARGE_TEXT JSON_ACCESSIBILITY_HIGH_CONTRAST JSON_ACCESSIBILITY_REDUCED_MOTION JSON_ACCESSIBILITY_KEYBOARD_FOCUS JSON_ACCESSIBILITY_HINT
   export JSON_SCHEDULE_WEEKLY_TITLE JSON_SCHEDULE_WEEKLY_HINT JSON_SCHEDULE_ENABLED JSON_SCHEDULE_APP_TITLE JSON_SCHEDULE_APP_HINT JSON_SCHEDULE_SELECT_APP JSON_SCHEDULE_ADD_WINDOW JSON_SCHEDULE_REMOVE_WINDOW JSON_SCHEDULE_START JSON_SCHEDULE_END JSON_SCHEDULE_CLEAR_APP JSON_SCHEDULE_NO_WINDOWS JSON_SCHEDULE_BLOCKED_TITLE JSON_SCHEDULE_PROFILE_BLOCKED JSON_SCHEDULE_APP_BLOCKED JSON_SCHEDULE_OPEN_PARENTS
   export JSON_WEEKDAY_MONDAY JSON_WEEKDAY_TUESDAY JSON_WEEKDAY_WEDNESDAY JSON_WEEKDAY_THURSDAY JSON_WEEKDAY_FRIDAY JSON_WEEKDAY_SATURDAY JSON_WEEKDAY_SUNDAY
+  export JSON_CATALOG_ALL
+  export JSON_CATALOG_CREATIVE
+  export JSON_CATALOG_LEARNING
+  export JSON_CATALOG_GAMES
+  export JSON_CATALOG_WEB
+  export JSON_CATALOG_REFRESH
+  export JSON_CATALOG_SEARCH
+  export JSON_CATALOG_CATEGORY
+  export JSON_CATALOG_STATUS
+  export JSON_CATALOG_COUNT
+  export JSON_CATALOG_NO_MATCHES
+  export JSON_CATALOG_HINT
+  export JSON_CATALOG_DETAILS
+  export JSON_CATALOG_UNKNOWN
+  export JSON_CATALOG_AGE
+  export JSON_CATALOG_OFFLINE
+  export JSON_CATALOG_OFFLINE_YES
+  export JSON_CATALOG_OFFLINE_PARTIAL
+  export JSON_CATALOG_OFFLINE_NO
+  export JSON_CATALOG_LICENSE
+  export JSON_CATALOG_INPUT
+  export JSON_CATALOG_MOUSE
+  export JSON_CATALOG_KEYBOARD
+  export JSON_CATALOG_TOUCH
+  export JSON_CATALOG_NETWORK
+  export JSON_CATALOG_WEB_PRIVACY
+  export JSON_CATALOG_SOURCE
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -1719,6 +1801,61 @@ JSON_ACCESSIBILITY_REDUCED_MOTION="$(json_text "$ACCESSIBILITY_REDUCED_MOTION")"
 JSON_ACCESSIBILITY_KEYBOARD_FOCUS="$(json_text "$ACCESSIBILITY_KEYBOARD_FOCUS")"
 JSON_ACCESSIBILITY_HINT="$(json_text "$ACCESSIBILITY_HINT")"
 
+CATALOG_ALL="$(text catalog_all)"
+JSON_CATALOG_ALL="$(json_text "$CATALOG_ALL")"
+CATALOG_CREATIVE="$(text catalog_creative)"
+JSON_CATALOG_CREATIVE="$(json_text "$CATALOG_CREATIVE")"
+CATALOG_LEARNING="$(text catalog_learning)"
+JSON_CATALOG_LEARNING="$(json_text "$CATALOG_LEARNING")"
+CATALOG_GAMES="$(text catalog_games)"
+JSON_CATALOG_GAMES="$(json_text "$CATALOG_GAMES")"
+CATALOG_WEB="$(text catalog_web)"
+JSON_CATALOG_WEB="$(json_text "$CATALOG_WEB")"
+CATALOG_REFRESH="$(text catalog_refresh)"
+JSON_CATALOG_REFRESH="$(json_text "$CATALOG_REFRESH")"
+CATALOG_SEARCH="$(text catalog_search)"
+JSON_CATALOG_SEARCH="$(json_text "$CATALOG_SEARCH")"
+CATALOG_CATEGORY="$(text catalog_category)"
+JSON_CATALOG_CATEGORY="$(json_text "$CATALOG_CATEGORY")"
+CATALOG_STATUS="$(text catalog_status)"
+JSON_CATALOG_STATUS="$(json_text "$CATALOG_STATUS")"
+CATALOG_COUNT="$(text catalog_count)"
+JSON_CATALOG_COUNT="$(json_text "$CATALOG_COUNT")"
+CATALOG_NO_MATCHES="$(text catalog_no_matches)"
+JSON_CATALOG_NO_MATCHES="$(json_text "$CATALOG_NO_MATCHES")"
+CATALOG_HINT="$(text catalog_hint)"
+JSON_CATALOG_HINT="$(json_text "$CATALOG_HINT")"
+CATALOG_DETAILS="$(text catalog_details)"
+JSON_CATALOG_DETAILS="$(json_text "$CATALOG_DETAILS")"
+CATALOG_UNKNOWN="$(text catalog_unknown)"
+JSON_CATALOG_UNKNOWN="$(json_text "$CATALOG_UNKNOWN")"
+CATALOG_AGE="$(text catalog_age)"
+JSON_CATALOG_AGE="$(json_text "$CATALOG_AGE")"
+CATALOG_OFFLINE="$(text catalog_offline)"
+JSON_CATALOG_OFFLINE="$(json_text "$CATALOG_OFFLINE")"
+CATALOG_OFFLINE_YES="$(text catalog_offline_yes)"
+JSON_CATALOG_OFFLINE_YES="$(json_text "$CATALOG_OFFLINE_YES")"
+CATALOG_OFFLINE_PARTIAL="$(text catalog_offline_partial)"
+JSON_CATALOG_OFFLINE_PARTIAL="$(json_text "$CATALOG_OFFLINE_PARTIAL")"
+CATALOG_OFFLINE_NO="$(text catalog_offline_no)"
+JSON_CATALOG_OFFLINE_NO="$(json_text "$CATALOG_OFFLINE_NO")"
+CATALOG_LICENSE="$(text catalog_license)"
+JSON_CATALOG_LICENSE="$(json_text "$CATALOG_LICENSE")"
+CATALOG_INPUT="$(text catalog_input)"
+JSON_CATALOG_INPUT="$(json_text "$CATALOG_INPUT")"
+CATALOG_MOUSE="$(text catalog_mouse)"
+JSON_CATALOG_MOUSE="$(json_text "$CATALOG_MOUSE")"
+CATALOG_KEYBOARD="$(text catalog_keyboard)"
+JSON_CATALOG_KEYBOARD="$(json_text "$CATALOG_KEYBOARD")"
+CATALOG_TOUCH="$(text catalog_touch)"
+JSON_CATALOG_TOUCH="$(json_text "$CATALOG_TOUCH")"
+CATALOG_NETWORK="$(text catalog_network)"
+JSON_CATALOG_NETWORK="$(json_text "$CATALOG_NETWORK")"
+CATALOG_WEB_PRIVACY="$(text catalog_web_privacy)"
+JSON_CATALOG_WEB_PRIVACY="$(json_text "$CATALOG_WEB_PRIVACY")"
+CATALOG_SOURCE="$(text catalog_source)"
+JSON_CATALOG_SOURCE="$(json_text "$CATALOG_SOURCE")"
+
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
 backup_if_exists "$INDEX_FILE"
@@ -1741,6 +1878,7 @@ backup_if_exists "$FRONTEND_ACTIVITY_FILE"
 backup_if_exists "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
 backup_if_exists "$FRONTEND_MEDIA_LIBRARY_FILE"
 backup_if_exists "$FRONTEND_SETTINGS_FILE"
+backup_if_exists "$FRONTEND_APP_CATALOG_FILE"
 backup_if_exists "$FRONTEND_FIRST_RUN_FILE"
 backup_if_exists "$FRONTEND_RUNTIME_FILE"
 backup_if_exists "$MEDIA_FILE"
@@ -1800,6 +1938,7 @@ render_template "$SRC_DIR/frontend/activity-dashboard.js" "$FRONTEND_ACTIVITY_FI
 install -m 0644 "$SRC_DIR/frontend/media-library.css" "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
 install -m 0644 "$SRC_DIR/frontend/media-library.js" "$FRONTEND_MEDIA_LIBRARY_FILE"
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
+install -m 0644 "$SRC_DIR/frontend/app-catalog.js" "$FRONTEND_APP_CATALOG_FILE"
 install -m 0644 "$SRC_DIR/frontend/package-catalog.js" "$FRONTEND_DIR/package-catalog.js"
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644

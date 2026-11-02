@@ -3,6 +3,7 @@
 import json
 import time
 from browser_package_install import run_catalog_install_scenarios
+from browser_catalog_discovery import run_catalog_discovery_scenarios
 
 
 def wait_for_values(browser, expression, expected, message, timeout=5):
@@ -188,6 +189,7 @@ def run_regression_scenarios(browser, artifacts, base_url):
     finally:
         browser.evaluate("window.fetch=window.__fixtureOriginalFetch")
 
+    run_catalog_discovery_scenarios(browser, artifacts)
     run_catalog_install_scenarios(browser, artifacts)
     browser.devtools.call('Page.navigate', {'url': base_url + '/media.html?tile=music'})
     browser.wait_for("typeof mediaConfig!=='undefined' && mediaConfig!==null && document.querySelectorAll('#mediaGrid .media-card').length===2")

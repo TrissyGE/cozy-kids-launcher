@@ -39,7 +39,8 @@ The frontend stays dependency-free and is split by responsibility:
 - `src/frontend/transition-runtime.js` owns dependency-free navigation, launch, success, and return motion without delaying state or focus changes
 - `src/frontend/launcher-ui.js` renders the child-facing launcher, themes, paging, and PIN gate
 - `src/media.html` and `src/frontend/media-library.*` render the local cover library and submit only opaque media IDs
-- `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing, recommendations, and updates
+- `src/frontend/parent-settings.js` owns the Overview, Children, Apps & Media, Screen Time, Appearance, and System sections plus tile editing and updates
+- `src/frontend/app-catalog.js` owns local recommendation search, combined filters, parent guidance, duplicate detection, and saving tiles for installed apps
 - `src/frontend/runtime-controls.js` owns timer flows, device status, import/export, backups, and keyboard control
 
 The installer renders or copies these files below the local application root. The Python server serves them as ordinary static assets, so development and production require no package manager or bundler.
@@ -122,6 +123,9 @@ installation. A bounded private journal never replays actions after a restart.
 `src/frontend/package-catalog.js` renders review, progress, recovery and add-tile
 states; the three `/api/packages/*` routes are Parent-protected. See
 [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for dependencies, mappings and limits.
+The catalog's Install button delegates to this workflow; discovery does not
+construct installation commands. See [APP_STORE.md](APP_STORE.md) for the Parent
+flow and curated guidance contract.
 
 ### 3. Launch adapters
 
