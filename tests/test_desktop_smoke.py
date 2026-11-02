@@ -26,6 +26,62 @@ def subprocess_result(returncode=0, stdout="", stderr=""):
 
 
 class SmokeConfigTests(unittest.TestCase):
+    def test_snap_firefox_isolation_is_created_under_its_accessible_common_root(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(desktop_smoke.Path, "home", return_value=Path(directory)), \
+                patch.object(desktop_smoke.shutil, "which", return_value="/usr/bin/snap"), \
+                patch.object(desktop_smoke.subprocess, "run", return_value=subprocess_result()) as run:
+            parent = desktop_smoke.temporary_home_parent("/usr/bin/firefox")
+            self.assertEqual(parent, Path(directory) / "snap" / "firefox" / "common")
+            self.assertTrue(parent.is_dir())
+            run.assert_called_once_with(["snap", "list", "firefox"], capture_output=True, text=True, timeout=10)
+
+    def test_other_browsers_and_non_snap_firefox_keep_standard_temporary_homes(self):
+        with patch.object(desktop_smoke.shutil, "which", return_value=None), \
+                patch.object(desktop_smoke.subprocess, "run") as run:
+            self.assertIsNone(desktop_smoke.temporary_home_parent("/usr/bin/google-chrome"))
+            self.assertIsNone(desktop_smoke.temporary_home_parent("/usr/bin/firefox"))
+            run.assert_not_called()
+
+    def test_catalog_observation_never_causes_fullscreen_itself(self):
+        import sys
+        source_root = str(REPOSITORY_ROOT / "src")
+        if source_root not in sys.path:
+            sys.path.insert(0, source_root)
+        import app_display
+        import process_supervisor
+        properties = {(1, "_NET_CLIENT_LIST"): [10, 20],
+                      (10, "_NET_WM_PID"): [999],
+                      (10, "_NET_WM_STATE"): ["_NET_WM_STATE_FULLSCREEN"],
+                      (20, "_NET_WM_PID"): [123]}
+        with patch.object(app_display, "X11Fullscreen") as factory, \
+                patch.object(process_supervisor, "owned_processes", return_value=[123]):
+            display = factory.return_value
+            display.root = 1
+            display.atom.side_effect = lambda name: name
+            display.values.side_effect = lambda window, name, _type: properties.get((window, name), [])
+            self.assertIsNone(desktop_smoke.owned_fullscreen_window(100))
+            properties[20, "_NET_WM_STATE"] = ["_NET_WM_STATE_FULLSCREEN"]
+            self.assertEqual(desktop_smoke.owned_fullscreen_window(100), 20)
+            display.confirm.assert_not_called()
+            display.request.assert_not_called()
+
+    def test_catalog_selection_rejects_web_and_unknown_entries(self):
+        entry = desktop_smoke.kde_catalog_entry("kturtle")
+        self.assertEqual(entry["cmd"], ["kstart", "--fullscreen", "kturtle"])
+        for app_id in ("youtube-kids", "unknown"):
+            with self.subTest(app=app_id), self.assertRaises(ValueError):
+                desktop_smoke.kde_catalog_entry(app_id)
+
+    def test_real_catalog_fixture_uses_the_same_launch_vector_as_the_appstore(self):
+        entry = desktop_smoke.kde_catalog_entry("kturtle")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(json.dumps({"activeProfileId": "default", "profiles": [{"id": "default"}]}), encoding="utf-8")
+            desktop_smoke.write_smoke_config(path, "chromium", entry)
+            config = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(config["profiles"][0]["tiles"][0]["cmd"], entry["cmd"])
+
     def test_smoke_fixture_updates_the_active_schema_two_profile(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "config.json"

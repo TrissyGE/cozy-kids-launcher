@@ -75,12 +75,14 @@ def direct_app_command(command):
 
 
 def needs_managed_fullscreen(command, environment):
-    """Keep TuxMath fullscreen without SDL 1.2's exclusive X11 mouse grab.
+    """Honor legacy KDE requests and avoid TuxMath's SDL mouse grab.
 
-    Explicit windowed arguments and non-X11 driver overrides remain untouched.
-    Other apps keep their own fullscreen implementations until individually
-    tested; this is not a universal forced-fullscreen wrapper.
+    A KDE wrapper is a request, not a process to detach from supervision. Its
+    display requirements are checked by the supervisor before starting an app.
+    Bare/custom app commands otherwise keep their own display behavior.
     """
+    if direct_app_command(command) != command:
+        return True
     return bool(
         command and os.path.basename(command[0]) == "tuxmath"
         and "--fullscreen" in command and "--windowed" not in command
