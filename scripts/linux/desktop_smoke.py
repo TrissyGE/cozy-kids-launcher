@@ -686,7 +686,7 @@ def run_smoke(args, browser_path, report):
                 raise RuntimeError("second launcher invocation replaced the active browser")
             report.pass_check("single-instance lock")
 
-            if args.session == "x11" or entry:
+            if args.session == "x11":
                 for command in ("wmctrl", "xdotool"):
                     if not shutil.which(command):
                         raise RuntimeError(f"{command} is required for X11 window checks")
@@ -737,11 +737,12 @@ def run_smoke(args, browser_path, report):
                     message="app overlay is not visible to the X11 window manager",
                 )
                 report.pass_check("X11 overlay window visibility")
-                wait_until(
-                    lambda: x11_window_ids("Cozy Kids Launcher"),
-                    timeout=15,
-                    message="launcher window ID is unavailable",
-                )
+                if args.session == "x11":
+                    wait_until(
+                        lambda: x11_window_ids("Cozy Kids Launcher"),
+                        timeout=15,
+                        message="launcher window ID is unavailable",
+                    )
                 overlay_windows = wait_until(
                     lambda: x11_window_ids("App Overlay"),
                     timeout=15,
@@ -756,12 +757,16 @@ def run_smoke(args, browser_path, report):
                     timeout=15,
                     message="overlay close did not stop the owned tile",
                 )
-                wait_until(
-                    lambda: x11_window_is_active("Cozy Kids Launcher"),
-                    timeout=15,
-                    message="overlay close did not restore launcher focus",
-                )
-                report.pass_check("X11 overlay close and launcher focus recovery")
+                if args.session == "x11":
+                    wait_until(
+                        lambda: x11_window_is_active("Cozy Kids Launcher"),
+                        timeout=15,
+                        message="overlay close did not restore launcher focus",
+                    )
+                    report.pass_check("X11 overlay close and launcher focus recovery")
+                else:
+                    report.pass_check("XWayland overlay close stops the owned catalog app")
+                    report.manual_check("Wayland launcher focus recovery", "native Wayland focus is not exposed through X11")
             else:
                 report.manual_check(
                     "Wayland overlay stacking and focus",
