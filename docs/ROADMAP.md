@@ -15,9 +15,11 @@ publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
 The November 2 continuation merged the quality/provider foundation in
 [#59](https://github.com/TrissyGE/cozy-kids-launcher/pull/59) and repaired the
 Python 3.9 runner in [#61](https://github.com/TrissyGE/cozy-kids-launcher/pull/61).
-Terminal-free installation remains a draft review in
-[#60](https://github.com/TrissyGE/cozy-kids-launcher/pull/60), with the discovery
-increment stacked on it until the remaining desktop acceptance is complete.
+Terminal-free installation was merged in
+[#60](https://github.com/TrissyGE/cozy-kids-launcher/pull/60). The discovery
+increment in [#62](https://github.com/TrissyGE/cozy-kids-launcher/pull/62) now
+targets `develop` directly. Remaining distribution and desktop acceptance
+below still applies to release certification.
 
 1. **Quality repair — merged in #59:** shared local/CI/release checks,
    diagnosed browser assertions, corrected custom-theme/accessibility
@@ -26,11 +28,11 @@ increment stacked on it until the remaining desktop acceptance is complete.
 2. **Platform foundation — merged in #59:** detect native package
    managers and prepare allowlisted, explicitly manual installation plans.
    This is not an automatic package executor or a cross-distribution support claim.
-3. **Current product increment — terminal-free installation first:** on the
+3. **Terminal-free installation — merged in #60:** on the
    initial Ubuntu/Mint/Zorin targets, review required packages/download size,
    confirm explicitly, authorize through the desktop's system dialog, show real
    progress, and offer adding the installed app as a tile. No terminal is part
-   of the normal catalog flow. Implemented for review; real TuxMath installation
+   of the normal catalog flow. Real TuxMath installation
    passed on Ubuntu KDE/Wayland. Tile addition and start passed; a real return
    failure first exposed an SDL input grab. The windowed workaround was rejected:
    TuxMath now uses confirmed, compositor-managed fullscreen on X11/XWayland.
@@ -42,7 +44,7 @@ increment stacked on it until the remaining desktop acceptance is complete.
    source-backed package mappings. Audit desktop-entry discovery and existing
    recommendation wording before expanding the catalog.
    Search, combined filters and sourced detail fields are implemented in a
-   dependent review increment. Its Install action retains the terminal-free
+   separate review increment. Its Install action retains the terminal-free
    review, confirmation and PackageKit flow; copying a command is not the normal
    Parent installation path. New app recipes still require fullscreen acceptance.
 5. **Then broaden package actions:** update/removal and richer restart recovery;
