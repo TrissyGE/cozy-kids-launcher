@@ -71,6 +71,22 @@ Use `--headless` to skip the short visible external-browser window. Use `--visib
 
 If Mesa reports `llvmpipe`, the script automatically selects WSLg's D3D12 Gallium driver when `/dev/dxg` exists. It does not change the user's shell profile.
 
+## Catalog package-install checks
+
+The browser suite also exercises catalog review, explicit confirmation, progress,
+lost replies, safe errors and adding a tile using local fixtures. It never installs
+system packages. The optional `packagekit`, `python3-gi` and
+`gir1.2-packagekitglib-1.0` distribution packages enable the read-only real-backend
+check `python3 scripts/linux/packagekit_smoke.py --app kturtle`.
+
+WSLg does not guarantee a graphical Polkit authorization agent. Successful
+simulation is not proof that a real installation can be authorized. Use a complete
+disposable desktop VM and the normal desktop user for the real catalog flow; do
+not work around a missing agent by running the launcher as root or relaxing Polkit
+policy. `--install` on the smoke script is an explicit opt-in that changes system
+packages, even though its launcher journal is temporary. See
+[PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for the acceptance checklist.
+
 ## Website and DRM checklist
 
 The network probe can also run independently:

@@ -2,6 +2,7 @@
 
 import json
 import time
+from browser_package_install import run_catalog_install_scenarios
 
 
 def wait_for_values(browser, expression, expected, message, timeout=5):
@@ -124,7 +125,7 @@ def run_regression_scenarios(browser, artifacts, base_url):
             window.__fixtureSuccess={status:'manual',provider:'dnf',command:'sudo dnf install tuxpaint'};
             window.__fixtureMode='success';
         """)
-        browser.evaluate("triggerInstall(window.__fixtureRec)", await_promise=True)
+        browser.evaluate("showManualInstall(window.__fixtureRec)", await_promise=True)
         assert_js(browser, """
             document.getElementById('installCommand').textContent==='sudo dnf install tuxpaint' &&
             !document.getElementById('installCopyBtn').disabled &&
@@ -133,7 +134,7 @@ def run_regression_scenarios(browser, artifacts, base_url):
         """, "Install instructions did not use the acknowledged native-provider plan")
         browser.screenshot(artifacts / 'native-install-instructions.png')
         for mode in ('rejected', 'unavailable', 'network', 'malformed', 'unacknowledged', 'unsupported'):
-            browser.evaluate(f"window.__fixtureMode={json.dumps(mode)}; triggerInstall(window.__fixtureRec)", await_promise=True)
+            browser.evaluate(f"window.__fixtureMode={json.dumps(mode)}; showManualInstall(window.__fixtureRec)", await_promise=True)
             expected = 'installUnsupported' if mode == 'unsupported' else 'installError'
             assert_js(browser, f"""
                 document.getElementById('installCommand').textContent==='' &&
@@ -141,7 +142,7 @@ def run_regression_scenarios(browser, artifacts, base_url):
                 document.querySelector('#installOverlay .command-box').classList.contains('hidden') &&
                 document.getElementById('installMessage').textContent.includes(uiText.{expected})
             """, f"Install failure ({mode}) exposed a guessed or stale command")
-        browser.evaluate("window.__fixtureMode='pending'; void triggerInstall(window.__fixtureRec)")
+        browser.evaluate("window.__fixtureMode='pending'; void showManualInstall(window.__fixtureRec)")
         assert_js(browser, """
             document.getElementById('installMessage').textContent.includes(uiText.installLoading) &&
             document.getElementById('installCopyBtn').disabled
@@ -153,23 +154,23 @@ def run_regression_scenarios(browser, artifacts, base_url):
             document.getElementById('installOverlay').classList.contains('hidden') &&
             pendingInstallCommand==='' && document.getElementById('installCopyBtn').disabled
         """, "A late response repopulated a closed install dialog")
-        browser.evaluate("window.__fixtureMode='network'; triggerInstall(window.__fixtureRec)", await_promise=True)
+        browser.evaluate("window.__fixtureMode='network'; showManualInstall(window.__fixtureRec)", await_promise=True)
         browser.evaluate("window.__fixtureMode='success'")
         browser.click('#installMessage button')
         browser.wait_for("!document.getElementById('installCopyBtn').disabled")
         browser.click('#installCloseBtn')
         browser.evaluate("""
-            window.__fixtureMode='pending'; void triggerInstall(window.__fixtureRec);
+            window.__fixtureMode='pending'; void showManualInstall(window.__fixtureRec);
             window.__oldInstallResolve=window.__fixtureResolve;
             window.__fixtureMode='success';
         """)
-        browser.evaluate("triggerInstall(window.__fixtureRec)", await_promise=True)
+        browser.evaluate("showManualInstall(window.__fixtureRec)", await_promise=True)
         browser.evaluate("window.__oldInstallResolve(new Response('{\"status\":\"manual\",\"command\":\"stale command\"}'))")
         browser.evaluate("new Promise(resolve=>setTimeout(resolve,100))", await_promise=True)
         assert_js(browser, "pendingInstallCommand==='sudo dnf install tuxpaint'", "An older request replaced newer instructions")
         for language in ('de', 'en'):
             browser.evaluate(f"loadInterfaceLanguage({json.dumps(language)})", await_promise=True)
-            browser.evaluate(f"cfg.language={json.dumps(language)}; renderLocalizedChrome(); triggerInstall(window.__fixtureRec)", await_promise=True)
+            browser.evaluate(f"cfg.language={json.dumps(language)}; renderLocalizedChrome(); showManualInstall(window.__fixtureRec)", await_promise=True)
             browser.set_device_metrics(800, 600)
             assert_js(browser, """
                 typeof uiText.installManual==='string' && uiText.installManual.length>80 &&
@@ -187,6 +188,7 @@ def run_regression_scenarios(browser, artifacts, base_url):
     finally:
         browser.evaluate("window.fetch=window.__fixtureOriginalFetch")
 
+    run_catalog_install_scenarios(browser, artifacts)
     browser.devtools.call('Page.navigate', {'url': base_url + '/media.html?tile=music'})
     browser.wait_for("typeof mediaConfig!=='undefined' && mediaConfig!==null && document.querySelectorAll('#mediaGrid .media-card').length===2")
     browser.evaluate("""

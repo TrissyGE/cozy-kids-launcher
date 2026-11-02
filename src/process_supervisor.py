@@ -122,6 +122,7 @@ def supervise(
     activity_file="",
     activity_profile="",
     activity_tile="",
+    managed_fullscreen=False,
 ):
     global _termination_signal
     _termination_signal = None
@@ -131,14 +132,33 @@ def supervise(
 
     child = None
     started_at = None
+    display = None
     try:
-        child = subprocess.Popen(command, env=dict(os.environ))
+        environment = dict(os.environ)
+        if managed_fullscreen:
+            from app_display import X11Fullscreen
+            if "--fullscreen" not in command:
+                raise ValueError("Managed fullscreen requires a fullscreen request")
+            display = X11Fullscreen()
+            # The WM supplies real, undecorated fullscreen and scaling. SDL
+            # itself stays ungrabbed so the independent Home overlay can click.
+            command = ["--windowed" if part == "--fullscreen" else part for part in command]
+            environment["SDL_VIDEODRIVER"] = "x11"
+        child = subprocess.Popen(command, env=environment)
         started_at = int(time.time())
+        if display:
+            # Publish ownership immediately so shutdown can cancel a slow
+            # startup. Readiness is separate and requires a confirmed WM state.
+            write_process_record(record_path, os.getpid(), "tile-process", marker=marker, ready=False)
+            wait_for_fullscreen(display)
+            display.close()
+            display = None
         write_process_record(
             record_path,
             os.getpid(),
             "tile-process",
             marker=marker,
+            ready=True if managed_fullscreen else None,
         )
         while True:
             child.poll()
@@ -150,6 +170,8 @@ def supervise(
                 return 0
             time.sleep(POLL_SECONDS)
     finally:
+        if display:
+            display.close()
         if owned_processes():
             terminate_owned_tree()
         if child is not None:
@@ -170,6 +192,21 @@ def supervise(
                 pass
 
 
+def wait_for_fullscreen(display, timeout=20):
+    """Do not announce readiness or leave a windowed app after a failed request."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if _termination_signal is not None:
+            raise OSError("Fullscreen startup was cancelled")
+        pids = owned_processes()
+        if not pids:
+            raise OSError("App exited before fullscreen was confirmed")
+        if display.confirm(pids):
+            return
+        time.sleep(0.1)
+    raise OSError("The app did not enter fullscreen")
+
+
 def _parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--record", required=True)
@@ -177,6 +214,7 @@ def _parser():
     parser.add_argument("--activity-file", default="")
     parser.add_argument("--activity-profile", default="")
     parser.add_argument("--activity-tile", default="")
+    parser.add_argument("--managed-fullscreen", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     return parser
 
@@ -196,6 +234,7 @@ def main(argv=None):
             activity_file=args.activity_file,
             activity_profile=args.activity_profile,
             activity_tile=args.activity_tile,
+            managed_fullscreen=args.managed_fullscreen,
         )
     except (OSError, ValueError):
         remove_process_record(args.record, expected_pid=os.getpid())

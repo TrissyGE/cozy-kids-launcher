@@ -673,6 +673,9 @@ function renderRecommendations(){
   const h2=document.createElement('h2'); h2.style.margin='0'; h2.textContent=uiText.appBrowserTitle||'App Browser';
   const refreshBtn=document.createElement('button'); refreshBtn.className='smallbtn'; setIconOnly(refreshBtn,'refresh',uiText.retry); refreshBtn.disabled=recommendationState==='loading'; refreshBtn.onclick=loadRecommendations;
   headerRow.appendChild(h2); headerRow.appendChild(refreshBtn);
+  const installStatus=document.createElement('button'); installStatus.className='smallbtn';
+  setIconLabel(installStatus,'download',uiText.packageStatus); installStatus.onclick=()=>openPackageStatus();
+  headerRow.appendChild(installStatus);
   panel.appendChild(headerRow);
   container.appendChild(panel);
   if(recommendationState!=='ready'){
@@ -735,7 +738,7 @@ function renderRecommendations(){
 }
 let pendingInstallCommand='';
 let installRequestId=0;
-async function triggerInstall(rec){
+async function showManualInstall(rec){
   const requestId=++installRequestId;
   pendingInstallCommand='';
   const overlay=document.getElementById('installOverlay');
@@ -773,7 +776,7 @@ async function triggerInstall(rec){
     document.getElementById('installCopyBtn').disabled=false;
   }catch(e){
     if(requestId!==installRequestId) return;
-    renderUiState(message,'error',uiText.installError,()=>triggerInstall(rec));
+    renderUiState(message,'error',uiText.installError,()=>showManualInstall(rec));
   }
 }
 function closeInstallOverlay(){ ++installRequestId; pendingInstallCommand=''; document.getElementById('installOverlay').classList.add('hidden'); }

@@ -208,6 +208,55 @@ class PinTests(unittest.TestCase):
 
 
 class LaunchActionTests(unittest.TestCase):
+    def test_catalog_migrates_known_defaults_but_preserves_parent_arguments(self):
+        recommendations = [{
+            "cmd": ["paint", "--fullscreen"], "alt_cmds": ["old-paint"],
+            "legacy_cmds": [["paint", "--old-default"]],
+        }]
+        commands = [["paint"], ["old-paint"], ["paint", "--old-default"],
+                    ["paint", "--windowed", "--nosound"], ["old-paint", "--custom"]]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "config.json"
+            config, _ = server_module.migrate_config(base_config())
+            config["profiles"][0]["tiles"] = [
+                dict(base_config()["tiles"][0], id=f"tile-{index}", cmd=command)
+                for index, command in enumerate(commands)
+            ]
+            second = copy.deepcopy(config["profiles"][0])
+            second.update(id="second", name="Second")
+            config["profiles"].append(second)
+            path.write_text(json.dumps(config), encoding="utf-8")
+            with mock.patch.object(server_module, "CFG", str(path)), \
+                    mock.patch.object(server_module, "load_recommendations", return_value=recommendations), \
+                    mock.patch.object(server_module, "log_runtime_event"):
+                loaded = server_module.load_stored_cfg()
+                for profile in loaded["profiles"]:
+                    self.assertEqual([tile["cmd"] for tile in profile["tiles"]],
+                                     [["paint", "--fullscreen"]] * 3 + commands[3:])
+                before = path.read_bytes()
+                with mock.patch.object(server_module, "atomic_write_config") as write:
+                    self.assertEqual(server_module.load_stored_cfg(), loaded)
+                    write.assert_not_called()
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_tuxmath_defaults_to_fullscreen_without_overwriting_custom_window_mode(self):
+        recommendations = json.loads((SOURCE_ROOT / "recommendations.json").read_text(encoding="utf-8"))
+        recipe = next(item for item in recommendations if item["id"] == "tuxmath")
+        self.assertEqual(recipe["cmd"], ["tuxmath", "--fullscreen"])
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = base_config()
+            config["tiles"][0].update(id="tuxmath", cmd=["tuxmath"])
+            path = Path(temp_dir) / "config.json"
+            path.write_text(json.dumps(config), encoding="utf-8")
+            with mock.patch.object(server_module, "CFG", str(path)), \
+                    mock.patch.object(server_module, "load_recommendations", return_value=recommendations), \
+                    mock.patch.object(server_module, "log_runtime_event"):
+                self.assertEqual(server_module.load_cfg()["tiles"][0]["cmd"], recipe["cmd"])
+                config["tiles"][0]["cmd"] = ["tuxmath", "--windowed"]
+                path.write_text(json.dumps(config), encoding="utf-8")
+                self.assertEqual(server_module.load_cfg()["tiles"][0]["cmd"],
+                                 ["tuxmath", "--windowed"])
+
     def test_obsolete_web_targets_are_migrated(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_path = str(Path(temp_dir) / "config.json")
@@ -533,6 +582,41 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(data["status"], "unsupported")
         self.assertNotIn("command", data)
+
+    def test_native_install_api_requires_parent_origin_and_exact_confirmation(self):
+        self.enable_pin()
+        installer = mock.Mock()
+        self.httpd.package_installer = installer
+        for path, method, body in (("/api/packages/status", "GET", None),
+                                   ("/api/packages/prepare", "POST", {"appId": "tuxpaint"}),
+                                   ("/api/packages/install", "POST", {"jobId": "j", "confirmationToken": "t"})):
+            status, _, _ = self.request(path, method=method, body=body, origin=self.base_url)
+            self.assertEqual(status, 403)
+        installer.prepare.assert_not_called()
+        installer.start.assert_not_called()
+        cookie = self.authenticate()
+        status, _, _ = self.request('/api/packages/prepare', method='POST', body={'appId': 'tuxpaint'},
+                                    origin='https://evil.example', cookie=cookie)
+        self.assertEqual(status, 403)
+        for body in ({'command': 'sudo anything'}, {'appId': 'tuxpaint', 'package': 'arbitrary'}):
+            status, _, _ = self.request('/api/packages/prepare', method='POST', body=body,
+                                        origin=self.base_url, cookie=cookie)
+            self.assertEqual(status, 400)
+        installer.prepare.return_value = {'status': 'checking', 'jobId': 'safe'}
+        status, data, _ = self.request('/api/packages/prepare', method='POST', body={'appId': 'tuxpaint'},
+                                       origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        self.assertEqual(data['jobId'], 'safe')
+        installer.start.return_value = {'status': 'installing'}
+        status, _, _ = self.request('/api/packages/install', method='POST',
+                                    body={'jobId': 'safe', 'confirmationToken': 'consent'},
+                                    origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        installer.start.assert_called_once_with('safe', 'consent')
+        installer.snapshot.return_value = {'status': 'complete'}
+        status, data, _ = self.request('/api/packages/status', cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(data['status'], 'complete')
 
     def test_config_endpoint_hides_hash_and_sends_security_headers(self):
         self.enable_pin()

@@ -33,6 +33,14 @@ def free_port():
     "Linux flock integration required",
 )
 class LauncherLifecycleTests(unittest.TestCase):
+    def test_installer_defaults_to_chrome_free_kiosk_fullscreen(self):
+        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
+        launcher = (SOURCE_ROOT / "launcher.sh").read_text(encoding="utf-8")
+        self.assertIn('DEFAULT_LAUNCH_MODE="kiosk"', installer)
+        self.assertIn('LAUNCH_MODE="{{DEFAULT_LAUNCH_MODE}}"', launcher)
+        kiosk_case = launcher.split('case "$LAUNCH_MODE" in', 1)[1].split(';;', 1)[0]
+        self.assertEqual(kiosk_case.count('--kiosk "$URL"'), 2)
+
     def wait_for_lifecycle(self, path, state, reason=None, timeout=12):
         deadline = time.monotonic() + timeout
         last = None

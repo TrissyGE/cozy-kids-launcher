@@ -53,12 +53,82 @@ also passed Python 3.9, Python 3.13, and the complete Chromium suite on the firs
 run of this change. This establishes the tested result, not proof that the
 baseline's intermittent accessibility failure can never recur.
 
-Next: review catalog metadata and desktop-entry parsing, add the searchable
-catalog/detail UX, then implement and verify the package lifecycle on real
-distributions. [ROADMAP.md](ROADMAP.md) records the execution order;
+At the user's request, the next increment prioritizes terminal-free catalog
+installation before the searchable catalog/detail UX. [ROADMAP.md](ROADMAP.md)
+records the execution order;
 [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) records the deliberately limited
 first provider mappings. This review is not a complete security audit or a new
 GNOME/KDE/XFCE certification.
+
+### Follow-up: terminal-free catalog installation (in review)
+
+The separate `feature/catalog-install` branch builds on PR #59 without merging
+it or changing `main`, `VERSION`, or published releases. It adds an optional typed
+PackageKit bridge for APT on the initial Ubuntu/Mint/Zorin targets. The normal
+desktop user reviews a simulated package plan, explicitly confirms one-use
+consent, and authorizes the system-owned password dialog. Background progress,
+safe errors, reconnecting the dialog and adding a child-screen tile are covered
+by focused tests. Private restart state never replays consent or an installation.
+
+Real Ubuntu WSL resolution/simulation passed for Tux Paint and KTurtle. An actual
+WSL install request failed safely with `authorization` when no suitable desktop
+agent was available. The complete Ubuntu 24.04.4 test VM also prepared KTurtle
+successfully (one package, 2,145,680 download bytes). The user then successfully
+installed **TuxMath** through the catalog in the KDE/Wayland session. The launcher
+reported `complete`, and APT history confirms a PackageKit transaction installing
+TuxMath `2.0.3-9build2` plus nine dependencies as the non-admin desktop user. The
+deployed installation engine, bridge and catalog UI hashes match `94811db`.
+
+That code commit passed **299 local unit/integration tests**, static checks,
+the full local browser suite and [all three PR #60 CI jobs](https://github.com/TrissyGE/cozy-kids-launcher/actions/runs/34327132552).
+The full suite initially exposed a test-isolation defect: the catalog tile-save
+fixture persisted an earlier journey's unsaved UI configuration, removing the
+media tile expected by the next check. Restoring both server and client fixture
+snapshots fixed it without weakening the media assertion; the complete rerun
+passed. German/English 800x600 catalog review screenshots were visually checked.
+
+The user's next test confirmed tile addition and launch but exposed a real
+return failure: TuxMath's fullscreen SDL mode captured input even though the
+close overlay was visible. A windowed comparison using the complete launcher
+entry point allowed the overlay to terminate the owned game and return to the
+launcher. That temporary workaround was rejected as a product default; see the
+fullscreen correction below. A related configuration bug also needed correction: the
+old executable-name-only migration overwrote customized arguments on every read.
+Migration now matches complete known default vectors, preserving Parent choices;
+new regressions cover multiple profiles and idempotent reloads.
+
+The initial windowed comparison passed **301 local unit/integration tests** and static checks.
+The VM repeated launch and real pointer-click overlay close successfully with
+the corrected server. TuxMath, its supervisor and overlay exited; the full
+launcher remained running and visible. A separate Chrome crash report had the
+timestamp of the harness's earlier service restart, not this close action; no
+report was sent. This restart observation is not a clean-shutdown matrix pass.
+
+The final product behavior keeps fullscreen: the catalog requests TuxMath
+`--fullscreen`, while the X11/XWayland supervisor uses ungrabbed SDL rendering
+inside a compositor-confirmed fullscreen window. Explicit windowed commands and
+different SDL driver overrides remain unchanged. Ownership is available during
+startup, but readiness is withheld until fullscreen is confirmed; timeout and
+cancellation clean up the owned process. Unit coverage exercises the policy,
+PID-scoped EWMH requests, dialog/unrelated-window exclusion, delayed readiness,
+timeout/cancellation cleanup, argument preservation and installer deployment.
+
+The KDE/Wayland VM now uses the installer's normal Chrome `kiosk` mode instead
+of its earlier diagnostic `window` setting. A real click on Rechnen launched a
+1600x900 fullscreen TuxMath window, confirmed by the WM state and visual
+inspection. Fullscreen persisted into a number exercise. Linux XTest digit and
+Return input scored a correct answer; Windows-automated key input did not reach
+the guest and is a separate physical-input acceptance gap. A real pointer click
+on the Home overlay ended the owned game and returned to the fullscreen launcher.
+This is not a new native-X11/GNOME matrix certification or proof for every app.
+
+The fullscreen correction passed **314 local unit/integration tests** and static
+checks. The integrated kiosk-to-game-to-kiosk pointer-close test passed twice;
+the game, its supervisor and overlay left no active ownership records afterward.
+
+Remaining desktop failure scenarios still need acceptance. These results must
+not be described as full Ubuntu/Mint/Zorin certification; see
+[PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for boundaries and remaining checks.
 
 ## Completed foundation
 

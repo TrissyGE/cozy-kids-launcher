@@ -74,9 +74,11 @@ def _atomic_write(path, data):
         raise
 
 
-def write_process_record(path, pid, role, marker=""):
+def write_process_record(path, pid, role, marker="", ready=None):
     """Record a live process together with its non-reusable kernel identity."""
     role = _validate_role(role)
+    if ready is not None and not isinstance(ready, bool):
+        raise ValueError("Process readiness must be a boolean")
     if isinstance(pid, bool):
         raise ValueError("PID must be a positive integer")
     pid = int(pid)
@@ -97,6 +99,8 @@ def write_process_record(path, pid, role, marker=""):
     }
     if marker:
         record["marker"] = marker
+    if ready is not None:
+        record["ready"] = ready
     _atomic_write(path, record)
     return record
 

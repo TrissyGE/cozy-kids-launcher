@@ -8,7 +8,8 @@ The roadmap is intentionally release-oriented. Stability work comes before the p
 
 The September 9 review starts from `develop` at `91b7157`, not the earlier
 frontend-splitting plan: v0.5.0 and v0.6.0 are already published. New work stays
-on topic branches targeting `develop`; this plan does not bump `VERSION` or
+on topic branches ultimately targeting `develop` (dependent draft PRs may be
+stacked until their parent lands); this plan does not bump `VERSION` or
 publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
 
 1. **Quality repair — current increment:** unify local/CI/release checks,
@@ -18,15 +19,40 @@ publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
 2. **Platform foundation — started in this increment:** detect native package
    managers and prepare allowlisted, explicitly manual installation plans.
    This is not an automatic package executor or a cross-distribution support claim.
-3. **Next product increment:** searchable, categorized Parent catalog with
+3. **Current product increment — terminal-free installation first:** on the
+   initial Ubuntu/Mint/Zorin targets, review required packages/download size,
+   confirm explicitly, authorize through the desktop's system dialog, show real
+   progress, and offer adding the installed app as a tile. No terminal is part
+   of the normal catalog flow. Implemented for review; real TuxMath installation
+   passed on Ubuntu KDE/Wayland. Tile addition and start passed; a real return
+   failure first exposed an SDL input grab. The windowed workaround was rejected:
+   TuxMath now uses confirmed, compositor-managed fullscreen on X11/XWayland.
+   Launching from the kiosk-fullscreen launcher, entering a game and returning
+   through the overlay passed in the KDE/Wayland VM. Further desktop failure scenarios and Mint/Zorin
+   acceptance remain open release gates.
+4. **Then expand the catalog:** searchable, categorized Parent catalog with
    app details, honest availability, age/offline/privacy/input metadata, and
    source-backed package mappings. Audit desktop-entry discovery and existing
    recommendation wording before expanding the catalog.
-4. **Then native actions:** design confirmation, privilege, progress, retry,
-   update/removal, and restart recovery; verify real disposable APT/DNF/Pacman/
-   Zypper environments and evaluate Flatpak remotes separately.
-5. Continue living-room and packaging milestones below after their prerequisites
+5. **Then broaden package actions:** update/removal and richer restart recovery;
+   verify real disposable APT/DNF/Pacman/Zypper environments and evaluate
+   Flatpak remotes separately. The current journal never automatically replays
+   an interrupted installation; uncertain state is reported honestly.
+6. Continue living-room and packaging milestones below after their prerequisites
    pass. Refresh desktop evidence whenever the affected runtime changes.
+
+### Fullscreen product contract
+
+Fullscreen is the default for both the launcher and child apps. Window mode is
+an explicit Parent/developer choice, not a stability workaround counted as a pass.
+The installer already defaults to chrome-free `kiosk`; graphical acceptance must
+test that default too, not only the windowed diagnostic harness.
+
+- [x] Restore the TuxMath fullscreen recipe without overwriting explicit custom arguments
+- [x] Verify TuxMath fullscreen, menu-to-game transition, overlay close and return to a fullscreen launcher on the current KDE/Wayland VM
+- [ ] Repeat the corrected TuxMath flow on native X11 and GNOME Wayland, including physical keyboard/touch input
+- [ ] Audit every catalog app's actual fullscreen behavior before catalog expansion; in particular, replace the stripped legacy `kstart --fullscreen` request with an owned, verified equivalent
+- [ ] Require fullscreen, usable game input, a reachable close control and launcher return together in per-app desktop acceptance
 
 The current increment is tracked under **Unreleased** in the changelog. Historical
 release checkboxes below remain historical; an old desktop report does not
@@ -124,7 +150,8 @@ standard at the end of this document is met.
 - [ ] Show age guidance, offline capability, license, input methods, and privacy/network expectations before a parent installs an app
 - [ ] Replace distribution-specific install commands with tested package-provider adapters for APT, DNF, Pacman, Zypper, and suitable Flatpak remotes
   - Native detection and safe manual-plan preparation are implemented for review; see [provider scope and evidence](PACKAGE_PROVIDERS.md).
-  - Package execution, removal/update, progress, persistent recovery, Flatpak, and real distribution testing remain open.
+  - Terminal-free PackageKit/APT installation, progress, single-use confirmation, and a no-replay restart journal are implemented for review.
+  - Successful system-password dialog/installation checks on Ubuntu, Mint and Zorin, removal/update, full transaction reattachment, other native backends and Flatpak remain open.
 - [ ] Keep every package action Parent-authenticated, explicitly confirmed, argv-based, allowlisted, and free of downloaded arbitrary shell scripts
 - [ ] Preserve install progress and recoverable error state across a launcher restart without collecting package or family telemetry
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives

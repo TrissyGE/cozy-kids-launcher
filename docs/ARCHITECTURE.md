@@ -114,7 +114,14 @@ installation plans from catalog keys and explicit provider mappings. It never
 starts a subprocess. The Parent-protected `/api/install-package` route returns
 `manual` with an argv/command plan, `unsupported` without a command, or HTTP 400
 for invalid input. The frontend never manufactures a fallback shell command.
-See [PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for supported mappings and limits.
+The normal catalog Install action now uses `src/package_install.py` and the
+optional typed `src/packagekit_backend.py` binding. A single background job
+prepares an APT plan, requires expiring single-use Parent consent, revalidates
+the plan, delegates authorization and execution to PackageKit, and verifies
+installation. A bounded private journal never replays actions after a restart.
+`src/frontend/package-catalog.js` renders review, progress, recovery and add-tile
+states; the three `/api/packages/*` routes are Parent-protected. See
+[PACKAGE_PROVIDERS.md](PACKAGE_PROVIDERS.md) for dependencies, mappings and limits.
 
 ### 3. Launch adapters
 
