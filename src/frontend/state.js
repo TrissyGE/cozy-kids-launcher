@@ -40,6 +40,7 @@ let uiText = {
   catalogNetwork: {{JSON_CATALOG_NETWORK}},
   catalogWebPrivacy: {{JSON_CATALOG_WEB_PRIVACY}},
   catalogSource: {{JSON_CATALOG_SOURCE}},
+  catalogReviewed: {{JSON_CATALOG_REVIEWED}},
   adminTitle: {{JSON_ADMIN_TITLE}},
   adminNavLabel: {{JSON_ADMIN_NAV_LABEL}},
   adminOverview: {{JSON_ADMIN_OVERVIEW}},

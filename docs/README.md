@@ -8,6 +8,8 @@ Welcome to the Cozy Kids Launcher documentation.
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the launcher works under the hood |
 | [PRIVACY.md](PRIVACY.md) | Local-first design and safety notes for parents |
 | [APP_STORE.md](APP_STORE.md) | Search, parent guidance, and direct app installation |
+| [CATALOG_GUIDANCE.md](CATALOG_GUIDANCE.md) | Reviewed recommendations, primary sources, and unknown fields |
+| [LOCALIZATION.md](LOCALIZATION.md) | Current translation pipeline and extensible language-pack plan |
 | [APP_DISCOVERY.md](APP_DISCOVERY.md) | Installed-app discovery, XDG precedence, locales, and launch arguments |
 | [CATALOG_FULLSCREEN.md](CATALOG_FULLSCREEN.md) | Owned KDE fullscreen and repeatable real-app acceptance |
 | [ROADMAP.md](ROADMAP.md) | Completed features and future plans |

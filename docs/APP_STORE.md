@@ -6,7 +6,7 @@ and status filters can be combined to find installed, missing or already-added
 apps. Existing tiles are recognized even when they are hidden.
 
 Each card has expandable parent guidance: suggested age, offline availability,
-license, input devices, network considerations and an HTTPS source. Missing
+license, input devices, network considerations, a review date and HTTPS sources. Missing
 guidance is shown as unknown. Ages are suggestions; parents decide what suits
 their child. Offline support describes the reviewed core use, not a guarantee
 that every feature avoids the network.
@@ -41,18 +41,25 @@ documented in [APP_DISCOVERY.md](APP_DISCOVERY.md).
 
 ## Curated guidance
 
-`src/recommendations.json` stores bilingual descriptions and optional guidance
-fields (`age`, `offline`, `license`, `input`, `network`, `source`, `reviewed`).
-Tux Paint, GCompris and YouTube Kids have guidance reviewed against their
-official documentation on 2026-11-02. In particular, YouTube Kids is an online
-provider with its own privacy rules and possible advertising; it is not
-described as universally ad-free.
+`src/recommendations.json` stores localized descriptions and optional guidance
+fields (`age`, `offline`, `license`, `input`, `network`, `source`, `reviewed`,
+`references`). Eleven existing recommendations have sourced guidance: Tux Paint,
+GCompris, YouTube Kids, KTurtle, KBruch, KTuberling, KLettres, Kanagram, KHangMan,
+KBlocks and KReversi. See [CATALOG_GUIDANCE.md](CATALOG_GUIDANCE.md) for the review
+scope and primary sources. YouTube Kids remains an online provider with possible
+advertising; KBlocks is a falling-block game requiring timely input.
 
-Review sources: [Tux Paint overview](https://tuxpaint.org/),
-[Tux Paint privacy policy](https://tuxpaint.org/privacy/),
-[GCompris overview](https://gcompris.net/index-en.html),
-[GCompris FAQ](https://gcompris.net/faq-en.html) and
-[YouTube Kids advertising](https://support.google.com/youtubekids/answer/6130541?hl=en).
+The expanded details show a localized review date and up to four supporting
+references alongside the main project source. Invalid dates display as unknown.
+Only HTTPS links without embedded credentials are shown; duplicates are removed
+and labels render as plain text. Filtering to one result lets the card use the
+available width for more readable details.
+
+Names, descriptions, age/network guidance and reference labels use
+`<field>_<language>` data keys, falling back to English when a translation is
+absent. This permits more catalog translations without language-specific code
+branches. It does not enable unreviewed UI language packs; see
+[LOCALIZATION.md](LOCALIZATION.md) for the current pipeline and planned work.
 
 New package mappings and launch recipes require separate per-app fullscreen
 and return-to-launcher checks. This discovery increment retains the existing

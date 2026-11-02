@@ -223,7 +223,7 @@
   .backup-panel h3 { margin:0 0 6px; }
   .backup-actions { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; margin-top:12px; }
   .backup-message { min-height:20px; margin-top:8px; }
-  .rec-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+  .rec-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
   .rec-card { background:white; border-radius:var(--radius-control); padding:var(--space-4); display:flex; flex-direction:column; align-items:center; gap:10px; box-shadow:0 4px 16px var(--rec-shadow); }
   .rec-card .emoji { font-size:2.4rem; }
   .rec-card .name { font-weight:700; font-size:1rem; text-align:center; }
@@ -245,7 +245,12 @@
   .catalog-details dt { font-weight:700; margin-top:10px; }
   .catalog-details dd { margin:4px 0; line-height:1.4; }
   .catalog-details a { color:inherit; display:inline-flex; min-height:44px; align-items:center; }
+  .catalog-sources { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
   .catalog-heading .smallbtn, .rec-card .smallbtn { min-height:44px; }
+  @media(min-width:1000px) {
+    .rec-card:only-child .catalog-details dl { display:grid; grid-template-columns:minmax(100px,180px) minmax(0,1fr); gap:10px 12px; align-items:baseline; }
+    .rec-card:only-child .catalog-details dt, .rec-card:only-child .catalog-details dd { margin:0; }
+  }
   @media(max-width:900px) { .catalog-controls { grid-template-columns:1fr; } }
   .install-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; z-index:200; }
   #profileOverlay { z-index:90; }

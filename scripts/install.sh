@@ -767,6 +767,8 @@ text() {
     en:catalog_web_privacy) echo "Opens an external browser. Provider rules and accounts apply; the launcher navigation boundary does not apply there." ;;
     de:catalog_source) echo "Offizielle Projektinformationen ↗" ;;
     en:catalog_source) echo "Official project information ↗" ;;
+    de:catalog_reviewed) echo "Geprüft am" ;;
+    en:catalog_reviewed) echo "Reviewed on" ;;
     *) die "Missing translation for $ACTIVE_LANG:$key" ;;
   esac
 }
@@ -1290,6 +1292,7 @@ render_template() {
   export JSON_CATALOG_NETWORK
   export JSON_CATALOG_WEB_PRIVACY
   export JSON_CATALOG_SOURCE
+  export JSON_CATALOG_REVIEWED
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -1855,6 +1858,8 @@ CATALOG_WEB_PRIVACY="$(text catalog_web_privacy)"
 JSON_CATALOG_WEB_PRIVACY="$(json_text "$CATALOG_WEB_PRIVACY")"
 CATALOG_SOURCE="$(text catalog_source)"
 JSON_CATALOG_SOURCE="$(json_text "$CATALOG_SOURCE")"
+CATALOG_REVIEWED="$(text catalog_reviewed)"
+JSON_CATALOG_REVIEWED="$(json_text "$CATALOG_REVIEWED")"
 
 backup_if_exists "$RUNTIME_BIN"
 backup_if_exists "$SERVER_FILE"
