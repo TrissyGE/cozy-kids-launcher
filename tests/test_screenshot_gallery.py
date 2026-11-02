@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_SCREENSHOTS = {
+    "screenshot-app-store.png",
     "screenshot-admin-appearance.png",
     "screenshot-admin-children.png",
     "screenshot-admin-general.png",

@@ -53,6 +53,14 @@ See the [installation guide](docs/INSTALL.md) for language, browser, launch-mode
 |---|---|
 | ![Ocean theme](screenshots/screenshot-home-world.png) | ![Theme picker](screenshots/screenshot-theme-picker.png) |
 
+### Parent app store
+
+Search recommendations, review parent guidance, and install supported apps
+directly through the desktop's package authorization. See the
+[app-store guide](docs/APP_STORE.md) for provider requirements.
+
+![Parent app store with search, filters, details and direct installation](screenshots/screenshot-app-store.png)
+
 The screenshots use a clean, generated demo profile. Maintainers can recreate them with `python3 scripts/take-screenshots.py`; see the [screenshot guide](docs/SCREENSHOTS.md).
 
 ## How it fits together

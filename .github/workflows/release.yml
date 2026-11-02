@@ -105,6 +105,7 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/package_install.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/packagekit_backend.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/frontend/package-catalog.js"
+          test -f "$test_home/.local/share/cozy-kids-launcher/frontend/app-catalog.js"
           test -f "$test_home/.local/share/cozy-kids-launcher/application_launcher.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/backup_store.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/config_validation.py"

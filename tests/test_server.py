@@ -45,6 +45,7 @@ def frontend_source():
         frontend_root / "schedule-controls.js",
         frontend_root / "activity-dashboard.js",
         frontend_root / "parent-settings.js",
+        frontend_root / "app-catalog.js",
         frontend_root / "first-run.js",
         frontend_root / "runtime-controls.js",
         frontend_root / "styles.css",

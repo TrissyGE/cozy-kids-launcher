@@ -12,11 +12,18 @@ on topic branches ultimately targeting `develop` (dependent draft PRs may be
 stacked until their parent lands); this plan does not bump `VERSION` or
 publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
 
-1. **Quality repair — current increment:** unify local/CI/release checks,
-   diagnose the failing browser assertion, fix custom-theme/accessibility
-   conflicts, and make update/install UI states reflect acknowledged results.
-   Add regression coverage before expanding the catalog.
-2. **Platform foundation — started in this increment:** detect native package
+The November 2 continuation merged the quality/provider foundation in
+[#59](https://github.com/TrissyGE/cozy-kids-launcher/pull/59) and repaired the
+Python 3.9 runner in [#61](https://github.com/TrissyGE/cozy-kids-launcher/pull/61).
+Terminal-free installation remains a draft review in
+[#60](https://github.com/TrissyGE/cozy-kids-launcher/pull/60), with the discovery
+increment stacked on it until the remaining desktop acceptance is complete.
+
+1. **Quality repair — merged in #59:** shared local/CI/release checks,
+   diagnosed browser assertions, corrected custom-theme/accessibility
+   conflicts, and update/install UI states that reflect acknowledged results.
+   Regression coverage precedes catalog expansion.
+2. **Platform foundation — merged in #59:** detect native package
    managers and prepare allowlisted, explicitly manual installation plans.
    This is not an automatic package executor or a cross-distribution support claim.
 3. **Current product increment — terminal-free installation first:** on the
@@ -34,6 +41,10 @@ publish a release. See [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md) for findings.
    app details, honest availability, age/offline/privacy/input metadata, and
    source-backed package mappings. Audit desktop-entry discovery and existing
    recommendation wording before expanding the catalog.
+   Search, combined filters and sourced detail fields are implemented in a
+   dependent review increment. Its Install action retains the terminal-free
+   review, confirmation and PackageKit flow; copying a command is not the normal
+   Parent installation path. New app recipes still require fullscreen acceptance.
 5. **Then broaden package actions:** update/removal and richer restart recovery;
    verify real disposable APT/DNF/Pacman/Zypper environments and evaluate
    Flatpak remotes separately. The current journal never automatically replays
@@ -163,7 +174,25 @@ standard at the end of this document is met.
 - [ ] Add stable and opt-in preview update channels without weakening immutable releases
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
 
+### Later family increments
+
+- [ ] Add optional per-child daily budgets shared across apps, surviving launcher restarts and profile switches, with defined suspend, midnight and clock-change behavior
+- [ ] Show the next allowed time and remaining budget without exposing the full family schedule to children
+- [ ] Add a local request for more time with PIN-confirmed one-off extensions
+- [ ] Add Parent-reviewed profile duplication without copying usage history or media resume state
+
 ## v0.9.0 — Living Room
+
+### RetroGameCorner
+
+- [ ] Add an optional, Parent-enabled RetroGameCorner with a curated choice of emulators installed through the app store's direct installation flow
+- [ ] Write German/English Parent guidance explaining emulators, ROMs, optional BIOS files, controls, age/content choices and save data
+- [ ] Let parents supply their own ROMs and any required BIOS files with the necessary usage rights; do not bundle game ROMs/BIOS files or provide ROM-download/search services
+- [ ] Add bounded Parent-managed local game folders and per-child approved game lists; handle missing or disconnected storage clearly
+- [ ] Keep save files and supported save states separate for each child, with understandable backup and removal controls
+- [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
+
+### Living-room foundations
 
 - [ ] Add optional gamepad and simple remote-control navigation with the same focus and modal boundaries as keyboard input
 - [ ] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API

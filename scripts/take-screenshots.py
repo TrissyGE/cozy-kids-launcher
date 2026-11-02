@@ -324,6 +324,27 @@ def main():
                     root / "chrome-theme-picker",
                     "(async () => { enterAdmin(); await loadBackups(); openThemePicker(); return true; })()",
                 )
+                capture(
+                    browser,
+                    url,
+                    output_dir / "screenshot-app-store.png",
+                    root / "chrome-app-store",
+                    """(async () => {
+                      enterAdmin();
+                      await loadRecommendations();
+                      recommendations=recommendations
+                        .filter(rec=>['tuxpaint','gcompris','tuxmath','kturtle'].includes(rec.id))
+                        .map(rec=>({...rec,installed:['tuxpaint','gcompris'].includes(rec.id)}));
+                      catalogQuery='';catalogCategory='all';catalogStatus='all';
+                      renderRecommendations();
+                      activateAdminSection('apps');
+                      const panel=document.getElementById('recommendations');
+                      panel.style.minHeight='calc(100vh - 120px)';
+                      document.getElementById('catalogSearch').focus({preventScroll:true});
+                      panel.scrollIntoView({block:'start'});
+                      return true;
+                    })()""",
+                )
                 write_config(launcher_home, "ocean")
                 capture(
                     browser,

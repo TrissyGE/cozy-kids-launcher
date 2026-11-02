@@ -296,6 +296,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertTrue((frontend_root.parent / "package_install.py").is_file())
             self.assertTrue((frontend_root.parent / "packagekit_backend.py").is_file())
             self.assertTrue((frontend_root / "package-catalog.js").is_file())
+            self.assertTrue((frontend_root / "app-catalog.js").is_file())
             self.assertTrue((frontend_root / "localization.js").is_file())
             self.assertTrue((frontend_root / "first-run.js").is_file())
             self.assertTrue((frontend_root / "schedule-controls.js").is_file())

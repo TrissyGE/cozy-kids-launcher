@@ -7,6 +7,7 @@ Welcome to the Cozy Kids Launcher documentation.
 | [INSTALL.md](INSTALL.md) | One-liner install, manual install, options table, troubleshooting |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the launcher works under the hood |
 | [PRIVACY.md](PRIVACY.md) | Local-first design and safety notes for parents |
+| [APP_STORE.md](APP_STORE.md) | Search, parent guidance, and direct app installation |
 | [ROADMAP.md](ROADMAP.md) | Completed features and future plans |
 | [SCREENSHOTS.md](SCREENSHOTS.md) | How to capture and add screenshots to the repo |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Automated checks and local smoke tests |
