@@ -15,7 +15,8 @@ concurrency:
 jobs:
   test:
     name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    # Python 3.9 has published builds for 24.04, not the new 26.04 runner.
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-24.04' || 'ubuntu-latest' }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
