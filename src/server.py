@@ -87,8 +87,8 @@ from media_state import (
     set_media_favorite,
 )
 from retro_games import (
-    HUB_COMMAND, HUB_ID, approved_retro_ids, emulator_binary, emulator_command, retro_cover,
-    retro_hub, scan_retro_games,
+    HUB_COMMAND, HUB_ID, PS1_BIOS_BYTES, approved_retro_ids, emulator_binary, emulator_command,
+    import_ps1_bios, ps1_bios_status, retro_cover, retro_hub, scan_retro_games,
 )
 from media_resume import (
     prepare_profile_resume_directory,
@@ -876,6 +876,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "enabled": bool(retro_hub(cfg)),
                 "covers": (retro_hub(cfg, require_visible=False) or {}).get("retroCovers", False),
                 "approvedIds": list(approved_retro_ids(cfg)),
+                "ps1Bios": ps1_bios_status(os.path.dirname(MEDIA_STATE_FILE)),
             })
         if request_url.path in ("/api/retro/library", "/api/retro/cover"):
             cfg = load_cfg()
@@ -1105,6 +1106,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self.dispatch_post(action)
 
     def dispatch_post(self, action, retro_from_hub=False):
+        if action == "api/retro/ps1-bios":
+            if not self.require_admin(load_cfg()):
+                return
+            if self.headers.get_content_type() != "application/octet-stream":
+                return self.json_response({"status": "invalid"}, 415)
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                return self.json_response({"status": "invalid"}, 400)
+            if length != PS1_BIOS_BYTES:
+                return self.json_response({"status": "invalid"}, 413 if length > PS1_BIOS_BYTES else 400)
+            self.connection.settimeout(10)
+            state_root = os.path.dirname(MEDIA_STATE_FILE)
+            try:
+                import_ps1_bios(state_root, self.rfile.read(length))
+            except ValueError:
+                return self.json_response({"status": "invalid"}, 400)
+            except OSError:
+                return self.json_response({"status": "unavailable"}, 503)
+            return self.json_response({"status": "ok", "ps1Bios": ps1_bios_status(state_root)})
         if action == "api/retro/play":
             body = self.read_json_body()
             if body is None:

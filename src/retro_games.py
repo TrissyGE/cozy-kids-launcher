@@ -5,6 +5,7 @@ import os
 import re
 import stat
 import struct
+import tempfile
 import threading
 import time
 import zipfile
@@ -41,7 +42,60 @@ MAX_SCAN_DIRECTORIES = 250
 MAX_SCAN_ENTRIES = 2500
 ROM_ID = re.compile(r"[a-f0-9]{24}")
 MAX_COVER_BYTES = 1024 * 1024
+PS1_BIOS_BYTES = 512 * 1024
+# Regional firmware images documented by Mednafen for its PS1 module.
+PS1_BIOS = {
+    "jp": ("scph5500.bin", "9c0421858e217805f4abe18698afea8d5aa36ff0727eb8484944e00eb5e7eadb"),
+    "na": ("scph5501.bin", "11052b6499e466bbf0a709b1f9cb6834a9418e66680387912451e971cf8a1fef"),
+    "eu": ("scph5502.bin", "1faaa18fa820a0225e488d9f086296b8e6c46df739666093987ff7d8fd352c09"),
+}
 _cover_slots = threading.BoundedSemaphore(2)
+
+
+def ps1_bios_status(state_root):
+    directory = os.path.join(state_root, "ps1-bios")
+    statuses = dict.fromkeys(PS1_BIOS, "missing")
+    for region, (filename, expected) in PS1_BIOS.items():
+        path = os.path.join(directory, filename)
+        if not os.path.lexists(path):
+            continue
+        statuses[region] = "invalid"
+        if os.path.realpath(path) != path:
+            continue
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        flags |= getattr(os, "O_BINARY", 0)
+        try:
+            with os.fdopen(os.open(path, flags), "rb") as handle:
+                info = os.fstat(handle.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_size != PS1_BIOS_BYTES:
+                    continue
+                payload = handle.read(PS1_BIOS_BYTES + 1)
+        except OSError:
+            continue
+        if len(payload) == PS1_BIOS_BYTES and hashlib.sha256(payload).hexdigest() == expected:
+            statuses[region] = "ready"
+    return statuses
+
+
+def import_ps1_bios(state_root, payload):
+    """Identify a supplied BIOS by content and store it under the known filename."""
+    if len(payload) != PS1_BIOS_BYTES:
+        raise ValueError("Invalid PS1 BIOS size")
+    digest = hashlib.sha256(payload).hexdigest()
+    filename = next((name for name, expected in PS1_BIOS.values() if digest == expected), None)
+    if filename is None:
+        raise ValueError("Unrecognized PS1 BIOS")
+    directory = prepare_profile_resume_directory(state_root, "ps1-bios")
+    descriptor, temporary = tempfile.mkstemp(prefix="bios-", dir=directory)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, os.path.join(directory, filename))
+    finally:
+        if os.path.lexists(temporary):
+            os.unlink(temporary)
 
 
 def retro_hub(cfg, require_visible=True):

@@ -253,11 +253,12 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
 - [x] Assign private mGBA save and save-state directories per child and game
 - [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
-- [ ] Make PlayStation 1 the next optional system in RetroGameCorner using Mednafen
-  - [ ] Validate Parent-supplied BIOS files against the expected regional checksums and report missing firmware before launch
-  - [ ] Import single-disc CUE/BIN games first. Keep the CUE and every referenced track inside the approved source and invalidate approval when a disc component changes
+- [ ] Make PlayStation 1 the next optional system in RetroGameCorner
+  - [x] Import Parent-supplied BIOS files locally, validate the documented regional checksums and show readiness in Parent settings
+  - [ ] Qualify a Linux install route for a CHD-capable PS1 emulator. Review Beetle PSX and DuckStation against the existing install, launch and private-save requirements
+  - [ ] Import single-disc CHDs and check firmware before launch. Add CUE/BIN support with every referenced track inside the approved source. Invalidate approval when a disc component changes
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
-  - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card
+  - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card. Support handheld playlists by resolving disc entries unambiguously inside the selected game source without following the original absolute paths
 - [ ] Add save backup and removal controls
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
   - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.

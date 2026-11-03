@@ -24,6 +24,7 @@ import lifecycle_state
 import activity_store
 import media_state
 import profile_config
+import retro_games
 from translation_data import load_translations
 
 
@@ -863,6 +864,49 @@ class ServerApiTests(unittest.TestCase):
             rom.write_bytes(b"changed fixture")
             self.assertEqual(self.request("/api/retro/play", "POST", {"gameId": identifier})[0], 503)
             launch.assert_called_once()
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "BIOS storage uses Linux permissions")
+    def test_ps1_bios_import_is_parent_only_and_validates_before_replacing(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        endpoint = "/api/retro/ps1-bios"
+        fixture = b"\x11" * retro_games.PS1_BIOS_BYTES
+        expected = hashlib.sha256(fixture).hexdigest()
+        valid = {**retro_games.PS1_BIOS, "eu": ("scph5502.bin", expected)}
+
+        def upload(payload, session=None, origin=None):
+            headers = {"Content-Type": "application/octet-stream"}
+            if session:
+                headers["Cookie"] = session
+            if origin:
+                headers["Origin"] = origin
+            request = urllib.request.Request(self.base_url + endpoint, data=payload, headers=headers)
+            try:
+                response = urllib.request.urlopen(request, timeout=5)
+            except urllib.error.HTTPError as error:
+                response = error
+            with response:
+                return response.status, json.load(response)
+
+        root = Path(server_module.MEDIA_STATE_FILE).parent / "ps1-bios"
+        with mock.patch.object(retro_games, "PS1_BIOS", valid):
+            self.assertEqual(upload(fixture)[0], 403)
+            self.assertEqual(upload(fixture, cookie, "https://example.com")[0], 403)
+            self.assertEqual(upload(fixture + b"x", cookie)[0], 413)
+            self.assertEqual(upload(b"wrong", cookie)[0], 400)
+            self.assertFalse(root.exists())
+            status, result = upload(fixture, cookie)
+            self.assertEqual(status, 200)
+            self.assertEqual(result["ps1Bios"], {"jp": "missing", "na": "missing", "eu": "ready"})
+            bios = root / "scph5502.bin"
+            self.assertEqual(bios.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(root.stat().st_mode & 0o777, 0o700)
+            self.assertEqual(upload(bytes(len(fixture)), cookie)[0], 400)
+            self.assertEqual(bios.read_bytes(), fixture)
+            self.assertEqual(self.request("/api/retro/games", cookie=cookie)[1]["ps1Bios"]["eu"], "ready")
+            self.assertNotIn("ps1Bios", self.request("/api/config")[1])
+            bios.write_bytes(bytes(len(fixture)))
+            self.assertEqual(self.request("/api/retro/games", cookie=cookie)[1]["ps1Bios"]["eu"], "invalid")
 
     def test_media_play_launches_only_a_catalog_item_for_a_visible_media_tile(self):
         media_file = Path(server_module.VIDEOS) / "Film.mp4"
