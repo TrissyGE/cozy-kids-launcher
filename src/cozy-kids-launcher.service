@@ -1,0 +1,11 @@
+[Unit]
+Description=Cozy Kids Launcher in the graphical user session
+PartOf=graphical-session.target
+
+[Service]
+Type=exec
+EnvironmentFile=%t/cozy-kids-launcher-session.env
+ExecStart=%h/.local/bin/cozy-kids-launcher --service-run
+Restart=no
+KillMode=mixed
+TimeoutStopSec=30

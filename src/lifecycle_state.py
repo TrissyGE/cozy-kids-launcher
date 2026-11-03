@@ -51,7 +51,7 @@ ALLOWED_TRANSITIONS = {
     "failed": {"starting"},
 }
 
-REQUEST_REASONS = {"parent-exit", "shutdown"}
+REQUEST_REASONS = {"manual-stop", "parent-exit", "shutdown"}
 
 
 def utc_timestamp(now=None):

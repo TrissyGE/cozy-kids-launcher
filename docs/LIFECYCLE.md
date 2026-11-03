@@ -45,6 +45,35 @@ and replaces that stale state.
 
 ## Diagnostics and tests
 
+### Optional systemd user service
+
+On Linux desktops with a running systemd user manager, exit the standalone
+launcher before enabling the service from a terminal in the graphical session:
+
+```bash
+~/.local/bin/cozy-kids-launcher --service enable
+~/.local/bin/cozy-kids-launcher --service start
+~/.local/bin/cozy-kids-launcher --service status
+```
+
+The existing desktop and login entries start the service when opted in. The
+unit has no boot-time enable target. Each start captures the display and session
+environment in a private file for that unit. The original launcher retains its
+instance lock, bounded crash recovery and ownership of browser and server
+cleanup. Parent exit stops the service without starting another session.
+
+Use `--service recover` in the graphical session for a controlled stop and
+restart, `--service stop` to close the supervised launcher, or
+`--service disable` to return the desktop entries to standalone mode.
+`--standalone` is an emergency launch option if the user manager is
+unavailable. The existing instance lock still applies.
+
+Status reports the current systemd unit state and the last recorded launcher
+lifecycle separately. Use `journalctl --user -u cozy-kids-launcher.service`
+for service diagnostics. Stop and disable the service before uninstalling.
+
+### Evidence
+
 Parent diagnostics include only the allowlisted current state, reason, and
 bounded recovery attempt. Automated Linux integration tests run real isolated
 launcher, server, browser-stub, update, shutdown, logout, and crash-recovery
