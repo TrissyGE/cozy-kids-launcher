@@ -267,7 +267,7 @@
   "retroLimit": "Se ha alcanzado el límite de búsqueda. Elige una carpeta más pequeña.",
   "retroUnavailable": "Este juego no está disponible. Pide a un adulto que compruebe la carpeta, el permiso y el emulador correspondiente.",
   "ps1BiosTitle": "Preparar la BIOS de PlayStation 1",
-  "ps1BiosGuide": "Importa un archivo BIOS de tu propia consola. El lanzador verifica la región mediante la suma de comprobación y guarda el archivo localmente. La importación de juegos de PS1 sigue en desarrollo.",
+  "ps1BiosGuide": "Importa un archivo BIOS de tu propia consola. El lanzador identifica la BIOS mediante la suma de comprobación y guarda el archivo localmente. La importación de juegos de PS1 sigue en desarrollo.",
   "ps1BiosLabel": "Elige un archivo BIOS para importar",
   "ps1BiosReady": "Verificada",
   "ps1BiosMissing": "Falta",

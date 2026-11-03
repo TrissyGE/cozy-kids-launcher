@@ -43,11 +43,12 @@ MAX_SCAN_ENTRIES = 2500
 ROM_ID = re.compile(r"[a-f0-9]{24}")
 MAX_COVER_BYTES = 1024 * 1024
 PS1_BIOS_BYTES = 512 * 1024
-# Regional firmware images documented by Mednafen for its PS1 module.
+# The three regional PS1 images and the PSP image supported by PCSX ReARMed.
 PS1_BIOS = {
     "jp": ("scph5500.bin", "9c0421858e217805f4abe18698afea8d5aa36ff0727eb8484944e00eb5e7eadb"),
     "na": ("scph5501.bin", "11052b6499e466bbf0a709b1f9cb6834a9418e66680387912451e971cf8a1fef"),
     "eu": ("scph5502.bin", "1faaa18fa820a0225e488d9f086296b8e6c46df739666093987ff7d8fd352c09"),
+    "psp": ("psxonpsp660.bin", "cbe758e1c8ece593c8e14ce1e8b3436428a01c608032a02613b3a4b442b4d712"),
 }
 _cover_slots = threading.BoundedSemaphore(2)
 

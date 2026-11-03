@@ -410,7 +410,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.evaluate("enterAdmin(); activateAdminSection('retro')")
     browser.wait_for("!document.getElementById('retroRoots').disabled")
     browser.click("#ps1BiosTitle")
-    assert_js(browser, "document.querySelectorAll('#ps1BiosRegions li').length===3 && "
+    assert_js(browser, "document.querySelectorAll('#ps1BiosRegions li').length===4 && "
               "Array.from(document.querySelectorAll('#ps1BiosRegions li')).every(row=>row.textContent.includes(uiText.ps1BiosMissing))",
               "PS1 BIOS readiness was not shown in Parent settings")
     browser.evaluate("""(() => {

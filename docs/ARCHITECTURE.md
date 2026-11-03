@@ -247,11 +247,13 @@ See the [mGBA command-line manual](https://manpages.debian.org/testing/mgba-qt/m
 and the [Mednafen documentation](https://mednafen.github.io/documentation/).
 
 Parents can prepare PS1 firmware from the RetroGameCorner panel. The launcher
-identifies the supported Japan, North America and Europe BIOS images by their
-documented SHA-256 checksums and stores verified files under
+identifies the supported Japan, North America, Europe and PSP BIOS images by
+SHA-256 and stores verified files under
 `~/.local/state/cozy-kids-launcher/ps1-bios/`. Only Parent requests can import
 firmware or view its readiness. BIOS files are stored separately from config
-exports. PS1 game discovery and launch are tracked in the roadmap.
+exports. PCSX ReARMed supports the PSP BIOS and CHDs. The PS1 install, game
+discovery and launch flows are tracked in the roadmap.
+See the [PCSX ReARMed BIOS documentation](https://docs.libretro.com/library/pcsx_rearmed/#bios).
 
 Enable controller and remote navigation in Parent settings under System.
 On Home and in the media library, the D-pad or left stick moves focus in the

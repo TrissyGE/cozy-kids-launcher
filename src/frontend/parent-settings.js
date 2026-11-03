@@ -463,7 +463,7 @@ function renderPs1Bios(regions){
   const statuses={ready:uiText.ps1BiosReady,missing:uiText.ps1BiosMissing,invalid:uiText.ps1BiosInvalid};
   const list=document.getElementById('ps1BiosRegions');
   list.replaceChildren();
-  for(const [region,name] of [['jp','SCPH-5500 (JP)'],['na','SCPH-5501 (NA)'],['eu','SCPH-5502 (EU)']]){
+  for(const [region,name] of [['jp','SCPH-5500 (JP)'],['na','SCPH-5501 (NA)'],['eu','SCPH-5502 (EU)'],['psp','PSXONPSP660 (PSP)']]){
     const row=document.createElement('li');
     row.textContent=`${name} · ${statuses[regions[region]]||statuses.missing}`;
     list.appendChild(row);

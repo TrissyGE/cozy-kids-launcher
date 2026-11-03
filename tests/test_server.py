@@ -897,7 +897,7 @@ class ServerApiTests(unittest.TestCase):
             self.assertFalse(root.exists())
             status, result = upload(fixture, cookie)
             self.assertEqual(status, 200)
-            self.assertEqual(result["ps1Bios"], {"jp": "missing", "na": "missing", "eu": "ready"})
+            self.assertEqual(result["ps1Bios"], {"jp": "missing", "na": "missing", "eu": "ready", "psp": "missing"})
             bios = root / "scph5502.bin"
             self.assertEqual(bios.stat().st_mode & 0o777, 0o600)
             self.assertEqual(root.stat().st_mode & 0o777, 0o700)

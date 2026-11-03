@@ -254,8 +254,9 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Assign private mGBA save and save-state directories per child and game
 - [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
 - [ ] Make PlayStation 1 the next optional system in RetroGameCorner
-  - [x] Import Parent-supplied BIOS files locally, validate the documented regional checksums and show readiness in Parent settings
-  - [ ] Qualify a Linux install route for a CHD-capable PS1 emulator. Review Beetle PSX and DuckStation against the existing install, launch and private-save requirements
+  - [x] Import Parent-supplied BIOS files locally, validate regional PS1 and supported PSP BIOS checksums and show readiness in Parent settings
+  - [x] Verify that Ubuntu RetroArch can launch the upstream Linux x86-64 PCSX ReARMed core with a CHD, the supported PSP BIOS and a private save directory
+  - [ ] Wire RetroArch and a reviewed PCSX ReARMed build into the Parent install flow. Verify the downloaded core artifact and keep its version explicit. Evaluate Beetle PSX or DuckStation if needed for game compatibility
   - [ ] Import single-disc CHDs and check firmware before launch. Add CUE/BIN support with every referenced track inside the approved source. Invalidate approval when a disc component changes
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
   - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card. Support handheld playlists by resolving disc entries unambiguously inside the selected game source without following the original absolute paths
