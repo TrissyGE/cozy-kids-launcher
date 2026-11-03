@@ -267,7 +267,8 @@ that lack an equivalent core, including Wii U and PS3.
   - [ ] Qualify a durable versioned source for the core so that installs remain available after upstream rolls the download. Evaluate Beetle PSX or DuckStation if needed for game compatibility
   - [x] Discover single-disc CHDs, enforce per-child approval and verify the firmware, disc and pre-provisioned core before launch
   - [x] Discover CUE/BIN discs with raw 2352-byte tracks, validate every track in the source, and invalidate approval when the CUE or a BIN changes
-  - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
+  - [x] Keep memory cards private per child and game, and verify CUE/BIN fullscreen, overlay close and memory-card persistence in all three desktop VM sessions
+  - [ ] Verify gameplay controls, audible output and save persistence on the physical Linux test laptop
   - [x] Import M3U sets of CHD and CUE/BIN discs with a single approval, including Miyoo playlists whose entries are resolved within the playlist folder
   - [ ] Verify a disc change requested during gameplay and memory-card persistence on the desktop matrix and the physical Linux test laptop
 - [x] Add Parent-only save backup and removal controls for each child and game
