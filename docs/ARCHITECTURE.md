@@ -207,7 +207,8 @@ RetroGameCorner has a dedicated Parent section. Its emulator cards use the
 same package review, confirmation and authorization flow as the app store.
 Add up to eight local game folders, then approve games
 individually for the active profile. The launcher accepts individual
-`.gb`, `.gbc` and `.gba` files. Parents supply game files themselves and
+`.gb`, `.gbc` and `.gba` files, including ZIP archives containing exactly
+one such file. Parents supply game files themselves and
 review content and controls before approving a game. The mGBA integration
 uses its built-in BIOS behavior.
 
@@ -220,8 +221,14 @@ file may require approval again. The child configuration contains the
 tile label and ID. The source paths are available in Parent settings
 and configuration exports. A copied profile needs its own game approvals.
 
-Place an optional same-name PNG next to a ROM for a local cover. The per-child
-automatic cover option starts disabled. Once enabled, the launcher looks up
+Place an optional same-name PNG next to a ROM or ZIP archive for a local cover.
+Online lookups use the ROM name
+and system inside the archive. The scanner limits archives to 40 MiB, their
+ROMs to 32 MiB and their central directories to 64 KiB and 32 entries. It
+checks ZIP integrity on launch and passes the approved archive to mGBA.
+The launcher leaves the archive in place. A scan lists up to 512 candidates.
+
+The per-child automatic cover option starts disabled. Once enabled, the launcher looks up
 missing covers by console and game title in the
 [Libretro thumbnail collection](https://docs.libretro.com/guides/roms-playlists-thumbnails/).
 The child browser loads the cover through the local launcher.
