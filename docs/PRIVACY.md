@@ -12,6 +12,8 @@ The launcher is designed to run locally:
 - local application launching
 
 No cloud backend is required.
+The server accepts the local listener's Host and port. See the
+[threat model](THREAT_MODEL.md) for the Parent and local HTTP boundaries.
 
 The local media catalog stays on the loopback server. Its public response uses
 opaque identifiers and never returns absolute media or cover paths. Discovery
