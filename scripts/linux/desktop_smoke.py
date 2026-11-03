@@ -5,8 +5,10 @@ import argparse
 import getpass
 import json
 import os
+import platform
 import shutil
 import socket
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -300,16 +302,49 @@ def kde_catalog_entry(app_id):
     raise ValueError("Choose an existing KDE fullscreen catalog app")
 
 
-def owned_fullscreen_window(supervisor_pid):
-    """Observe the owned app's WM state without requesting fullscreen ourselves."""
+def runtime_processes(*roots):
     source_root = str(REPOSITORY_ROOT / "src")
     if source_root not in sys.path:
         sys.path.insert(0, source_root)
-    from app_display import X11Fullscreen
     from process_supervisor import owned_processes
+    pids = set(roots)
+    for root in roots:
+        pids.update(owned_processes(root))
+    return pids
+
+
+def pss_sample(pids, proc=Path("/proc")):
+    """Sum proportional memory and expose incomplete samples."""
+    total = measured = 0
+    for pid in pids:
+        try:
+            with (proc / str(pid) / "smaps_rollup").open(encoding="ascii") as handle:
+                for line in handle:
+                    if line.startswith("Pss:"):
+                        total += int(line.split()[1])
+                        measured += 1
+                        break
+        except (OSError, ValueError, IndexError):
+            continue
+    return {"pssKiB": total if measured else None, "measured": measured, "processes": len(pids)}
+
+
+def idle_memory(roots):
+    samples = []
+    for _ in range(3):
+        time.sleep(3)
+        samples.append(pss_sample(runtime_processes(*roots)))
+    complete = [sample["pssKiB"] for sample in samples
+                if sample["measured"] and sample["measured"] == sample["processes"]]
+    return {"samples": samples, "medianPssKiB": statistics.median(complete) if len(complete) == len(samples) else None}
+
+
+def owned_fullscreen_window(supervisor_pid):
+    """Observe the owned app's WM state without requesting fullscreen ourselves."""
+    pids = runtime_processes(supervisor_pid) - {supervisor_pid}
+    from app_display import X11Fullscreen
     display = X11Fullscreen()
     try:
-        pids = set(owned_processes(supervisor_pid))
         for window in display.values(display.root, "_NET_CLIENT_LIST", "WINDOW"):
             owner = display.values(window, "_NET_WM_PID", "CARDINAL")
             if len(owner) != 1 or owner[0] not in pids:
@@ -644,6 +679,7 @@ def run_smoke(args, browser_path, report):
             environment["COZY_KIDS_PORT"] = str(port)
 
             launcher_log = (artifacts / "launcher.log").open("w", encoding="utf-8")
+            started = time.monotonic()
             launcher = subprocess.Popen(
                 [str(runtime)],
                 env=environment,
@@ -656,6 +692,15 @@ def run_smoke(args, browser_path, report):
                 timeout=45,
                 message="launcher server did not become ready",
             )
+            if args.performance:
+                memory = os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")
+                report.data["performance"] = {
+                    "freshBrowserProfile": True,
+                    "architecture": platform.machine(),
+                    "logicalCPUs": len(os.sched_getaffinity(0)),
+                    "memoryMiB": memory // (1024 * 1024),
+                    "serverReadyMs": round((time.monotonic() - started) * 1000),
+                }
             browser_record = wait_until(
                 lambda: live_process_record(cache / "browser.pid", "browser"),
                 timeout=30,
@@ -676,6 +721,15 @@ def run_smoke(args, browser_path, report):
                 timeout=30,
                 message="owned PID did not exec into the configured browser",
             )
+            if args.performance:
+                performance = report.data["performance"]
+                performance["browserExecMs"] = round((time.monotonic() - started) * 1000)
+                if args.session == "x11" and shutil.which("wmctrl"):
+                    wait_until(lambda: x11_window_present("Cozy Kids Launcher"), timeout=20)
+                    performance["x11WindowMs"] = round((time.monotonic() - started) * 1000)
+                server_record = live_process_record(cache / "server.pid", "server")
+                if server_record:
+                    performance["idleMemory"] = idle_memory((launcher.pid, browser_record["pid"], server_record["pid"]))
             mode_details = verify_browser_mode(
                 browser_command,
                 browser_name,
@@ -851,6 +905,11 @@ def main():
         "--interactive",
         action="store_true",
         help="Record the manual VM observations in the JSON report",
+    )
+    parser.add_argument(
+        "--performance",
+        action="store_true",
+        help="Record first-launch timings and three idle proportional-memory samples",
     )
     parser.add_argument(
         "--artifacts",
