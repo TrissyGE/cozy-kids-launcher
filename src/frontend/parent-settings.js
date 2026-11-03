@@ -446,18 +446,73 @@ async function saveMediaRoots(){
 }
 
 let retroSession=null;
+let ps1Runtime=null;
+let retroDevice=null;
 
 function clearRetroGames(){
   retroSession?.abort();
   retroSession=null;
+  ps1Runtime=null;
+  if(retroDevice){
+    retroDevice=null;
+    renderRetroEmulators();
+  }
+  document.getElementById('retroDeviceRun').disabled=true;
+  document.getElementById('retroDeviceStatus').textContent='';
+  document.getElementById('retroDeviceResults').replaceChildren();
   document.getElementById('retroRoots').value='';
   document.getElementById('retroGame').replaceChildren();
   document.getElementById('retroStatus').textContent='';
+  document.getElementById('retroSaveGame').replaceChildren();
+  document.getElementById('retroSaveStatus').textContent='';
   document.getElementById('ps1BiosInput').value='';
   document.getElementById('ps1BiosRegions').replaceChildren();
   document.getElementById('ps1BiosStatus').textContent='';
   document.getElementById('ps1RuntimeStatus').textContent='';
-  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave','ps1BiosInput']) document.getElementById(id).disabled=true;
+  document.getElementById('ps1CoreInput').value='';
+  document.getElementById('ps1CoreStatus').textContent='';
+  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave',
+    'retroSaveGame','retroSaveDownload','retroSaveRemove','ps1BiosInput','ps1CoreInput','ps1CoreDownload']) document.getElementById(id).disabled=true;
+}
+
+function renderPs1Runtime(){
+  const coreState=ps1Runtime.coreSupported
+    ?(ps1Runtime.core?uiText.ps1BiosReady:uiText.ps1BiosMissing):uiText.ps1CoreUnsupported;
+  const retroarchState=ps1Runtime.retroarch?uiText.ps1BiosReady:uiText.ps1BiosMissing;
+  document.getElementById('ps1RuntimeStatus').textContent=
+    `RetroArch · ${retroarchState} / PCSX ReARMed ${ps1Runtime.coreVersion} · ${coreState}`;
+  const disabled=!ps1Runtime.coreSupported||ps1Runtime.core;
+  document.getElementById('ps1CoreDownload').disabled=disabled;
+  document.getElementById('ps1CoreInput').disabled=disabled;
+}
+
+async function installPs1Core(file=null){
+  const signal=retroSession?.signal;
+  const input=document.getElementById('ps1CoreInput');
+  const button=document.getElementById('ps1CoreDownload');
+  if(!signal||signal.aborted||button.disabled) return;
+  const status=document.getElementById('ps1CoreStatus');
+  input.value='';
+  status.textContent='';
+  if(file&&(!file.size||file.size>4*1024*1024)){status.textContent=uiText.ps1CoreRejected;return;}
+  input.disabled=true;
+  button.disabled=true;
+  try{
+    const response=file
+      ?await fetch('/api/retro/ps1-core',{
+        method:'POST',headers:{'Content-Type':'application/octet-stream'},body:file,signal
+      })
+      :await fetch('/api/retro/ps1-core-download',{method:'POST',signal});
+    if(signal.aborted) return;
+    if(response.status===400||response.status===409){status.textContent=uiText.ps1CoreRejected;return;}
+    if(!response.ok) throw new Error('Core installation failed');
+    ps1Runtime.core=true;
+    status.textContent=uiText.ps1BiosReady;
+  }catch(e){
+    if(!signal.aborted) status.textContent=uiText.ps1CoreError;
+  }finally{
+    if(!signal.aborted) renderPs1Runtime();
+  }
 }
 
 function renderPs1Bios(regions){
@@ -503,6 +558,8 @@ async function loadRetroGames(){
   clearRetroGames();
   retroSession=new AbortController();
   const {signal}=retroSession;
+  document.getElementById('retroDeviceRun').disabled=false;
+  void loadRetroSaves(signal);
   const status=document.getElementById('retroStatus');
   try{
     const response=await fetch('/api/retro/games',{cache:'no-store',signal});
@@ -511,9 +568,8 @@ async function loadRetroGames(){
     if(signal.aborted) return;
     renderPs1Bios(data.ps1Bios);
     document.getElementById('ps1BiosInput').disabled=false;
-    document.getElementById('ps1RuntimeStatus').textContent=[
-      ['RetroArch',data.ps1Runtime.retroarch],['PCSX ReARMed',data.ps1Runtime.core]
-    ].map(([name,ready])=>`${name} · ${ready?uiText.ps1BiosReady:uiText.ps1BiosMissing}`).join(' / ');
+    ps1Runtime=data.ps1Runtime;
+    renderPs1Runtime();
     const roots=document.getElementById('retroRoots');
     roots.value=data.roots.join('\n');
     roots.disabled=false;
@@ -540,6 +596,72 @@ async function loadRetroGames(){
     ].filter(Boolean).join(' ');
   }catch(e){
     if(!signal.aborted) status.textContent=uiText.retroUnavailable;
+  }
+}
+
+function setRetroSaveControls(disabled){
+  for(const id of ['retroSaveGame','retroSaveDownload','retroSaveRemove']){
+    document.getElementById(id).disabled=disabled;
+  }
+}
+
+async function loadRetroSaves(signal){
+  const select=document.getElementById('retroSaveGame');
+  const status=document.getElementById('retroSaveStatus');
+  try{
+    const response=await fetch('/api/retro/saves',{cache:'no-store',signal});
+    if(!response.ok) throw new Error('Saves unavailable');
+    const data=await response.json();
+    if(signal.aborted||data.profileId!==cfg.activeProfileId) return;
+    select.replaceChildren(...data.games.map(game=>new Option(game.title,game.id)));
+    setRetroSaveControls(!select.options.length);
+    status.textContent=select.options.length?'':uiText.retroSavesEmpty;
+  }catch(e){
+    if(!signal.aborted) status.textContent=uiText.retroSaveError;
+  }
+}
+
+async function manageRetroSave(remove){
+  const signal=retroSession?.signal;
+  const select=document.getElementById('retroSaveGame');
+  if(!signal||signal.aborted||select.disabled||!select.value) return;
+  const gameId=select.value;
+  const profileId=cfg.activeProfileId;
+  if(remove){
+    const message=uiText.retroSaveConfirm.replace('{game}',()=>select.selectedOptions[0].text);
+    if(!(await requestConfirmation(message,uiText.retroSaveRemove))||signal.aborted) return;
+  }
+  const status=document.getElementById('retroSaveStatus');
+  setRetroSaveControls(true);
+  try{
+    const query=new URLSearchParams({gameId,profileId});
+    const response=remove
+      ?await fetch('/api/retro/saves',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({gameId,profileId,confirm:true}),signal
+      })
+      :await fetch('/api/retro/saves?'+query,{cache:'no-store',signal});
+    if(signal.aborted) return;
+    if(response.status===409){status.textContent=uiText.retroSaveBusy;return;}
+    if(!response.ok) throw new Error('Save operation failed');
+    if(remove){
+      select.selectedOptions[0].remove();
+      status.textContent=uiText.retroSaveRemoved;
+    }else{
+      const payload=await response.blob();
+      if(signal.aborted) return;
+      const url=URL.createObjectURL(payload);
+      const link=document.createElement('a');
+      link.href=url;
+      link.download='cozy-retro-'+gameId+'.zip';
+      link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      status.textContent='';
+    }
+  }catch(e){
+    if(!signal.aborted) status.textContent=uiText.retroSaveError;
+  }finally{
+    if(!signal.aborted) setRetroSaveControls(!select.options.length);
   }
 }
 
@@ -589,6 +711,51 @@ function saveRetroSettings(){
   },document.getElementById('retroSettingsSave'));
 }
 
+function retroDeviceLabels(row){
+  const statuses={untested:uiText.retroDeviceUntested,limited:uiText.retroDeviceLimited,
+    incompatible:uiText.retroDeviceIncompatible};
+  const reasons={architecture:uiText.ps1CoreUnsupported,cpu:uiText.retroDeviceCpu,
+    memory:uiText.retroDeviceMemory,graphics:uiText.retroDeviceGraphics};
+  const routes={available:uiText.retroDeviceRouteAvailable,unavailable:uiText.retroDeviceRouteUnavailable,
+    installed:uiText.installed};
+  return [statuses[row.status],reasons[row.reason],routes[row.route]].filter(Boolean);
+}
+
+async function runRetroDeviceCheck(){
+  const signal=retroSession?.signal;
+  const button=document.getElementById('retroDeviceRun');
+  const status=document.getElementById('retroDeviceStatus');
+  const results=document.getElementById('retroDeviceResults');
+  if(!signal||signal.aborted||button.disabled) return;
+  button.disabled=true;
+  status.textContent=uiText.retroDeviceChecking;
+  results.replaceChildren();
+  try{
+    const response=await fetch('/api/retro/device',{cache:'no-store',signal});
+    if(!response.ok) throw new Error('Device check failed');
+    const data=await response.json();
+    if(signal.aborted) return;
+    retroDevice=data;
+    const missing='—';
+    const memory=data.memoryGiB===null?missing:`${data.memoryGiB} GiB`;
+    status.textContent=`${data.architecture||missing} · RAM ${memory} · OpenGL ${data.opengl||missing} · Vulkan ${data.vulkan||missing}`;
+    for(const row of data.systems){
+      const item=document.createElement('li');
+      item.textContent=[row.system,row.emulator,...retroDeviceLabels(row)].join(' · ');
+      results.appendChild(item);
+    }
+    renderRetroEmulators();
+  }catch(e){
+    if(!signal.aborted){
+      retroDevice=null;
+      renderRetroEmulators();
+      status.textContent=uiText.retroDeviceFailed;
+    }
+  }finally{
+    if(!signal.aborted) button.disabled=false;
+  }
+}
+
 function renderRetroEmulators(){
   const container=document.getElementById('retroEmulators');
   container.replaceChildren();
@@ -607,13 +774,21 @@ function renderRetroEmulators(){
     name.textContent=catalogName(emulator);
     const description=document.createElement('p');
     description.textContent=catalogText(emulator,'desc');
+    const device=retroDevice?.systems.find(row=>row.catalog===emulator.id);
     const button=document.createElement('button');
     button.className='smallbtn';
     button.type='button';
-    button.disabled=emulator.installed;
+    button.disabled=emulator.installed||device?.status==='incompatible'||device?.route==='unavailable';
     button.textContent=emulator.installed?uiText.installed:uiText.install;
     button.onclick=()=>triggerInstall(emulator);
-    card.append(name,description,button,catalogDetails(emulator));
+    card.append(name,description,button);
+    if(device){
+      const note=document.createElement('p');
+      note.className='muted';
+      note.textContent=retroDeviceLabels(device).join(' · ');
+      card.appendChild(note);
+    }
+    card.appendChild(catalogDetails(emulator));
     container.appendChild(card);
   }
 }
@@ -623,14 +798,23 @@ function renderAdmin(){
   document.getElementById('retroCoversLabel').textContent=uiText.retroCovers;
   document.getElementById('retroSettingsSave').textContent=uiText.save;
   document.getElementById('retroGuide').textContent=uiText.retroGuide;
+  document.getElementById('retroDeviceTitle').textContent=uiText.retroDeviceTitle;
+  document.getElementById('retroDeviceGuide').textContent=uiText.retroDeviceGuide;
+  document.getElementById('retroDeviceRun').textContent=uiText.retroDeviceRun;
   document.getElementById('ps1BiosTitle').textContent=uiText.ps1BiosTitle;
   document.getElementById('ps1BiosGuide').textContent=uiText.ps1BiosGuide;
   document.getElementById('ps1BiosLabel').textContent=uiText.ps1BiosLabel;
+  document.getElementById('ps1CoreDownload').textContent=uiText.ps1CoreDownload;
+  document.getElementById('ps1CoreLabel').textContent=uiText.ps1CoreLabel;
   document.getElementById('retroRootsLabel').textContent=uiText.retroRoots;
   document.getElementById('retroSave').textContent=uiText.save;
   document.getElementById('retroRefresh').textContent=uiText.retroRefresh;
   document.getElementById('retroGameLabel').textContent=uiText.retroGame;
   document.getElementById('retroApprove').textContent=uiText.retroApprove;
+  document.getElementById('retroSavesTitle').textContent=uiText.retroSavesTitle;
+  document.getElementById('retroSaveGameLabel').textContent=uiText.retroGame;
+  document.getElementById('retroSaveDownload').textContent=uiText.retroSaveDownload;
+  document.getElementById('retroSaveRemove').textContent=uiText.retroSaveRemove;
   document.getElementById('controllerNavigationLabel').textContent=uiText.controllerNavigationLabel;
   document.getElementById('controllerNavigationHint').textContent=uiText.controllerNavigationHint;
   document.getElementById('cfgControllerNavigation').checked=cfg.controllerNavigationEnabled===true;

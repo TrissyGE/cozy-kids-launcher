@@ -115,9 +115,35 @@ following separately:
 - The emulator window enters fullscreen and the visible game image scales to the display while preserving its aspect ratio.
 - A gameplay action responds to the keyboard and a physical gamepad.
 - The close overlay can be clicked and the launcher regains focus after the emulator exits.
+- For PS1 CUE/BIN, include a disc with a separate audio BIN. Check gameplay audio and confirm that replacing any track makes the old approval unavailable.
+- For a PS1 multi-disc set, reach a disc change in the game. Open the virtual tray with F9, select the next disc with F10 and close the tray with F9. Verify play continues and the same memory card is available after exiting and relaunching the set.
 
 Use a redistributable test ROM for shared screenshots. When verifying ZIP
 support, repeat a failing ZIP launch with the same ROM as a loose file.
+With a disposable child profile, verify that the Parent save ZIP contains the
+emulator's saved files and that confirmed deletion clears only that game's
+local saves. Check keyboard and gamepad focus when filtering the library by
+console. Record the device check's reported graphics APIs separately from
+emulator performance, especially when the VM uses software graphics.
+
+#### PS1 CUE/BIN validation, 2026-11-03
+
+Candidate `2b96af8` ran on an Ubuntu 24.04.4 LTS VirtualBox guest with
+RetroArch 1.18.0 and the reviewed PCSX ReARMed r26 core. Each row confirmed
+local core import, CUE/BIN approval, fullscreen, the keyboard screenshot
+shortcut, overlay close, a memory-card write, and reuse of the card on
+relaunch. Modifying the BIN made the old approval unavailable.
+
+| Desktop session | Browser | Result |
+| --- | --- | --- |
+| GNOME 46 Wayland | Firefox Snap 154.0.1, kiosk | Passed after waiting for the previous overlay to close before relaunch |
+| Plasma 5.27.12 Wayland | Chrome 152.0.7977.64, fullscreen | Passed |
+| XFCE 4.18.3 X11 | Chrome 152.0.7977.64, kiosk | Passed with LightDM after the guest's GDM X11 session repeatedly exited |
+
+The candidate keeps RetroArch audio writes nonblocking. A stalled PulseAudio
+sink reproduced a black screen and blocked shutdown before this change.
+Actual gameplay controls, audible output, and an in-game request for another
+disc still require separate validation.
 
 ## Physical Linux test laptop
 

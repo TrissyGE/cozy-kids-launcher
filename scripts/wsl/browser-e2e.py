@@ -205,6 +205,106 @@ def run_controller_home_scenario(browser):
     browser.evaluate("document.querySelector('[data-tile-id=music]').focus(); testPad.buttons[0].pressed=true")
 
 
+def run_retro_scenario(browser, test_home):
+    browser.wait_for("typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+    retro_root = test_home / "Game Fixtures"
+    retro_root.mkdir()
+    archive = retro_root / "Game Bundle.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
+        zipped.writestr("Local Test.gba", b"scanner fixture")
+    (retro_root / "TV Game.nes").write_bytes(b"scanner fixture")
+    (retro_root / "Game Bundle.png").write_bytes(base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
+    ))
+    browser.evaluate("enterAdmin(); activateAdminSection('retro')")
+    browser.wait_for("!document.getElementById('retroRoots').disabled")
+    browser.click("#retroDeviceTitle")
+    browser.click("#retroDeviceRun")
+    browser.wait_for("Array.from(document.querySelectorAll('#retroDeviceResults li')).some(row=>row.textContent.includes('Wii U'))")
+    browser.click("#retroDeviceTitle")
+    browser.click("#ps1BiosTitle")
+    assert_js(browser, "document.querySelectorAll('#ps1BiosRegions li').length===4 && "
+              "Array.from(document.querySelectorAll('#ps1BiosRegions li')).every(row=>row.textContent.includes(uiText.ps1BiosMissing))",
+              "PS1 BIOS readiness was not shown in Parent settings")
+    browser.evaluate("""(() => {
+        const input=document.getElementById('ps1BiosInput');
+        const files=new DataTransfer();
+        files.items.add(new File([new Uint8Array(512*1024)],'invalid.bin'));
+        input.files=files.files;
+        input.dispatchEvent(new Event('change'));
+    })()""")
+    browser.wait_for("document.getElementById('ps1BiosStatus').textContent===uiText.ps1BiosRejected")
+    if browser.evaluate("!document.getElementById('ps1CoreInput').disabled"):
+        browser.evaluate("""(() => {
+            const input=document.getElementById('ps1CoreInput');
+            const files=new DataTransfer();
+            files.items.add(new File(['unreviewed'],'invalid.so'));
+            input.files=files.files;
+            input.dispatchEvent(new Event('change'));
+        })()""")
+        browser.wait_for("document.getElementById('ps1CoreStatus').textContent===uiText.ps1CoreRejected")
+    browser.click("#ps1BiosTitle")
+    browser.set_value("#retroRoots", str(retro_root))
+    browser.click("#retroSave")
+    browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='Local Test'")
+    browser.click("#retroApprove")
+    browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
+    browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='TV Game'")
+    browser.click("#retroApprove")
+    browser.wait_for("cfg.tiles.some(tile=>tile.label==='TV Game' && tile.cmd[0].startsWith('special:retro:'))")
+    game_id = browser.evaluate("cfg.tiles.find(tile=>tile.label==='Local Test').cmd[0].split(':').at(-1)")
+    save_dir = test_home / ".local/state/cozy-kids-launcher/retro/default" / game_id
+    save_dir.mkdir(parents=True)
+    save = save_dir / "Local Test.sav"
+    save.write_bytes(b"test save")
+    browser.click("#retroRefresh")
+    browser.wait_for("!document.getElementById('retroSaveGame').disabled && !document.getElementById('retroEnabled').disabled")
+    browser.click("#retroSavesTitle")
+    browser.click("#retroSaveRemove")
+    browser.wait_for("confirmationIsOpen() && document.getElementById('confirmMessage').textContent.includes('Local Test')")
+    browser.click("#confirmCancelBtn")
+    if not save.exists():
+        raise AssertionError("Cancelling save removal changed the local save")
+    browser.click("#retroSaveRemove")
+    browser.click("#confirmActionBtn")
+    browser.wait_for("document.getElementById('retroSaveStatus').textContent===uiText.retroSaveRemoved")
+    if save.exists():
+        raise AssertionError("Confirmed save removal did not remove the local save")
+    assert_js(browser, "['mgba-qt','mednafen','retroarch'].every(id=>"
+              "document.querySelector('[data-retro-emulator='+id+'] button') && "
+              "!document.querySelector('[data-catalog-id='+id+']'))",
+              "The emulator install action is outside RetroGameCorner")
+    browser.click("#retroEnabled")
+    browser.click("#retroSettingsSave")
+    browser.wait_for("cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.visible)")
+    browser.evaluate("closeAdmin()")
+    assert_js(browser, "document.querySelectorAll('#grid .tile[data-tile-id^=retro-]').length===1",
+              "Approved games appeared as extra Home tiles")
+    browser.click('#grid .tile[data-tile-id="retro-corner"]')
+    browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
+    browser.click('[data-retro-system="Nintendo - Nintendo Entertainment System"]')
+    assert_js(browser, "document.querySelectorAll('.media-card').length===1 && "
+              "document.querySelector('.media-card-title').textContent==='TV Game'",
+              "The console filter did not isolate the selected system")
+    browser.click('[data-retro-system="Nintendo - Game Boy Advance"]')
+    browser.wait_for("document.querySelector('.media-cover img')?.naturalWidth>0",
+                     message="The approved game did not display its local cover")
+    assert_js(browser, "getComputedStyle(document.querySelector('.media-cover img')).objectFit==='contain'",
+              "Portrait box art was cropped")
+    archive.write_bytes(b"replacement")
+    browser.click(".media-card")
+    browser.wait_for("document.querySelector('#mediaState .ui-state-message')?.textContent===mediaText.retroUnavailable")
+    assert_js(
+        browser,
+        "!JSON.stringify(mediaConfig).includes('Game Fixtures') && !document.body.textContent.includes('Game Fixtures')",
+        "A local game path escaped the Parent settings",
+    )
+    browser.key_press("Escape")
+    browser.wait_for("location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+    browser.evaluate("cfg.tiles=cfg.tiles.filter(tile=>!tile.id.startsWith('retro-')); persistConfig().then(renderAll)", await_promise=True)
+    log_scenario("Parent-managed RetroGameCorner tiles are path-private and reject changed ROMs")
+
+
 def run_scenarios(browser, release_fixture, installed_version, artifacts, test_home):
     browser.wait_for(
         "typeof cfg !== 'undefined' && cfg !== null && "
@@ -399,63 +499,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
         "Home title or tiles are incorrect",
     )
     managed_root = test_home / "External Media"
-    retro_root = test_home / "Game Fixtures"
-    retro_root.mkdir()
-    archive = retro_root / "Game Bundle.zip"
-    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
-        zipped.writestr("Local Test.gba", b"scanner fixture")
-    (retro_root / "Game Bundle.png").write_bytes(base64.b64decode(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
-    ))
-    browser.evaluate("enterAdmin(); activateAdminSection('retro')")
-    browser.wait_for("!document.getElementById('retroRoots').disabled")
-    browser.click("#ps1BiosTitle")
-    assert_js(browser, "document.querySelectorAll('#ps1BiosRegions li').length===4 && "
-              "Array.from(document.querySelectorAll('#ps1BiosRegions li')).every(row=>row.textContent.includes(uiText.ps1BiosMissing))",
-              "PS1 BIOS readiness was not shown in Parent settings")
-    browser.evaluate("""(() => {
-        const input=document.getElementById('ps1BiosInput');
-        const files=new DataTransfer();
-        files.items.add(new File([new Uint8Array(512*1024)],'invalid.bin'));
-        input.files=files.files;
-        input.dispatchEvent(new Event('change'));
-    })()""")
-    browser.wait_for("document.getElementById('ps1BiosStatus').textContent===uiText.ps1BiosRejected")
-    browser.click("#ps1BiosTitle")
-    browser.set_value("#retroRoots", str(retro_root))
-    browser.click("#retroSave")
-    browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='Local Test'")
-    browser.click("#retroApprove")
-    browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
-    browser.wait_for("!document.getElementById('retroEnabled').disabled")
-    assert_js(browser, "['mgba-qt','mednafen','retroarch'].every(id=>"
-              "document.querySelector('[data-retro-emulator='+id+'] button') && "
-              "!document.querySelector('[data-catalog-id='+id+']'))",
-              "The emulator install action is outside RetroGameCorner")
-    browser.click("#retroEnabled")
-    browser.click("#retroSettingsSave")
-    browser.wait_for("cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.visible)")
-    browser.evaluate("closeAdmin()")
-    assert_js(browser, "document.querySelectorAll('#grid .tile[data-tile-id^=retro-]').length===1",
-              "Approved games appeared as extra Home tiles")
-    browser.click('#grid .tile[data-tile-id="retro-corner"]')
-    browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
-    browser.wait_for("document.querySelector('.media-cover img')?.naturalWidth>0",
-                     message="The approved game did not display its local cover")
-    assert_js(browser, "getComputedStyle(document.querySelector('.media-cover img')).objectFit==='contain'",
-              "Portrait box art was cropped")
-    archive.write_bytes(b"replacement")
-    browser.click(".media-card")
-    browser.wait_for("document.querySelector('#mediaState .ui-state-message')?.textContent===mediaText.retroUnavailable")
-    assert_js(
-        browser,
-        "!JSON.stringify(mediaConfig).includes('Game Fixtures') && !document.body.textContent.includes('Game Fixtures')",
-        "A local game path escaped the Parent settings",
-    )
-    browser.key_press("Escape")
-    browser.wait_for("location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
-    browser.evaluate("cfg.tiles=cfg.tiles.filter(tile=>!tile.id.startsWith('retro-')); persistConfig().then(renderAll)", await_promise=True)
-    log_scenario("Parent-managed RetroGameCorner tiles are path-private and reject changed ROMs")
+    run_retro_scenario(browser, test_home)
     browser.evaluate("enterAdmin(); activateAdminSection('apps')")
     browser.wait_for("!document.getElementById('mediaRootsInput').disabled")
     browser.set_value("#mediaRootsInput", str(managed_root))
@@ -1747,7 +1791,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
-    parser.add_argument("--suite", choices=("all", "core", "regressions"), default="all")
+    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -1828,7 +1872,7 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name, setup_completed=args.suite == "regressions")
+            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro"))
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = installed_version
 
@@ -1874,6 +1918,8 @@ def main():
                             test_home,
                         )
                         run_accessibility_scenarios(browser, args.artifacts)
+                    if args.suite == "retro":
+                        run_retro_scenario(browser, test_home)
                     if args.suite in ("all", "regressions"):
                         run_regression_scenarios(browser, args.artifacts, base_url)
                     browser.screenshot(args.artifacts / "final-state.png")

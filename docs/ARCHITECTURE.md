@@ -257,15 +257,55 @@ identifies the supported Japan, North America, Europe and PSP BIOS images by
 SHA-256 and stores verified files under
 `~/.local/state/cozy-kids-launcher/ps1-bios/`. Only Parent requests can import
 firmware or view its readiness. BIOS files are stored separately from config
-exports. The launcher discovers standalone version 5 CD CHDs and checks their
-file identity and headers again at launch. It refuses adjacent SBI or LSD
-files until the launcher can include them in approvals. The PS1 launch uses
+exports. The launcher discovers version 5 CD CHDs and CUE/BIN discs as
+standalone discs or as ordered M3U sets of two to eight discs. It resolves
+playlist entries within the playlist's own folder, including Miyoo's
+`/_hidden/` convention. A set needs one approval and the launcher revalidates
+all discs at launch. Individual discs already approved separately remain
+available.
+A CUE can list a raw 2352-byte data track and additional audio tracks. Each
+BIN must be within the CUE folder, and changes to any BIN or the CUE
+invalidate approval. RetroArch receives a private CUE with the validated
+tracks. The launcher refuses unapproved sidecars that the core could
+auto-load, including SBI, SUB and alternate CHD layouts. The PS1 launch uses
 RetroArch with the reviewed Linux x86-64 PCSX ReARMed build, whose SHA-256 is
 checked before loading from `~/.local/state/cozy-kids-launcher/ps1-cores/`.
 RetroArch stores saves, states and screenshots in the child's private game
-directory. The Parent catalog installs RetroArch. One-click delivery of the
-core and support for disc sets are tracked separately.
-See the [PCSX ReARMed BIOS documentation](https://docs.libretro.com/library/pcsx_rearmed/#bios).
+directory. It uses a private generated M3U to give the set a single memory card.
+PS1 keeps RetroArch audio output enabled and uses nonblocking audio writes so
+a stalled PulseAudio sink cannot hold the emulation loop during shutdown.
+When the game requests the next disc, F9 opens the virtual tray, F10 selects
+the next disc and F9 closes the tray. Local PNG covers can sit beside the game
+file or in the adjacent Miyoo `Imgs/` folder. The child library offers console
+filters when approvals span more than one system. The Parent catalog installs
+RetroArch. The PS1 panel installs PCSX ReARMed r26 (`7b0e8f8`) from Libretro
+or imports a local ZIP or shared library. Both routes require the reviewed
+SHA-256. The online action refuses a newer build at the rolling URL until its
+hash has been reviewed. The verified local copy remains usable offline.
+See the [PCSX ReARMed disc documentation](https://docs.libretro.com/library/pcsx_rearmed/#loading-content).
+
+In the RetroGameCorner Parent panel, **Game saves** lists files for the
+active child profile, including saves for games whose storage is disconnected.
+Parents can download a per-game ZIP or confirm deletion. Close the running app
+before using either action. The ZIP contains save files and states from the
+managed emulator directories and preserves their relative layout. For manual
+recovery, extract the files into the corresponding game directory under
+`~/.local/state/cozy-kids-launcher/retro/<profile-id>/` with the emulator closed.
+The game ID appears in the archive filename.
+
+**Device check** is an on-demand Parent diagnostic. It observes architecture,
+CPU flags and usable RAM. When available, `glxinfo` and `vulkaninfo` report
+hardware-backed graphics API versions. The check uses no game files or
+network services. A confirmed CPU incompatibility can block installation.
+Lower RAM or graphics versions flag a limitation. Results with no confirmed
+limitation retain the untested performance status. Catalog route status is
+shown separately and a real package review still checks repository availability.
+The thresholds use the
+[PCSX2 requirements](https://pcsx2.net/docs/setup/requirements/),
+[Dolphin FAQ](https://dolphin-emu.org/docs/faq/#how-much-ram-do-i-need-to-run-dolphin),
+[xemu requirements](https://xemu.app/docs/about/#system-requirements) and
+[Cemu requirements](https://cemu.info/). RPCS3 is listed as an unqualified
+candidate. Game speed and frame pacing need separate emulator workloads.
 
 Enable controller and remote navigation in Parent settings under System.
 On Home and in the media library, the D-pad or left stick moves focus in the

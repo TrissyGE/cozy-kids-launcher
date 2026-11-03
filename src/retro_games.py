@@ -1,6 +1,7 @@
 """Bounded local ROM discovery for the first managed emulator."""
 
 import hashlib
+import io
 import os
 import platform
 import re
@@ -33,13 +34,27 @@ ROM_SYSTEMS = {
     ".sms": ("mednafen", "sms", "Sega - Master System - Mark III"),
     ".gg": ("mednafen", "gg", "Sega - Game Gear"),
     ".chd": ("retroarch", "", "Sony - PlayStation"),
+    ".m3u": ("retroarch", "", "Sony - PlayStation"),
+    ".cue": ("retroarch", "", "Sony - PlayStation"),
 }
+PS1_EXTENSIONS = {".chd", ".m3u", ".cue"}
 MAX_ROM_BYTES = 32 * 1024 * 1024
 MAX_CHD_BYTES = 1024 * 1024 * 1024
+MAX_PLAYLIST_BYTES = 16 * 1024
+MAX_PLAYLIST_DISCS = 8
+MAX_CUE_BYTES = 32 * 1024
+RAW_CD_SECTOR_BYTES = 2352
+CUE_FILE = re.compile(r'FILE\s+(?:"([^"]+)"|([^"\s]+))\s+BINARY', re.IGNORECASE)
+CUE_TRACK = re.compile(r'TRACK\s+([0-9]{2})\s+(MODE[12]/2352|AUDIO)', re.IGNORECASE)
+CUE_TIME = re.compile(r'(INDEX\s+0[01]|PREGAP|POSTGAP)\s+([0-9]{2}):([0-5][0-9]):([0-7][0-9])',
+                      re.IGNORECASE)
 CHD_HEADER = struct.Struct(">8sII")
 PS1_CORE_FILENAME = "pcsx_rearmed_libretro.so"
+PS1_CORE_VERSION = "r26 (7b0e8f8)"
 PS1_CORE_BYTES = 2250248
 PS1_CORE_SHA256 = "b81ce0d92b66fac94788a94836430530cebed2f2ee77e384db87eb0273e49c3c"
+PS1_CORE_UPLOAD_BYTES = 4 * 1024 * 1024
+PS1_CORE_URL = f"https://buildbot.libretro.com/nightly/linux/x86_64/latest/{PS1_CORE_FILENAME}.zip"
 MAX_ZIP_BYTES = 40 * 1024 * 1024
 MAX_ZIP_DIRECTORY_BYTES = 64 * 1024
 MAX_ZIP_ENTRIES = 32
@@ -89,8 +104,12 @@ def import_ps1_bios(state_root, payload):
     filename = next((name for name, expected in PS1_BIOS.values() if digest == expected), None)
     if filename is None:
         raise ValueError("Unrecognized PS1 BIOS")
-    directory = prepare_profile_resume_directory(state_root, "ps1-bios")
-    descriptor, temporary = tempfile.mkstemp(prefix="bios-", dir=directory)
+    _install_ps1_file(state_root, "ps1-bios", filename, payload)
+
+
+def _install_ps1_file(state_root, folder, filename, payload):
+    directory = prepare_profile_resume_directory(state_root, folder)
+    descriptor, temporary = tempfile.mkstemp(prefix=".install-", dir=directory)
     try:
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(payload)
@@ -112,7 +131,7 @@ def approved_retro_ids(cfg):
             if (identifier := retro_id(tile["cmd"]))}
 
 
-class _NoCoverRedirect(HTTPRedirectHandler):
+class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         return None
 
@@ -121,7 +140,7 @@ class _NoCoverRedirect(HTTPRedirectHandler):
 def _download_cover(system, name, cache_hour):
     url = f"https://thumbnails.libretro.com/{quote(system, safe='')}/Named_Boxarts/{quote(name, safe='')}.png"
     try:
-        with build_opener(_NoCoverRedirect()).open(url, timeout=4) as response:
+        with build_opener(_NoRedirect()).open(url, timeout=4) as response:
             payload = response.read(MAX_COVER_BYTES + 1)
     except OSError:
         return b""
@@ -132,15 +151,18 @@ def _download_cover(system, name, cache_hour):
 
 def retro_cover(game, download=False):
     stem, extension = os.path.splitext(game["path"])
-    sidecar = stem + ".png"
-    try:
-        if os.path.realpath(sidecar) == sidecar and os.path.isfile(sidecar):
-            with open(sidecar, "rb") as cover:
+    directory, name = os.path.split(stem)
+    for path in (stem + ".png", os.path.join(directory, "Imgs", name + ".png")):
+        try:
+            with _open_local_regular(path) as cover:
+                info = os.fstat(cover.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_COVER_BYTES:
+                    continue
                 payload = cover.read(MAX_COVER_BYTES + 1)
             if len(payload) <= MAX_COVER_BYTES and payload.startswith(b"\x89PNG\r\n\x1a\n"):
                 return payload
-    except OSError:
-        pass
+        except OSError:
+            continue
     if not download or not _cover_slots.acquire(timeout=15):
         return b""
     try:
@@ -210,7 +232,7 @@ def inspect_rom_zip(path, verify=False):
                 if (
                     any(part.startswith(".") for part in rom.parts)
                     or rom.suffix.casefold() not in ROM_SYSTEMS
-                    or rom.suffix.casefold() == ".chd"
+                    or rom.suffix.casefold() in PS1_EXTENSIONS
                     or mode not in (0, stat.S_IFREG)
                     or member.flag_bits & 0x41
                     or member.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
@@ -243,6 +265,108 @@ def _open_local_regular(path):
     return os.fdopen(os.open(path, flags | getattr(os, "O_BINARY", 0)), "rb")
 
 
+def _read_local_descriptor(path, maximum):
+    with _open_local_regular(path) as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= maximum:
+            raise ValueError("Invalid disc descriptor")
+        payload = handle.read(maximum + 1)
+        if len(payload) > maximum:
+            raise ValueError("Oversized disc descriptor")
+        return payload
+
+
+def _ps1_reference(descriptor, entry, extension):
+    parts = entry.split("/")
+    if (any(not part or part.startswith(".") for part in parts)
+            or PurePosixPath(entry).suffix.casefold() != extension
+            or any(char in entry for char in "\\:#")
+            or not entry.isprintable()):
+        raise ValueError("Invalid disc reference")
+    path = os.path.join(os.path.dirname(descriptor), *parts)
+    if any(char in path for char in "#\r\n") or os.path.realpath(path) != path:
+        raise ValueError("Invalid disc path")
+    return path
+
+
+def _cue_metadata(path):
+    """Return approved BIN paths, canonical CUE text and an approval fingerprint."""
+    try:
+        payload = _read_local_descriptor(path, MAX_CUE_BYTES)
+        fingerprint = hashlib.sha256(payload)
+        lines = []
+        files = []
+        seen = set()
+        total_bytes = 0
+        tracks = 0
+        file_has_track = False
+        last_index = -1
+        times = {}
+        for line in payload.decode("utf-8-sig").splitlines():
+            line = line.strip()
+            if not line or line.split()[0].upper() in {"REM", "TITLE", "PERFORMER", "CATALOG", "ISRC", "SONGWRITER"}:
+                continue
+            if match := CUE_FILE.fullmatch(line):
+                if files and (not file_has_track or "INDEX 01" not in times):
+                    return None
+                track_file = _ps1_reference(path, match[1] or match[2], ".bin")
+                canonical = f'FILE "{track_file}" BINARY'
+                # The pinned core reads CUE lines with a 256-byte fgets buffer.
+                if '"' in track_file or len(os.fsencode(canonical)) > 254:
+                    return None
+                with _open_local_regular(track_file) as handle:
+                    info = os.fstat(handle.fileno())
+                identity = (info.st_dev, info.st_ino)
+                total_bytes += info.st_size
+                if (not stat.S_ISREG(info.st_mode) or not info.st_size or info.st_size % RAW_CD_SECTOR_BYTES
+                        or total_bytes > MAX_CHD_BYTES or identity in seen):
+                    return None
+                seen.add(identity)
+                files.append(track_file)
+                fingerprint.update(f"{info.st_dev}:{info.st_ino}:{info.st_size}:"
+                                   f"{info.st_mtime_ns}:{info.st_ctime_ns}\n".encode("ascii"))
+                file_sectors = info.st_size // RAW_CD_SECTOR_BYTES
+                file_has_track = False
+                last_index = -1
+                lines.append(canonical)
+            elif match := CUE_TRACK.fullmatch(line):
+                if not files or (file_has_track and "INDEX 01" not in times):
+                    return None
+                tracks += 1
+                mode = match[2].upper()
+                expected_modes = ("MODE1/2352", "MODE2/2352") if tracks == 1 else ("AUDIO",)
+                if int(match[1]) != tracks or mode not in expected_modes:
+                    return None
+                file_has_track = True
+                times = {}
+                lines.append(f"  TRACK {tracks:02d} {mode}")
+            elif match := CUE_TIME.fullmatch(line):
+                if not file_has_track:
+                    return None
+                label = " ".join(match[1].upper().split())
+                minute, second, frame = map(int, match.groups()[1:])
+                sector = (minute * 60 + second) * 75 + frame
+                if label in times or frame >= 75:
+                    return None
+                if label.startswith("INDEX") and not last_index < sector < file_sectors:
+                    return None
+                if label == "INDEX 00" and "INDEX 01" in times:
+                    return None
+                if label == "INDEX 01":
+                    if sector < times.get("INDEX 00", 0):
+                        return None
+                    last_index = sector
+                times[label] = sector
+                lines.append(f"    {label} {minute:02d}:{second:02d}:{frame:02d}")
+            else:
+                return None
+        if file_has_track and "INDEX 01" in times:
+            return files, "\n".join(lines) + "\n", fingerprint.digest()
+    except (OSError, UnicodeError, ValueError):
+        return None
+    return None
+
+
 def _chd_fingerprint(path):
     try:
         with _open_local_regular(path) as handle:
@@ -266,6 +390,51 @@ def _chd_fingerprint(path):
 @lru_cache(maxsize=MAX_SCAN_ENTRIES)
 def _chd_metadata(path, identity):
     return _chd_fingerprint(path)
+
+
+def _ps1_disc_set(path, verify=False):
+    try:
+        payload = _read_local_descriptor(path, MAX_PLAYLIST_BYTES)
+        entries = [line.strip() for line in payload.decode("utf-8-sig").split("\n")]
+        entries = [line for line in entries if line and not line.startswith("#")]
+        if not 2 <= len(entries) <= MAX_PLAYLIST_DISCS:
+            return None
+        discs = []
+        cue_discs = {}
+        seen = set()
+        fingerprint = hashlib.sha256(payload)
+        for entry in entries:
+            # Miyoo playlists use /_hidden/ relative to the playlist's directory.
+            if entry.startswith("/_hidden/"):
+                entry = entry[1:]
+            extension = PurePosixPath(entry).suffix.casefold()
+            if extension not in (".chd", ".cue"):
+                return None
+            disc = _ps1_reference(path, entry, extension)
+            info = os.stat(disc, follow_symlinks=False)
+            if not stat.S_ISREG(info.st_mode) or (info.st_dev, info.st_ino) in seen:
+                return None
+            seen.add((info.st_dev, info.st_ino))
+            identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+            if extension == ".cue":
+                cue = _cue_metadata(disc)
+                if cue is None:
+                    return None
+                tracks, contents, member = cue
+                cue_discs[disc] = tracks, contents
+            else:
+                member = _chd_fingerprint(disc) if verify else _chd_metadata(disc, identity)
+            if member is None:
+                return None
+            discs.append(disc)
+            fingerprint.update(member)
+        return discs, cue_discs, fingerprint.digest()
+    except (OSError, UnicodeError, ValueError):
+        return None
+
+
+def _game_id(path, fingerprint):
+    return hashlib.sha256(os.fsencode(path) + b"\0" + fingerprint).hexdigest()[:24]
 
 
 def scan_retro_games(roots):
@@ -300,16 +469,28 @@ def scan_retro_games(roots):
                         if extension not in ROM_SYSTEMS and extension != ".zip":
                             continue
                         info = item.stat(follow_symlinks=False)
-                        maximum = {".zip": MAX_ZIP_BYTES, ".chd": MAX_CHD_BYTES}.get(extension, MAX_ROM_BYTES)
+                        maximum = {".zip": MAX_ZIP_BYTES, ".chd": MAX_CHD_BYTES,
+                                   ".m3u": MAX_PLAYLIST_BYTES, ".cue": MAX_CUE_BYTES}.get(extension, MAX_ROM_BYTES)
                         if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= maximum:
                             continue
                         fingerprint = f"{info.st_size}:{info.st_mtime_ns}".encode("ascii")
                         member = None
+                        discs = None
                         identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
                         if extension == ".chd":
                             fingerprint = _chd_metadata(item.path, identity)
                             if fingerprint is None:
                                 continue
+                        elif extension == ".m3u":
+                            disc_set = _ps1_disc_set(item.path)
+                            if disc_set is None:
+                                continue
+                            discs, _, fingerprint = disc_set
+                        elif extension == ".cue":
+                            cue = _cue_metadata(item.path)
+                            if cue is None:
+                                continue
+                            _, _, fingerprint = cue
                         elif extension == ".zip":
                             member = _zip_metadata(item.path, identity)
                             if member is None:
@@ -317,7 +498,7 @@ def scan_retro_games(roots):
                             fingerprint += repr(member).encode("utf-8")
                             rom = PurePosixPath(member[0])
                             stem, extension = rom.stem, rom.suffix.casefold()
-                        identifier = hashlib.sha256(os.fsencode(item.path) + b"\0" + fingerprint).hexdigest()[:24]
+                        identifier = _game_id(item.path, fingerprint)
                         if identifier not in games and len(games) >= MAX_ROMS:
                             return games, sources["unavailableSources"], True
                         games[identifier] = {
@@ -327,6 +508,8 @@ def scan_retro_games(roots):
                             "romExtension": extension,
                             "zipMember": member,
                         }
+                        if discs:
+                            games[identifier]["discPaths"] = discs
             except OSError:
                 continue
     return games, sources["unavailableSources"], False
@@ -336,8 +519,45 @@ def emulator_binary(game):
     return ROM_SYSTEMS[game["romExtension"]][0]
 
 
+def ps1_core_supported():
+    return platform.machine().lower() in ("x86_64", "amd64")
+
+
+def _reviewed_ps1_core(payload):
+    return len(payload) == PS1_CORE_BYTES and hashlib.sha256(payload).hexdigest() == PS1_CORE_SHA256
+
+
+def import_ps1_core(state_root, payload):
+    if not ps1_core_supported() or not 0 < len(payload) <= PS1_CORE_UPLOAD_BYTES:
+        raise ValueError("Unsupported PS1 core")
+    if payload.startswith(b"PK\x03\x04"):
+        try:
+            with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                entries = archive.infolist()
+                if (len(entries) != 1 or entries[0].filename != PS1_CORE_FILENAME
+                        or entries[0].file_size != PS1_CORE_BYTES):
+                    raise ValueError("Unexpected PS1 core archive")
+                with archive.open(entries[0]) as member:
+                    payload = member.read(PS1_CORE_BYTES + 1)
+        except (zipfile.BadZipFile, RuntimeError, NotImplementedError, zlib.error) as error:
+            raise ValueError("Invalid PS1 core archive") from error
+    if not _reviewed_ps1_core(payload):
+        raise ValueError("PS1 core does not match the reviewed build")
+    _install_ps1_file(state_root, "ps1-cores", PS1_CORE_FILENAME, payload)
+
+
+def download_ps1_core(state_root):
+    if not ps1_core_supported():
+        raise ValueError("Unsupported PS1 core platform")
+    if ps1_core_path(state_root):
+        return
+    with build_opener(_NoRedirect()).open(PS1_CORE_URL, timeout=10) as response:
+        payload = response.read(PS1_CORE_UPLOAD_BYTES + 1)
+    import_ps1_core(state_root, payload)
+
+
 def ps1_core_path(state_root):
-    if platform.machine().lower() not in ("x86_64", "amd64"):
+    if not ps1_core_supported():
         return None
     path = os.path.join(state_root, "ps1-cores", PS1_CORE_FILENAME)
     try:
@@ -348,7 +568,18 @@ def ps1_core_path(state_root):
             payload = handle.read(PS1_CORE_BYTES + 1)
     except OSError:
         return None
-    return path if hashlib.sha256(payload).hexdigest() == PS1_CORE_SHA256 else None
+    return path if _reviewed_ps1_core(payload) else None
+
+
+def _write_private_text(path, contents):
+    descriptor, temporary = tempfile.mkstemp(prefix=".retroarch-", dir=os.path.dirname(path))
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(contents)
+        os.replace(temporary, path)
+    finally:
+        if os.path.lexists(temporary):
+            os.unlink(temporary)
 
 
 def _ps1_command(executable, game, state_root, game_directory):
@@ -356,10 +587,31 @@ def _ps1_command(executable, game, state_root, game_directory):
     if core is None:
         raise ValueError("Reviewed PS1 core is unavailable")
     path = game["path"]
-    fingerprint = _chd_fingerprint(path)
-    if fingerprint is None or hashlib.sha256(os.fsencode(path) + b"\0" + fingerprint).hexdigest()[:24] != game["id"]:
+    playlist = game["romExtension"] == ".m3u"
+    cue_discs = {}
+    if playlist:
+        disc_set = _ps1_disc_set(path, verify=True)
+        if disc_set is None:
+            raise ValueError("Approved PS1 disc set has changed")
+        discs, cue_discs, fingerprint = disc_set
+    elif game["romExtension"] == ".cue":
+        cue = _cue_metadata(path)
+        if cue is None:
+            raise ValueError("Approved PS1 tracks have changed")
+        tracks, cue_text, fingerprint = cue
+        discs = [path]
+        cue_discs[path] = tracks, cue_text
+    else:
+        discs, fingerprint = [path], _chd_fingerprint(path)
+    if fingerprint is None or _game_id(path, fingerprint) != game["id"]:
         raise ValueError("Approved PS1 disc has changed")
-    if any(os.path.lexists(os.path.splitext(path)[0] + extension) for extension in (".sbi", ".lsd")):
+    # PCSX ReARMed can automatically open metadata alongside a CHD.
+    sidecars = [(disc, (".sbi", ".lsd", ".sub", ".toc", ".ccd", ".mds", ".cue"))
+                for disc in discs if disc not in cue_discs]
+    sidecars.extend((file, (".sbi", ".lsd", ".sub"))
+                    for disc, (tracks, _) in cue_discs.items() for file in (disc, *tracks))
+    if any(os.path.lexists(os.path.splitext(file)[0] + extension)
+           for file, extensions in sidecars for extension in extensions):
         raise ValueError("PS1 disc sidecars require approval support")
     statuses = ps1_bios_status(state_root)
     system_directory = os.path.join(state_root, "ps1-bios")
@@ -370,30 +622,44 @@ def _ps1_command(executable, game, state_root, game_directory):
         raise ValueError("Unsupported character in RetroArch configuration path")
     config_home = prepare_profile_resume_directory(game_directory, "config")
     config = os.path.join(game_directory, "retroarch.cfg")
-    descriptor, temporary = tempfile.mkstemp(prefix="retroarch-", dir=game_directory)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
-            handle.write(
-                f'system_directory = "{system_directory}"\n'
-                f'savefile_directory = "{game_directory}"\n'
-                f'savestate_directory = "{game_directory}"\n'
-                f'screenshot_directory = "{game_directory}"\n'
-                f'core_options_path = "{game_directory}/core-options.cfg"\n'
-                'config_save_on_exit = "false"\n'
-                'auto_overrides_enable = "false"\n'
-                'auto_remaps_enable = "false"\n'
-                'video_driver = "gl"\n'
-                'video_context_driver = "x"\n'
-                'menu_driver = "rgui"\n'
-                'input_menu_toggle = "nul"\n'
-                'input_menu_toggle_gamepad_combo = "0"\n'
-                'kiosk_mode_enable = "true"\n'
-                'desktop_menu_enable = "false"\n'
-            )
-        os.replace(temporary, config)
-    finally:
-        if os.path.lexists(temporary):
-            os.unlink(temporary)
+    disc_controls = ""
+    content_paths = []
+    for index, disc in enumerate(discs, 1):
+        if disc in cue_discs:
+            name = f"disc-{index:02d}.cue" if playlist else "disc.cue"
+            _write_private_text(os.path.join(game_directory, name), cue_discs[disc][1])
+            content_paths.append(name)
+        else:
+            content_paths.append(disc)
+    if playlist:
+        path = os.path.join(game_directory, "disc-set.m3u")
+        _write_private_text(path, "\n".join(content_paths) + "\n")
+        disc_controls = (
+            'input_audio_mute = "nul"\n'
+            'input_disk_eject_toggle = "f9"\n'
+            'input_disk_next = "f10"\n'
+        )
+    elif cue_discs:
+        path = os.path.join(game_directory, content_paths[0])
+    _write_private_text(config, (
+        f'system_directory = "{system_directory}"\n'
+        f'savefile_directory = "{game_directory}"\n'
+        f'savestate_directory = "{game_directory}"\n'
+        f'screenshot_directory = "{game_directory}"\n'
+        f'core_options_path = "{game_directory}/core-options.cfg"\n'
+        'config_save_on_exit = "false"\n'
+        'auto_overrides_enable = "false"\n'
+        'auto_remaps_enable = "false"\n'
+        'video_driver = "gl"\n'
+        'video_context_driver = "x"\n'
+        # A stalled PulseAudio sink must not block input or saving on close.
+        'audio_sync = "false"\n'
+        'menu_driver = "rgui"\n'
+        'input_menu_toggle = "nul"\n'
+        'input_menu_toggle_gamepad_combo = "0"\n'
+        'kiosk_mode_enable = "true"\n'
+        'desktop_menu_enable = "false"\n'
+    ) + disc_controls)
     return ["kstart", "--fullscreen", "/usr/bin/env", f"XDG_CONFIG_HOME={config_home}",
             executable, "--fullscreen", "--config", config, "--no-patch", "-L", core, "--", path]
 
@@ -407,7 +673,7 @@ def emulator_command(executable, game, save_root, profile_id):
         raise ValueError("Mednafen would apply an unapproved IPS patch")
     profile = prepare_profile_resume_directory(save_root, profile_id)
     game_directory = prepare_profile_resume_directory(profile, game["id"])
-    if game["romExtension"] == ".chd":
+    if game["romExtension"] in PS1_EXTENSIONS:
         return _ps1_command(executable, game, os.path.dirname(save_root), game_directory)
     if module:
         # Keep fullscreen observable by the supervisor and visible while the overlay has focus.

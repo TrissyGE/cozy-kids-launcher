@@ -6,8 +6,10 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
+from contextlib import ExitStack
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
@@ -86,10 +88,14 @@ from media_state import (
     remove_profile_media_state,
     set_media_favorite,
 )
+from retro_device import retro_device_report
 from retro_games import (
-    HUB_COMMAND, HUB_ID, PS1_BIOS_BYTES, approved_retro_ids, emulator_binary, emulator_command,
-    import_ps1_bios, ps1_bios_status, ps1_core_path, retro_cover, retro_hub, scan_retro_games,
+    HUB_COMMAND, HUB_ID, PS1_BIOS_BYTES, PS1_CORE_UPLOAD_BYTES, PS1_CORE_VERSION, ROM_SYSTEMS,
+    approved_retro_ids, download_ps1_core, emulator_binary, emulator_command, import_ps1_bios,
+    import_ps1_core, ps1_bios_status, ps1_core_path, ps1_core_supported, retro_cover, retro_hub,
+    retro_id, scan_retro_games,
 )
+from retro_saves import backup_retro_saves, remove_retro_saves, retro_save_ids
 from media_resume import (
     prepare_profile_resume_directory,
     remove_profile_resume_directory,
@@ -862,24 +868,37 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if self.require_admin(cfg):
                 return self.json_response({"roots": cfg.get("mediaRoots", [])})
             return
+        if request_url.path == "/api/retro/saves":
+            return self.get_retro_saves(parse_qs(request_url.query))
+        if request_url.path == "/api/retro/device":
+            if self.require_admin():
+                core_ready = bool(ps1_core_path(os.path.dirname(MEDIA_STATE_FILE)))
+                return self.json_response(retro_device_report(load_recommendations(), core_ready))
+            return
         if request_url.path == "/api/retro/games":
             cfg = load_cfg()
             if not self.require_admin(cfg):
                 return
             roots = cfg.get("retroRoots", [])
             games, unavailable, truncated = scan_retro_games(roots)
+            approved = approved_retro_ids(cfg)
+            playlist_discs = {disc for game in games.values() for disc in game.get("discPaths", ())}
+            visible_games = (game for game in games.values()
+                             if game["path"] not in playlist_discs or game["id"] in approved)
             return self.json_response({
                 "roots": roots,
-                "games": sorted(games.values(), key=lambda game: (game["title"].casefold(), game["path"])),
+                "games": sorted(visible_games, key=lambda game: (game["title"].casefold(), game["path"])),
                 "unavailable": unavailable,
                 "truncated": truncated,
                 "enabled": bool(retro_hub(cfg)),
                 "covers": (retro_hub(cfg, require_visible=False) or {}).get("retroCovers", False),
-                "approvedIds": list(approved_retro_ids(cfg)),
+                "approvedIds": list(approved),
                 "ps1Bios": ps1_bios_status(os.path.dirname(MEDIA_STATE_FILE)),
                 "ps1Runtime": {
                     "retroarch": bool(shutil.which("retroarch")),
                     "core": bool(ps1_core_path(os.path.dirname(MEDIA_STATE_FILE))),
+                    "coreVersion": PS1_CORE_VERSION,
+                    "coreSupported": ps1_core_supported(),
                 },
             })
         if request_url.path in ("/api/retro/library", "/api/retro/cover"):
@@ -905,6 +924,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response({
                 "items": [
                     {"id": identifier, "title": approved[identifier]["label"],
+                     "system": ROM_SYSTEMS[games[identifier]["romExtension"]][2],
                      "coverUrl": f"/api/retro/cover?id={identifier}"}
                     for identifier in sorted(games.keys() & approved.keys(),
                                              key=lambda key: (approved[key]["label"].casefold(), key))
@@ -1091,6 +1111,50 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         return super().do_GET()
 
+    def get_retro_saves(self, query):
+        if not self.request_has_local_origin():
+            return self.json_response({"status": "invalid"}, 403)
+        with ExitStack() as resources:
+            with _family_lock:
+                cfg = load_cfg()
+                if not self.require_admin(cfg):
+                    return
+                profile_id = cfg["activeProfileId"]
+                root = os.path.join(os.path.dirname(MEDIA_STATE_FILE), "retro")
+                try:
+                    if "gameId" not in query:
+                        labels = {retro_id(tile["cmd"]): tile["label"] for tile in cfg["tiles"]}
+                        games = [{"id": identifier, "title": labels.get(identifier, identifier)}
+                                 for identifier in retro_save_ids(root, profile_id)]
+                        games.sort(key=lambda item: (item["title"].casefold(), item["id"]))
+                        return self.json_response({"profileId": profile_id, "games": games})
+                    if query.get("profileId") != [profile_id] or len(query["gameId"]) != 1:
+                        return self.json_response({"status": "invalid"}, 400)
+                    if self.retro_save_busy():
+                        return self.json_response({"status": "busy"}, 409)
+                    identifier = query["gameId"][0]
+                    backup = resources.enter_context(tempfile.TemporaryFile())
+                    backup_retro_saves(root, profile_id, identifier, backup)
+                except FileNotFoundError:
+                    return self.json_response({"status": "unavailable"}, 404)
+                except ValueError:
+                    return self.json_response({"status": "invalid"}, 400)
+                except OSError:
+                    return self.json_response({"status": "unavailable"}, 503)
+            size = backup.tell()
+            backup.seek(0)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Disposition", f'attachment; filename="cozy-retro-{identifier}.zip"')
+            self.send_header("Content-Length", str(size))
+            self.end_headers()
+            self.copyfile(backup, self.wfile)
+
+    @staticmethod
+    def retro_save_busy():
+        launcher = application_launcher()
+        return owned_process_alive(launcher.tile_process_pidfile, "tile-process", launcher.process_supervisor)
+
     def do_POST(self):
         if not self.request_has_local_origin():
             log_runtime_event("request.rejected", level="warning", statusCode=403)
@@ -1099,7 +1163,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         action = self.path.strip("/")
         if action.startswith("launch/") or action in {
             "api/media/play", "api/media/roots", "api/retro/games", "api/retro/approve",
-            "api/retro/settings", "api/retro/play",
+            "api/retro/settings", "api/retro/play", "api/retro/saves",
             "api/profiles/create", "api/profiles/select", "api/profiles/delete",
             "api/save-config", "api/import-config", "api/backups/restore", "api/budget/session",
             "api/verify-pin", "api/pin/set", "api/pin/remove",
@@ -1110,26 +1174,68 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self.dispatch_post(action)
 
     def dispatch_post(self, action, retro_from_hub=False):
-        if action == "api/retro/ps1-bios":
+        if action == "api/retro/saves":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            profile_id = cfg["activeProfileId"]
+            identifier = body.get("gameId")
+            if body.get("profileId") != profile_id or not isinstance(identifier, str) or body.get("confirm") is not True:
+                return self.json_response({"status": "invalid"}, 400)
+            if self.retro_save_busy():
+                return self.json_response({"status": "busy"}, 409)
+            root = os.path.join(os.path.dirname(MEDIA_STATE_FILE), "retro")
+            try:
+                remove_retro_saves(root, profile_id, identifier)
+            except FileNotFoundError:
+                return self.json_response({"status": "unavailable"}, 404)
+            except ValueError:
+                return self.json_response({"status": "invalid"}, 400)
+            except OSError:
+                return self.json_response({"status": "unavailable"}, 503)
+            return self.json_response({"status": "ok"})
+        if action == "api/retro/ps1-core-download":
+            if not self.require_admin():
+                return
+            try:
+                download_ps1_core(os.path.dirname(MEDIA_STATE_FILE))
+            except ValueError:
+                return self.json_response({"status": "unreviewed"}, 409)
+            except OSError:
+                return self.json_response({"status": "unavailable"}, 503)
+            return self.json_response({"status": "ok", "coreVersion": PS1_CORE_VERSION})
+        if action in ("api/retro/ps1-bios", "api/retro/ps1-core"):
             if not self.require_admin(load_cfg()):
                 return
+            bios = action == "api/retro/ps1-bios"
+            maximum = PS1_BIOS_BYTES if bios else PS1_CORE_UPLOAD_BYTES
             if self.headers.get_content_type() != "application/octet-stream":
                 return self.json_response({"status": "invalid"}, 415)
             try:
                 length = int(self.headers.get("Content-Length", "0"))
             except ValueError:
                 return self.json_response({"status": "invalid"}, 400)
-            if length != PS1_BIOS_BYTES:
-                return self.json_response({"status": "invalid"}, 413 if length > PS1_BIOS_BYTES else 400)
+            if not 0 < length <= maximum or (bios and length != maximum):
+                return self.json_response({"status": "invalid"}, 413 if length > maximum else 400)
             self.connection.settimeout(10)
             state_root = os.path.dirname(MEDIA_STATE_FILE)
             try:
-                import_ps1_bios(state_root, self.rfile.read(length))
+                payload = self.rfile.read(length)
+                if len(payload) != length:
+                    raise ValueError("Truncated PS1 upload")
+                if bios:
+                    import_ps1_bios(state_root, payload)
+                else:
+                    import_ps1_core(state_root, payload)
             except ValueError:
                 return self.json_response({"status": "invalid"}, 400)
             except OSError:
                 return self.json_response({"status": "unavailable"}, 503)
-            return self.json_response({"status": "ok", "ps1Bios": ps1_bios_status(state_root)})
+            result = {"ps1Bios": ps1_bios_status(state_root)} if bios else {"coreVersion": PS1_CORE_VERSION}
+            return self.json_response({"status": "ok", **result})
         if action == "api/retro/play":
             body = self.read_json_body()
             if body is None:

@@ -335,6 +335,13 @@
           <section id="adminSectionRetro" class="admin-section" data-admin-panel="retro" aria-labelledby="adminNavRetro" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
             <div id="retroEmulators"></div>
+            <details class="backup-panel media-roots-panel">
+              <summary id="retroDeviceTitle"></summary>
+              <p id="retroDeviceGuide" class="muted"></p>
+              <button id="retroDeviceRun" class="smallbtn" type="button" onclick="runRetroDeviceCheck()" disabled></button>
+              <p id="retroDeviceStatus" role="status" aria-live="polite"></p>
+              <ul id="retroDeviceResults"></ul>
+            </details>
             <div class="backup-panel media-roots-panel">
               <label class="chk"><input id="retroEnabled" type="checkbox"><span id="retroEnabledLabel"></span></label>
               <label class="chk"><input id="retroCovers" type="checkbox"><span id="retroCoversLabel"></span></label>
@@ -347,6 +354,12 @@
                 <summary id="ps1BiosTitle"></summary>
                 <p id="ps1BiosGuide" class="muted"></p>
                 <p id="ps1RuntimeStatus" class="muted"></p>
+                <div class="actions">
+                  <button id="ps1CoreDownload" class="smallbtn" type="button" onclick="installPs1Core()" disabled></button>
+                </div>
+                <label id="ps1CoreLabel" for="ps1CoreInput"></label>
+                <input id="ps1CoreInput" type="file" accept=".zip,.so" onchange="if(this.files.length) installPs1Core(this.files[0])" disabled>
+                <p id="ps1CoreStatus" role="status" aria-live="polite"></p>
                 <label id="ps1BiosLabel" for="ps1BiosInput"></label>
                 <input id="ps1BiosInput" type="file" accept=".bin" onchange="importPs1Bios()" disabled>
                 <ul id="ps1BiosRegions"></ul>
@@ -362,6 +375,16 @@
               <select id="retroGame" disabled></select>
               <button id="retroApprove" class="smallbtn" type="button" onclick="approveRetroGame()" disabled></button>
               <div id="retroStatus" role="status" aria-live="polite"></div>
+              <details>
+                <summary id="retroSavesTitle"></summary>
+                <label id="retroSaveGameLabel" for="retroSaveGame"></label>
+                <select id="retroSaveGame" disabled></select>
+                <div class="actions">
+                  <button id="retroSaveDownload" class="smallbtn" type="button" onclick="manageRetroSave(false)" disabled></button>
+                  <button id="retroSaveRemove" class="smallbtn" type="button" onclick="manageRetroSave(true)" disabled></button>
+                </div>
+                <p id="retroSaveStatus" role="status" aria-live="polite"></p>
+              </details>
             </section>
           </section>
 
