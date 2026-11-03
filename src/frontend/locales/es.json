@@ -254,6 +254,8 @@
   "activityLessMinute": "< 1 min",
   "activityMinutes": "{count} min",
   "activityHoursMinutes": "{hours} h {minutes} min",
+  "controllerNavigationLabel": "Navegación con mando y control remoto",
+  "controllerNavigationHint": "Usa un mando estándar o un control remoto con teclas de dirección e Intro en la pantalla de inicio y en la biblioteca multimedia.",
   "browserHint": "Los cambios se aplican al volver a iniciar sesión.",
   "browserLabel": "Navegador",
   "languageLabel": "Idioma",

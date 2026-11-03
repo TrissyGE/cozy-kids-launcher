@@ -11,6 +11,9 @@ let mediaSourceRevision='';
 let mediaCatalogLoading=false;
 let mediaSourceChecking=false;
 let mediaCoverRevision=0;
+const configureMediaController=createControllerNavigation(()=>({
+  buttons:'.media-library-screen button',back:mediaHome
+}));
 
 function mediaHome(){ window.location='/index.html'; }
 
@@ -347,6 +350,7 @@ async function initializeMediaLibrary(){
     applyMediaTheme(mediaConfig);
     localizeMediaPage(tile);
     await loadMediaCatalog();
+    configureMediaController(mediaConfig.controllerNavigationEnabled===true);
     window.setInterval(checkMediaSources,10000);
     document.addEventListener('visibilitychange',checkMediaSources);
   }catch(e){

@@ -1,3 +1,25 @@
+const configureLauncherController=createControllerNavigation(()=>{
+  const blocked=document.querySelector(
+    '#pin:not(.hidden),#timerBlock:not(.hidden),#timerWarning:not(.hidden),#startOverlay:not(.hidden),'+
+    '#firstRunOverlay:not(.hidden),#confirmOverlay:not(.hidden),#installOverlay:not(.hidden),'+
+    '#packageOverlay:not(.hidden),#themeOverlay:not(.hidden)'
+  );
+  if(blocked) return {modal:blocked};
+  const availability=document.querySelector('#availabilityBlock:not(.hidden)');
+  if(availability){
+    const editing=!document.getElementById('budgetExtensionForm').hidden;
+    return {
+      modal:availability,
+      buttons:editing?'#budgetCancelBtn':'#availabilityBlockClose,#availabilityParentsBtn,#budgetRequestBtn',
+      back:editing?cancelBudgetExtension:hideAvailabilityBlock
+    };
+  }
+  const profiles=document.querySelector('#profileOverlay:not(.hidden)');
+  if(profiles) return {modal:profiles,buttons:'#profileOverlay button',back:closeProfilePicker};
+  if(!cfg||document.getElementById('kids').classList.contains('hidden')) return null;
+  return {buttons:'#grid .tile:not(.placeholder),#navLeft,#navRight,#profileBtn,#parentBtn'};
+});
+
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
 function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
 function isMediaLibraryTile(tile){
@@ -135,6 +157,7 @@ function applyDynamicTheme(){
   applyCustomThemeRuntime(document.body,cfg,document.getElementById('themeBg'));
 }
 function renderAll(){
+  configureLauncherController(cfg?.controllerNavigationEnabled===true);
   renderLocalizedChrome();
   applyThemeRuntime(document.body,cfg);
   applyAccessibilityRuntime(document.body,cfg);

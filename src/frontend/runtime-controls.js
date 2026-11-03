@@ -220,6 +220,7 @@ async function saveConfig(){
   cfg.accessibilityHighContrast=document.getElementById('cfgAccessibilityHighContrast').checked;
   cfg.accessibilityReducedMotion=document.getElementById('cfgAccessibilityReducedMotion').checked;
   cfg.accessibilityKeyboardFocus=document.getElementById('cfgAccessibilityKeyboardFocus').checked;
+  cfg.controllerNavigationEnabled=document.getElementById('cfgControllerNavigation').checked;
   cfg.layoutMode=document.getElementById('cfgLayoutMode').value;
   cfg.parentLabel=document.getElementById('cfgParentLabel').value;
   cfg.exitLabel=document.getElementById('cfgExitLabel').value;

@@ -170,6 +170,8 @@
   "confirm_cancel": "Cancelar",
   "confirm_continue": "Continuar",
   "confirm_title": "Confirma la acción",
+  "controller_navigation_hint": "Usa un mando estándar o un control remoto con teclas de dirección e Intro en la pantalla de inicio y en la biblioteca multimedia.",
+  "controller_navigation_label": "Navegación con mando y control remoto",
   "copy_command": "Copiar",
   "custom_cmd": "Personalizado",
   "delete": "Eliminar",

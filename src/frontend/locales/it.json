@@ -254,6 +254,8 @@
   "activityLessMinute": "< 1 min",
   "activityMinutes": "{count} min",
   "activityHoursMinutes": "{hours} h {minutes} min",
+  "controllerNavigationLabel": "Navigazione con controller e telecomando",
+  "controllerNavigationHint": "Usa un controller standard o un telecomando con frecce e tasto Invio nella schermata iniziale e nella raccolta multimediale.",
   "browserHint": "Le modifiche saranno applicate al prossimo accesso.",
   "browserLabel": "Browser",
   "languageLabel": "Lingua",

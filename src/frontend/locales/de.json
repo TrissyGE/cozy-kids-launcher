@@ -254,6 +254,8 @@
   "activityLessMinute": "< 1 Min.",
   "activityMinutes": "{count} Min.",
   "activityHoursMinutes": "{hours} Std. {minutes} Min.",
+  "controllerNavigationLabel": "Navigation mit Controller und Fernbedienung",
+  "controllerNavigationHint": "Nutze auf der Startseite und in der Mediathek einen Standard-Controller oder eine Fernbedienung mit Pfeil- und Eingabetasten.",
   "browserHint": "Änderung wirkt erst nach erneutem Login.",
   "browserLabel": "Browser",
   "languageLabel": "Sprache",

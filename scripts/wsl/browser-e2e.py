@@ -150,6 +150,58 @@ def enter_parent_settings(browser):
     )
 
 
+def install_gamepad_fixture(browser):
+    browser.evaluate("""
+        window.testPad={
+            index:0,connected:true,mapping:'standard',
+            buttons:Array.from({length:17},()=>({pressed:false})),axes:[0,0]
+        };
+        Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[window.testPad]});
+        window.padButton=async (index)=>{
+            testPad.buttons[index].pressed=true;
+            await new Promise(resolve=>setTimeout(resolve,150));
+            testPad.buttons[index].pressed=false;
+            await new Promise(resolve=>setTimeout(resolve,150));
+        };
+    """)
+    browser.wait_for("document.hasFocus()")
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,150))", await_promise=True)
+
+
+def run_controller_home_scenario(browser):
+    install_gamepad_fixture(browser)
+    browser.evaluate("document.querySelector('[data-tile-id=paint]').focus()")
+    browser.evaluate("padButton(15)", await_promise=True)
+    assert_js(browser, "document.activeElement.dataset.tileId==='paint'",
+              "The gamepad moved focus before the Parent opt-in")
+    browser.evaluate("enterAdmin(); activateAdminSection('system')")
+    browser.click("#cfgControllerNavigation")
+    browser.click("#saveBtn")
+    browser.wait_for(
+        "cfg.controllerNavigationEnabled===true && document.getElementById('admin').classList.contains('hidden')",
+        message="The controller setting was not saved",
+    )
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,150))", await_promise=True)
+    browser.evaluate("document.querySelector('[data-tile-id=paint]').focus()")
+    browser.evaluate("padButton(15)", await_promise=True)
+    assert_js(browser, "document.activeElement.dataset.tileId==='music'",
+              "The standard D-pad did not move to the tile on the right")
+    browser.key_press("ArrowLeft")
+    assert_js(browser, "document.activeElement.dataset.tileId==='paint'",
+              "A keyboard-style remote could not move focus left")
+    browser.evaluate("""
+        requestPin(()=>{ throw new Error('Controller submitted a PIN'); });
+        document.querySelector('[data-tile-id=music]').focus();
+    """)
+    browser.key_press("Enter")
+    browser.evaluate("padButton(0)", await_promise=True)
+    assert_js(browser, "location.pathname==='/index.html' && !document.getElementById('pin').classList.contains('hidden')",
+              "A controller or remote reached behind the PIN dialog")
+    browser.key_press("Escape")
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,150))", await_promise=True)
+    browser.evaluate("document.querySelector('[data-tile-id=music]').focus(); testPad.buttons[0].pressed=true")
+
+
 def run_scenarios(browser, release_fixture, installed_version, artifacts, test_home):
     browser.wait_for(
         "typeof cfg !== 'undefined' && cfg !== null && "
@@ -350,7 +402,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.click("#mediaRootsSave")
     browser.wait_for("document.getElementById('mediaRootsStatus').textContent===uiText.mediaRootsSaved")
     browser.evaluate("closeAdmin()")
-    browser.click('#grid .tile[data-tile-id="music"]')
+    run_controller_home_scenario(browser)
     browser.wait_for(
         "location.pathname==='/media.html' && "
         "document.querySelectorAll('#mediaGrid .media-card').length===2 && "
@@ -465,7 +517,12 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.wait_for("document.querySelectorAll('#mediaGrid .media-card').length===1")
     browser.set_device_metrics(1440, 900)
     log_scenario("Parent-managed media folders reconnect and disconnect without exposing paths")
-    browser.click("#mediaBack")
+    install_gamepad_fixture(browser)
+    browser.evaluate("document.getElementById('mediaRefresh').focus(); testPad.axes[1]=0.85")
+    browser.wait_for("document.activeElement.matches('.media-card,.media-favorite')")
+    browser.evaluate("testPad.axes[1]=0")
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,150))", await_promise=True)
+    browser.evaluate("testPad.buttons[1].pressed=true")
     browser.wait_for(
         "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg!==null && "
         "bootstrapPromise===null && document.querySelectorAll('#grid .tile:not(.placeholder)').length===2 && "
@@ -474,6 +531,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
         ".classList.contains('return-highlight')",
         message="The media library did not return to the launcher",
     )
+    log_scenario("opt-in gamepad and remote navigation respect the PIN and media boundaries")
+    browser.evaluate("cfg.controllerNavigationEnabled=false; persistConfig().then(renderAll)", await_promise=True)
     browser.evaluate("new Promise(resolve=>setTimeout(resolve,250))", await_promise=True)
     browser.screenshot(artifacts / "launcher-return.png")
     browser.evaluate(

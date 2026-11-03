@@ -254,6 +254,8 @@
   "activityLessMinute": "< 1 min",
   "activityMinutes": "{count} min",
   "activityHoursMinutes": "{hours} hr {minutes} min",
+  "controllerNavigationLabel": "Controller and remote navigation",
+  "controllerNavigationHint": "Use a standard gamepad or a remote that sends arrow and Enter keys on Home and in the media library.",
   "browserHint": "Changes take effect after the next login.",
   "browserLabel": "Browser",
   "languageLabel": "Language",

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Living Room
 
 - Add Parent-managed media folders and refresh the cover library as local storage disconnects or reconnects.
+- Add optional standard gamepad and keyboard-style remote navigation on Home and in the media library.
 
 ### Languages
 

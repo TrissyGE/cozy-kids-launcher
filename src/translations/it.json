@@ -170,6 +170,8 @@
   "confirm_cancel": "Annulla",
   "confirm_continue": "Continua",
   "confirm_title": "Conferma",
+  "controller_navigation_hint": "Usa un controller standard o un telecomando con frecce e tasto Invio nella schermata iniziale e nella raccolta multimediale.",
+  "controller_navigation_label": "Navigazione con controller e telecomando",
   "copy_command": "Copia",
   "custom_cmd": "Personalizzato",
   "delete": "Elimina",

@@ -170,6 +170,8 @@
   "confirm_cancel": "Cancel",
   "confirm_continue": "Continue",
   "confirm_title": "Please confirm",
+  "controller_navigation_hint": "Use a standard gamepad or a remote that sends arrow and Enter keys on Home and in the media library.",
+  "controller_navigation_label": "Controller and remote navigation",
   "copy_command": "Copy",
   "custom_cmd": "Custom",
   "delete": "Delete",
