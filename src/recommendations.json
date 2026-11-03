@@ -405,7 +405,30 @@
     "cmd": ["kstart","--fullscreen","blinken"],
     "alt_cmds": ["blinken"],
     "package": "blinken",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "age_de": "Für Kinder, die kurze Folgen aus Farben oder Tönen nachspielen möchten (Elternorientierung).",
+      "age_en": "For children ready to repeat short patterns of colours or sounds (parent guidance).",
+      "age_es": "Para quienes empiezan a repetir secuencias cortas de colores o sonidos (orientación para familias).",
+      "age_fr": "Pour les enfants prêts à reproduire de courtes suites de couleurs ou de sons (conseil aux parents).",
+      "source": "https://apps.kde.org/blinken/",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "label_es": "Manual",
+          "label_fr": "Manuel",
+          "url": "https://docs.kde.org/trunk_kf6/en/blinken/blinken/playing-tips.html"
+        }
+      ]
+    }
   },
   {
     "id": "childsplay",
@@ -592,7 +615,26 @@
     "cmd": ["kstart","--fullscreen","kwordquiz"],
     "alt_cmds": ["kwordquiz"],
     "package": "kwordquiz",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "age_de": "Für Kinder, die mit Lesekenntnissen eigene Lernkarten üben können (Elternorientierung).",
+      "age_en": "For children ready to read and practise with their own flashcards (parent guidance).",
+      "age_es": "Para niños que ya pueden leer y practicar con sus propias fichas (orientación para familias).",
+      "age_fr": "Pour les enfants qui savent lire et peuvent réviser avec leurs propres fiches (conseil aux parents).",
+      "source": "https://apps.kde.org/kwordquiz/",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "label_es": "Manual",
+          "label_fr": "Manuel",
+          "url": "https://docs.kde.org/stable_kf6/en/kwordquiz/kwordquiz/kwordquiz.pdf"
+        }
+      ]
+    }
   },
   {
     "id": "parley",
@@ -610,7 +652,30 @@
     "cmd": ["kstart","--fullscreen","parley"],
     "alt_cmds": ["parley"],
     "package": "parley",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "offline": "yes",
+      "license": "GPL-2.0-or-later",
+      "age_de": "Für Kinder mit Lesekenntnissen, die Wörter oder Wendungen wiederholen möchten (Elternorientierung).",
+      "age_en": "For children ready to read and review words or phrases (parent guidance).",
+      "age_es": "Para niños que ya pueden leer y quieren repasar palabras o frases (orientación para familias).",
+      "age_fr": "Pour les enfants qui savent lire et souhaitent réviser des mots ou des expressions (conseil aux parents).",
+      "source": "https://apps.kde.org/parley/",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "label_es": "Manual",
+          "label_fr": "Manuel",
+          "url": "https://docs.kde.org/trunk_kf6/en/parley/parley/creating-new-files.html"
+        }
+      ],
+      "network_de": "Lokale Wortlisten können offline geübt werden. Optionale Downloads benötigen Internet.",
+      "network_en": "Local vocabulary files work offline. Optional downloads require an internet connection.",
+      "network_es": "Las listas de vocabulario locales funcionan sin conexión. Las descargas opcionales requieren internet.",
+      "network_fr": "Les listes de vocabulaire locales fonctionnent hors ligne. Les téléchargements facultatifs nécessitent Internet."
+    }
   },
   {
     "id": "potato-guy",
@@ -751,7 +816,25 @@
     "desc_fr": "Des films et séries pour enfants sur Netflix.",
     "cmd": ["special:external-browser:https://www.netflix.com/browse/genre/27346"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externer Streamingdienst. Kinderprofil und Altersfreigabe bei Netflix einstellen. Die Kachel öffnet nur die Startseite für Kinderinhalte.",
+      "network_en": "External streaming service. Set the Kids profile and maturity limit in Netflix. The tile opens a starting page for kids’ content.",
+      "network_es": "Servicio de vídeo externo. Configura el perfil infantil y la clasificación por edades en Netflix. La ficha abre una página inicial de contenido infantil.",
+      "network_fr": "Service de streaming externe. Réglez le profil enfant et le niveau de maturité dans Netflix. La tuile ouvre une page de contenus jeunesse.",
+      "source": "https://help.netflix.com/en/node/114275",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Datenschutzhinweise",
+          "label_en": "Privacy policy",
+          "label_es": "Política de privacidad",
+          "label_fr": "Politique de confidentialité",
+          "url": "https://help.netflix.com/legal/privacy"
+        }
+      ]
+    }
   },
   {
     "id": "disney-plus",
@@ -768,7 +851,32 @@
     "desc_fr": "Disney, Pixar, Marvel et Star Wars pour toute la famille.",
     "cmd": ["special:external-browser:https://www.disneyplus.com"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externer Streamingdienst. Den Junior-Modus im Disney+-Profil aktivieren. Disney+ beschreibt diesen Modus als werbefrei.",
+      "network_en": "External streaming service. Enable Junior Mode in the Disney+ profile. Disney+ says Junior Mode profiles do not show ads.",
+      "network_es": "Servicio de vídeo externo. Activa el modo Junior en el perfil de Disney+. Disney+ indica que este modo no muestra anuncios.",
+      "network_fr": "Service de streaming externe. Activez le mode Junior dans le profil Disney+. Disney+ indique que ce mode ne diffuse pas de publicités.",
+      "source": "https://help.disneyplus.com/en-GB/article/disneyplus-en-my-kids-profiles",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Werbung und Junior-Modus",
+          "label_en": "Ads and Junior Mode",
+          "label_es": "Anuncios y modo Junior",
+          "label_fr": "Publicités et mode Junior",
+          "url": "https://help.disneyplus.com/article/disneyplus-ads?redirect=false"
+        },
+        {
+          "label_de": "Datenschutzhinweise",
+          "label_en": "Privacy policy",
+          "label_es": "Política de privacidad",
+          "label_fr": "Politique de confidentialité",
+          "url": "https://privacy.thewaltdisneycompany.com/en/"
+        }
+      ]
+    }
   },
   {
     "id": "prime-kids",
@@ -785,7 +893,16 @@
     "desc_fr": "Des films et séries pour enfants sur Amazon Prime Video.",
     "cmd": ["special:external-browser:https://www.amazon.de/gp/video/storefront/?ie=UTF8&node=17402232031"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externer Streamingdienst. Kinderprofil bei Prime Video einstellen und Erwachsenenprofile dort per PIN sperren. Inhalte können Werbeunterbrechungen enthalten.",
+      "network_en": "External streaming service. Set up a Prime Video Kids profile and PIN-lock adult profiles there. Some content may contain promotional breaks.",
+      "network_es": "Servicio de vídeo externo. Configura un perfil infantil en Prime Video y protege con PIN los perfiles de adultos. Puede haber pausas promocionales.",
+      "network_fr": "Service de streaming externe. Configurez un profil enfant Prime Video et verrouillez les profils adultes par code PIN. Certains contenus peuvent comporter des pauses promotionnelles.",
+      "source": "https://digprjsurvey.amazon.com/csad/help/node/GTYL2UYVAAPUD6WE",
+      "reviewed": "2026-11-03"
+    }
   },
   {
     "id": "pbs-kids",
@@ -802,7 +919,16 @@
     "desc_fr": "Des jeux éducatifs et vidéos de PBS Kids.",
     "cmd": ["special:external-browser:https://www.pbskids.org"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externe Webseite mit Spielen und Videos. PBS KIDS erläutert in seinen Datenschutzhinweisen unter anderem die Nutzung von Cookies und Analysedaten.",
+      "network_en": "External website with games and videos. The PBS KIDS privacy policy covers cookies and analytics data.",
+      "network_es": "Sitio web externo con juegos y vídeos. La política de privacidad de PBS KIDS explica el uso de cookies y datos de análisis.",
+      "network_fr": "Site web externe avec jeux et vidéos. La politique de PBS KIDS explique l’usage des cookies et des données d’analyse.",
+      "source": "https://pbskids.org/privacy",
+      "reviewed": "2026-11-03"
+    }
   },
   {
     "id": "zdf-tivi",
@@ -819,7 +945,25 @@
     "desc_fr": "Des vidéos et jeux pour enfants de ZDF.",
     "cmd": ["special:external-browser:https://www.zdf.de/kinder"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externe ZDF-Webseite mit Kinderprogramm. Altersangaben bei der Auswahl beachten und die Datenschutzeinstellungen auf der Webseite prüfen.",
+      "network_en": "External ZDF website for children’s programmes. Check the listed age ratings and review the website’s privacy settings.",
+      "network_es": "Sitio web externo de ZDF con programación infantil. Consulta las clasificaciones por edades y los ajustes de privacidad del sitio.",
+      "network_fr": "Site web externe de ZDF avec des programmes jeunesse. Vérifiez les indications d’âge et les réglages de confidentialité du site.",
+      "source": "https://www.zdf.de/kinder",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Datenschutzhinweise",
+          "label_en": "Privacy policy",
+          "label_es": "Política de privacidad",
+          "label_fr": "Politique de confidentialité",
+          "url": "https://www.zdf.de/datenschutz"
+        }
+      ]
+    }
   },
   {
     "id": "kika",
@@ -836,6 +980,24 @@
     "desc_fr": "La chaîne pour enfants d’ARD et ZDF, avec des vidéos et des jeux.",
     "cmd": ["special:external-browser:https://www.kika.de"],
     "package": "",
-    "category": "browser"
+    "category": "browser",
+    "guidance": {
+      "offline": "no",
+      "network_de": "Externe KiKA-Webseite. Die Datenschutzerklärung beschreibt Reichweitenmessung und mögliche Einbindungen von Drittanbietern.",
+      "network_en": "External KiKA website. Its privacy policy describes audience measurement and embedded third-party services.",
+      "network_es": "Sitio web externo de KiKA. Su política de privacidad describe la medición de audiencia y la inclusión de servicios de terceros.",
+      "network_fr": "Site web externe de KiKA. Sa politique de confidentialité décrit la mesure d’audience et l’intégration de services tiers.",
+      "source": "https://www.kika.de/eltern/datenschutz/datenschutzerklaerung102.html",
+      "reviewed": "2026-11-03",
+      "references": [
+        {
+          "label_de": "Datenschutzhinweise",
+          "label_en": "Privacy policy",
+          "label_es": "Política de privacidad",
+          "label_fr": "Politique de confidentialité",
+          "url": "https://www.kika.de/eltern/datenschutz/datenschutzhinweise-100.html"
+        }
+      ]
+    }
   }
 ]

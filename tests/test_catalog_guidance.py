@@ -6,12 +6,17 @@ from urllib.parse import urlsplit
 
 
 class CatalogGuidanceTests(unittest.TestCase):
-    def test_guidance_is_bilingual_sourced_and_explicit_about_review_scope(self):
+    def test_guidance_is_localized_sourced_and_explicit_about_review_scope(self):
         path = Path(__file__).resolve().parents[1] / "src" / "recommendations.json"
         entries = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(len(entries), len({entry["id"] for entry in entries}))
         for entry in entries:
             info = entry.get("guidance")
+            if entry["category"] == "browser":
+                with self.subTest(web_app=entry["id"]):
+                    self.assertIsNotNone(info)
+                    self.assertEqual(info["offline"], "no")
+                    self.assertTrue(info["network_en"].strip())
             if not info:
                 continue
             with self.subTest(app=entry["id"]):
@@ -23,7 +28,9 @@ class CatalogGuidanceTests(unittest.TestCase):
                 datetime.date.fromisoformat(info["reviewed"])
                 self.assertTrue(set(info.get("input", [])) <= {"mouse", "keyboard", "touch"})
                 for prefix in ("age", "network"):
-                    self.assertEqual(bool(info.get(prefix + "_de")), bool(info.get(prefix + "_en")))
+                    if any(f"{prefix}_{language}" in info for language in ("de", "en", "es", "fr")):
+                        for language in ("de", "en", "es", "fr"):
+                            self.assertTrue(info[f"{prefix}_{language}"].strip())
                 references = info.get("references", [])
                 self.assertIsInstance(references, list)
                 self.assertLessEqual(len(references), 4)
@@ -36,7 +43,7 @@ class CatalogGuidanceTests(unittest.TestCase):
                     self.assertIsNone(url.password)
                     self.assertNotIn(reference["url"], urls)
                     urls.add(reference["url"])
-                    for language in ("de", "en"):
+                    for language in ("de", "en", "es", "fr"):
                         self.assertTrue(reference["label_" + language].strip())
 
 
