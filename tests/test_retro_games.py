@@ -71,6 +71,7 @@ class RetroArchiveTests(unittest.TestCase):
         state = self.root / "state"
         command = retro_games.emulator_command("mgba-qt", game, state, "default")
         self.assertEqual(command[-1], str(self.path))
+        self.assertEqual(command[4:6], ["mgba-qt", "--fullscreen"])
         self.assertIn(f"savestatePath={state / 'default' / game['id']}", command)
         before = self.path.stat()
         raw = self.path.read_bytes().replace(b"original payload", b"modified payload", 1)

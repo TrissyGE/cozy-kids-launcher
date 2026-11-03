@@ -247,6 +247,7 @@ def emulator_command(executable, game, save_root, profile_id):
     return [
         "kstart", "--fullscreen",
         "/usr/bin/env", f"XDG_CONFIG_HOME={config_directory}", executable,
+        "--fullscreen",
         "-C", f"savegamePath={game_directory}",
         "-C", f"savestatePath={game_directory}",
         game["path"],
