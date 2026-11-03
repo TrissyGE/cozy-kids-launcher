@@ -6,12 +6,14 @@
     "label_en": "Paint",
     "label_es": "Pintar",
     "label_fr": "Dessiner",
+    "label_it": "Disegna",
     "name_de": "Tux Paint",
     "name_en": "Tux Paint",
     "desc_de": "Ein buntes Malprogramm für Kinder mit lustigen Stempeln und Zaubereffekten.",
     "desc_en": "A colorful paint program for kids with funny stamps and magic effects.",
     "desc_es": "Un programa de dibujo para niños con sellos divertidos y efectos mágicos.",
     "desc_fr": "Un logiciel de dessin pour enfants avec des tampons amusants et des effets magiques.",
+    "desc_it": "Un programma di disegno colorato per bambini, con timbri divertenti ed effetti magici.",
     "cmd": ["tuxpaint","--fullscreen=yes"],
     "package": "tuxpaint",
     "packages": {
@@ -31,17 +33,20 @@
       "age_en": "Ages 3–12 (project guidance)",
       "age_es": "De 3 a 12 años (orientación del proyecto).",
       "age_fr": "De 3 à 12 ans (indication du projet).",
+      "age_it": "Da 3 a 12 anni (indicazione del progetto).",
       "license": "GPL",
       "network_de": "Die offiziellen Desktop-Versionen haben laut Projekt keine Netzwerkfunktionen.",
       "network_en": "The project states that official desktop releases have no networking functionality.",
       "network_es": "El proyecto indica que las versiones oficiales de escritorio no incluyen funciones de red.",
       "network_fr": "Le projet indique que les versions officielles pour ordinateur n’utilisent pas le réseau.",
+      "network_it": "Il progetto indica che le versioni ufficiali per computer non hanno funzioni di rete.",
       "references": [
         {
           "label_de": "Datenschutz des Projekts",
           "label_en": "Project privacy policy",
           "label_es": "Política de privacidad del proyecto",
           "label_fr": "Politique de confidentialité du projet",
+          "label_it": "Informativa sulla privacy del progetto",
           "url": "https://tuxpaint.org/privacy/"
         }
       ]
@@ -54,12 +59,14 @@
     "label_en": "Learning games",
     "label_es": "Juegos educativos",
     "label_fr": "Jeux éducatifs",
+    "label_it": "Giochi educativi",
     "name_de": "GCompris",
     "name_en": "GCompris",
     "desc_de": "Eine Sammlung von Lernaktivitäten zu Mathe, Lesen, Logik, Natur und mehr.",
     "desc_en": "A collection of learning activities about math, reading, logic, nature, and more.",
     "desc_es": "Actividades de matemáticas, lectura, lógica, naturaleza y mucho más.",
     "desc_fr": "Des activités de mathématiques, de lecture, de logique, de découverte de la nature et bien plus encore.",
+    "desc_it": "Attività su matematica, lettura, logica, natura e molto altro.",
     "cmd": ["gcompris"],
     "alt_cmds": ["gcompris-qt"],
     "package": "gcompris-qt",
@@ -77,17 +84,20 @@
       "age_en": "Ages 2–10 (project guidance)",
       "age_es": "De 2 a 10 años (orientación del proyecto).",
       "age_fr": "De 2 à 10 ans (indication du projet).",
+      "age_it": "Da 2 a 10 anni (indicazione del progetto).",
       "license": "GPL / AGPL",
       "network_de": "Sprachen, Bilder und Musik können nachgeladen werden. Automatische Downloads lassen sich in GCompris abschalten.",
       "network_en": "Voices, images, and music can be downloaded. Automatic downloads can be disabled in GCompris.",
       "network_es": "Puede descargar voces, imágenes y música. Las descargas automáticas se pueden desactivar en GCompris.",
       "network_fr": "Des voix, images et musiques peuvent être téléchargées. Les téléchargements automatiques peuvent être désactivés dans GCompris.",
+      "network_it": "È possibile scaricare voci, immagini e musica. In GCompris puoi disattivare i download automatici.",
       "references": [
         {
           "label_de": "Projektübersicht",
           "label_en": "Project overview",
           "label_es": "Información del proyecto",
           "label_fr": "Présentation du projet",
+          "label_it": "Presentazione del progetto",
           "url": "https://gcompris.net/index-en.html"
         }
       ]
@@ -100,12 +110,14 @@
     "label_en": "Math",
     "label_es": "Matemáticas",
     "label_fr": "Calcul",
+    "label_it": "Matematica",
     "name_de": "TuxMath",
     "name_en": "TuxMath",
     "desc_de": "Mathe-Übungsspiel mit dem Pinguin Tux: Plus, Minus, Mal und Geteilt.",
     "desc_en": "Math practice game with penguin Tux: addition, subtraction, multiplication and division.",
     "desc_es": "Practica sumas, restas, multiplicaciones y divisiones con el pingüino Tux.",
     "desc_fr": "Entraîne-toi aux additions, soustractions, multiplications et divisions avec le manchot Tux.",
+    "desc_it": "Esercitati con il pinguino Tux in addizioni, sottrazioni, moltiplicazioni e divisioni.",
     "cmd": ["tuxmath","--fullscreen"],
     "package": "tuxmath",
     "category": "learning",
@@ -116,10 +128,12 @@
       "age_en": "For children ready to practise arithmetic under time pressure (parent guidance).",
       "age_es": "Para quienes quieren practicar cálculo con tiempo limitado (orientación para familias).",
       "age_fr": "Pour les enfants prêts à faire du calcul en temps limité (conseil aux parents).",
+      "age_it": "Per chi è pronto a fare calcoli a tempo (indicazione per i genitori).",
       "network_de": "Einzelspiel ist lokal. Der optionale Mehrspielermodus verwendet das lokale Netzwerk.",
       "network_en": "Single-player play is local. Optional multiplayer uses the local network.",
       "network_es": "El modo individual es local. El multijugador opcional usa la red local.",
       "network_fr": "Le jeu en solo est local. Le mode multijoueur facultatif utilise le réseau local.",
+      "network_it": "Il gioco in solitaria funziona in locale. La modalità multigiocatore facoltativa usa la rete locale.",
       "offline": "yes",
       "input": [
         "keyboard"
@@ -133,12 +147,14 @@
     "label_en": "Typing",
     "label_es": "Mecanografía",
     "label_fr": "Clavier",
+    "label_it": "Scrivi con la tastiera",
     "name_de": "TuxType",
     "name_en": "TuxType",
     "desc_de": "Lerne das Tippen auf der Tastatur mit spannenden Übungen und Spielen.",
     "desc_en": "Learn to type on the keyboard with exciting exercises and games.",
     "desc_es": "Aprende a escribir con el teclado mediante juegos y ejercicios.",
     "desc_fr": "Apprends à taper au clavier avec des jeux et des exercices.",
+    "desc_it": "Impara a scrivere con la tastiera con esercizi e giochi.",
     "cmd": ["tuxtype","--fullscreen"],
     "package": "tuxtype",
     "category": "learning",
@@ -149,6 +165,7 @@
       "age_en": "For children ready to recognise letters and practise typing (parent guidance).",
       "age_es": "Para quienes reconocen letras y quieren practicar mecanografía (orientación para familias).",
       "age_fr": "Pour les enfants qui reconnaissent les lettres et souhaitent s’exercer au clavier (conseil aux parents).",
+      "age_it": "Per chi è pronto a riconoscere le lettere e a esercitarsi con la tastiera (indicazione per i genitori).",
       "offline": "yes",
       "input": [
         "keyboard"
@@ -162,12 +179,14 @@
     "label_en": "Programming",
     "label_es": "Programar",
     "label_fr": "Programmer",
+    "label_it": "Programmazione",
     "name_de": "KTurtle",
     "name_en": "KTurtle",
     "desc_de": "Erste Schritte ins Programmieren – steuere eine kleine Schildkröte mit Befehlen.",
     "desc_en": "First steps into programming – control a little turtle with commands.",
     "desc_es": "Da tus primeros pasos en programación al dirigir una tortuga con órdenes.",
     "desc_fr": "Fais tes premiers pas en programmation en guidant une tortue avec des commandes.",
+    "desc_it": "Primi passi nella programmazione. Guida una tartarughina con i comandi.",
     "cmd": ["kstart","--fullscreen","kturtle"],
     "alt_cmds": ["kturtle"],
     "package": "kturtle",
@@ -182,6 +201,7 @@
       "age_en": "For first text-based programming tasks; reading and typing help (parent guidance).",
       "age_es": "Para empezar a programar con texto. Saber leer y escribir con el teclado ayuda (orientación para familias).",
       "age_fr": "Pour débuter la programmation textuelle. Savoir lire et taper au clavier est utile (conseil aux parents).",
+      "age_it": "Per i primi esercizi di programmazione testuale. Saper leggere e scrivere con la tastiera aiuta (indicazione per i genitori).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -196,6 +216,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/kturtle/kturtle/index.html"
         }
       ]
@@ -208,12 +229,14 @@
     "label_en": "KAnagram",
     "label_es": "KAnagram",
     "label_fr": "KAnagram",
+    "label_it": "KAnagram",
     "name_de": "KAnagram",
     "name_en": "KAnagram",
     "desc_de": "Bilde Wörter aus durcheinandergewürfelten Buchstaben und trainiere deinen Wortschatz.",
     "desc_en": "Build words from scrambled letters and train your vocabulary.",
     "desc_es": "Forma palabras con letras desordenadas y practica tu vocabulario.",
     "desc_fr": "Reconstitue des mots dont les lettres sont mélangées et enrichis ton vocabulaire.",
+    "desc_it": "Riordina le lettere per formare parole e allenare il vocabolario.",
     "cmd": ["kstart","--fullscreen","kanagram"],
     "alt_cmds": ["kanagram"],
     "package": "kanagram",
@@ -223,6 +246,7 @@
       "age_en": "Reading words and arranging letters help (parent guidance).",
       "age_es": "Ayuda saber leer palabras y ordenar letras (orientación para familias).",
       "age_fr": "Savoir lire des mots et remettre les lettres dans l’ordre est utile (conseil aux parents).",
+      "age_it": "Aiuta saper leggere le parole e riordinare le lettere (indicazione per i genitori).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -237,6 +261,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/kanagram/kanagram/index.html"
         },
         {
@@ -244,13 +269,15 @@
           "label_en": "Additional word lists",
           "label_es": "Listas de palabras adicionales",
           "label_fr": "Listes de mots supplémentaires",
+          "label_it": "Altre liste di parole",
           "url": "https://docs.kde.org/stable_kf6/en/kanagram/kanagram/newstuff.html"
         }
       ],
       "network_de": "Enthaltene Wortlisten sind lokal nutzbar. Weitere Listen können über die integrierte Download-Funktion aus dem Internet installiert werden.",
       "network_en": "Included word lists work locally. More lists can be installed from the Internet through the built-in download feature.",
       "network_es": "Las listas de palabras incluidas se usan sin conexión. Puedes descargar más listas desde la aplicación.",
-      "network_fr": "Les listes de mots fournies fonctionnent hors ligne. D’autres listes peuvent être téléchargées depuis l’application."
+      "network_fr": "Les listes de mots fournies fonctionnent hors ligne. D’autres listes peuvent être téléchargées depuis l’application.",
+      "network_it": "Le liste di parole incluse funzionano in locale. La funzione di download integrata permette di scaricarne altre da Internet."
     }
   },
   {
@@ -260,6 +287,7 @@
     "label_en": "KHangman",
     "label_es": "KHangMan",
     "label_fr": "KHangMan",
+    "label_it": "KHangman",
     "name_de": "KHangman",
     "name_en": "KHangman",
     "name_es": "KHangMan",
@@ -268,6 +296,7 @@
     "desc_en": "The classic hangman game with many word categories and difficulty levels.",
     "desc_es": "El juego clásico del ahorcado con temas y niveles de dificultad variados.",
     "desc_fr": "Le jeu classique du pendu avec plusieurs thèmes et niveaux de difficulté.",
+    "desc_it": "Il classico gioco dell'impiccato, con tante categorie di parole e livelli di difficoltà.",
     "cmd": ["kstart","--fullscreen","khangman"],
     "alt_cmds": ["khangman"],
     "package": "khangman",
@@ -277,6 +306,7 @@
       "age_en": "Ages 6 and over (project guidance).",
       "age_es": "A partir de 6 años (orientación del proyecto).",
       "age_fr": "À partir de 6 ans (indication du projet).",
+      "age_it": "Da 6 anni (indicazione del progetto).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -291,6 +321,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/khangman/khangman/index.html"
         },
         {
@@ -298,13 +329,15 @@
           "label_en": "Languages and word files",
           "label_es": "Idiomas y archivos de palabras",
           "label_fr": "Langues et fichiers de mots",
+          "label_it": "Lingue e liste di parole",
           "url": "https://docs.kde.org/stable_kf6/en/khangman/khangman/languages.html"
         }
       ],
       "network_de": "Mit installierten Wortlisten lokal spielbar. Weitere Sprachen und Wortdateien können aus dem Internet geladen werden.",
       "network_en": "Playable locally with installed word lists. More languages and word files can be downloaded from the Internet.",
       "network_es": "Se puede jugar sin conexión con las listas instaladas. Hay más idiomas y archivos de palabras para descargar.",
-      "network_fr": "Le jeu fonctionne hors ligne avec les listes installées. D’autres langues et fichiers de mots sont téléchargeables."
+      "network_fr": "Le jeu fonctionne hors ligne avec les listes installées. D’autres langues et fichiers de mots sont téléchargeables.",
+      "network_it": "Si può giocare in locale con le liste di parole installate. Altre lingue e liste sono scaricabili da Internet."
     }
   },
   {
@@ -314,12 +347,14 @@
     "label_en": "SuperTux",
     "label_es": "SuperTux",
     "label_fr": "SuperTux",
+    "label_it": "SuperTux",
     "name_de": "SuperTux",
     "name_en": "SuperTux",
     "desc_de": "Ein klassischer Jump-and-Run mit dem mutigen Pinguin Tux durch verschneite Welten.",
     "desc_en": "A classic jump-and-run with the brave penguin Tux through snowy worlds.",
     "desc_es": "Un juego clásico de plataformas con Tux en mundos nevados.",
     "desc_fr": "Un jeu de plateforme classique avec Tux dans des mondes enneigés.",
+    "desc_it": "Corri e salta con il coraggioso pinguino Tux in mondi innevati.",
     "cmd": ["supertux2","--fullscreen"],
     "alt_cmds": ["supertux"],
     "package": "supertux",
@@ -331,10 +366,12 @@
       "age_en": "For children ready to coordinate running and jumping in a platform game (parent guidance).",
       "age_es": "Para quienes pueden coordinar carreras y saltos en un juego de plataformas (orientación para familias).",
       "age_fr": "Pour les enfants prêts à coordonner la course et les sauts dans un jeu de plateforme (conseil aux parents).",
+      "age_it": "Per chi è pronto a coordinare corse e salti in un gioco di piattaforme (indicazione per i genitori).",
       "network_de": "Der Story-Modus ist lokal. Zusätzliche Levels aus der Community sind als optionale Downloads verfügbar.",
       "network_en": "Story mode is local. Community levels are available as optional downloads.",
       "network_es": "El modo historia es local. Hay niveles de la comunidad como descargas opcionales.",
       "network_fr": "Le mode histoire est local. Des niveaux de la communauté sont proposés en téléchargement facultatif.",
+      "network_it": "La modalità storia funziona in locale. I livelli della community si possono scaricare a parte.",
       "offline": "yes"
     }
   },
@@ -345,12 +382,14 @@
     "label_en": "SuperTuxKart",
     "label_es": "SuperTuxKart",
     "label_fr": "SuperTuxKart",
+    "label_it": "SuperTuxKart",
     "name_de": "SuperTuxKart",
     "name_en": "SuperTuxKart",
     "desc_de": "Rasante Kart-Rennen mit Tux und Freunden durch verrückte Strecken.",
     "desc_en": "Fast kart races with Tux and friends through crazy tracks.",
     "desc_es": "Corre en karts con Tux y sus amigos por circuitos disparatados.",
     "desc_fr": "Participe à des courses de kart avec Tux et ses amis sur des circuits déjantés.",
+    "desc_it": "Corse di kart con Tux e i suoi amici su piste stravaganti.",
     "cmd": ["supertuxkart","--fullscreen"],
     "package": "supertuxkart",
     "category": "game",
@@ -361,17 +400,20 @@
       "age_en": "For children ready to steer and react to obstacles at the same time (parent guidance).",
       "age_es": "Para quienes pueden conducir y reaccionar ante obstáculos a la vez (orientación para familias).",
       "age_fr": "Pour les enfants prêts à piloter et à réagir aux obstacles en même temps (conseil aux parents).",
+      "age_it": "Per chi è pronto a sterzare e a reagire agli ostacoli allo stesso tempo (indicazione per i genitori).",
       "network_de": "Einzelrennen und geteilter Bildschirm sind offline möglich. Online-Funktionen und Extras hängen vom jeweiligen Dienst ab.",
       "network_en": "Solo races and split-screen play work offline. Online features and extras depend on the relevant service.",
       "network_es": "Las carreras en solitario y en pantalla dividida funcionan sin conexión. Las funciones en línea y extras dependen del servicio.",
       "network_fr": "Les courses en solo et en écran partagé fonctionnent hors ligne. Les fonctions en ligne et les extras dépendent du service.",
+      "network_it": "Le gare in solitaria e a schermo condiviso funzionano offline. Le funzioni online e i contenuti extra dipendono dal relativo servizio.",
       "references": [
         {
           "url": "https://members.supertuxkart.net/posts/supertuxkart-has-173200716",
           "label_de": "Status der Online-Dienste",
           "label_en": "Online service status",
           "label_es": "Estado de los servicios en línea",
-          "label_fr": "État des services en ligne"
+          "label_fr": "État des services en ligne",
+          "label_it": "Stato dei servizi online"
         }
       ],
       "offline": "yes"
@@ -384,12 +426,14 @@
     "label_en": "Frozen Bubble",
     "label_es": "Frozen Bubble",
     "label_fr": "Frozen Bubble",
+    "label_it": "Frozen Bubble",
     "name_de": "Frozen Bubble",
     "name_en": "Frozen Bubble",
     "desc_de": "Ein buntes Bubble-Shooter-Spiel mit niedlichen Eispinguinen.",
     "desc_en": "A colorful bubble shooter game with cute ice penguins.",
     "desc_es": "Un juego de disparar burbujas de colores con simpáticos pingüinos.",
     "desc_fr": "Un jeu de tir de bulles colorées avec de charmants manchots.",
+    "desc_it": "Mira e fai scoppiare bolle colorate con simpatici pinguini.",
     "cmd": ["frozen-bubble","--fullscreen"],
     "package": "frozen-bubble",
     "category": "game",
@@ -400,10 +444,12 @@
       "age_en": "For children ready to match colours and aim (parent guidance). The manual documents a mode without a shot timer.",
       "age_es": "Para quienes pueden agrupar colores y apuntar (orientación para familias). El manual describe un modo sin límite de tiempo por tiro.",
       "age_fr": "Pour les enfants prêts à associer les couleurs et à viser (conseil aux parents). Le manuel décrit un mode sans délai de tir.",
+      "age_it": "Per chi è pronto a riconoscere colori uguali e a mirare (indicazione per i genitori). Il manuale descrive una modalità senza limite di tempo per il tiro.",
       "network_de": "Einzelspiel und Spiel zu zweit am selben Rechner sind lokal. Weitere Modi nutzen LAN oder Netzwerkserver.",
       "network_en": "Solo and two-player games on the same computer are local. Other modes use LAN or network servers.",
       "network_es": "El modo individual y el modo de dos jugadores en el mismo equipo son locales. Otros modos usan la red local o servidores.",
       "network_fr": "Les modes solo et deux joueurs sur un même ordinateur sont locaux. D’autres modes utilisent le réseau local ou des serveurs.",
+      "network_it": "Le partite in solitaria e in due sullo stesso computer funzionano in locale. Le altre modalità usano la rete locale o server.",
       "offline": "yes",
       "input": [
         "keyboard"
@@ -417,12 +463,14 @@
     "label_en": "Minetest",
     "label_es": "Minetest",
     "label_fr": "Minetest",
+    "label_it": "Minetest",
     "name_de": "Minetest",
     "name_en": "Minetest",
     "desc_de": "Eine offene Blockwelt zum Bauen, Graben und Entdecken ohne Grenzen.",
     "desc_en": "An open block world to build, dig and explore without limits.",
     "desc_es": "Un mundo abierto de bloques para construir, excavar y explorar.",
     "desc_fr": "Un monde ouvert en blocs pour construire, creuser et explorer.",
+    "desc_it": "Un mondo aperto di blocchi dove costruire, scavare ed esplorare.",
     "cmd": ["minetest"],
     "hint_de": "Tipp: Vollbild kannst du in den Minetest-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the Minetest settings.",
@@ -435,17 +483,20 @@
       "age_en": "Luanti was formerly Minetest. Content and difficulty depend on the installed game (parent guidance).",
       "age_es": "Luanti antes se llamaba Minetest. El contenido y la dificultad dependen del juego instalado (orientación para familias).",
       "age_fr": "Luanti s’appelait auparavant Minetest. Le contenu et la difficulté dépendent du jeu installé (conseil aux parents).",
+      "age_it": "Luanti si chiamava Minetest. Contenuti e difficoltà dipendono dal gioco installato (indicazione per i genitori).",
       "network_de": "Installierte Spiele können lokal gespielt werden. Serverliste, Inhaltsdownloads und fremde Mehrspieler-Server nutzen Internet.",
       "network_en": "Installed games can be played locally. The server list, content downloads and third-party multiplayer servers use the internet.",
       "network_es": "Los juegos instalados se pueden jugar en local. La lista de servidores, las descargas y los servidores de terceros usan internet.",
       "network_fr": "Les jeux installés se jouent en local. La liste des serveurs, les téléchargements et les serveurs tiers utilisent Internet.",
+      "network_it": "I giochi installati funzionano in locale. L'elenco dei server, i download e i server multigiocatore di terzi usano Internet.",
       "references": [
         {
           "url": "https://www.luanti.org/app-privacy-policy/",
           "label_de": "Datenschutzhinweise",
           "label_en": "Privacy policy",
           "label_es": "Política de privacidad",
-          "label_fr": "Politique de confidentialité"
+          "label_fr": "Politique de confidentialité",
+          "label_it": "Informativa sulla privacy"
         }
       ],
       "offline": "yes"
@@ -458,12 +509,14 @@
     "label_en": "Extreme Tux Racer",
     "label_es": "Extreme Tux Racer",
     "label_fr": "Extreme Tux Racer",
+    "label_it": "Extreme Tux Racer",
     "name_de": "Extreme Tux Racer",
     "name_en": "Extreme Tux Racer",
     "desc_de": "Tux rutscht auf dem Bauch den verschneiten Berg hinab – so schnell wie möglich!",
     "desc_en": "Tux slides down the snowy mountain on his belly – as fast as possible!",
     "desc_es": "Deslízate con Tux sobre la barriga por una montaña nevada a toda velocidad.",
     "desc_fr": "Dévale une montagne enneigée sur le ventre avec Tux, le plus vite possible.",
+    "desc_it": "Tux scivola a pancia in giù sulla montagna innevata. Aiutalo ad andare più veloce che può!",
     "cmd": ["etr"],
     "alt_cmds": ["extremetuxracer"],
     "hint_de": "Tipp: Vollbild kannst du in den ETR-Einstellungen aktivieren.",
@@ -477,6 +530,7 @@
       "age_en": "For children ready to steer and react during fast downhill races (parent guidance).",
       "age_es": "Para quienes pueden dirigir al personaje y reaccionar en descensos rápidos (orientación para familias).",
       "age_fr": "Pour les enfants prêts à diriger le personnage et à réagir pendant des descentes rapides (conseil aux parents).",
+      "age_it": "Per chi è pronto a sterzare e a reagire durante discese veloci (indicazione per i genitori).",
       "offline": "yes"
     }
   },
@@ -487,12 +541,14 @@
     "label_en": "Pingus",
     "label_es": "Pingus",
     "label_fr": "Pingus",
+    "label_it": "Pingus",
     "name_de": "Pingus",
     "name_en": "Pingus",
     "desc_de": "Rette die kleinen Pinguine, indem du ihnen Fähigkeiten wie Graben oder Bauen gibst.",
     "desc_en": "Save the little penguins by giving them skills like digging or building.",
     "desc_es": "Salva a los pequeños pingüinos dándoles habilidades como excavar o construir.",
     "desc_fr": "Sauve les petits manchots en leur donnant des capacités comme creuser ou construire.",
+    "desc_it": "Salva i pinguini affidando loro compiti come scavare o costruire.",
     "cmd": ["pingus"],
     "hint_de": "Tipp: Vollbild kannst du in den Pingus-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the Pingus settings.",
@@ -505,6 +561,7 @@
       "age_en": "For children ready to spot obstacles and plan actions ahead (parent guidance).",
       "age_es": "Para quienes quieren identificar obstáculos y planificar acciones (orientación para familias).",
       "age_fr": "Pour les enfants prêts à repérer les obstacles et à anticiper leurs actions (conseil aux parents).",
+      "age_it": "Per chi è pronto a individuare ostacoli e pianificare le mosse (indicazione per i genitori).",
       "offline": "yes"
     }
   },
@@ -515,12 +572,14 @@
     "label_en": "Blinken",
     "label_es": "Blinken",
     "label_fr": "Blinken",
+    "label_it": "Blinken",
     "name_de": "Blinken",
     "name_en": "Blinken",
     "desc_de": "Merke dir die Reihenfolge der blinkenden Lichter und wiederhole sie.",
     "desc_en": "Remember the sequence of flashing lights and repeat it.",
     "desc_es": "Recuerda la secuencia de luces y repítela.",
     "desc_fr": "Mémorise la suite de lumières clignotantes et reproduis-la.",
+    "desc_it": "Ricorda la sequenza delle luci e ripetila.",
     "cmd": ["kstart","--fullscreen","blinken"],
     "alt_cmds": ["blinken"],
     "package": "blinken",
@@ -536,6 +595,7 @@
       "age_en": "For children ready to repeat short patterns of colours or sounds (parent guidance).",
       "age_es": "Para quienes empiezan a repetir secuencias cortas de colores o sonidos (orientación para familias).",
       "age_fr": "Pour les enfants prêts à reproduire de courtes suites de couleurs ou de sons (conseil aux parents).",
+      "age_it": "Per chi è pronto a ripetere brevi sequenze di colori o suoni (indicazione per i genitori).",
       "source": "https://apps.kde.org/blinken/",
       "reviewed": "2026-11-03",
       "references": [
@@ -544,6 +604,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/trunk_kf6/en/blinken/blinken/playing-tips.html"
         }
       ]
@@ -556,12 +617,14 @@
     "label_en": "Learning games",
     "label_es": "Juegos educativos",
     "label_fr": "Jeux éducatifs",
+    "label_it": "Giochi educativi",
     "name_de": "Childsplay",
     "name_en": "Childsplay",
     "desc_de": "Eine Sammlung einfacher Lernspiele für die Allerkleinsten: Farben, Buchstaben, Memory und mehr.",
     "desc_en": "A collection of simple learning games for the little ones: colors, letters, memory and more.",
     "desc_es": "Juegos sencillos para los más pequeños con colores, letras y ejercicios de memoria.",
     "desc_fr": "Des jeux simples pour les plus petits avec des couleurs, des lettres et des exercices de mémoire.",
+    "desc_it": "Una raccolta di giochi semplici per i più piccoli, con colori, lettere, memoria e altro.",
     "cmd": ["childsplay","--fullscreen"],
     "package": "childsplay",
     "category": "learning",
@@ -572,6 +635,7 @@
       "age_en": "The project is aimed at young children and includes memory and input exercises.",
       "age_es": "El proyecto se dirige a niños pequeños e incluye ejercicios de memoria y manejo del ordenador.",
       "age_fr": "Le projet s’adresse aux jeunes enfants et propose des exercices de mémoire et de manipulation.",
+      "age_it": "Il progetto si rivolge ai bambini piccoli e include esercizi di memoria e di uso dei comandi.",
       "offline": "yes",
       "input": [
         "mouse",
@@ -586,12 +650,14 @@
     "label_en": "Memory",
     "label_es": "Memoria",
     "label_fr": "Mémoire",
+    "label_it": "Memoria",
     "name_de": "Pysycache",
     "name_en": "Pysycache",
     "desc_de": "Memory-Spiele mit echten Fotos – ideal für Kleinkinder zum Merken und Zuordnen.",
     "desc_en": "Memory games with real photos – perfect for toddlers to memorize and match.",
     "desc_es": "Juegos de memoria con fotos para que los más pequeños recuerden y emparejen imágenes.",
     "desc_fr": "Des jeux de mémoire avec des photos pour aider les tout-petits à mémoriser et associer des images.",
+    "desc_it": "Giochi con foto reali da ricordare e abbinare.",
     "cmd": ["pysycache"],
     "hint_de": "Tipp: Vollbild kannst du in den Pysycache-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the Pysycache settings.",
@@ -604,13 +670,15 @@
       "age_en": "The project suggests ages 4–7. Activities practise moving, clicking and dragging with a mouse.",
       "age_es": "El proyecto recomienda de 4 a 7 años. Se practica mover el ratón, hacer clic y arrastrar.",
       "age_fr": "Le projet indique de 4 à 7 ans. Les activités font travailler les déplacements, les clics et le glisser-déposer.",
+      "age_it": "Il progetto suggerisce un'età tra 4 e 7 anni. Le attività aiutano a usare il mouse per spostare il puntatore, fare clic e trascinare.",
       "references": [
         {
           "url": "https://pysycache.org/contrib/UserManual/UserManual-en.pdf",
           "label_de": "Handbuch",
           "label_en": "Handbook",
           "label_es": "Manual",
-          "label_fr": "Manuel"
+          "label_fr": "Manuel",
+          "label_it": "Manuale"
         }
       ],
       "offline": "yes",
@@ -626,12 +694,14 @@
     "label_en": "Potato Guy",
     "label_es": "Señor Patata",
     "label_fr": "Monsieur Patate",
+    "label_it": "Omino di patata",
     "name_de": "KTuberling",
     "name_en": "KTuberling",
     "desc_de": "Der digitale Kartoffelmann! Setze Augen, Nasen und Münder zusammen und bastel lustige Gesichter.",
     "desc_en": "The digital potato man! Put together eyes, noses and mouths to craft funny faces.",
     "desc_es": "Combina ojos, narices y bocas para crear caras divertidas.",
     "desc_fr": "Assemble des yeux, des nez et des bouches pour créer des visages amusants.",
+    "desc_it": "Crea facce buffe combinando occhi, nasi e bocche.",
     "cmd": ["kstart","--fullscreen","ktuberling"],
     "alt_cmds": ["ktuberling"],
     "package": "ktuberling",
@@ -641,6 +711,7 @@
       "age_en": "Intended for young children and also suitable for adults (project description).",
       "age_es": "Pensado para niños pequeños. También es apto para adultos (descripción del proyecto).",
       "age_fr": "Destiné aux jeunes enfants et aussi adapté aux adultes (description du projet).",
+      "age_it": "Pensato per i bambini piccoli e adatto anche agli adulti (descrizione del progetto).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -654,6 +725,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/ktuberling/ktuberling/index.html"
         }
       ]
@@ -666,12 +738,14 @@
     "label_en": "Letters",
     "label_es": "Letras",
     "label_fr": "Lettres",
+    "label_it": "Lettere",
     "name_de": "KLettres",
     "name_en": "KLettres",
     "desc_de": "Lerne Buchstaben und erste Wörter spielerisch mit Lauten und Bildern.",
     "desc_en": "Learn letters and first words playfully with sounds and pictures.",
     "desc_es": "Aprende las letras y las primeras palabras con sonidos e imágenes.",
     "desc_fr": "Apprends les lettres et les premiers mots avec des sons et des images.",
+    "desc_it": "Impara le lettere e le prime parole giocando con suoni e immagini.",
     "cmd": ["kstart","--fullscreen","klettres"],
     "alt_cmds": ["klettres"],
     "package": "klettres",
@@ -681,6 +755,7 @@
       "age_en": "From about 2½ years; also for adults learning a language (project guidance).",
       "age_es": "A partir de unos 2 años y medio. También para adultos que aprenden un idioma (orientación del proyecto).",
       "age_fr": "À partir d’environ 2 ans et demi. Convient aussi aux adultes qui apprennent une langue (indication du projet).",
+      "age_it": "Da circa 2 anni e mezzo. Adatto anche agli adulti che imparano una lingua (indicazione del progetto).",
       "offline": "partial",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -695,6 +770,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/klettres/klettres/index.html"
         },
         {
@@ -702,13 +778,15 @@
           "label_en": "Downloading language data",
           "label_es": "Descarga de datos de idioma",
           "label_fr": "Téléchargement des données linguistiques",
+          "label_it": "Download dei dati delle lingue",
           "url": "https://docs.kde.org/stable_kf6/en/klettres/klettres/Get-new-stuff.html"
         }
       ],
       "network_de": "Installierte Sprach- und Audiodaten sind lokal nutzbar. Zusätzliche Alphabete und Sprachen werden bei Bedarf aus dem Internet geladen.",
       "network_en": "Installed language and audio data can be used locally. Additional alphabets and languages can be downloaded when needed.",
       "network_es": "Los idiomas y sonidos instalados se pueden usar sin conexión. Puedes descargar más alfabetos e idiomas.",
-      "network_fr": "Les langues et sons installés sont utilisables hors ligne. D’autres alphabets et langues peuvent être téléchargés."
+      "network_fr": "Les langues et sons installés sont utilisables hors ligne. D’autres alphabets et langues peuvent être téléchargés.",
+      "network_it": "Le lingue e gli audio installati funzionano in locale. Si possono scaricare altre lingue e altri alfabeti quando servono."
     }
   },
   {
@@ -718,12 +796,14 @@
     "label_en": "Fractions",
     "label_es": "Fracciones",
     "label_fr": "Fractions",
+    "label_it": "Frazioni",
     "name_de": "KBruch",
     "name_en": "KBruch",
     "desc_de": "Bruchrechnung spielerisch lernen mit bunten Kreisen und Balken.",
     "desc_en": "Learn fractions playfully with colorful circles and bars.",
     "desc_es": "Practica fracciones con círculos y barras de colores.",
     "desc_fr": "Entraîne-toi aux fractions avec des cercles et des barres de couleur.",
+    "desc_it": "Impara le frazioni giocando con cerchi e barre colorate.",
     "cmd": ["kstart","--fullscreen","kbruch"],
     "alt_cmds": ["kbruch"],
     "package": "kbruch",
@@ -733,6 +813,7 @@
       "age_en": "For children ready to practise fractions and basic arithmetic (parent guidance).",
       "age_es": "Para niños que empiezan a practicar fracciones y operaciones básicas (orientación para familias).",
       "age_fr": "Pour les enfants prêts à travailler les fractions et le calcul de base (conseil aux parents).",
+      "age_it": "Per chi è pronto a esercitarsi con le frazioni e l'aritmetica di base (indicazione per i genitori).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -747,6 +828,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/kbruch/kbruch/index.html"
         }
       ]
@@ -759,12 +841,14 @@
     "label_en": "Vocabulary",
     "label_es": "Vocabulario",
     "label_fr": "Vocabulaire",
+    "label_it": "Vocabolario",
     "name_de": "KWordQuiz",
     "name_en": "KWordQuiz",
     "desc_de": "Vokabeln lernen mit digitalen Karteikarten – ideal für die Schule.",
     "desc_en": "Learn vocabulary with digital flashcards – great for school.",
     "desc_es": "Aprende vocabulario con tarjetas digitales para repasar.",
     "desc_fr": "Apprends du vocabulaire à l’aide de cartes de révision numériques.",
+    "desc_it": "Impara nuove parole con schede digitali, anche per la scuola.",
     "cmd": ["kstart","--fullscreen","kwordquiz"],
     "alt_cmds": ["kwordquiz"],
     "package": "kwordquiz",
@@ -776,6 +860,7 @@
       "age_en": "For children ready to read and practise with their own flashcards (parent guidance).",
       "age_es": "Para niños que ya pueden leer y practicar con sus propias fichas (orientación para familias).",
       "age_fr": "Pour les enfants qui savent lire et peuvent réviser avec leurs propres fiches (conseil aux parents).",
+      "age_it": "Per chi è pronto a leggere e a esercitarsi con le proprie schede (indicazione per i genitori).",
       "source": "https://apps.kde.org/kwordquiz/",
       "reviewed": "2026-11-03",
       "references": [
@@ -784,6 +869,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/kwordquiz/kwordquiz/kwordquiz.pdf"
         }
       ]
@@ -796,12 +882,14 @@
     "label_en": "Languages",
     "label_es": "Idiomas",
     "label_fr": "Langues",
+    "label_it": "Lingue",
     "name_de": "Parley",
     "name_en": "Parley",
     "desc_de": "Ein umfangreicher Vokabeltrainer für verschiedene Sprachen und Altersstufen.",
     "desc_en": "A comprehensive vocabulary trainer for different languages and age groups.",
     "desc_es": "Practica vocabulario en distintos idiomas con ejercicios para varias edades.",
     "desc_fr": "Travaille le vocabulaire de différentes langues avec des exercices pour plusieurs tranches d’âge.",
+    "desc_it": "Uno strumento per esercitare il vocabolario in varie lingue e a diverse età.",
     "cmd": ["kstart","--fullscreen","parley"],
     "alt_cmds": ["parley"],
     "package": "parley",
@@ -813,6 +901,7 @@
       "age_en": "For children ready to read and review words or phrases (parent guidance).",
       "age_es": "Para niños que ya pueden leer y quieren repasar palabras o frases (orientación para familias).",
       "age_fr": "Pour les enfants qui savent lire et souhaitent réviser des mots ou des expressions (conseil aux parents).",
+      "age_it": "Per chi è pronto a leggere e ripassare parole o frasi (indicazione per i genitori).",
       "source": "https://apps.kde.org/parley/",
       "reviewed": "2026-11-03",
       "references": [
@@ -821,13 +910,15 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/trunk_kf6/en/parley/parley/creating-new-files.html"
         }
       ],
       "network_de": "Lokale Wortlisten können offline geübt werden. Optionale Downloads benötigen Internet.",
       "network_en": "Local vocabulary files work offline. Optional downloads require an internet connection.",
       "network_es": "Las listas de vocabulario locales funcionan sin conexión. Las descargas opcionales requieren internet.",
-      "network_fr": "Les listes de vocabulaire locales fonctionnent hors ligne. Les téléchargements facultatifs nécessitent Internet."
+      "network_fr": "Les listes de vocabulaire locales fonctionnent hors ligne. Les téléchargements facultatifs nécessitent Internet.",
+      "network_it": "I file di vocabolario salvati sul dispositivo funzionano offline. I download facoltativi richiedono Internet."
     }
   },
   {
@@ -837,12 +928,14 @@
     "label_en": "Make figures",
     "label_es": "Crear figuras",
     "label_fr": "Créer des personnages",
+    "label_it": "Crea personaggi",
     "name_de": "Potato Guy",
     "name_en": "Potato Guy",
     "desc_de": "Lustige Figuren aus Kartoffeln und Zubehör basteln – einfach und kreativ.",
     "desc_en": "Craft funny figures from potatoes and accessories – simple and creative.",
     "desc_es": "Crea personajes divertidos con patatas y accesorios.",
     "desc_fr": "Crée des personnages amusants à partir de pommes de terre et d’accessoires.",
+    "desc_it": "Inventa personaggi buffi con patate e accessori.",
     "cmd": ["kstart","--fullscreen","potato-guy"],
     "alt_cmds": ["potato-guy"],
     "package": "potato-guy",
@@ -854,13 +947,15 @@
       "age_en": "Legacy catalog entry for making figures. The current KDE project KTuberling offers this type of play.",
       "age_es": "Entrada histórica para crear figuras. El proyecto actual KTuberling de KDE ofrece este tipo de juego.",
       "age_fr": "Ancienne entrée du catalogue pour créer des personnages. Le projet KDE actuel KTuberling propose ce type de jeu.",
+      "age_it": "Voce storica del catalogo per creare personaggi. L'attuale progetto KDE KTuberling offre lo stesso tipo di gioco.",
       "references": [
         {
           "url": "https://packages.ubuntu.com/ktuberling",
           "label_de": "Ubuntu-Paket KTuberling",
           "label_en": "KTuberling Ubuntu package",
           "label_es": "Paquete KTuberling de Ubuntu",
-          "label_fr": "Paquet Ubuntu de KTuberling"
+          "label_fr": "Paquet Ubuntu de KTuberling",
+          "label_it": "Pacchetto KTuberling per Ubuntu"
         }
       ]
     }
@@ -872,12 +967,14 @@
     "label_en": "Blocks",
     "label_es": "Bloques",
     "label_fr": "Blocs",
+    "label_it": "Blocchi",
     "name_de": "KBlocks",
     "name_en": "KBlocks",
     "desc_de": "Fallende Blöcke drehen und stapeln, um vollständige Reihen zu bilden und abzuräumen.",
     "desc_en": "Rotate and stack falling blocks to complete and clear rows.",
     "desc_es": "Gira y apila los bloques que caen para completar y eliminar filas.",
     "desc_fr": "Fais pivoter et empile les blocs qui tombent pour compléter et effacer des lignes.",
+    "desc_it": "Ruota e impila i blocchi che cadono per completare e cancellare le righe.",
     "cmd": ["kstart","--fullscreen","kblocks"],
     "alt_cmds": ["kblocks"],
     "package": "kblocks",
@@ -887,6 +984,7 @@
       "age_en": "Falling blocks require timely keyboard input (parent guidance).",
       "age_es": "Los bloques que caen exigen pulsar las teclas a tiempo (orientación para familias).",
       "age_fr": "Les blocs qui tombent demandent de réagir à temps au clavier (conseil aux parents).",
+      "age_it": "I blocchi che cadono richiedono risposte rapide con la tastiera (indicazione per i genitori).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -900,6 +998,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/kblocks/kblocks/index.html"
         }
       ]
@@ -912,12 +1011,14 @@
     "label_en": "Reversi",
     "label_es": "Reversi",
     "label_fr": "Reversi",
+    "label_it": "Reversi",
     "name_de": "KReversi",
     "name_en": "KReversi",
     "desc_de": "Das klassische Othello-Spiel – umkreise die Steine des Gegners und gewinne.",
     "desc_en": "The classic Othello game – surround your opponent's pieces and win.",
     "desc_es": "Rodea las fichas rivales para ganar en este juego clásico de Othello.",
     "desc_fr": "Encercle les pions adverses pour gagner dans ce jeu classique d’Othello.",
+    "desc_it": "Il classico gioco Othello. Circonda le pedine dell'avversario per vincere.",
     "cmd": ["kstart","--fullscreen","kreversi"],
     "alt_cmds": ["kreversi"],
     "package": "kreversi",
@@ -927,6 +1028,7 @@
       "age_en": "For children ready to practise simple board-game rules and planning moves (parent guidance).",
       "age_es": "Para niños que empiezan a practicar reglas sencillas y a anticipar jugadas (orientación para familias).",
       "age_fr": "Pour les enfants prêts à pratiquer des règles simples et à anticiper les coups (conseil aux parents).",
+      "age_it": "Per chi è pronto a seguire semplici regole di un gioco da tavolo e a pianificare le mosse (indicazione per i genitori).",
       "offline": "yes",
       "license": "GPL-2.0-or-later",
       "input": [
@@ -940,6 +1042,7 @@
           "label_en": "Handbook",
           "label_es": "Manual",
           "label_fr": "Manuel",
+          "label_it": "Manuale",
           "url": "https://docs.kde.org/stable_kf6/en/kreversi/kreversi/index.html"
         }
       ]
@@ -952,12 +1055,14 @@
     "label_en": "YouTube Kids",
     "label_es": "YouTube Kids",
     "label_fr": "YouTube Kids",
+    "label_it": "YouTube Kids",
     "name_de": "YouTube Kids",
     "name_en": "YouTube Kids",
     "desc_de": "Videos und Musik mit eigenen Eltern-Einstellungen; der kostenlose Dienst kann Werbung zeigen.",
     "desc_en": "Videos and music with provider parental controls; the free service may show ads.",
     "desc_es": "Vídeos y música con controles parentales del proveedor. El servicio gratuito puede mostrar anuncios.",
     "desc_fr": "Des vidéos et de la musique avec le contrôle parental du fournisseur. Le service gratuit peut afficher des publicités.",
+    "desc_it": "Video e musica con controlli genitori del fornitore. Il servizio gratuito può mostrare pubblicità.",
     "cmd": ["special:external-browser:https://www.youtubekids.com"],
     "package": "",
     "category": "browser",
@@ -967,6 +1072,7 @@
       "network_en": "External online service with its own privacy rules and possible advertising. Review provider settings together.",
       "network_es": "Servicio externo con sus propias reglas de privacidad y posibles anuncios. Revisad juntos los ajustes del proveedor.",
       "network_fr": "Service externe avec ses propres règles de confidentialité et des publicités possibles. Consultez ensemble les réglages du fournisseur.",
+      "network_it": "Servizio online esterno con regole sulla privacy proprie e possibile pubblicità. Controllate insieme le impostazioni del fornitore.",
       "source": "https://support.google.com/youtubekids/answer/6130541?hl=en",
       "reviewed": "2026-11-02"
     }
@@ -978,12 +1084,14 @@
     "label_en": "Netflix Kids",
     "label_es": "Netflix Kids",
     "label_fr": "Netflix Kids",
+    "label_it": "Netflix Kids",
     "name_de": "Netflix Kids",
     "name_en": "Netflix Kids",
     "desc_de": "Filme und Serien fuer Kinder bei Netflix.",
     "desc_en": "Movies and shows for kids on Netflix.",
     "desc_es": "Películas y series infantiles en Netflix.",
     "desc_fr": "Des films et séries pour enfants sur Netflix.",
+    "desc_it": "Film e serie per bambini su Netflix.",
     "cmd": ["special:external-browser:https://www.netflix.com/browse/genre/27346"],
     "package": "",
     "category": "browser",
@@ -993,6 +1101,7 @@
       "network_en": "External streaming service. Set the Kids profile and maturity limit in Netflix. The tile opens a starting page for kids’ content.",
       "network_es": "Servicio de vídeo externo. Configura el perfil infantil y la clasificación por edades en Netflix. La ficha abre una página inicial de contenido infantil.",
       "network_fr": "Service de streaming externe. Réglez le profil enfant et le niveau de maturité dans Netflix. La tuile ouvre une page de contenus jeunesse.",
+      "network_it": "Servizio di streaming esterno. Imposta il profilo Bambini e il limite di classificazione in Netflix. Il riquadro apre una pagina iniziale per i contenuti per bambini.",
       "source": "https://help.netflix.com/en/node/114275",
       "reviewed": "2026-11-03",
       "references": [
@@ -1001,6 +1110,7 @@
           "label_en": "Privacy policy",
           "label_es": "Política de privacidad",
           "label_fr": "Politique de confidentialité",
+          "label_it": "Informativa sulla privacy",
           "url": "https://help.netflix.com/legal/privacy"
         }
       ]
@@ -1013,12 +1123,14 @@
     "label_en": "Disney+",
     "label_es": "Disney+",
     "label_fr": "Disney+",
+    "label_it": "Disney+",
     "name_de": "Disney+",
     "name_en": "Disney+",
     "desc_de": "Disney, Pixar, Marvel und Star Wars fuer die ganze Familie.",
     "desc_en": "Disney, Pixar, Marvel and Star Wars for the whole family.",
     "desc_es": "Disney, Pixar, Marvel y Star Wars para toda la familia.",
     "desc_fr": "Disney, Pixar, Marvel et Star Wars pour toute la famille.",
+    "desc_it": "Disney, Pixar, Marvel e Star Wars per tutta la famiglia.",
     "cmd": ["special:external-browser:https://www.disneyplus.com"],
     "package": "",
     "category": "browser",
@@ -1028,6 +1140,7 @@
       "network_en": "External streaming service. Enable Junior Mode in the Disney+ profile. Disney+ says Junior Mode profiles do not show ads.",
       "network_es": "Servicio de vídeo externo. Activa el modo Junior en el perfil de Disney+. Disney+ indica que este modo no muestra anuncios.",
       "network_fr": "Service de streaming externe. Activez le mode Junior dans le profil Disney+. Disney+ indique que ce mode ne diffuse pas de publicités.",
+      "network_it": "Servizio di streaming esterno. Attiva la modalità Junior nel profilo Disney+. Disney+ indica che i profili in modalità Junior non mostrano pubblicità.",
       "source": "https://help.disneyplus.com/en-GB/article/disneyplus-en-my-kids-profiles",
       "reviewed": "2026-11-03",
       "references": [
@@ -1036,6 +1149,7 @@
           "label_en": "Ads and Junior Mode",
           "label_es": "Anuncios y modo Junior",
           "label_fr": "Publicités et mode Junior",
+          "label_it": "Pubblicità e modalità Junior",
           "url": "https://help.disneyplus.com/article/disneyplus-ads?redirect=false"
         },
         {
@@ -1043,6 +1157,7 @@
           "label_en": "Privacy policy",
           "label_es": "Política de privacidad",
           "label_fr": "Politique de confidentialité",
+          "label_it": "Informativa sulla privacy",
           "url": "https://privacy.thewaltdisneycompany.com/en/"
         }
       ]
@@ -1055,12 +1170,14 @@
     "label_en": "Prime Kids",
     "label_es": "Prime Kids",
     "label_fr": "Prime Kids",
+    "label_it": "Prime Kids",
     "name_de": "Prime Kids",
     "name_en": "Prime Kids",
     "desc_de": "Kinderfilme und -serien bei Amazon Prime Video.",
     "desc_en": "Kids movies and shows on Amazon Prime Video.",
     "desc_es": "Películas y series infantiles en Amazon Prime Video.",
     "desc_fr": "Des films et séries pour enfants sur Amazon Prime Video.",
+    "desc_it": "Film e serie per bambini su Amazon Prime Video.",
     "cmd": ["special:external-browser:https://www.amazon.de/gp/video/storefront/?ie=UTF8&node=17402232031"],
     "package": "",
     "category": "browser",
@@ -1070,6 +1187,7 @@
       "network_en": "External streaming service. Set up a Prime Video Kids profile and PIN-lock adult profiles there. Some content may contain promotional breaks.",
       "network_es": "Servicio de vídeo externo. Configura un perfil infantil en Prime Video y protege con PIN los perfiles de adultos. Puede haber pausas promocionales.",
       "network_fr": "Service de streaming externe. Configurez un profil enfant Prime Video et verrouillez les profils adultes par code PIN. Certains contenus peuvent comporter des pauses promotionnelles.",
+      "network_it": "Servizio di streaming esterno. Crea un profilo Bambini su Prime Video e proteggi con un PIN i profili degli adulti. Alcuni contenuti possono includere interruzioni promozionali.",
       "source": "https://digprjsurvey.amazon.com/csad/help/node/GTYL2UYVAAPUD6WE",
       "reviewed": "2026-11-03"
     }
@@ -1081,12 +1199,14 @@
     "label_en": "PBS Kids",
     "label_es": "PBS Kids",
     "label_fr": "PBS Kids",
+    "label_it": "PBS Kids",
     "name_de": "PBS Kids",
     "name_en": "PBS Kids",
     "desc_de": "Lernspiele und Videos von PBS Kids.",
     "desc_en": "Learning games and videos from PBS Kids.",
     "desc_es": "Juegos educativos y vídeos de PBS Kids.",
     "desc_fr": "Des jeux éducatifs et vidéos de PBS Kids.",
+    "desc_it": "Giochi educativi e video di PBS Kids.",
     "cmd": ["special:external-browser:https://www.pbskids.org"],
     "package": "",
     "category": "browser",
@@ -1096,6 +1216,7 @@
       "network_en": "External website with games and videos. The PBS KIDS privacy policy covers cookies and analytics data.",
       "network_es": "Sitio web externo con juegos y vídeos. La política de privacidad de PBS KIDS explica el uso de cookies y datos de análisis.",
       "network_fr": "Site web externe avec jeux et vidéos. La politique de PBS KIDS explique l’usage des cookies et des données d’analyse.",
+      "network_it": "Sito esterno con giochi e video. L'informativa sulla privacy di PBS KIDS descrive i cookie e i dati di analisi.",
       "source": "https://pbskids.org/privacy",
       "reviewed": "2026-11-03"
     }
@@ -1107,12 +1228,14 @@
     "label_en": "ZDFtivi",
     "label_es": "ZDFtivi",
     "label_fr": "ZDFtivi",
+    "label_it": "ZDFtivi",
     "name_de": "ZDFtivi",
     "name_en": "ZDFtivi",
     "desc_de": "Videos und Spiele vom ZDF fuer Kinder.",
     "desc_en": "Videos and games from ZDF for kids.",
     "desc_es": "Vídeos y juegos infantiles de ZDF.",
     "desc_fr": "Des vidéos et jeux pour enfants de ZDF.",
+    "desc_it": "Video e giochi per bambini di ZDF.",
     "cmd": ["special:external-browser:https://www.zdf.de/kinder"],
     "package": "",
     "category": "browser",
@@ -1122,6 +1245,7 @@
       "network_en": "External ZDF website for children’s programmes. Check the listed age ratings and review the website’s privacy settings.",
       "network_es": "Sitio web externo de ZDF con programación infantil. Consulta las clasificaciones por edades y los ajustes de privacidad del sitio.",
       "network_fr": "Site web externe de ZDF avec des programmes jeunesse. Vérifiez les indications d’âge et les réglages de confidentialité du site.",
+      "network_it": "Sito esterno di ZDF con programmi per bambini. Controlla le classificazioni per età indicate e le impostazioni sulla privacy del sito.",
       "source": "https://www.zdf.de/kinder",
       "reviewed": "2026-11-03",
       "references": [
@@ -1130,6 +1254,7 @@
           "label_en": "Privacy policy",
           "label_es": "Política de privacidad",
           "label_fr": "Politique de confidentialité",
+          "label_it": "Informativa sulla privacy",
           "url": "https://www.zdf.de/datenschutz"
         }
       ]
@@ -1142,12 +1267,14 @@
     "label_en": "KiKA",
     "label_es": "KiKA",
     "label_fr": "KiKA",
+    "label_it": "KiKA",
     "name_de": "KiKA",
     "name_en": "KiKA",
     "desc_de": "Der Kinderkanal von ARD und ZDF mit Videos und Spielen.",
     "desc_en": "The kids channel from ARD and ZDF with videos and games.",
     "desc_es": "El canal infantil de ARD y ZDF con vídeos y juegos.",
     "desc_fr": "La chaîne pour enfants d’ARD et ZDF, avec des vidéos et des jeux.",
+    "desc_it": "Il canale per bambini di ARD e ZDF con video e giochi.",
     "cmd": ["special:external-browser:https://www.kika.de"],
     "package": "",
     "category": "browser",
@@ -1157,6 +1284,7 @@
       "network_en": "External KiKA website. Its privacy policy describes audience measurement and embedded third-party services.",
       "network_es": "Sitio web externo de KiKA. Su política de privacidad describe la medición de audiencia y la inclusión de servicios de terceros.",
       "network_fr": "Site web externe de KiKA. Sa politique de confidentialité décrit la mesure d’audience et l’intégration de services tiers.",
+      "network_it": "Sito esterno di KiKA. La sua informativa sulla privacy descrive la misurazione del pubblico e i servizi di terzi integrati.",
       "source": "https://www.kika.de/eltern/datenschutz/datenschutzerklaerung102.html",
       "reviewed": "2026-11-03",
       "references": [
@@ -1165,6 +1293,7 @@
           "label_en": "Privacy policy",
           "label_es": "Política de privacidad",
           "label_fr": "Politique de confidentialité",
+          "label_it": "Informativa sulla privacy",
           "url": "https://www.kika.de/eltern/datenschutz/datenschutzhinweise-100.html"
         }
       ]
@@ -1177,12 +1306,14 @@
     "label_en": "Drawing",
     "label_es": "Dibujo",
     "label_fr": "Dessin",
+    "label_it": "Disegno",
     "name_de": "KolourPaint",
     "name_en": "KolourPaint",
     "desc_de": "Zeichne mit Stift, Farben und Formen.",
     "desc_en": "Draw with a pencil, colours and shapes.",
     "desc_es": "Dibuja con lápiz, colores y formas.",
     "desc_fr": "Dessine avec un crayon, des couleurs et des formes.",
+    "desc_it": "Disegna con matita, colori e forme.",
     "cmd": [
       "kstart",
       "--fullscreen",
@@ -1198,6 +1329,7 @@
       "age_en": "For children ready to draw lines and shapes with a pointer (parent guidance).",
       "age_es": "Para quienes quieren dibujar líneas y formas con el puntero (orientación para familias).",
       "age_fr": "Pour les enfants qui souhaitent dessiner des lignes et des formes au pointeur (conseil aux parents).",
+      "age_it": "Per chi è pronto a disegnare linee e forme usando un puntatore (indicazione per i genitori).",
       "offline": "yes",
       "input": [
         "mouse"
@@ -1213,12 +1345,14 @@
     "label_en": "Explore maps",
     "label_es": "Explorar mapas",
     "label_fr": "Explorer les cartes",
+    "label_it": "Esplora le mappe",
     "name_de": "KGeography",
     "name_en": "KGeography",
     "desc_de": "Entdecke Regionen, Hauptstädte und Flaggen auf Karten.",
     "desc_en": "Explore regions, capitals and flags on maps.",
     "desc_es": "Explora regiones, capitales y banderas en mapas.",
     "desc_fr": "Explore les régions, les capitales et les drapeaux sur des cartes.",
+    "desc_it": "Esplora regioni, capitali e bandiere sulle mappe.",
     "cmd": [
       "kstart",
       "--fullscreen",
@@ -1234,6 +1368,7 @@
       "age_en": "For children ready to read map names and locate regions (parent guidance).",
       "age_es": "Para quienes pueden leer nombres en un mapa y localizar regiones (orientación para familias).",
       "age_fr": "Pour les enfants qui savent lire des noms sur une carte et souhaitent repérer des régions (conseil aux parents).",
+      "age_it": "Per chi è pronto a leggere i nomi sulle mappe e a individuare le regioni (indicazione per i genitori).",
       "offline": "yes",
       "input": [
         "mouse"
@@ -1244,12 +1379,14 @@
       "network_en": "Map exercises work offline. Information buttons can open Wikipedia in the default browser.",
       "network_es": "Los ejercicios con mapas funcionan sin conexión. Los botones de información pueden abrir Wikipedia en el navegador predeterminado.",
       "network_fr": "Les exercices sur les cartes fonctionnent hors ligne. Les boutons d’information peuvent ouvrir Wikipédia dans le navigateur par défaut.",
+      "network_it": "Gli esercizi sulle mappe funzionano offline. I pulsanti informativi possono aprire Wikipedia nel browser predefinito.",
       "references": [
         {
           "label_de": "Kurzanleitung",
           "label_en": "Quick start",
           "label_es": "Guía de inicio",
           "label_fr": "Guide de démarrage",
+          "label_it": "Guida rapida",
           "url": "https://docs.kde.org/stable_kf6/en/kgeography/kgeography/quick-start.html"
         }
       ]

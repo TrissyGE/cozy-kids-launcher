@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Languages
+
+- Add Italian for guided installation, the launcher, native timer messages and catalog guidance.
+
 ### Catalog guidance and roadmap
 
 - Add sourced Parent guidance to eight existing KDE recommendations, with visible localized review dates and supporting references; preserve unknown network behavior

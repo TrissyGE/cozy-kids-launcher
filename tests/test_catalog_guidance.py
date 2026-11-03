@@ -7,6 +7,7 @@ from urllib.parse import urlsplit
 
 class CatalogGuidanceTests(unittest.TestCase):
     def test_guidance_is_localized_sourced_and_explicit_about_review_scope(self):
+        reviewed_languages = ("de", "en", "es", "fr", "it")
         path = Path(__file__).resolve().parents[1] / "src" / "recommendations.json"
         entries = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(len(entries), len({entry["id"] for entry in entries}))
@@ -19,6 +20,9 @@ class CatalogGuidanceTests(unittest.TestCase):
                     self.assertTrue(info["network_en"].strip())
             with self.subTest(app=entry["id"]):
                 self.assertTrue(info)
+                for prefix in ("label", "desc"):
+                    for language in reviewed_languages:
+                        self.assertTrue(entry[f"{prefix}_{language}"].strip())
                 if "offline" in info:
                     self.assertIn(info["offline"], ("yes", "partial", "no"))
                 self.assertEqual(urlsplit(info["source"]).scheme, "https")
@@ -28,8 +32,8 @@ class CatalogGuidanceTests(unittest.TestCase):
                 datetime.date.fromisoformat(info["reviewed"])
                 self.assertTrue(set(info.get("input", [])) <= {"mouse", "keyboard", "touch"})
                 for prefix in ("age", "network"):
-                    if any(f"{prefix}_{language}" in info for language in ("de", "en", "es", "fr")):
-                        for language in ("de", "en", "es", "fr"):
+                    if any(f"{prefix}_{language}" in info for language in reviewed_languages):
+                        for language in reviewed_languages:
                             self.assertTrue(info[f"{prefix}_{language}"].strip())
                 references = info.get("references", [])
                 self.assertIsInstance(references, list)
@@ -43,7 +47,7 @@ class CatalogGuidanceTests(unittest.TestCase):
                     self.assertIsNone(url.password)
                     self.assertNotIn(reference["url"], urls)
                     urls.add(reference["url"])
-                    for language in ("de", "en", "es", "fr"):
+                    for language in reviewed_languages:
                         self.assertTrue(reference["label_" + language].strip())
 
 

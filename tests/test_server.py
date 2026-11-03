@@ -1354,7 +1354,7 @@ class ServerApiTests(unittest.TestCase):
         location = launch_response.headers["Location"]
         launch_response.close()
 
-        for language in ("de", "es", "fr", "en"):
+        for language in ("de", "es", "fr", "it", "en"):
             config["language"] = language
             server_module.save_cfg(config)
             with urllib.request.urlopen(self.base_url + location, timeout=5) as response:

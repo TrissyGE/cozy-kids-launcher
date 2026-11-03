@@ -1,9 +1,9 @@
 # Languages and translation contributions
 
-English, German, Spanish and French are enabled. Choose a language during
+English, German, Spanish, French and Italian are enabled. Choose a language during
 installation or setup, or under **Parent settings → System** and save.
 Profile names, home titles and tile labels already set by the family are
-preserved. Italian is tracked in [ROADMAP.md](ROADMAP.md).
+preserved.
 
 The guided installer, launcher, app catalog and media library use these packs.
 Standalone bootstrap diagnostics and `--help` are in English. Native helpers
@@ -91,5 +91,5 @@ direction.
 The browser suite exercises an in-memory RTL fixture at 800×600. Before
 enabling a real pack, a fluent reviewer still needs to check mixed-script
 text, labels, screen readers, touch input, and the native helper windows.
-Italian and real right-to-left language acceptance remain tracked in
+Physical-device and right-to-left language acceptance remain tracked in
 [ROADMAP.md](ROADMAP.md).
