@@ -259,13 +259,18 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
   - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card
 - [ ] Add save backup and removal controls
-- [ ] Qualify PC Engine HuCards, Neo Geo Pocket / Color, WonderSwan / Color and Atari Lynx with Mednafen
-- [ ] Qualify Mega Drive, Nintendo 64 and Nintendo DS, including Parent-supplied BIOS configuration where required
-- [ ] Qualify Saturn after PS1, including BIOS, disc formats and device performance
-- [ ] Add a short local device check in Parent settings that recommends console systems using measured emulation performance and reviewed hardware requirements
-  - [ ] Show supported, untested and incompatible systems separately. Explain which measurement or hardware requirement informed each result
-  - [ ] Disable installation for a confirmed incompatible system in the Parent RetroGameCorner panel and explain the reason next to the install button
-  - [ ] Use locally generated test workloads so the device check can run before the family supplies any game files
+- [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
+  - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.
+  - [ ] Use bounded, locally generated test workloads that require no family game files. When the emulator is available, measure emulation speed and frame pacing with a representative workload and record the tested settings.
+  - [ ] Report recommended, limited, untested and incompatible separately. Explain the result beside the install button. Disable installation for a confirmed hardware incompatibility or unavailable install route, with a distinct explanation for each. Keep the install action available when performance is unknown and a reviewed install route exists.
+  - [ ] Scope results to the device, emulator version and tested settings. Allow a rerun after a driver or emulator update. Keep per-game compatibility separate from the device result.
+- [ ] Qualify optional systems in groups after PS1
+  - [ ] Earlier cartridges and arcade games including Atari 2600/5200/7800, ColecoVision, Intellivision, SG-1000, Mega Drive, PC Engine, Neo Geo and selected arcade boards. Review disc add-ons such as Sega CD and PC Engine CD separately.
+  - [ ] Earlier handhelds including Atari Lynx, Neo Geo Pocket / Color, WonderSwan / Color, Nintendo DS and PSP. Evaluate Nintendo 3DS and PlayStation Vita as later handhelds in scope.
+  - [ ] Nintendo 64, Saturn and Dreamcast. Qualify firmware, disc formats, controls and save isolation for each system.
+  - [ ] PlayStation 2, GameCube, Wii and original Xbox. Review PCSX2, [Dolphin](https://dolphin-emu.org/docs/faq/) and [xemu](https://xemu.app/) as candidates, including Wii motion input and Xbox firmware setup.
+  - [ ] Wii U and PlayStation 3. Qualify [Cemu](https://cemu.info/faq.html) and [RPCS3](https://github.com/RPCS3/rpcs3), including firmware or game installation where required and per-game compatibility guidance. Evaluate [Xenia](https://github.com/xenia-project/xenia) for Xbox 360 in the same era once a Linux installation and launch path passes review.
+  - [ ] For each new system, qualify the Parent install flow, supported game formats, required user-supplied files, child approvals, private saves and desktop acceptance before offering it in RetroGameCorner.
 - [x] Support bounded single-ROM ZIP archives from handheld game libraries
 - [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
 
