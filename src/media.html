@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ACTIVE_LANG}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Movies &amp; music · Cozy Kids Launcher</title>
+<title>Cozy Kids Launcher</title>
 <link rel="stylesheet" href="/frontend/design-system.css">
 <link rel="stylesheet" href="/frontend/styles.css">
 <link rel="stylesheet" href="/frontend/media-library.css">
@@ -14,20 +14,20 @@
 <main class="media-library-screen">
   <div class="media-library-shell">
     <header class="media-library-header">
-      <button id="mediaBack" class="smallbtn" type="button" data-local-icon="back">Back</button>
+      <button id="mediaBack" class="smallbtn" type="button" data-local-icon="back"></button>
       <div class="media-library-heading">
-        <h1 id="mediaTitle">Movies &amp; music</h1>
-        <p id="mediaHint">Choose something to play</p>
+        <h1 id="mediaTitle"></h1>
+        <p id="mediaHint"></p>
       </div>
       <span id="mediaTruncated" class="media-truncated" hidden></span>
     </header>
-    <nav id="mediaFilters" class="media-library-filters" aria-label="Media library views">
-      <button class="smallbtn media-filter is-active" type="button" data-media-filter="all" aria-pressed="true">All media</button>
-      <button class="smallbtn media-filter" type="button" data-media-filter="favorites" aria-pressed="false">Favorites</button>
-      <button class="smallbtn media-filter" type="button" data-media-filter="recents" aria-pressed="false">Recently played</button>
+    <nav id="mediaFilters" class="media-library-filters">
+      <button class="smallbtn media-filter is-active" type="button" data-media-filter="all" aria-pressed="true"></button>
+      <button class="smallbtn media-filter" type="button" data-media-filter="favorites" aria-pressed="false"></button>
+      <button class="smallbtn media-filter" type="button" data-media-filter="recents" aria-pressed="false"></button>
     </nav>
     <section id="mediaState" class="ui-state ui-state-loading media-library-state" role="status" aria-live="polite" aria-busy="true">
-      <span class="ui-state-message">Looking for your media...</span>
+      <span class="ui-state-message"></span>
     </section>
     <section id="mediaGrid" class="media-library-grid" role="list" hidden></section>
   </div>

@@ -195,6 +195,18 @@ async function saveConfig(){
   const message=document.getElementById('saveMsg');
   button.disabled=true;
   renderUiState(message,'loading',uiText.saveLoading);
+  const previousLanguage=cfg.language;
+  const language=normalizedInterfaceLanguage(document.getElementById('cfgLanguage').value);
+  let locale;
+  if(language!==previousLanguage){
+    try{
+      locale=await fetchInterfaceLocale(language);
+    }catch(e){
+      renderUiState(message,'error',uiText.firstRun.languageError);
+      button.disabled=false;
+      return;
+    }
+  }
   cfg.title=document.getElementById('cfgTitle').value;
   cfg.name=document.getElementById('cfgProfileName').value.trim();
   cfg.avatar=document.getElementById('cfgProfileAvatar').value.trim();
@@ -229,13 +241,21 @@ async function saveConfig(){
   }
   cfg.browser=document.getElementById('cfgBrowser').value;
   cfg.currentPage=0;
+  cfg.language=language;
+  let saved=false;
   try{
     await persistConfig();
+    saved=true;
+    if(locale){
+      applyInterfaceLocale(language,locale);
+      await loadApps();
+    }
     await pollAvailability();
     clearUiState(message);
     renderAll();
     closeAdmin();
   }catch(e){
+    if(!saved) cfg.language=previousLanguage;
     renderUiState(message,'error',uiText.saveError);
   }finally{
     button.disabled=false;
@@ -290,7 +310,7 @@ async function importConfig(input){
 }
 function backupLabel(backup){
   const date=new Date(backup.createdAt);
-  const locale=interfaceLanguage()==='de'?'de-DE':'en-US';
+  const locale=interfaceLanguage();
   const created=Number.isNaN(date.getTime())?backup.createdAt:date.toLocaleString(locale);
   const source=backup.source==='pre-restore'?uiText.backupPreRestore:uiText.backupInstaller;
   return source+' · '+created;

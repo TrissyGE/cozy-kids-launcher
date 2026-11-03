@@ -44,7 +44,7 @@ function renderPackageJob(){
   const job=packageJob;
   const rec=recommendations.find(item=>item.id===job.appId);
   document.getElementById('packageTitle').textContent=rec?
-    ((cfg.language==='de'?rec.name_de:rec.name_en)||rec.id):uiText.packageStatus;
+    catalogName(rec):uiText.packageStatus;
   const message=document.getElementById('packageMessage');
   const progress=document.getElementById('packageProgress');
   const summary=document.getElementById('packageSummary');
@@ -64,7 +64,7 @@ function renderPackageJob(){
     const packages=Array.isArray(job.packages)?job.packages:[];
     const size=Number.isFinite(job.downloadBytes)?
       new Intl.NumberFormat(cfg.language,{maximumFractionDigits:1}).format(job.downloadBytes/1048576)+' MB':uiText.packageUnknownSize;
-    summary.textContent=uiText.packageDownload.replace('{size}',size)+' · '+uiText.packageCount.replace('{count}',packages.length);
+    summary.textContent=uiText.packageDownload.replace('{size}',size)+' · '+localizedCount('packageCount',packages.length);
     summary.hidden=false; details.hidden=false;
     document.getElementById('packageDetailsLabel').textContent=uiText.packageList;
     const list=document.getElementById('packageList'); list.replaceChildren();
@@ -134,7 +134,7 @@ async function confirmPackageInstall(){
 async function addInstalledPackageTile(rec){
   if(cfg.tiles.some(tile=>tile.id===rec.id)) return;
   const button=document.getElementById('packageAction'); button.disabled=true;
-  const tile={id:rec.id,label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id,
+  const tile={id:rec.id,label:catalogText(rec,'label')||rec.id,
     emoji:rec.emoji||'✨',cmd:rec.cmd||[],visible:true};
   cfg.tiles.push(tile);
   try{

@@ -1,5 +1,5 @@
 // PIN setup
-async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1||p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent='4-6 digits'; msg.style.color='#c00'; return; } const r=await fetch('/api/pin/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p1})}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht gespeichert werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=true; msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
+async function savePin(){ const p1=document.getElementById('cfgPin').value; const p2=document.getElementById('cfgPinConfirm').value; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; if(!p1||p1!==p2){ msg.textContent=uiText.pinMismatch; msg.style.color='#c00'; return; } if(!/^\d{4,6}$/.test(p1)){ msg.textContent=uiText.pinPlaceholder; msg.style.color='#c00'; return; } const r=await fetch('/api/pin/set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p1})}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht gespeichert werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=true; msg.textContent=uiText.pinSaved; msg.style.color='green'; document.getElementById('cfgPin').value=''; document.getElementById('cfgPinConfirm').value=''; updatePinButton(); }
 async function removePin(){ if(!cfg.pinConfigured) return; const msg=document.getElementById('pinMsg'); msg.textContent=''; msg.style.color=''; const r=await fetch('/api/pin/remove',{method:'POST'}); if(!r.ok){ msg.textContent=uiText.pinWrong||'PIN konnte nicht entfernt werden'; msg.style.color='#c00'; return; } cfg.pinConfigured=false; msg.textContent=uiText.pinRemoved; msg.style.color='green'; updatePinButton(); }
 function updatePinButton(){ const setButton=document.getElementById('setPinBtn'); setIconLabel(setButton,'lock',cfg.pinConfigured?uiText.pinChange:uiText.pinSet); const btn=document.getElementById('removePinBtn'); setIconLabel(btn,'delete',uiText.pinRemove); btn.disabled=!cfg.pinConfigured; btn.style.opacity=cfg.pinConfigured?1:.5; }
 
@@ -337,6 +337,17 @@ function renderCatalogStates(){
 
 function renderAdmin(){
   document.getElementById('adminTitle').textContent=uiText.adminTitle;
+  document.getElementById('cfgLanguageLabel').textContent=uiText.languageLabel;
+  const languages=document.getElementById('cfgLanguage');
+  languages.replaceChildren();
+  for(const {code,name} of INTERFACE_LANGUAGE_REGISTRY.languages){
+    const option=document.createElement('option');
+    option.value=code;
+    option.lang=code;
+    option.textContent=name;
+    languages.appendChild(option);
+  }
+  languages.value=normalizedInterfaceLanguage(cfg.language);
   document.getElementById('cfgTitle').placeholder=uiText.placeholderTitle;
   document.getElementById('cfgParentLabel').placeholder=uiText.placeholderParentLabel;
   document.getElementById('cfgExitLabel').placeholder=uiText.placeholderExitLabel;
@@ -403,9 +414,7 @@ function renderAdmin(){
   }else if(installedBrowsers.length>0){
     browserSel.value=installedBrowsers[0].name;
   }
-  document.getElementById('browserHint').textContent=interfaceLanguage()==='de'
-    ? 'Änderung wirkt erst nach erneutem Login.'
-    : 'Changes take effect after the next login.';
+  document.getElementById('browserHint').textContent=uiText.browserHint;
   document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
   setIconLabel(document.getElementById('checkUpdateBtn'),'refresh',uiText.updateCheck||'Check for updates');
@@ -677,8 +686,8 @@ async function showManualInstall(rec){
   document.getElementById('installCommand').textContent='';
   document.getElementById('installCopyBtn').disabled=true;
   renderUiState(message,'loading',uiText.installLoading);
-  document.getElementById('installTitle').textContent=(uiText.install||'Install')+' '+((cfg.language==='de'?rec.name_de:rec.name_en)||(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id);
-  const hint=cfg.language==='de'?rec.hint_de:rec.hint_en;
+  document.getElementById('installTitle').textContent=uiText.install+' '+catalogName(rec);
+  const hint=catalogText(rec,'hint');
   const hintEl=document.getElementById('installHint');
   hintEl.textContent=hint||'';
   hintEl.style.display=hint?'block':'none';
@@ -728,7 +737,7 @@ async function autoScanRecommendations(){
   for(const rec of recommendations){
     if(existingIds.has(rec.id)) continue;
     if(rec.installed && !existingCmds.has(JSON.stringify(rec.cmd||[]))){
-      cfg.tiles.push({ id:rec.id, label:(cfg.language==='de'?rec.label_de:rec.label_en)||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true });
+      cfg.tiles.push({ id:rec.id, label:catalogText(rec,'label')||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true });
       added=true;
     }
   }

@@ -254,6 +254,14 @@
   "activityLessMinute": "< 1 Min.",
   "activityMinutes": "{count} Min.",
   "activityHoursMinutes": "{hours} Std. {minutes} Min.",
+  "browserHint": "Änderung wirkt erst nach erneutem Login.",
+  "browserLabel": "Browser",
+  "languageLabel": "Sprache",
+  "paletteBgStart": "Hintergrundanfang",
+  "paletteBgEnd": "Hintergrundende",
+  "paletteText": "Text",
+  "paletteButton": "Schaltflächen",
+  "paletteCard": "Karten",
   "defaultTitle": "Hallo Kiddo 🌈",
   "defaultParentLabel": "Papa",
   "defaultExitLabel": "Kindermodus beenden",
@@ -293,6 +301,23 @@
   "themeMotion": "Sanfte Hintergrundbewegung",
   "themeTimeOfDay": "An lokale Tageszeit anpassen",
   "worldThemeHint": "Nur für illustrierte Welten. Die Einstellung für reduzierte Bewegung des Geräts hat immer Vorrang.",
+  "themes": {
+    "rosa": "Rosa",
+    "lila": "Lila",
+    "blau": "Blau",
+    "gruen": "Grün",
+    "regenbogen": "Regenbogen",
+    "wald": "Wald",
+    "weltraum": "Weltraum",
+    "ocean": "Ozean",
+    "dinosaurier": "Dinosaurier",
+    "baustelle": "Baustelle",
+    "prinzessin": "Prinzessin",
+    "bauernhof": "Bauernhof",
+    "katzen": "Katzen",
+    "hunde": "Hunde",
+    "custom": "Eigene Farben"
+  },
   "firstRun": {
     "progress": "Schritt {current} von {total}",
     "languageTitle": "Willkommen bei Cozy Kids",
@@ -340,5 +365,13 @@
     "nameRequired": "Bitte einen Namen eingeben.",
     "namePlaceholder": "Name des Kindes",
     "avatarPlaceholder": "Emoji, z. B. 🚀"
+  },
+  "counts": {
+    "catalogCount": {
+      "one": "{count} von {total} App"
+    },
+    "packageCount": {
+      "one": "{count} Paket einschließlich benötigter Komponenten"
+    }
   }
 }

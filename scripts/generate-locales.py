@@ -10,8 +10,8 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
-from language_registry import LANGUAGE_CODES
-from translation_data import load_translations
+from language_registry import DEFAULT_LANGUAGE, LANGUAGE_CODES
+from translation_data import PLACEHOLDER, load_translations, read_table
 
 INSTALLER = REPOSITORY_ROOT / "scripts" / "install.sh"
 STATE_TEMPLATE = REPOSITORY_ROOT / "src" / "frontend" / "state.js"
@@ -31,6 +31,14 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "browserHint": "browser_hint",
+    "browserLabel": "cli_browser",
+    "languageLabel": "cli_language",
+    "paletteBgStart": "palette_bg_start",
+    "paletteBgEnd": "palette_bg_end",
+    "paletteText": "palette_text",
+    "paletteButton": "palette_button",
+    "paletteCard": "palette_card",
     "defaultTitle": "config_title",
     "defaultParentLabel": "parent_label",
     "defaultExitLabel": "exit_label",
@@ -74,6 +82,10 @@ EXTRA_UI_KEYS = {
 }
 
 UI_GROUPS = {
+    "themes": ("theme_name", (
+        "rosa lila blau gruen regenbogen wald weltraum ocean dinosaurier "
+        "baustelle prinzessin bauernhof katzen hunde custom"
+    ).split()),
     "firstRun": ("first_run", (
         "progress languageTitle languageBody childTitle childBody childName childAvatar "
         "homeTitle appsTitle appsBody timeTitle timeBody appearanceTitle appearanceBody "
@@ -85,6 +97,8 @@ UI_GROUPS = {
         "nameRequired namePlaceholder avatarPlaceholder"
     ).split()),
 }
+
+COUNT_KEYS = {"catalogCount": "catalog_count", "packageCount": "package_count"}
 
 
 def locale_payloads():
@@ -105,6 +119,7 @@ def locale_payloads():
     payloads = {}
     required_keys = set(re.findall(r'\$\(text ([a-z0-9_]+)\)', installer))
     required_keys.update(ui_to_text.values())
+    required_keys.update(key + "_one" for key in COUNT_KEYS.values())
     group_keys = {
         group: {
             field: prefix + "_" + re.sub(r"[A-Z]", lambda match: "_" + match[0].lower(), field)
@@ -114,7 +129,11 @@ def locale_payloads():
     }
     for fields in group_keys.values():
         required_keys.update(fields.values())
+    baseline_keys = read_table(DEFAULT_LANGUAGE).keys()
     for language in LANGUAGE_CODES:
+        untranslated = sorted(baseline_keys - read_table(language).keys())
+        if untranslated:
+            raise ValueError(f"Untranslated {language} keys: {', '.join(untranslated)}")
         translations = load_translations(language)
         missing = sorted(required_keys - translations.keys())
         if missing:
@@ -127,6 +146,12 @@ def locale_payloads():
             group: {field: translations[key] for field, key in fields.items()}
             for group, fields in group_keys.items()
         })
+        payloads[language]["counts"] = {}
+        for field, key in COUNT_KEYS.items():
+            singular = translations[key + "_one"]
+            if sorted(PLACEHOLDER.findall(singular)) != sorted(PLACEHOLDER.findall(translations[key])):
+                raise ValueError(f"{language}: count placeholders differ for {key}")
+            payloads[language]["counts"][field] = {"one": singular}
     return payloads
 
 

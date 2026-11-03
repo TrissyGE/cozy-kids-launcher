@@ -277,7 +277,7 @@ fi
 [[ -d "$TARGET_HOME" ]] || die "Home directory does not exist: $TARGET_HOME"
 
 command -v python3 >/dev/null 2>&1 || die "python3 is required"
-registry_rows="$(python3 "$SRC_DIR/language_registry.py")" || die "Could not load language registry"
+registry_rows="$(PYTHONIOENCODING=utf-8 python3 "$SRC_DIR/language_registry.py")" || die "Could not load language registry"
 LANGUAGE_CODES=()
 LANGUAGE_NAMES=()
 {
@@ -310,18 +310,18 @@ guided_setup() {
   local input index auto_choice
   echo ""
   echo "========================================="
-  echo "  Guided Setup"
+  echo "$(text cli_guided)"
   echo "========================================="
   echo ""
 
   if [[ "$EXPLICIT_LANG" == "0" ]]; then
-    echo "Choose language:"
+    echo "$(text cli_choose_language)"
     for index in "${!LANGUAGE_CODES[@]}"; do
       printf '  %s) %s\n' "$((index + 1))" "${LANGUAGE_NAMES[index]}"
     done
     auto_choice="$((${#LANGUAGE_CODES[@]} + 1))"
-    echo "  $auto_choice) Auto-detect (default)"
-    prompt_read "Choice [$auto_choice]: " input
+    echo "  $auto_choice) $(text cli_auto)"
+    prompt_read "$(text cli_choice) [$auto_choice]: " input
     for index in "${!LANGUAGE_CODES[@]}"; do
       if [[ "$input" == "$((index + 1))" ]]; then
         LANG_MODE="${LANGUAGE_CODES[index]}"
@@ -334,13 +334,13 @@ guided_setup() {
 
   if [[ "$EXPLICIT_BROWSER" == "0" ]]; then
     echo ""
-    echo "Choose browser:"
-    echo "  1) Auto-detect (default)"
+    echo "$(text cli_choose_browser)"
+    echo "  1) $(text cli_auto)"
     echo "  2) Firefox"
     echo "  3) Chromium"
     echo "  4) Google Chrome"
-    echo "  5) Other browser"
-    prompt_read "Choice [1]: " input
+    echo "  5) $(text cli_browser_other)"
+    prompt_read "$(text cli_choice) [1]: " input
     case "$input" in
       2) DEFAULT_BROWSER="firefox"; EXPLICIT_BROWSER=1 ;;
       3) DEFAULT_BROWSER="chromium"; EXPLICIT_BROWSER=1 ;;
@@ -354,7 +354,7 @@ guided_setup() {
         fi
         ;;
       5)
-        prompt_read "Browser command name (e.g. brave, opera, vivaldi): " input
+        prompt_read "$(text cli_browser_command) " input
         if [[ -n "$input" ]]; then
           DEFAULT_BROWSER="$input"; EXPLICIT_BROWSER=1
         fi
@@ -365,22 +365,14 @@ guided_setup() {
 
   if [[ "$EXPLICIT_THEME" == "0" ]]; then
     echo ""
-    echo "Choose theme:"
-    echo "  1) Rosa (default)"
-    echo "  2) Lila"
-    echo "  3) Blau"
-    echo "  4) Gruen"
-    echo "  5) Regenbogen"
-    echo "  6) Wald"
-    echo "  7) Weltraum"
-    echo "  8) Ocean"
-    echo "  9) Dinosaurier"
-    echo " 10) Baustelle"
-    echo " 11) Prinzessin"
-    echo " 12) Bauernhof"
-    echo " 13) Katzen"
-    echo " 14) Hunde"
-    prompt_read "Choice [1]: " input
+    echo "$(text cli_choose_theme)"
+    local themes=(rosa lila blau gruen regenbogen wald weltraum ocean dinosaurier baustelle prinzessin bauernhof katzen hunde)
+    for index in "${!themes[@]}"; do
+      printf '  %2d) %s' "$((index + 1))" "$(text "theme_name_${themes[index]}")"
+      if [[ "$index" == 0 ]]; then printf ' (%s)' "$(text cli_default)"; fi
+      printf '\n'
+    done
+    prompt_read "$(text cli_choice) [1]: " input
     case "$input" in
       2) DEFAULT_THEME="lila"; EXPLICIT_THEME=1 ;;
       3) DEFAULT_THEME="blau"; EXPLICIT_THEME=1 ;;
@@ -401,10 +393,10 @@ guided_setup() {
 
   if [[ "$EXPLICIT_LAYOUT" == "0" ]]; then
     echo ""
-    echo "Choose tile layout:"
-    echo "  1) Gross / Large - 4 big tiles (default)"
-    echo "  2) Klein / Small - 9 smaller tiles"
-    prompt_read "Choice [1]: " input
+    echo "$(text cli_choose_layout)"
+    echo "  1) $(text layout_large) ($(text cli_default))"
+    echo "  2) $(text layout_small)"
+    prompt_read "$(text cli_choice) [1]: " input
     case "$input" in
       2) DEFAULT_LAYOUT="klein"; EXPLICIT_LAYOUT=1 ;;
       *) ;;
@@ -413,11 +405,11 @@ guided_setup() {
 
   if [[ "$EXPLICIT_LAUNCH_MODE" == "0" ]]; then
     echo ""
-    echo "Choose launch mode:"
-    echo "  1) Kiosk - fullscreen, no window controls (default)"
-    echo "  2) Fullscreen - fullscreen with minimal controls"
-    echo "  3) Window - regular browser window"
-    prompt_read "Choice [1]: " input
+    echo "$(text cli_choose_mode)"
+    echo "  1) $(text cli_mode_kiosk) ($(text cli_default))"
+    echo "  2) $(text cli_mode_fullscreen)"
+    echo "  3) $(text cli_mode_window)"
+    prompt_read "$(text cli_choice) [1]: " input
     case "$input" in
       2) DEFAULT_LAUNCH_MODE="fullscreen"; EXPLICIT_LAUNCH_MODE=1 ;;
       3) DEFAULT_LAUNCH_MODE="window"; EXPLICIT_LAUNCH_MODE=1 ;;
@@ -427,7 +419,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_TITLE" == "0" ]]; then
     echo ""
-    prompt_read "Launcher title [$(text config_title)]: " input
+    prompt_read "$(text cli_title) [$(text config_title)]: " input
     if [[ -n "$input" ]]; then
       DEFAULT_TITLE="$input"
       EXPLICIT_TITLE=1
@@ -436,7 +428,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_PARENT_LABEL" == "0" ]]; then
     echo ""
-    prompt_read "Parent button label [$(text parent_label)]: " input
+    prompt_read "$(text cli_parent) [$(text parent_label)]: " input
     if [[ -n "$input" ]]; then
       DEFAULT_PARENT_LABEL="$input"
       EXPLICIT_PARENT_LABEL=1
@@ -445,7 +437,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_EXIT_LABEL" == "0" ]]; then
     echo ""
-    prompt_read "Exit button label [$(text exit_label)]: " input
+    prompt_read "$(text cli_exit) [$(text exit_label)]: " input
     if [[ -n "$input" ]]; then
       DEFAULT_EXIT_LABEL="$input"
       EXPLICIT_EXIT_LABEL=1
@@ -454,7 +446,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_SHUTDOWN" == "0" ]]; then
     echo ""
-    prompt_read "Install shutdown helper? [y/N]: " input
+    prompt_read "$(text cli_shutdown): " input
     case "$input" in
       [jJyY]*) INSTALL_SHUTDOWN_HELPER="1"; EXPLICIT_SHUTDOWN=1 ;;
     esac
@@ -462,7 +454,7 @@ guided_setup() {
 
   if [[ "$EXPLICIT_RECOMMENDED" == "0" ]]; then
     echo ""
-    prompt_read "Create tiles for recommended apps if installed? [y/N]: " input
+    prompt_read "$(text recommended_prompt): " input
     case "$input" in
       [jJyY]*) RECOMMENDED="1"; EXPLICIT_RECOMMENDED=1 ;;
     esac
@@ -472,10 +464,10 @@ guided_setup() {
 # Offer guided mode when running interactively without explicit customizations
 if is_interactive; then
   echo ""
-  prompt_read "Use quick defaults, or walk through options? [d/w]: " input
+  prompt_read "$(text cli_quick_or_guided) " input
   case "$input" in
     [wW]*) guided_setup ;;
-    *) echo "Using defaults..." ;;
+    *) echo "$(text cli_using_defaults)" ;;
   esac
 
 fi
@@ -521,26 +513,26 @@ command -v flock >/dev/null 2>&1 || die "flock is required (provided by util-lin
 # Summary
 echo ""
 echo "========================================="
-echo "  Install Summary"
+echo "$(text cli_summary)"
 echo "========================================="
-echo "  User:             $TARGET_USER"
-echo "  Home:             $TARGET_HOME"
-echo "  Language:         $ACTIVE_LANG"
-echo "  Browser:          $BROWSER_CMD"
-echo "  Theme:            $DEFAULT_THEME"
-echo "  Layout:           $DEFAULT_LAYOUT"
-echo "  Launch mode:      $DEFAULT_LAUNCH_MODE"
-echo "  Title:            ${DEFAULT_TITLE:-$(text config_title)}"
-echo "  Parent label:     ${DEFAULT_PARENT_LABEL:-$(text parent_label)}"
-echo "  Exit label:       ${DEFAULT_EXIT_LABEL:-$(text exit_label)}"
-echo "  Shutdown helper:  $INSTALL_SHUTDOWN_HELPER"
-echo "  Recommended apps: $RECOMMENDED"
+echo "  $(text cli_user): $TARGET_USER"
+echo "  $(text cli_home): $TARGET_HOME"
+echo "  $(text cli_language): $ACTIVE_LANG"
+echo "  $(text cli_browser): $BROWSER_CMD"
+echo "  $(text cli_theme): $DEFAULT_THEME"
+echo "  $(text cli_layout): $DEFAULT_LAYOUT"
+echo "  $(text cli_mode): $DEFAULT_LAUNCH_MODE"
+echo "  $(text cli_title): ${DEFAULT_TITLE:-$(text config_title)}"
+echo "  $(text cli_parent): ${DEFAULT_PARENT_LABEL:-$(text parent_label)}"
+echo "  $(text cli_exit): ${DEFAULT_EXIT_LABEL:-$(text exit_label)}"
+echo "  $(text cli_shutdown_helper): $INSTALL_SHUTDOWN_HELPER"
+echo "  $(text cli_recommended): $RECOMMENDED"
 echo ""
 
 if is_interactive; then
-  prompt_read "Proceed with installation? [Y/n]: " input
+  prompt_read "$(text cli_proceed) " input
   case "$input" in
-    [nN]*) echo "Installation cancelled."; exit 0 ;;
+    [nN]*) echo "$(text cli_cancelled)"; exit 0 ;;
   esac
 fi
 
@@ -699,6 +691,7 @@ render_template() {
   export JSON_CATALOG_REVIEWED
   export JSON_LANGUAGE_REGISTRY
   export JSON_SETUP_LOCALE
+  export JSON_MEDIA_LOCALE
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -732,10 +725,21 @@ locale = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 keys = (
     "firstRun", "profiles", "defaultTitle", "defaultParentLabel", "defaultExitLabel",
     "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
+    "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
+    "paletteText", "paletteButton", "paletteCard",
 )
 print(json.dumps({key: locale[key] for key in keys}, ensure_ascii=True))
 PY
 )" || die "Could not prepare setup and profile translations for $ACTIVE_LANG"
+JSON_MEDIA_LOCALE="$(python3 - "$SRC_DIR/frontend/locales/$ACTIVE_LANG.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+locale = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(json.dumps({key: value for key, value in locale.items() if key.startswith("mediaLibrary")}))
+PY
+)" || die "Could not prepare media translations for $ACTIVE_LANG"
 
 DEFAULT_TITLE="$(trim "${DEFAULT_TITLE:-$(text config_title)}")"
 DEFAULT_PARENT_LABEL="$(trim "${DEFAULT_PARENT_LABEL:-$(text parent_label)}")"
@@ -1363,14 +1367,14 @@ render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
 render_template "$SRC_DIR/frontend/schedule-controls.js" "$FRONTEND_SCHEDULE_FILE" 0644
 render_template "$SRC_DIR/frontend/activity-dashboard.js" "$FRONTEND_ACTIVITY_FILE" 0644
 install -m 0644 "$SRC_DIR/frontend/media-library.css" "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
-install -m 0644 "$SRC_DIR/frontend/media-library.js" "$FRONTEND_MEDIA_LIBRARY_FILE"
+render_template "$SRC_DIR/frontend/media-library.js" "$FRONTEND_MEDIA_LIBRARY_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
 install -m 0644 "$SRC_DIR/frontend/app-catalog.js" "$FRONTEND_APP_CATALOG_FILE"
 install -m 0644 "$SRC_DIR/frontend/package-catalog.js" "$FRONTEND_DIR/package-catalog.js"
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644
 render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE" 0644
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
-install -m 0644 "$SRC_DIR/media.html" "$MEDIA_LIBRARY_PAGE"
+render_template "$SRC_DIR/media.html" "$MEDIA_LIBRARY_PAGE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
 render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644
 render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755
@@ -1449,7 +1453,7 @@ if recommended == "1" and os.path.isfile(rec_path):
                     found_cmd = cmd
                     break
         if found_cmd:
-            label = rec.get("label_de" if lang == "de" else "label_en", rec["id"])
+            label = rec.get("label_" + lang) or rec.get("label_en") or rec["id"]
             if cmds and found_cmd == cmds[0]:
                 tile_cmd = cmds
             elif cmds and cmds[0] in ("kstart", "kstart5"):
@@ -1543,10 +1547,10 @@ fi
 
 echo "$(text install_done)"
 echo "$APP_NAME"
-echo "  user: $TARGET_USER"
-echo "  home: $TARGET_HOME"
-echo "  language: $ACTIVE_LANG"
-echo "  browser: $BROWSER_CMD"
-echo "  shutdown helper enabled: $INSTALL_SHUTDOWN_HELPER"
-echo "  backup dir: $BACKUP_DIR"
+echo "  $(text cli_user): $TARGET_USER"
+echo "  $(text cli_home): $TARGET_HOME"
+echo "  $(text cli_language): $ACTIVE_LANG"
+echo "  $(text cli_browser): $BROWSER_CMD"
+echo "  $(text cli_shutdown_helper): $INSTALL_SHUTDOWN_HELPER"
+echo "  $(text cli_backup_dir): $BACKUP_DIR"
 echo "$(text next_steps)"

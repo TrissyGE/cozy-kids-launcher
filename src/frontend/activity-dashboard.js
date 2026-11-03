@@ -31,7 +31,7 @@ function activityDisplay(record){
 function activityDate(timestamp){
   const date=new Date(Number(timestamp)*1000);
   if(Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat(interfaceLanguage()==='de'?'de-DE':'en',{
+  return new Intl.DateTimeFormat(interfaceLanguage(),{
     dateStyle:'medium',
     timeStyle:'short'
   }).format(date);

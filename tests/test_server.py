@@ -2228,10 +2228,11 @@ class FrontendSafetyTests(unittest.TestCase):
 
     def test_theme_and_browser_labels_follow_the_interface_language(self):
         source = frontend_source()
-        self.assertIn("const THEME_LABELS=", source)
+        self.assertIn("return uiText.themes[id]||id", source)
         self.assertIn("function interfaceLanguage()", source)
         self.assertIn("themeLabel(t.id)", source)
-        self.assertIn("Changes take effect after the next login.", source)
+        self.assertIn("textContent=uiText.browserHint", source)
+        self.assertEqual(load_translations("en")["browser_hint"], "Changes take effect after the next login.")
 
     def test_browser_tile_fields_do_not_hide_their_mode_selector(self):
         source = frontend_source()

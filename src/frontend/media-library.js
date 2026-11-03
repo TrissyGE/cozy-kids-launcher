@@ -1,28 +1,4 @@
-const MEDIA_FALLBACK_TEXT=Object.freeze({
-  mediaLibraryTitle:'Movies & music',
-  mediaLibraryHint:'Choose something to play',
-  mediaLibraryBack:'Back to home',
-  mediaLibraryLoading:'Looking for your media...',
-  mediaLibraryEmpty:'No music or videos were found here yet.',
-  mediaLibraryError:'The media library could not be loaded.',
-  mediaLibraryRetry:'Try again',
-  mediaLibraryVideo:'Video',
-  mediaLibraryAudio:'Music',
-  mediaLibraryPlay:'Play {title}',
-  mediaLibraryStarting:'Starting {title}...',
-  mediaLibraryPlayError:'This media could not be started.',
-  mediaLibraryUnavailable:'This media tile is not available right now.',
-  mediaLibraryTruncated:'Showing the first 2,000 items.',
-  mediaLibraryViews:'Media library views',
-  mediaLibraryAll:'All media',
-  mediaLibraryFavorites:'Favorites',
-  mediaLibraryRecents:'Recently played',
-  mediaLibraryFavoritesEmpty:'No favorites yet. Use the star on a cover to add one.',
-  mediaLibraryRecentsEmpty:'Nothing has been played here yet.',
-  mediaLibraryFavoriteAdd:'Add {title} to favorites',
-  mediaLibraryFavoriteRemove:'Remove {title} from favorites',
-  mediaLibraryFavoriteError:'This favorite could not be saved.'
-});
+const MEDIA_FALLBACK_TEXT=Object.freeze({{JSON_MEDIA_LOCALE}});
 
 let mediaText=MEDIA_FALLBACK_TEXT;
 let mediaConfig=null;
@@ -48,12 +24,14 @@ function applyMediaTheme(config){
 
 async function loadMediaText(language){
   const normalized=normalizedInterfaceLanguage(language);
-  document.documentElement.lang=normalized;
   try{
     const response=await fetch('/frontend/locales/'+normalized+'.json',{cache:'no-store'});
     if(!response.ok) throw new Error('Locale unavailable');
     const locale=await response.json();
-    if(locale&&typeof locale==='object'&&!Array.isArray(locale)) mediaText={...MEDIA_FALLBACK_TEXT,...locale};
+    if(locale&&typeof locale==='object'&&!Array.isArray(locale)&&locale.mediaLibraryTitle){
+      mediaText={...MEDIA_FALLBACK_TEXT,...locale};
+      document.documentElement.lang=normalized;
+    }
   }catch(e){}
 }
 
@@ -308,6 +286,8 @@ async function initializeMediaLibrary(){
     if(button) setMediaFilter(button.dataset.mediaFilter);
   });
   document.addEventListener('keydown',handleMediaKeys);
+  localizeMediaPage(null);
+  showMediaState('loading',mediaText.mediaLibraryLoading);
   mediaTileId=new URLSearchParams(window.location.search).get('tile')||'';
   try{
     const response=await fetch('/api/config',{cache:'no-store'});
@@ -320,7 +300,6 @@ async function initializeMediaLibrary(){
     localizeMediaPage(tile);
     await loadMediaCatalog();
   }catch(e){
-    await loadMediaText('en');
     localizeMediaPage(null);
     showMediaState('error',mediaText.mediaLibraryError,()=>window.location.reload());
   }

@@ -67,7 +67,7 @@ function renderCatalogResults(){
     return (!query||text.includes(query))&&(catalogCategory==='all'||rec.category===catalogCategory)&&
       (catalogStatus==='all'||(catalogStatus==='installed'&&rec.installed)||(catalogStatus==='missing'&&!rec.installed)||(catalogStatus==='added'&&catalogAdded(rec)));
   }).sort((a,b)=>Number(catalogAdded(a))-Number(catalogAdded(b))||Number(b.installed)-Number(a.installed)||catalogName(a).localeCompare(catalogName(b),cfg.language));
-  document.getElementById('catalogCount').textContent=uiText.catalogCount.replace('{count}',matches.length).replace('{total}',recommendations.length);
+  document.getElementById('catalogCount').textContent=localizedCount('catalogCount',matches.length,recommendations.length);
   if(!matches.length){renderUiState(results,'empty',uiText.catalogNoMatches); return;}
   const grid=document.createElement('div'); grid.className='rec-grid';
   for(const rec of matches){
