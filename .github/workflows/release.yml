@@ -144,20 +144,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(tr -d '\r\n' < VERSION)"
-          prefix="cozy-kids-launcher-$version/"
-          mkdir -p dist
-          git archive --format=tar --prefix="$prefix" "$GITHUB_SHA" \
-            | gzip -n > "dist/cozy-kids-launcher-$version.tar.gz"
-          git archive --format=zip --prefix="$prefix" \
-            --output="dist/cozy-kids-launcher-$version.zip" "$GITHUB_SHA"
-          (
-            cd dist
-            sha256sum \
-              "cozy-kids-launcher-$version.tar.gz" \
-              "cozy-kids-launcher-$version.zip" \
-              > SHA256SUMS
-          )
+          git version --build-options
+          gzip --version
+          repeat="$(mktemp -d)"
+          trap 'rm -rf "$repeat"' EXIT
+          bash scripts/build-release-archives.sh "$GITHUB_SHA" dist
+          bash scripts/build-release-archives.sh "$GITHUB_SHA" "$repeat"
+          diff -qr dist "$repeat"
 
       - name: Attest release artifacts
         uses: actions/attest-build-provenance@v3

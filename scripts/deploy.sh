@@ -101,11 +101,13 @@ PY
 
 echo "[5/6] Archive dry run"
 PREFIX="cozy-kids-launcher-$VERSION/"
-git archive --format=tar --prefix="$PREFIX" HEAD | gzip -n > "$TEST_HOME/release.tar.gz"
-tar -tzf "$TEST_HOME/release.tar.gz" > "$TEST_HOME/archive-contents.txt"
+bash scripts/build-release-archives.sh HEAD "$TEST_HOME/archives"
+bash scripts/build-release-archives.sh HEAD "$TEST_HOME/rebuilt"
+diff -qr "$TEST_HOME/archives" "$TEST_HOME/rebuilt"
+tar -tzf "$TEST_HOME/archives/cozy-kids-launcher-$VERSION.tar.gz" > "$TEST_HOME/archive-contents.txt"
 grep -Fxq "${PREFIX}VERSION" "$TEST_HOME/archive-contents.txt"
 grep -Fxq "${PREFIX}scripts/install.sh" "$TEST_HOME/archive-contents.txt"
-sha256sum "$TEST_HOME/release.tar.gz" >/dev/null
+(cd "$TEST_HOME/archives" && sha256sum -c SHA256SUMS)
 
 echo "[6/6] Tag checks"
 if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then

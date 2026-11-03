@@ -228,6 +228,7 @@ and Italian are enabled.
 - [x] Select immutable release candidates with numeric ordering and return from a candidate to the matching stable release
 - [x] Verify preview archives with the existing checksum and rollback path and fail closed when preview discovery is unavailable
 - [x] Build and attest preview releases through a workflow path that excludes stable-main promotion
+- [x] Share the release archive builder between local and hosted checks and require two builds of the same commit to match
 - [ ] Verify the first published release candidate on an opted-in disposable installation
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
 
