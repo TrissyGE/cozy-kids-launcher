@@ -173,6 +173,10 @@ FORCE="0"
 LEGACY_MAIN="0"
 SET_TRACK=""
 
+if [[ -e "$APP_ROOT/package-managed" || -L "$APP_ROOT/package-managed" ]]; then
+  die "This installation is managed by the system package manager"
+fi
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check-only) CHECK_ONLY="1"; shift ;;

@@ -1800,6 +1800,22 @@ class ServerApiTests(unittest.TestCase):
                                  channel)
         self.assertFalse((Path(server_module.APP_ROOT) / "update-trigger.sh").exists())
 
+    def test_package_managed_updates_do_not_query_or_trigger_releases(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        (Path(server_module.APP_ROOT) / "package-managed").touch()
+        with mock.patch.object(server_module, "resolve_update_status") as remote:
+            status, data, _ = self.request("/api/update/status")
+            self.assertEqual(status, 200)
+            self.assertEqual(data["source"], "package-manager")
+            self.assertEqual(data["installedVersion"], data["latestVersion"])
+            self.assertFalse(data["updateAvailable"])
+            remote.assert_not_called()
+        self.assertEqual(self.request("/api/update/channel", cookie=cookie)[1], {"managed": True})
+        self.assertEqual(self.request("/api/update/channel", "POST", {"channel": "preview"}, cookie)[0], 409)
+        self.assertEqual(self.request("/api/update", "POST", cookie=cookie)[0], 409)
+        self.assertFalse((Path(server_module.APP_ROOT) / "update-trigger.sh").exists())
+
     def test_update_request_only_writes_a_single_launcher_trigger(self):
         update_script = Path(server_module.UPDATE_SCRIPT)
         update_script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")

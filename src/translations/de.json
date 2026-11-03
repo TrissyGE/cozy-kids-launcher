@@ -486,6 +486,7 @@
   "timer_warning_title": "Noch 5 Minuten!",
   "timer_wrong_pin": "Falscher PIN",
   "update_available": "Update verfügbar",
+  "update_package_managed": "Updates werden über die Paketverwaltung des Systems installiert.",
   "update_check": "Auf Updates prüfen",
   "update_confirm": "Browser wird geschlossen und das Update installiert. Fortfahren?",
   "update_error": "Update-Prüfung fehlgeschlagen",

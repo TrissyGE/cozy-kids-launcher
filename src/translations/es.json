@@ -486,6 +486,7 @@
   "timer_warning_title": "¡Quedan 5 minutos!",
   "timer_wrong_pin": "PIN incorrecto",
   "update_available": "Actualización disponible",
+  "update_package_managed": "Instala las actualizaciones con el gestor de paquetes del sistema.",
   "update_check": "Buscar actualizaciones",
   "update_confirm": "¿Cerrar el navegador e instalar la actualización ahora?",
   "update_error": "No se pudo buscar actualizaciones",

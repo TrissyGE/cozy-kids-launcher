@@ -31,6 +31,7 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "updatePackageManaged": "update_package_managed",
     "adminRetro": "admin_retro",
     "retroEnabled": "retro_enabled",
     "retroCovers": "retro_covers",

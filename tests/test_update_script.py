@@ -192,6 +192,16 @@ class UpdateScriptIntegrationTests(unittest.TestCase):
     def installed_version(self):
         return (self.app_root / "version").read_text(encoding="utf-8").strip()
 
+    def test_package_managed_installation_refuses_direct_updates(self):
+        (self.app_root / "package-managed").touch()
+        for arguments in ((), ("--check-only",), ("--set-channel", "preview"), ("--legacy-main",)):
+            with self.subTest(arguments=arguments):
+                result = self.run_updater(*arguments)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("managed by the system package manager", result.stdout)
+                self.assertEqual(self.installed_version(), "0.3.4")
+        self.assertFalse((self.config_file.parent / "update-track").exists())
+
     def test_verified_release_updates_and_preserves_configuration(self):
         result = self.run_updater()
         self.assertEqual(result.returncode, 0, result.stdout)

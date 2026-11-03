@@ -519,6 +519,8 @@ class LauncherLifecycleTests(unittest.TestCase):
                 update_gate = root / "continue-update"
                 update_invoked = root / "update-invoked"
                 trigger = app_root / "update-trigger.sh"
+                package_marker = app_root / "package-managed"
+                package_marker.touch()
                 trigger.write_text(
                     "#!/usr/bin/env bash\n"
                     "set -eu\n"
@@ -526,6 +528,10 @@ class LauncherLifecycleTests(unittest.TestCase):
                     f"while [[ ! -f {update_gate} ]]; do sleep 0.05; done\n",
                     encoding="utf-8",
                 )
+                time.sleep(2)
+                self.assertFalse(update_invoked.exists())
+                self.assertIsNone(launcher.poll())
+                package_marker.unlink()
                 updating = self.wait_for_lifecycle(
                     lifecycle_file,
                     "updating",

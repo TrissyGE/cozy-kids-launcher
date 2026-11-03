@@ -310,7 +310,8 @@ that lack an equivalent core, including Wii U and PS3.
 ### Packaging and downstream distribution
 
 - [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
-  - [ ] Add a package-managed runtime mode that leaves updates to the system package manager
+  - [x] Add a package-managed update mode for the current runtime layout
+  - [ ] Integrate the package-managed mode into the system-wide package layout and script-install migration
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
 - [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
 - [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable

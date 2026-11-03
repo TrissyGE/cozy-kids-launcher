@@ -518,7 +518,15 @@ def _fetch_remote_text(url, timeout=5):
     return fetch_update_text(url, timeout=timeout)
 
 
+def updates_are_package_managed():
+    return os.path.lexists(os.path.join(APP_ROOT, "package-managed"))
+
+
 def get_update_status(timeout=5):
+    if updates_are_package_managed():
+        version = get_version()
+        return {"installedVersion": version, "latestVersion": version,
+                "source": "package-manager", "updateAvailable": False}
     return resolve_update_status(
         get_version(),
         LATEST_RELEASE_API,
@@ -1012,6 +1020,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response({"version": get_version()})
         if self.path == "/api/update/channel":
             if self.require_admin():
+                if updates_are_package_managed():
+                    return self.json_response({"managed": True})
                 self.json_response({"channel": read_update_track(Path(CFG).with_name("update-track"))})
             return
         if self.path == "/api/update/status":
@@ -1951,6 +1961,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if action == "api/update/channel":
             if not self.require_admin():
                 return
+            if updates_are_package_managed():
+                return self.json_response({"status": "package-managed"}, 409)
             body = self.read_json_body()
             if body is None:
                 return
@@ -1964,6 +1976,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if action == "api/update":
             if not self.require_admin():
                 return
+            if updates_are_package_managed():
+                return self.json_response({"status": "package-managed"}, 409)
             try:
                 write_update_trigger(APP_ROOT, UPDATE_SCRIPT)
                 log_runtime_event("update.triggered")
