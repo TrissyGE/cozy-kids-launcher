@@ -2079,7 +2079,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('role="dialog"', source)
         self.assertIn('aria-modal="true"', source)
         self.assertNotIn("window.confirm(", source)
-        self.assertEqual(source.count("requestConfirmation("), 7)
+        self.assertEqual(source.count("requestConfirmation("), 8)
         self.assertIn("return new Promise(resolve=>", dialogs)
         self.assertIn("confirmationReturnFocus=document.activeElement", dialogs)
         self.assertIn("returnFocus.focus()", dialogs)
