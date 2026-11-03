@@ -258,6 +258,7 @@ def emulator_command(executable, game, save_root, profile_id):
             "kstart", "--fullscreen", "/usr/bin/env", "SDL_VIDEODRIVER=x11",
             f"MEDNAFEN_HOME={game_directory}", executable,
             "-force_module", module, "-video.driver", "softfb", "-video.fs", "1",
+            f"-{module}.stretch", "aspect",
             game["path"],
         ]
     config_directory = prepare_profile_resume_directory(game_directory, "config")
