@@ -252,6 +252,11 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Assign private mGBA save and save-state directories per child and game
 - [ ] Add save backup and removal controls
 - [ ] Qualify additional emulators and add Parent-supplied BIOS configuration where required
+- [ ] Add a short local device check in Parent settings that recommends console systems using measured emulation performance and reviewed hardware requirements
+  - [ ] Show supported, untested and incompatible systems separately. Explain which measurement or hardware requirement informed each result
+  - [ ] Disable the emulator install action for a confirmed incompatible system and explain the reason in the app store
+  - [ ] Use locally generated test workloads so the device check can run before the family supplies any game files
+- [ ] Support bounded single-ROM ZIP archives from handheld game libraries
 - [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
 
 #### Living-room foundations
