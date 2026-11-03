@@ -122,6 +122,8 @@ jobs:
           test -f "$test_home/.local/share/cozy-kids-launcher/media_library.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/media_state.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/media_resume.py"
+          test -f "$test_home/.local/share/cozy-kids-launcher/retro_saves.py"
+          test -f "$test_home/.local/share/cozy-kids-launcher/retro_device.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/media_session.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/parent_auth.py"
           test -f "$test_home/.local/share/cozy-kids-launcher/speech_feedback.py"

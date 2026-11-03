@@ -120,6 +120,11 @@ following separately:
 
 Use a redistributable test ROM for shared screenshots. When verifying ZIP
 support, repeat a failing ZIP launch with the same ROM as a loose file.
+With a disposable child profile, verify that the Parent save ZIP contains the
+emulator's saved files and that confirmed deletion clears only that game's
+local saves. Check keyboard and gamepad focus when filtering the library by
+console. Record the device check's reported graphics APIs separately from
+emulator performance, especially when the VM uses software graphics.
 
 ## Physical Linux test laptop
 

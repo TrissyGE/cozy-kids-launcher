@@ -8,6 +8,7 @@ let mediaItems=[];
 let mediaFavoriteIds=new Set();
 let mediaRecentIds=[];
 let mediaFilter='all';
+let retroSystem='';
 let mediaSourceRevision='';
 let mediaCatalogLoading=false;
 let mediaSourceChecking=false;
@@ -159,6 +160,7 @@ function mediaCard(item){
 }
 
 function visibleMediaItems(){
+  if(retroLibrary&&retroSystem) return mediaItems.filter(item=>item.system===retroSystem);
   if(mediaFilter==='favorites'){
     return mediaItems.filter(item=>mediaFavoriteIds.has(item.id));
   }
@@ -176,13 +178,30 @@ function emptyMediaMessage(){
   return mediaText.mediaLibraryEmpty;
 }
 
+function renderRetroFilters(){
+  const filters=document.getElementById('mediaFilters');
+  filters.querySelectorAll('[data-retro-system]').forEach(button=>button.remove());
+  const systems=[...new Set(mediaItems.map(item=>item.system).filter(system=>typeof system==='string'&&system))].sort();
+  if(!systems.includes(retroSystem)||systems.length<2) retroSystem='';
+  if(systems.length<2) return;
+  for(const system of ['',...systems]){
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='smallbtn';
+    button.dataset.retroSystem=system;
+    button.textContent=system||mediaText.mediaLibraryAll;
+    filters.appendChild(button);
+  }
+}
+
 function renderMediaCatalog(){
   const items=visibleMediaItems();
   const grid=document.getElementById('mediaGrid');
   grid.replaceChildren(...items.map(mediaCard));
   grid.hidden=items.length===0;
-  document.querySelectorAll('[data-media-filter]').forEach(button=>{
-    const active=button.dataset.mediaFilter===mediaFilter;
+  document.querySelectorAll('[data-media-filter],[data-retro-system]').forEach(button=>{
+    const active=button.hasAttribute('data-retro-system')
+      ?button.dataset.retroSystem===retroSystem:button.dataset.mediaFilter===mediaFilter;
     button.classList.toggle('is-active',active);
     button.setAttribute('aria-pressed',active?'true':'false');
   });
@@ -234,6 +253,7 @@ async function loadMediaCatalog(){
     const truncated=document.getElementById('mediaTruncated');
     truncated.hidden=!payload.truncated;
     truncated.textContent=payload.truncated?(retroLibrary?mediaText.retroLimit:mediaText.mediaLibraryTruncated):'';
+    if(retroLibrary) renderRetroFilters();
     renderMediaCatalog();
     if(focusedId&&document.activeElement===refresh){
       const replacement=Array.from(document.querySelectorAll('['+focusAttribute+']'))
@@ -242,6 +262,7 @@ async function loadMediaCatalog(){
     }
   }catch(e){
     mediaItems=[];
+    if(retroLibrary) renderRetroFilters();
     document.getElementById('mediaGrid').replaceChildren();
     showMediaState('error',mediaText.mediaLibraryError,loadMediaCatalog);
   }finally{
@@ -343,6 +364,13 @@ async function initializeMediaLibrary(){
   document.getElementById('mediaBack').addEventListener('click',mediaHome);
   document.getElementById('mediaRefresh').addEventListener('click',loadMediaCatalog);
   document.getElementById('mediaFilters').addEventListener('click',event=>{
+    const system=event.target.closest('[data-retro-system]');
+    if(system&&retroLibrary&&!mediaCatalogLoading){
+      retroSystem=system.dataset.retroSystem;
+      renderMediaCatalog();
+      document.querySelector('.media-card')?.focus();
+      return;
+    }
     const button=event.target.closest('[data-media-filter]');
     if(button) setMediaFilter(button.dataset.mediaFilter);
   });

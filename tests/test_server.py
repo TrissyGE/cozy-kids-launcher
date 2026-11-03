@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import io
 import json
 import os
 import struct
@@ -11,6 +12,7 @@ import types
 import unittest
 import urllib.error
 import urllib.request
+import zipfile
 from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 from unittest import mock
@@ -838,6 +840,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(self.request("/api/retro/settings", "POST", settings, cookie)[0], 200)
         _, child_library, _ = self.request("/api/retro/library")
         self.assertEqual([game["id"] for game in child_library["items"]], [identifier])
+        self.assertEqual(child_library["items"][0]["system"], "Nintendo - Game Boy Advance")
         self.assertNotIn(str(root), json.dumps(child_library))
         with mock.patch.object(server_module, "retro_cover", return_value=b"") as cover:
             with self.assertRaises(urllib.error.HTTPError):
@@ -867,6 +870,93 @@ class ServerApiTests(unittest.TestCase):
             launch.assert_called_once()
 
     @unittest.skipUnless(sys.platform.startswith("linux"), "BIOS storage uses Linux permissions")
+    def test_retro_saves_are_parent_only_and_isolated_by_profile(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        identifier = "a" * 24
+        root = Path(server_module.MEDIA_STATE_FILE).parent / "retro"
+        game = root / "default" / identifier
+        other_profile = root / "other" / identifier
+        (game / "PCSX-ReARMed").mkdir(parents=True)
+        other_profile.mkdir(parents=True)
+        card = game / "PCSX-ReARMed" / "disc-set.srm"
+        card.write_bytes(b"card")
+        (game / "disc-set.m3u").write_text("/private/rom.chd", encoding="utf-8")
+        (other_profile / "other.sav").write_bytes(b"other")
+        endpoint = "/api/retro/saves"
+        self.assertEqual(self.request(endpoint)[0], 403)
+        payload = {"gameId": identifier, "profileId": "default", "confirm": True}
+        self.assertEqual(self.request(endpoint, "POST", payload)[0], 403)
+        self.assertEqual(self.request(endpoint, cookie=cookie)[1], {
+            "profileId": "default", "games": [{"id": identifier, "title": identifier}],
+        })
+        query = f"{endpoint}?profileId=default&gameId={identifier}"
+        self.assertEqual(self.request(query, cookie=cookie, origin="https://foreign.invalid")[0], 403)
+        request = urllib.request.Request(self.base_url + query, headers={"Cookie": cookie})
+        with urllib.request.urlopen(request, timeout=5) as response:
+            self.assertEqual(response.headers.get_content_type(), "application/zip")
+            with zipfile.ZipFile(io.BytesIO(response.read())) as backup:
+                self.assertEqual(backup.namelist(), ["PCSX-ReARMed/disc-set.srm"])
+                self.assertEqual(backup.read(backup.namelist()[0]), b"card")
+        self.assertEqual(self.request(endpoint, "POST", {**payload, "profileId": "other"}, cookie)[0], 400)
+        self.assertEqual(self.request(endpoint, "POST", {**payload, "confirm": False}, cookie)[0], 400)
+        with mock.patch.object(server_module.Handler, "retro_save_busy", return_value=True):
+            self.assertEqual(self.request(query, cookie=cookie)[0], 409)
+            self.assertEqual(self.request(endpoint, "POST", payload, cookie)[0], 409)
+        self.assertEqual(self.request(endpoint, "POST", payload, cookie)[0], 200)
+        self.assertFalse(card.exists())
+        self.assertTrue((game / "disc-set.m3u").exists())
+        self.assertTrue((other_profile / "other.sav").exists())
+        self.assertEqual(self.request(endpoint, cookie=cookie)[1]["games"], [])
+
+    def test_retro_device_report_requires_parent(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        endpoint = "/api/retro/device"
+        with mock.patch.object(server_module, "retro_device_report", return_value={"systems": []}) as report:
+            self.assertEqual(self.request(endpoint)[0], 403)
+            report.assert_not_called()
+            self.assertEqual(self.request(endpoint, cookie=cookie)[1], {"systems": []})
+            report.assert_called_once()
+
+    def test_ps1_core_download_and_import_require_parent_and_exact_build(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        payload = b"reviewed core fixture"
+        package = io.BytesIO()
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr(retro_games.PS1_CORE_FILENAME, payload)
+        state = Path(server_module.MEDIA_STATE_FILE).parent
+        installed = state / "ps1-cores" / retro_games.PS1_CORE_FILENAME
+        download = "/api/retro/ps1-core-download"
+        upload = self.base_url + "/api/retro/ps1-core"
+        headers = {"Cookie": cookie, "Content-Type": "application/octet-stream"}
+        with mock.patch.object(retro_games, "ps1_core_supported", return_value=True), \
+                mock.patch.object(retro_games, "PS1_CORE_BYTES", len(payload)), \
+                mock.patch.object(retro_games, "PS1_CORE_SHA256", hashlib.sha256(payload).hexdigest()), \
+                mock.patch.object(retro_games, "build_opener") as opener:
+            self.assertEqual(self.request(download, "POST")[0], 403)
+            opener.assert_not_called()
+            remote = opener.return_value.open.return_value.__enter__.return_value
+            remote.read.return_value = b"wrong build"
+            self.assertEqual(self.request(download, "POST", cookie=cookie)[0], 409)
+            self.assertFalse(installed.exists())
+            remote.read.return_value = package.getvalue()
+            self.assertEqual(self.request(download, "POST", cookie=cookie)[0], 200)
+            self.assertEqual(installed.read_bytes(), payload)
+            remote.read.reset_mock()
+            self.assertEqual(self.request(download, "POST", cookie=cookie)[0], 200)
+            remote.read.assert_not_called()
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(urllib.request.Request(upload, data=b"wrong build", headers=headers), timeout=5)
+            self.assertEqual(error.exception.code, 400)
+            error.exception.close()
+            self.assertEqual(installed.read_bytes(), payload)
+            installed.unlink()
+            with urllib.request.urlopen(urllib.request.Request(upload, data=package.getvalue(), headers=headers), timeout=5) as response:
+                self.assertEqual(response.status, 200)
+            self.assertEqual(installed.read_bytes(), payload)
+
     def test_ps1_bios_import_is_parent_only_and_validates_before_replacing(self):
         self.enable_pin()
         cookie = self.authenticate()

@@ -1,6 +1,7 @@
 """Bounded local ROM discovery for the first managed emulator."""
 
 import hashlib
+import io
 import os
 import platform
 import re
@@ -49,8 +50,11 @@ CUE_TIME = re.compile(r'(INDEX\s+0[01]|PREGAP|POSTGAP)\s+([0-9]{2}):([0-5][0-9])
                       re.IGNORECASE)
 CHD_HEADER = struct.Struct(">8sII")
 PS1_CORE_FILENAME = "pcsx_rearmed_libretro.so"
+PS1_CORE_VERSION = "r26 (7b0e8f8)"
 PS1_CORE_BYTES = 2250248
 PS1_CORE_SHA256 = "b81ce0d92b66fac94788a94836430530cebed2f2ee77e384db87eb0273e49c3c"
+PS1_CORE_UPLOAD_BYTES = 4 * 1024 * 1024
+PS1_CORE_URL = f"https://buildbot.libretro.com/nightly/linux/x86_64/latest/{PS1_CORE_FILENAME}.zip"
 MAX_ZIP_BYTES = 40 * 1024 * 1024
 MAX_ZIP_DIRECTORY_BYTES = 64 * 1024
 MAX_ZIP_ENTRIES = 32
@@ -100,8 +104,12 @@ def import_ps1_bios(state_root, payload):
     filename = next((name for name, expected in PS1_BIOS.values() if digest == expected), None)
     if filename is None:
         raise ValueError("Unrecognized PS1 BIOS")
-    directory = prepare_profile_resume_directory(state_root, "ps1-bios")
-    descriptor, temporary = tempfile.mkstemp(prefix="bios-", dir=directory)
+    _install_ps1_file(state_root, "ps1-bios", filename, payload)
+
+
+def _install_ps1_file(state_root, folder, filename, payload):
+    directory = prepare_profile_resume_directory(state_root, folder)
+    descriptor, temporary = tempfile.mkstemp(prefix=".install-", dir=directory)
     try:
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(payload)
@@ -123,7 +131,7 @@ def approved_retro_ids(cfg):
             if (identifier := retro_id(tile["cmd"]))}
 
 
-class _NoCoverRedirect(HTTPRedirectHandler):
+class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
         return None
 
@@ -132,7 +140,7 @@ class _NoCoverRedirect(HTTPRedirectHandler):
 def _download_cover(system, name, cache_hour):
     url = f"https://thumbnails.libretro.com/{quote(system, safe='')}/Named_Boxarts/{quote(name, safe='')}.png"
     try:
-        with build_opener(_NoCoverRedirect()).open(url, timeout=4) as response:
+        with build_opener(_NoRedirect()).open(url, timeout=4) as response:
             payload = response.read(MAX_COVER_BYTES + 1)
     except OSError:
         return b""
@@ -511,8 +519,45 @@ def emulator_binary(game):
     return ROM_SYSTEMS[game["romExtension"]][0]
 
 
+def ps1_core_supported():
+    return platform.machine().lower() in ("x86_64", "amd64")
+
+
+def _reviewed_ps1_core(payload):
+    return len(payload) == PS1_CORE_BYTES and hashlib.sha256(payload).hexdigest() == PS1_CORE_SHA256
+
+
+def import_ps1_core(state_root, payload):
+    if not ps1_core_supported() or not 0 < len(payload) <= PS1_CORE_UPLOAD_BYTES:
+        raise ValueError("Unsupported PS1 core")
+    if payload.startswith(b"PK\x03\x04"):
+        try:
+            with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                entries = archive.infolist()
+                if (len(entries) != 1 or entries[0].filename != PS1_CORE_FILENAME
+                        or entries[0].file_size != PS1_CORE_BYTES):
+                    raise ValueError("Unexpected PS1 core archive")
+                with archive.open(entries[0]) as member:
+                    payload = member.read(PS1_CORE_BYTES + 1)
+        except (zipfile.BadZipFile, RuntimeError, NotImplementedError, zlib.error) as error:
+            raise ValueError("Invalid PS1 core archive") from error
+    if not _reviewed_ps1_core(payload):
+        raise ValueError("PS1 core does not match the reviewed build")
+    _install_ps1_file(state_root, "ps1-cores", PS1_CORE_FILENAME, payload)
+
+
+def download_ps1_core(state_root):
+    if not ps1_core_supported():
+        raise ValueError("Unsupported PS1 core platform")
+    if ps1_core_path(state_root):
+        return
+    with build_opener(_NoRedirect()).open(PS1_CORE_URL, timeout=10) as response:
+        payload = response.read(PS1_CORE_UPLOAD_BYTES + 1)
+    import_ps1_core(state_root, payload)
+
+
 def ps1_core_path(state_root):
-    if platform.machine().lower() not in ("x86_64", "amd64"):
+    if not ps1_core_supported():
         return None
     path = os.path.join(state_root, "ps1-cores", PS1_CORE_FILENAME)
     try:
@@ -523,7 +568,7 @@ def ps1_core_path(state_root):
             payload = handle.read(PS1_CORE_BYTES + 1)
     except OSError:
         return None
-    return path if hashlib.sha256(payload).hexdigest() == PS1_CORE_SHA256 else None
+    return path if _reviewed_ps1_core(payload) else None
 
 
 def _write_private_text(path, contents):

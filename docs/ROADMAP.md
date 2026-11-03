@@ -263,15 +263,17 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Import Parent-supplied BIOS files locally, validate regional PS1 and supported PSP BIOS checksums and show readiness in Parent settings
   - [x] Verify that Ubuntu RetroArch can launch the upstream Linux x86-64 PCSX ReARMed core with a CHD, the supported PSP BIOS and a private save directory
   - [x] Offer the RetroArch package in the Parent installer and report whether the reviewed PCSX ReARMed core is available
-  - [ ] Add a maintained one-click delivery route for the reviewed PCSX ReARMed core, with artifact verification and explicit versioning. Evaluate Beetle PSX or DuckStation if needed for game compatibility
+  - [x] Install the explicitly versioned PCSX ReARMed core with one click when Libretro serves the reviewed checksum, and accept a matching local copy
+  - [ ] Qualify a durable versioned source for the core so that installs remain available after upstream rolls the download. Evaluate Beetle PSX or DuckStation if needed for game compatibility
   - [x] Discover single-disc CHDs, enforce per-child approval and verify the firmware, disc and pre-provisioned core before launch
   - [x] Discover CUE/BIN discs with raw 2352-byte tracks, validate every track in the source, and invalidate approval when the CUE or a BIN changes
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
   - [x] Import M3U sets of CHD and CUE/BIN discs with a single approval, including Miyoo playlists whose entries are resolved within the playlist folder
   - [ ] Verify a disc change requested during gameplay and memory-card persistence on the desktop matrix and the physical Linux test laptop
-- [ ] Add save backup and removal controls
+- [x] Add Parent-only save backup and removal controls for each child and game
 - [ ] Compare RetroArch cores for the existing cartridge systems. Switch a system only after verifying that existing game approvals and saves still work or have a tested migration.
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
+  - [x] Show an on-demand local hardware preflight and separate catalog-route status for the current emulators and later candidates through Wii U and PS3. Keep unknown performance explicit and block an incompatible reviewed PS1 core.
   - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.
   - [ ] Use bounded, locally generated test workloads that require no family game files. When the emulator is available, measure emulation speed and frame pacing with a representative workload and record the tested settings.
   - [ ] Report recommended, limited, untested and incompatible separately. Explain the result beside the install button. Disable installation for a confirmed hardware incompatibility or unavailable install route, with a distinct explanation for each. Keep the install action available when performance is unknown and a reviewed install route exists.
@@ -293,7 +295,8 @@ that lack an equivalent core, including Wii U and PS3.
 - [x] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
 - [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
 - [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix
-- [ ] Add optional child-friendly folders and categories without recommendations, streaks, or engagement scoring
+- [x] Group approved RetroGameCorner games by console with optional library filters
+- [ ] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
 - [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
 
