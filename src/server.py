@@ -1084,16 +1084,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if not game:
                 return self.json_response({"status": "unavailable"}, 404)
             tile_id = f"retro-{identifier}"
-            if not any(tile["id"] == tile_id for tile in cfg["tiles"]):
-                cfg["tiles"].append({
+            tile = next((tile for tile in cfg["tiles"] if tile["id"] == tile_id), None)
+            if tile is None:
+                tile = {
                     "id": tile_id, "label": game["title"], "emoji": "🎮",
                     "cmd": [f"special:retro:{identifier}"], "visible": True,
-                })
+                }
+                cfg["tiles"].append(tile)
                 try:
-                    cfg = save_cfg(cfg)
+                    save_cfg(cfg)
                 except (OSError, ValueError):
                     return self.json_response({"status": "error"}, 400)
-            return self.json_response({"config": public_config(cfg)})
+            elif tile["cmd"] != [f"special:retro:{identifier}"]:
+                return self.json_response({"status": "conflict"}, 409)
+            return self.json_response({"tile": tile})
         if action in ("api/media/roots", "api/retro/games"):
             stored = load_stored_cfg()
             if not self.require_admin(stored):

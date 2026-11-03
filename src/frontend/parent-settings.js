@@ -499,7 +499,10 @@ async function updateRetroGames(endpoint,body,button){
     if(!response.ok) throw new Error('Retro settings could not be saved');
     const data=await response.json();
     if(signal.aborted) return;
-    if(data.config){ cfg=data.config; renderAll(); }
+    if(data.tile&&!cfg.tiles.some(tile=>tile.id===data.tile.id)){
+      cfg.tiles.push(data.tile);
+      renderAll();
+    }
     await loadRetroGames();
   }catch(e){
     if(!signal.aborted){
