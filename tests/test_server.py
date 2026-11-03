@@ -951,9 +951,10 @@ class ServerApiTests(unittest.TestCase):
             retro_games.import_ps1_bios(str(state), bios)
             self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 204)
             command = launch.call_args.args[0]
-            self.assertEqual(command[:3], ["kstart", "--fullscreen", "/usr/bin/retroarch"])
-            self.assertEqual(command[-4:], ["-L", str(core), "--", str(disc)])
             directory = state / "retro" / "default" / game_id
+            self.assertEqual(command[:5], ["kstart", "--fullscreen", "/usr/bin/env",
+                                          f"XDG_CONFIG_HOME={directory / 'config'}", "/usr/bin/retroarch"])
+            self.assertEqual(command[-4:], ["-L", str(core), "--", str(disc)])
             config = (directory / "retroarch.cfg").read_text(encoding="utf-8")
             self.assertIn(f'savefile_directory = "{directory}"', config)
             self.assertIn(f'savestate_directory = "{directory}"', config)

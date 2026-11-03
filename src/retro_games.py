@@ -368,6 +368,7 @@ def _ps1_command(executable, game, state_root, game_directory):
         raise ValueError("Verified PS1 firmware is unavailable")
     if any(character in system_directory + game_directory for character in '\\"\r\n'):
         raise ValueError("Unsupported character in RetroArch configuration path")
+    config_home = prepare_profile_resume_directory(game_directory, "config")
     config = os.path.join(game_directory, "retroarch.cfg")
     descriptor, temporary = tempfile.mkstemp(prefix="retroarch-", dir=game_directory)
     try:
@@ -393,8 +394,8 @@ def _ps1_command(executable, game, state_root, game_directory):
     finally:
         if os.path.lexists(temporary):
             os.unlink(temporary)
-    return ["kstart", "--fullscreen", executable, "--fullscreen", "--config", config,
-            "--no-patch", "-L", core, "--", path]
+    return ["kstart", "--fullscreen", "/usr/bin/env", f"XDG_CONFIG_HOME={config_home}",
+            executable, "--fullscreen", "--config", config, "--no-patch", "-L", core, "--", path]
 
 
 def emulator_command(executable, game, save_root, profile_id):
