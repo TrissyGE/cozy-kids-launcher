@@ -301,6 +301,12 @@
   "themeMotion": "Animation douce de l’arrière-plan",
   "themeTimeOfDay": "Adapter à l’heure locale",
   "worldThemeHint": "Disponible pour les univers illustrés. Le réglage de réduction des animations de l’appareil est prioritaire.",
+  "updateTrack": {
+    "label": "Canal de mise à jour",
+    "stable": "Stable",
+    "preview": "Aperçu",
+    "hint": "Le canal Aperçu inclut des versions candidates. Le retour au canal stable attend une version stable plus récente."
+  },
   "budget": {
     "label": "Budget quotidien des applications en minutes",
     "hint": "Saisissez 0 pour le désactiver. Le temps passé dans les applications lancées s’additionne pour ce profil.",

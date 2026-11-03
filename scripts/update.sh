@@ -4,12 +4,19 @@ set -euo pipefail
 APP_ID="cozy-kids-launcher"
 REPO="${COZY_KIDS_REPO:-TrissyGE/cozy-kids-launcher}"
 RELEASE_API_URL="${COZY_KIDS_RELEASE_API_URL:-https://api.github.com/repos/$REPO/releases/latest}"
+PREVIEW_API_URL="${COZY_KIDS_PREVIEW_API_URL:-${RELEASE_API_URL%/latest}?per_page=100}"
 RAW_URL="${COZY_KIDS_RAW_URL:-https://raw.githubusercontent.com/$REPO/main}"
 MAIN_ARCHIVE_URL="${COZY_KIDS_MAIN_ARCHIVE_URL:-https://github.com/$REPO/archive/refs/heads/main.zip}"
 APP_ROOT="$HOME/.local/share/$APP_ID"
 VERSION_FILE="$APP_ROOT/version"
 CHANNEL_FILE="$APP_ROOT/update-channel"
 CONFIG_FILE="$HOME/.config/$APP_ID/config.json"
+TRACK_FILE="$HOME/.config/$APP_ID/update-track"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UPDATE_MANAGER="$SCRIPT_DIR/update_manager.py"
+if [[ ! -f "$UPDATE_MANAGER" ]]; then
+  UPDATE_MANAGER="$SCRIPT_DIR/../src/update_manager.py"
+fi
 RUNTIME_BIN="$HOME/.local/bin/$APP_ID"
 TMP_DIR="$(mktemp -d)"
 CONFIG_BACKED_UP="0"
@@ -63,6 +70,7 @@ Usage: scripts/update.sh [options]
 Options:
   --check-only   Check for an update without installing it
   --force        Reinstall the same version (never downgrades)
+  --set-channel stable|preview   Save the update channel without installing
   --legacy-main  Explicitly use the legacy main/VERSION update source
   -h, --help     Show this help
 EOF
@@ -71,30 +79,6 @@ EOF
 die() {
   echo "Error: $*" >&2
   exit 1
-}
-
-is_semver() {
-  [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-}
-
-# Return success when version $1 is numerically greater than or equal to $2.
-version_ge() {
-  local left="$1" right="$2" index left_part right_part
-  local IFS=.
-  local -a left_parts right_parts
-  read -ra left_parts <<< "$left"
-  read -ra right_parts <<< "$right"
-  for index in 0 1 2; do
-    left_part=$((10#${left_parts[index]:-0}))
-    right_part=$((10#${right_parts[index]:-0}))
-    if (( left_part > right_part )); then return 0; fi
-    if (( left_part < right_part )); then return 1; fi
-  done
-  return 0
-}
-
-version_gt() {
-  version_ge "$1" "$2" && [[ "$1" != "$2" ]]
 }
 
 download() {
@@ -109,43 +93,14 @@ download() {
 }
 
 discover_release() {
-  local metadata="$TMP_DIR/latest-release.json"
-  if ! download "$RELEASE_API_URL" "$metadata" 2>/dev/null; then
+  local metadata="$TMP_DIR/latest-release.json" endpoint="$RELEASE_API_URL"
+  if [[ "$TRACK" == "preview" ]]; then
+    endpoint="$PREVIEW_API_URL"
+  fi
+  if ! download "$endpoint" "$metadata" 2>/dev/null; then
     return 2
   fi
-
-  python3 - "$metadata" <<'PY'
-import json
-import re
-import sys
-
-try:
-    with open(sys.argv[1], encoding="utf-8") as handle:
-        release = json.load(handle)
-    tag = release["tag_name"]
-    if release.get("draft") or release.get("prerelease"):
-        raise ValueError("latest release is not stable")
-    version = tag[1:] if tag.startswith("v") else tag
-    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
-        raise ValueError("release tag is not a supported semantic version")
-    archive_name = f"cozy-kids-launcher-{version}.tar.gz"
-    assets = {
-        asset.get("name"): asset.get("browser_download_url")
-        for asset in release.get("assets", [])
-    }
-    archive_url = assets.get(archive_name)
-    checksum_url = assets.get("SHA256SUMS")
-    if not archive_url or not checksum_url:
-        raise ValueError("release is missing its archive or SHA256SUMS asset")
-except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-    print(f"Invalid release metadata: {error}", file=sys.stderr)
-    raise SystemExit(3)
-
-print(version)
-print(archive_name)
-print(archive_url)
-print(checksum_url)
-PY
+  python3 "$UPDATE_MANAGER" select "$metadata" "$TRACK" || return 3
 }
 
 read_legacy_version() {
@@ -216,22 +171,38 @@ prepare_snapshot() {
 CHECK_ONLY="0"
 FORCE="0"
 LEGACY_MAIN="0"
+SET_TRACK=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check-only) CHECK_ONLY="1"; shift ;;
     --force) FORCE="1"; shift ;;
     --legacy-main) LEGACY_MAIN="1"; shift ;;
+    --set-channel)
+      [[ $# -eq 2 && "$CHECK_ONLY" == "0" && "$FORCE" == "0" && "$LEGACY_MAIN" == "0" ]]         || die "Use --set-channel stable|preview on its own"
+      SET_TRACK="$2"
+      [[ "$SET_TRACK" == "stable" || "$SET_TRACK" == "preview" ]] || die "Expected stable or preview"
+      shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown option: $1" ;;
   esac
 done
 
+if [[ -n "$SET_TRACK" ]]; then
+  python3 "$UPDATE_MANAGER" set-track "$TRACK_FILE" "$SET_TRACK"
+  echo "Update channel: $SET_TRACK"
+  exit 0
+fi
+
+TRACK="$(python3 "$UPDATE_MANAGER" track "$TRACK_FILE")"
+[[ "$TRACK" != "preview" || "$LEGACY_MAIN" != "1" ]] || die "Switch to stable before requesting legacy main"
+echo "Update channel: $TRACK"
+
 INSTALLED_VERSION="0.0.0"
 if [[ -f "$VERSION_FILE" ]]; then
   INSTALLED_VERSION="$(head -n1 "$VERSION_FILE" | tr -d '[:space:]')"
 fi
-is_semver "$INSTALLED_VERSION" || die "Installed version is invalid: $INSTALLED_VERSION"
+python3 "$UPDATE_MANAGER" compare "$INSTALLED_VERSION" "$INSTALLED_VERSION" >/dev/null || die "Installed version is invalid"
 
 echo "Installed version: $INSTALLED_VERSION"
 echo "Checking for updates..."
@@ -263,6 +234,7 @@ if [[ "$LEGACY_MAIN" != "1" ]]; then
 fi
 
 if [[ -z "$UPDATE_SOURCE" ]]; then
+  [[ "$TRACK" == "stable" ]] || die "Preview discovery failed. Retry later."
   if [[ -f "$CHANNEL_FILE" && "$(head -n1 "$CHANNEL_FILE" | tr -d '[:space:]')" == "release" && "$LEGACY_MAIN" != "1" ]]; then
     die "Release discovery failed. This installation has already used verified releases, so mutable main fallback is disabled. Retry later or explicitly use --legacy-main."
   fi
@@ -275,21 +247,24 @@ if [[ -z "$UPDATE_SOURCE" ]]; then
   LATEST_VERSION="$(read_legacy_version)" || die "Could not fetch the legacy VERSION file"
 fi
 
-is_semver "$LATEST_VERSION" || die "Latest version is invalid: $LATEST_VERSION"
+if [[ "$UPDATE_SOURCE" == "legacy-main" && ! "$LATEST_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  die "Legacy version is invalid"
+fi
+ORDER="$(python3 "$UPDATE_MANAGER" compare "$INSTALLED_VERSION" "$LATEST_VERSION")" || die "Latest version is invalid"
 echo "Latest version:    $LATEST_VERSION ($UPDATE_SOURCE)"
 
-if version_gt "$INSTALLED_VERSION" "$LATEST_VERSION"; then
+if [[ "$ORDER" == "1" ]]; then
   echo "Installed version is newer; refusing to downgrade."
   exit 0
 fi
 
-if [[ "$INSTALLED_VERSION" == "$LATEST_VERSION" && "$FORCE" != "1" ]]; then
+if [[ "$ORDER" == "0" && "$FORCE" != "1" ]]; then
   echo "You are up to date."
   exit 0
 fi
 
 if [[ "$CHECK_ONLY" == "1" ]]; then
-  if [[ "$INSTALLED_VERSION" == "$LATEST_VERSION" ]]; then
+  if [[ "$ORDER" == "0" ]]; then
     echo "Version $LATEST_VERSION can be reinstalled with --force."
   else
     echo "Update available: $LATEST_VERSION (installed: $INSTALLED_VERSION)"

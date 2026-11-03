@@ -4,6 +4,9 @@ import json
 import os
 import re
 import shlex
+import sys
+import tempfile
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 
@@ -30,14 +33,85 @@ def parse_semver(value):
     return tuple(int(part) for part in value.split("."))
 
 
+def version_order(value):
+    """Order numeric releases, with release candidates before their final version."""
+    if not isinstance(value, str):
+        return None
+    match = re.fullmatch(r"([0-9]{1,9})\.([0-9]{1,9})\.([0-9]{1,9})(?:-rc\.([1-9][0-9]{0,8}))?", value)
+    if match is None:
+        return None
+    major, minor, patch, candidate = match.groups()
+    return int(major), int(minor), int(patch), candidate is None, int(candidate or 0)
+
+
 def version_is_newer(candidate, installed):
-    candidate_parts = parse_semver(candidate)
-    installed_parts = parse_semver(installed)
-    return bool(
-        candidate_parts
-        and installed_parts
-        and candidate_parts > installed_parts
-    )
+    candidate_parts = version_order(candidate)
+    installed_parts = version_order(installed)
+    return bool(candidate_parts and installed_parts and candidate_parts > installed_parts)
+
+
+def read_update_track(path):
+    try:
+        if path is not None and Path(path).read_text(encoding="utf-8").strip() == "preview":
+            return "preview"
+    except (OSError, ValueError):
+        pass
+    return "stable"
+
+
+def write_update_track(path, track):
+    if track not in ("stable", "preview"):
+        raise ValueError("Expected stable or preview")
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=path.parent, mode="w", encoding="utf-8", delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            stream.write(track + "\n")
+            stream.close()
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+def select_release(metadata, track):
+    """Choose a stable release or the highest eligible immutable preview-track release."""
+    if track == "preview":
+        if not isinstance(metadata, list):
+            raise ValueError("Expected a release list")
+        eligible = []
+        for release in metadata:
+            if not isinstance(release, dict) or release.get("draft") or release.get("immutable") is not True:
+                continue
+            tag = release.get("tag_name")
+            if not isinstance(tag, str) or not tag.startswith("v"):
+                continue
+            order = version_order(tag[1:])
+            if order is None or bool(release.get("prerelease")) == order[3]:
+                continue
+            eligible.append((order, release))
+        if not eligible:
+            raise ValueError("No immutable release is available on the preview track")
+        _, release = max(eligible, key=lambda entry: entry[0])
+    else:
+        release = metadata
+        if not isinstance(release, dict) or release.get("draft") or release.get("prerelease"):
+            raise ValueError("Latest release is not stable")
+
+    tag = release.get("tag_name", "")
+    if not isinstance(tag, str):
+        raise ValueError("Invalid release tag")
+    version = tag.removeprefix("v")
+    if track == "stable" and not parse_semver(version):
+        raise ValueError("Release tag is not a supported semantic version")
+    name = f"cozy-kids-launcher-{version}.tar.gz"
+    assets = {
+        asset.get("name"): asset.get("browser_download_url")
+        for asset in release.get("assets", []) if isinstance(asset, dict)
+    }
+    if name not in assets or "SHA256SUMS" not in assets:
+        raise ValueError("Release is missing verified update assets")
+    return version, tag, name, assets[name], assets["SHA256SUMS"]
 
 
 def fetch_remote_json(url, timeout=5):
@@ -66,34 +140,20 @@ def resolve_update_status(
     timeout=5,
     fetch_json=fetch_remote_json,
     fetch_text=fetch_remote_text,
+    preview_api_url=None,
+    track_file=None,
 ):
     """Prefer a verified stable release, retaining the legacy main fallback."""
+    track = read_update_track(track_file)
     release_error = None
     try:
-        release = fetch_json(release_api_url, timeout=timeout)
+        endpoint = preview_api_url if track == "preview" else release_api_url
+        release = fetch_json(endpoint, timeout=timeout)
     except Exception as exc:
         release_error = exc
     else:
         try:
-            tag = release.get("tag_name", "")
-            latest = tag[1:] if tag.startswith("v") else tag
-            archive_name = f"cozy-kids-launcher-{latest}.tar.gz"
-            asset_names = {
-                asset.get("name")
-                for asset in release.get("assets", [])
-                if isinstance(asset, dict)
-            }
-            if release.get("draft") or release.get("prerelease"):
-                raise ValueError("Latest release is not stable")
-            if not parse_semver(latest):
-                raise ValueError(
-                    "Release tag is not a supported semantic version"
-                )
-            if (
-                archive_name not in asset_names
-                or "SHA256SUMS" not in asset_names
-            ):
-                raise ValueError("Release is missing verified update assets")
+            latest, tag, _, _, _ = select_release(release, track)
         except (AttributeError, TypeError, ValueError) as exc:
             raise RuntimeError(
                 "Update check failed: invalid release metadata"
@@ -106,6 +166,8 @@ def resolve_update_status(
             "updateAvailable": version_is_newer(latest, installed),
         }
 
+    if track == "preview":
+        raise RuntimeError("Update check failed: preview releases unavailable") from release_error
     try:
         if os.path.isfile(update_channel_file):
             with open(update_channel_file, "r", encoding="utf-8") as handle:
@@ -142,3 +204,33 @@ def write_update_trigger(app_root, update_script):
         handle.write(trigger_script)
     os.chmod(trigger_path, 0o755)
     return trigger_path
+
+
+def main(argv):
+    command, *args = argv
+    if command == "compare":
+        left, right = map(version_order, args)
+        if left is None or right is None:
+            raise ValueError("Invalid version")
+        print((left > right) - (left < right))
+    elif command == "track":
+        print(read_update_track(args[0]))
+    elif command == "set-track":
+        write_update_track(*args)
+    elif command == "select":
+        path, track = args
+        with open(path, encoding="utf-8") as stream:
+            version, _, name, archive, checksums = select_release(json.load(stream), track)
+        if any(not isinstance(url, str) or not re.fullmatch(r"https?://[^\s]+", url)
+               for url in (archive, checksums)):
+            raise ValueError("Release assets have invalid download URLs")
+        print(version, name, archive, checksums, sep="\n")
+    else:
+        raise ValueError("Unknown update command")
+
+
+if __name__ == "__main__":
+    try:
+        main(sys.argv[1:])
+    except (AttributeError, OSError, TypeError, ValueError) as error:
+        sys.exit(str(error))

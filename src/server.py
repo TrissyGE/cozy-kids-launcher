@@ -132,9 +132,11 @@ from update_manager import (
     fetch_remote_json as fetch_update_json,
     fetch_remote_text as fetch_update_text,
     parse_semver,
+    read_update_track,
     read_version,
     resolve_update_status,
     version_is_newer,
+    write_update_track,
     write_update_trigger,
 )
 
@@ -146,6 +148,10 @@ UPDATE_CHANNEL_FILE = os.path.join(APP_ROOT, "update-channel")
 LATEST_RELEASE_API = os.environ.get(
     "COZY_KIDS_RELEASE_API_URL",
     "https://api.github.com/repos/TrissyGE/cozy-kids-launcher/releases/latest",
+)
+PREVIEW_RELEASE_API = os.environ.get(
+    "COZY_KIDS_PREVIEW_API_URL",
+    LATEST_RELEASE_API.removesuffix("/latest") + "?per_page=100",
 )
 LEGACY_RAW_URL = os.environ.get(
     "COZY_KIDS_RAW_URL",
@@ -507,6 +513,8 @@ def get_update_status(timeout=5):
         timeout=timeout,
         fetch_json=_fetch_remote_json,
         fetch_text=_fetch_remote_text,
+        preview_api_url=PREVIEW_RELEASE_API,
+        track_file=Path(CFG).with_name("update-track"),
     )
 
 
@@ -889,6 +897,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response(load_recommendations())
         if self.path == "/api/version":
             return self.json_response({"version": get_version()})
+        if self.path == "/api/update/channel":
+            if self.require_admin():
+                self.json_response({"channel": read_update_track(Path(CFG).with_name("update-track"))})
+            return
         if self.path == "/api/update/status":
             try:
                 status = get_update_status()
@@ -1617,6 +1629,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             log_runtime_event("timer.extended")
             self.json_response({"valid": True, "endTime": end_time, "minutes": minutes})
             return
+        if action == "api/update/channel":
+            if not self.require_admin():
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            try:
+                write_update_track(Path(CFG).with_name("update-track"), body.get("channel"))
+            except ValueError:
+                return self.json_response({"status": "error"}, 400)
+            except OSError:
+                return self.json_response({"status": "error"}, 503)
+            return self.json_response({"channel": body["channel"]})
         if action == "api/update":
             if not self.require_admin():
                 return

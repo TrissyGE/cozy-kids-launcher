@@ -118,6 +118,36 @@ class UpdateDiscoveryTests(unittest.TestCase):
         fetch_text.assert_not_called()
 
 
+    def test_preview_uses_numeric_rc_order_and_prefers_final_of_same_version(self):
+        def release(version, immutable=True, draft=False):
+            return {
+                "tag_name": f"v{version}", "prerelease": "-rc." in version,
+                "immutable": immutable, "draft": draft,
+                "assets": [{"name": f"cozy-kids-launcher-{version}.tar.gz"}, {"name": "SHA256SUMS"}],
+            }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            track = Path(temp_dir) / "update-track"
+            update_manager.write_update_track(track, "preview")
+            metadata = [release("0.8.0-rc.10"), release("0.8.0-rc.9"),
+                        release("0.9.0-rc.1", immutable=False), release("0.9.1-rc.1", draft=True)]
+            fetch_json = mock.Mock(return_value=metadata)
+            fetch_text = mock.Mock()
+
+            def status():
+                return update_manager.resolve_update_status(
+                    "0.8.0-rc.9", "stable-url", "legacy-url", Path(temp_dir) / "update-channel",
+                    fetch_json=fetch_json, fetch_text=fetch_text,
+                    track_file=track, preview_api_url="preview-url",
+                )
+
+            self.assertEqual(status()["latestVersion"], "0.8.0-rc.10")
+            self.assertTrue(status()["updateAvailable"])
+            metadata.append(release("0.8.0"))
+            self.assertEqual(status()["latestVersion"], "0.8.0")
+            fetch_json.assert_called_with("preview-url", timeout=5)
+            fetch_text.assert_not_called()
+
+
 class UpdateTriggerTests(unittest.TestCase):
     def test_trigger_delegates_to_the_installed_updater(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -301,6 +301,12 @@
   "themeMotion": "Movimiento suave del fondo",
   "themeTimeOfDay": "Adaptar a la hora local",
   "worldThemeHint": "Disponible para los mundos ilustrados. La preferencia del dispositivo de reducir el movimiento tiene prioridad.",
+  "updateTrack": {
+    "label": "Canal de actualización",
+    "stable": "Estable",
+    "preview": "Vista previa",
+    "hint": "La vista previa incluye versiones candidatas. Al volver al canal estable, se espera a una versión estable más reciente."
+  },
   "budget": {
     "label": "Presupuesto diario de aplicaciones en minutos",
     "hint": "Introduce 0 para desactivarlo. Se suma el tiempo en aplicaciones iniciadas durante todas las sesiones de este perfil.",

@@ -82,6 +82,7 @@ EXTRA_UI_KEYS = {
 }
 
 UI_GROUPS = {
+    "updateTrack": ("update_track", "label stable preview hint".split()),
     "budget": ("budget", (
         "label hint remaining nextAllowed exhausted unavailable request extraMinutes extend extendError "
         "newProfile copySource copy copyConfirm"

@@ -19,6 +19,44 @@ function parseBrowserAllowedOrigins(value){
 
 // Update check
 let installedVersion='0.0.0';
+let savedUpdateTrack='stable';
+async function loadUpdateTrack(){
+  const select=document.getElementById('updateTrack');
+  select.disabled=true;
+  try{
+    const response=await fetch('/api/update/channel',{cache:'no-store'});
+    if(!response.ok) return;
+    savedUpdateTrack=(await response.json()).channel;
+    select.value=savedUpdateTrack;
+    select.disabled=false;
+  }catch(e){}
+}
+async function saveUpdateTrack(){
+  const select=document.getElementById('updateTrack');
+  const button=document.getElementById('checkUpdateBtn');
+  const message=document.getElementById('updateMsg');
+  if(button.disabled){
+    select.value=savedUpdateTrack;
+    return;
+  }
+  document.getElementById('updateRow').style.display='none';
+  clearUiState(message);
+  select.disabled=true;
+  button.disabled=true;
+  try{
+    const response=await fetch('/api/update/channel',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({channel:select.value})});
+    if(!response.ok) throw new Error('Update channel rejected');
+    savedUpdateTrack=(await response.json()).channel;
+    updateAvailable=false;
+  }catch(e){
+    renderUiState(message,'error',uiText.saveError);
+  }finally{
+    select.value=savedUpdateTrack;
+    select.disabled=false;
+    button.disabled=false;
+  }
+}
 async function checkUpdate(){
   const btn=document.getElementById('checkUpdateBtn');
   const msg=document.getElementById('updateMsg');
@@ -32,6 +70,7 @@ async function checkUpdate(){
     const status=await statusR.json();
     installedVersion=status.installedVersion||'0.0.0';
     document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
+    updateAvailable=Boolean(status.updateAvailable);
     if(status.updateAvailable){
       renderUiState(msg,'success',(uiText.updateAvailable||'Update available')+': '+status.latestVersion);
       updateRow.style.display='grid';
@@ -109,6 +148,7 @@ function activateAdminSection(section,focusHeading=false){
   });
   const activePanel=document.querySelector('[data-admin-panel="'+section+'"]');
   if(changed) playAdminPanelTransition(activePanel);
+  if(changed&&section==='system') void loadUpdateTrack();
   if(focusHeading){
     const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
     if(heading) heading.focus({preventScroll:true});
@@ -417,6 +457,10 @@ function renderAdmin(){
   document.getElementById('browserHint').textContent=uiText.browserHint;
   document.getElementById('cfgParentLabel').value=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}';
   document.getElementById('cfgExitLabel').value=cfg.exitLabel||'{{DEFAULT_EXIT_LABEL}}';
+  document.getElementById('updateTrackLabel').textContent=uiText.updateTrack.label;
+  document.getElementById('updateTrackStable').textContent=uiText.updateTrack.stable;
+  document.getElementById('updateTrackPreview').textContent=uiText.updateTrack.preview;
+  document.getElementById('updateTrackHint').textContent=uiText.updateTrack.hint;
   setIconLabel(document.getElementById('checkUpdateBtn'),'refresh',uiText.updateCheck||'Check for updates');
   document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
   clearUiState(document.getElementById('updateMsg'));

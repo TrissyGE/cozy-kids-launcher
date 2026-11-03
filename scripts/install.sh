@@ -726,7 +726,7 @@ keys = (
     "firstRun", "profiles", "defaultTitle", "defaultParentLabel", "defaultExitLabel",
     "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
     "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
-    "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget",
+    "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget", "updateTrack",
 )
 print(json.dumps({key: locale[key] for key in keys}, ensure_ascii=True))
 PY

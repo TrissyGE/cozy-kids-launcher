@@ -25,8 +25,8 @@ if git show-ref --verify --quiet refs/remotes/origin/main; then
 fi
 
 VERSION="$(tr -d '\r\n' < VERSION)"
-[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "VERSION must use x.y.z semantic versioning"
-grep -Eq "^## \[$VERSION\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md \
+[[ "$VERSION" =~ ^[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}(-rc\.[1-9][0-9]{0,8})?$ ]] || die "VERSION must use x.y.z or x.y.z-rc.N"
+grep -F "## [$VERSION] - " CHANGELOG.md | grep -Eq '^## \[[^]]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$' \
   || die "CHANGELOG.md needs a dated section for $VERSION"
 
 if [[ -n "$(git status --short)" ]]; then
