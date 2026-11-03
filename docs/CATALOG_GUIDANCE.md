@@ -3,7 +3,8 @@
 The following guidance was reviewed on **2026-11-02 and 2026-11-03** against
 the projects’ and providers’ own documentation. This is a documentation review, separate from package,
 fullscreen and input acceptance. The catalog still contains all 31 existing
-recommendations. Twenty now have guidance and eleven still show unknown fields.
+recommendations. All 31 now have a source and a review date. Individual fields
+remain unknown where the sources do not establish the answer.
 
 | Recommendation | Source and scope |
 |---|---|
@@ -28,6 +29,24 @@ recommendations. Twenty now have guidance and eleven still show unknown fields.
 | Blinken | [Project](https://apps.kde.org/blinken/) and [handbook](https://docs.kde.org/trunk_kf6/en/blinken/blinken/playing-tips.html) for pattern recall and keyboard/mouse play. |
 | KWordQuiz | [Project](https://apps.kde.org/kwordquiz/) and [handbook](https://docs.kde.org/stable_kf6/en/kwordquiz/kwordquiz/kwordquiz.pdf) for locally authored flashcards. |
 | Parley | [Project](https://apps.kde.org/parley/) and [handbook](https://docs.kde.org/trunk_kf6/en/parley/parley/creating-new-files.html) for local word lists and optional downloaded collections. |
+| TuxMath | [Project manual](https://github.com/tux4kids/tuxmath/blob/master/doc/README) for local arithmetic practice and optional LAN games. |
+| Tux Typing | [Project README](https://github.com/tux4kids/tuxtype) for typing lessons and local letter and word games. |
+| SuperTux | [Project overview](https://www.supertux.org/discover.html) for the story mode and optional community levels. The published mobile privacy policy is scoped to mobile, so no desktop privacy claim was inferred. |
+| SuperTuxKart | [Game modes](https://supertuxkart.net/Discover) and [online service status](https://members.supertuxkart.net/posts/supertuxkart-has-173200716). The project’s October 2026 notice distinguishes offline play from the services it took offline. |
+| Frozen Bubble | [Packaged manual](https://manpages.debian.org/unstable/frozen-bubble/frozen-bubble.1p.en.html) for local and network modes, keyboard controls and the optional shot timer. |
+| Minetest / Luanti | [Project overview](https://www.luanti.org/en/) and [application privacy policy](https://www.luanti.org/app-privacy-policy/) for local worlds, optional content downloads and third-party servers. |
+| Extreme Tux Racer | [Project page](https://sourceforge.net/projects/extremetuxracer/) for the local downhill game. |
+| Pingus | [Project repository](https://github.com/Pingus/pingus) for the local puzzle game. |
+| Childsplay | [Project overview](https://childsplay.sourceforge.net/) for memory and mouse/keyboard exercises. |
+| PySyCache | [Project manual](https://pysycache.org/user-manual/en/index.html) for its suggested age range and mouse exercises. |
+| Potato Guy | Legacy entry. [KTuberling](https://apps.kde.org/ktuberling/) documents the corresponding kind of play and [Ubuntu lists KTuberling](https://packages.ubuntu.com/ktuberling) under its own package name. The legacy entry’s offline and input fields remain unknown. |
+
+A read-only APT cache check on Ubuntu 24.04 under WSL found candidates for
+TuxMath, Tux Typing, SuperTux, SuperTuxKart, Frozen Bubble, Minetest, Extreme
+Tux Racer and Pingus. The same cache had no candidates for Childsplay,
+PySyCache or the legacy Potato Guy name. This is a snapshot of one package
+cache. The cross-distribution and in-session acceptance checks remain separate.
+
 The eleven KDE project pages identify GPL-2.0-or-later licensing. Offline
 availability describes the documented local core activities, not a guarantee
 about every version or optional feature. Network/privacy behavior remains
