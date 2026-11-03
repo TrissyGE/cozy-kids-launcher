@@ -194,7 +194,7 @@ their own evidence is complete. See the release standard at the end.
 ### More languages and extensible translations
 
 - [x] Ship German/English UI resources with generated-locale freshness checks and live language switching
-- [ ] Introduce one language registry for installer, backend validation and all language pickers
+- [x] Introduce one language registry for installer, backend validation and all language pickers
 - [ ] Make locale data files the translation source, with reusable English fallback, key/plural/placeholder validation and no per-language logic branches for adding a language
 - [ ] Translate and review Spanish across installer, child UI, Parent settings and recovery messages
 - [ ] Translate and review French across the same surfaces
@@ -205,7 +205,8 @@ their own evidence is complete. See the release standard at the end.
 - [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
 
 The [translation guide](LOCALIZATION.md) explains the current German/English
-pipeline and the planned registry/data-file migration. Spanish, French and
+pipeline, the shared registry and the planned migration to translation data
+files. Spanish, French and
 Italian remain upcoming packs, rather than already-enabled settings options.
 
 ### Lifecycle and reach

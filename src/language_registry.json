@@ -1,0 +1,7 @@
+{
+  "default": "en",
+  "languages": [
+    {"code": "en", "name": "English", "icon": "🇬🇧"},
+    {"code": "de", "name": "Deutsch", "icon": "🇩🇪"}
+  ]
+}

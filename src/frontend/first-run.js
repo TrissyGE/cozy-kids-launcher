@@ -80,7 +80,7 @@ function renderFirstRun(){
 function renderFirstRunLanguage(content){
   const choices=document.createElement('div');
   choices.className='first-run-language-grid';
-  for(const [language,label,emoji] of [['de','Deutsch','🇩🇪'],['en','English','🇬🇧']]){
+  for(const {code:language,name:label,icon:emoji} of INTERFACE_LANGUAGE_REGISTRY.languages){
     const button=document.createElement('button');
     button.type='button';
     button.className='first-run-choice';
@@ -91,6 +91,7 @@ function renderFirstRunLanguage(content){
     icon.setAttribute('aria-hidden','true');
     icon.textContent=emoji;
     const name=document.createElement('strong');
+    name.lang=language;
     name.textContent=label;
     button.append(icon,name);
     button.onclick=()=>selectFirstRunLanguage(language);

@@ -122,6 +122,13 @@ class StableMainReleaseContractTests(unittest.TestCase):
                 ).read_text(encoding="utf-8")
             )
             self.assertFalse(installed["setupCompleted"])
+            self.assertEqual(installed["language"], "en")
+            app_root = Path(home) / ".local/share/cozy-kids-launcher"
+            registry = json.loads((REPOSITORY_ROOT / "src/language_registry.json").read_text(encoding="utf-8"))
+            self.assertEqual(json.loads((app_root / "language_registry.json").read_text(encoding="utf-8")), registry)
+            self.assertTrue((app_root / "language_registry.py").is_file())
+            for entry in registry["languages"]:
+                self.assertTrue((app_root / "frontend/locales" / (entry["code"] + ".json")).is_file())
             self.assertTrue(installed["profiles"][0]["themeMotionEnabled"])
             self.assertFalse(installed["profiles"][0]["themeTimeOfDayEnabled"])
             self.assertFalse(installed["profiles"][0]["accessibilityLargeText"])
