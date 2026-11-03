@@ -372,7 +372,7 @@
   "retro_enabled": "Enable RetroGameCorner for this child",
   "retro_covers": "Download cover art automatically from Libretro (sends the game title and console)",
   "retro_library_empty": "There are no approved games available yet.",
-  "retro_empty": "No additional games found. Choose a folder with .gb, .gbc or .gba files.",
+  "retro_empty": "No additional games found. Choose a folder with .gb, .gbc or .gba files, or ZIP archives with one such ROM.",
   "retro_limit": "The scan reached its limit. Choose a smaller game folder.",
   "retro_unavailable": "This game is unavailable. Ask a parent to check the folder, game approval and mGBA installation.",
   "runtime_failure_body": "Cozy Kids Launcher could not restart after several attempts. Please start kids mode again. If the problem returns, download diagnostics from Parent settings after a successful start.",

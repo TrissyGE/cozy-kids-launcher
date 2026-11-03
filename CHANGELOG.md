@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Living Room
 
+- Recognize single-ROM ZIP archives in RetroGameCorner, check them at launch and match covers by the ROM inside.
+
 - Give RetroGameCorner its own Parent section, one optional Home tile, and a cover library with opt-in Libretro artwork.
 
 - Add the first RetroGameCorner integration with mGBA, local game folders, per-child approvals and private save directories.

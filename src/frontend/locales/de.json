@@ -263,7 +263,7 @@
   "retroRefresh": "Spiele aktualisieren",
   "retroGame": "Spiel für das aktive Kind",
   "retroApprove": "Spiel freigeben",
-  "retroEmpty": "Keine weiteren Spiele gefunden. Wähle einen Ordner mit .gb-, .gbc- oder .gba-Dateien.",
+  "retroEmpty": "Keine weiteren Spiele gefunden. Wähle einen Ordner mit .gb-, .gbc- oder .gba-Dateien oder ZIP-Archiven mit genau einer solchen ROM.",
   "retroLimit": "Die Suche hat ihr Limit erreicht. Wähle einen kleineren Spieleordner.",
   "retroUnavailable": "Dieses Spiel ist nicht verfügbar. Bitte einen Elternteil, den Ordner, die Spielfreigabe und die mGBA-Installation zu prüfen.",
   "controllerNavigationLabel": "Navigation mit Controller und Fernbedienung",

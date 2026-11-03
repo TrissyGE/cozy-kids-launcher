@@ -263,7 +263,7 @@
   "retroRefresh": "Actualizar juegos",
   "retroGame": "Juego para el perfil activo",
   "retroApprove": "Aprobar juego",
-  "retroEmpty": "No hay más juegos. Elige una carpeta con archivos .gb, .gbc o .gba.",
+  "retroEmpty": "No hay más juegos. Elige una carpeta con archivos .gb, .gbc o .gba, o archivos ZIP con una sola ROM de ese tipo.",
   "retroLimit": "Se ha alcanzado el límite de búsqueda. Elige una carpeta más pequeña.",
   "retroUnavailable": "Este juego no está disponible. Pide a un adulto que compruebe la carpeta, el permiso y la instalación de mGBA.",
   "controllerNavigationLabel": "Navegación con mando y control remoto",

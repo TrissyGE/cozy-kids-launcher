@@ -263,7 +263,7 @@
   "retroRefresh": "Refresh games",
   "retroGame": "Game for the active child",
   "retroApprove": "Approve game",
-  "retroEmpty": "No additional games found. Choose a folder with .gb, .gbc or .gba files.",
+  "retroEmpty": "No additional games found. Choose a folder with .gb, .gbc or .gba files, or ZIP archives with one such ROM.",
   "retroLimit": "The scan reached its limit. Choose a smaller game folder.",
   "retroUnavailable": "This game is unavailable. Ask a parent to check the folder, game approval and mGBA installation.",
   "controllerNavigationLabel": "Controller and remote navigation",

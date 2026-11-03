@@ -15,6 +15,7 @@ import tempfile
 import threading
 import time
 import urllib.request
+import zipfile
 from pathlib import Path
 
 from browser_driver import BrowserSession, find_browser, stop_process
@@ -400,8 +401,10 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     managed_root = test_home / "External Media"
     retro_root = test_home / "Game Fixtures"
     retro_root.mkdir()
-    (retro_root / "Local Test.gba").write_bytes(b"scanner fixture")
-    (retro_root / "Local Test.png").write_bytes(base64.b64decode(
+    archive = retro_root / "Game Bundle.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
+        zipped.writestr("Local Test.gba", b"scanner fixture")
+    (retro_root / "Game Bundle.png").write_bytes(base64.b64decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
     ))
     browser.evaluate("enterAdmin(); activateAdminSection('retro')")
@@ -427,7 +430,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
                      message="The approved game did not display its local cover")
     assert_js(browser, "getComputedStyle(document.querySelector('.media-cover img')).objectFit==='contain'",
               "Portrait box art was cropped")
-    (retro_root / "Local Test.gba").write_bytes(b"replacement")
+    archive.write_bytes(b"replacement")
     browser.click(".media-card")
     browser.wait_for("document.querySelector('#mediaState .ui-state-message')?.textContent===mediaText.retroUnavailable")
     assert_js(
