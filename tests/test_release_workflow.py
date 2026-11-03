@@ -11,6 +11,14 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 class StableMainReleaseContractTests(unittest.TestCase):
+    def test_local_and_hosted_release_gates_require_matching_archive_builds(self):
+        workflow = (REPOSITORY_ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        deploy = (REPOSITORY_ROOT / "scripts/deploy.sh").read_text(encoding="utf-8")
+        for source in (workflow, deploy):
+            self.assertEqual(source.count("bash scripts/build-release-archives.sh"), 2)
+            self.assertIn("diff -qr", source)
+        self.assertLess(workflow.index('diff -qr dist "$repeat"'), workflow.index("gh release create"))
+
     def test_ci_runs_for_the_development_branch(self):
         workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "ci.yml").read_text(
             encoding="utf-8"

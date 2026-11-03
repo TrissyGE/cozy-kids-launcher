@@ -95,6 +95,21 @@ gh attestation verify cozy-kids-launcher-0.4.0.tar.gz \
   --repo TrissyGE/cozy-kids-launcher
 ```
 
+To reproduce the archives of a release that includes the shared builder,
+check out its tag in a clean clone.
+Use the Git and gzip builds reported in the release job, including a
+matching zlib for ZIP compression. The shared script reads `VERSION` and
+archive entries from the requested commit.
+
+```bash
+bash scripts/build-release-archives.sh HEAD rebuilt
+diff -u downloaded/SHA256SUMS rebuilt/SHA256SUMS
+(cd rebuilt && sha256sum -c ../downloaded/SHA256SUMS)
+```
+
+The local release gate and hosted workflow both rebuild into a second
+directory and compare the bytes before continuing.
+
 Finally, test both upgrade paths on disposable profiles:
 
 1. an installed v0.3.x updater using the `main/VERSION` compatibility path;

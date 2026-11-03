@@ -331,6 +331,7 @@ stable-`main` updater contract.
 - [ ] Verify clean install, script-to-package migration, upgrade, rollback, backup restore, and uninstall paths on every supported distribution
 - [ ] Complete manual screen-reader coverage alongside keyboard, touch, reduced-motion, high-contrast, and low-resolution testing
 - [ ] Make release artifacts and repository metadata reproducible, signed where applicable, and independently verifiable
+  - [x] Share the release archive builder between local and hosted checks and require two builds of the same commit to match
 - [ ] Document a sustainable translation, accessibility, security-reporting, and downstream-packaging contribution workflow
 
 ## Release standard
