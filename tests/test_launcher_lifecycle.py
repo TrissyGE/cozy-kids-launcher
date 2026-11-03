@@ -238,6 +238,8 @@ class LauncherLifecycleTests(unittest.TestCase):
                 encoding="utf-8",
             )
             lifecycle_file = cache / "lifecycle.json"
+            stale_exit = cache / "exit-requested"
+            stale_exit.write_text("1", encoding="utf-8")
             first = subprocess.Popen(
                 [str(launcher)],
                 env=environment,
@@ -267,6 +269,7 @@ class LauncherLifecycleTests(unittest.TestCase):
                     )["state"],
                     "running",
                 )
+                self.assertFalse(stale_exit.exists())
                 self.assertEqual(
                     firefox_preferences.read_text(encoding="utf-8").splitlines(),
                     [

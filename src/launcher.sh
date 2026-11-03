@@ -4,6 +4,18 @@ if [[ -d /snap/bin ]] && [[ ":$PATH:" != *":/snap/bin:"* ]]; then
   export PATH="$PATH:/snap/bin"
 fi
 APP_ROOT="$HOME/.local/share/{{APP_ID}}"
+case "${1:-}" in
+  --service)
+    shift
+    exec python3 "$APP_ROOT/service_control.py" "$@"
+    ;;
+  --service-run|--standalone) shift ;;
+  *)
+    if [[ -f "$HOME/.config/{{APP_ID}}/user-service" ]]; then
+      exec python3 "$APP_ROOT/service_control.py" start "$@"
+    fi
+    ;;
+esac
 PORT="${COZY_KIDS_PORT:-{{DEFAULT_PORT}}}"
 CACHE_ROOT="$HOME/.cache/{{APP_ID}}"
 PIDFILE="$CACHE_ROOT/server.pid"
@@ -394,7 +406,7 @@ trap 'handle_signal HUP' HUP
 trap 'handle_signal INT' INT
 trap 'handle_signal TERM' TERM
 
-rm -f "$LIFECYCLE_REQUEST_FILE"
+rm -f "$LIFECYCLE_REQUEST_FILE" "$EXIT_FLAGFILE"
 lifecycle_begin initial-start
 
 while true; do

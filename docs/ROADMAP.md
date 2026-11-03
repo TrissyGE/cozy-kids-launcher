@@ -215,7 +215,7 @@ physical-device language acceptance remain separate tasks.
 
 ### Lifecycle and reach
 
-- [ ] Add a supported user-service lifecycle with useful status and recovery commands
+- [x] Add an opt-in systemd user service with status, recovery, stop and disable commands ([lifecycle guide](LIFECYCLE.md))
 - [ ] Add stable and opt-in preview update channels without weakening immutable releases
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
 

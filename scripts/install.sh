@@ -1335,6 +1335,7 @@ install -m 0644 "$SRC_DIR/language_registry.py" "$SRC_DIR/language_registry.json
 install -m 0644 "$SRC_DIR/profile_config.py" "$APP_ROOT/profile_config.py"
 install -m 0644 "$SRC_DIR/schedule_rules.py" "$APP_ROOT/schedule_rules.py"
 install -m 0644 "$SRC_DIR/lifecycle_state.py" "$APP_ROOT/lifecycle_state.py"
+install -m 0644 "$SRC_DIR/service_control.py" "$SRC_DIR/cozy-kids-launcher.service" "$APP_ROOT/"
 install -m 0644 "$SRC_DIR/media_library.py" "$APP_ROOT/media_library.py"
 install -m 0644 "$SRC_DIR/media_state.py" "$APP_ROOT/media_state.py"
 install -m 0644 "$SRC_DIR/media_resume.py" "$APP_ROOT/media_resume.py"
@@ -1517,6 +1518,8 @@ Categories=Utility;
 EOF
 
 write_file "$UNINSTALL_FILE" 0644 <<EOF
+If the optional user service is enabled, run: $RUNTIME_BIN --service disable
+
 Remove these paths to uninstall:
 - $APP_ROOT
 - $CFG_DIR
