@@ -431,7 +431,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
         applyDocumentLanguage(mediaConfig.language);
     """)
     browser.screenshot(artifacts / "media-library.png")
-    assert_js(browser, "!document.getElementById('mediaSourcesNotice').hidden",
+    browser.set_device_metrics(800, 600)
+    assert_js(browser, "document.getElementById('mediaSourcesNotice').getBoundingClientRect().height>0",
               "A disconnected managed folder was not reported")
     managed_root.mkdir()
     (managed_root / "Drive_Film.mp4").write_bytes(b"video fixture")
@@ -462,6 +463,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     })()""", await_promise=True)
     browser.click("#mediaRefresh")
     browser.wait_for("document.querySelectorAll('#mediaGrid .media-card').length===1")
+    browser.set_device_metrics(1440, 900)
     log_scenario("Parent-managed media folders reconnect and disconnect without exposing paths")
     browser.click("#mediaBack")
     browser.wait_for(
