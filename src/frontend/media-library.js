@@ -228,6 +228,8 @@ async function loadMediaCatalog(){
       if(replacement) replacement.focus();
     }
   }catch(e){
+    mediaItems=[];
+    document.getElementById('mediaGrid').replaceChildren();
     showMediaState('error',mediaText.mediaLibraryError,loadMediaCatalog);
   }finally{
     mediaCatalogLoading=false;

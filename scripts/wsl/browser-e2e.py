@@ -448,6 +448,20 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
         "!document.getElementById('mediaSourcesNotice').hidden && !document.body.textContent.includes('Drive Film')",
         message="A disconnected source left a stale card or cover",
     )
+    browser.evaluate("""(async () => {
+        const request=window.fetch;
+        try {
+            window.fetch=(url,...args)=>url==='/api/media'
+                ? Promise.resolve(new Response(null,{status:503})) : request(url,...args);
+            await loadMediaCatalog();
+            setMediaFilter('favorites');
+            if(document.querySelector('#mediaGrid .media-card')) throw new Error('Stale cards survived a failed refresh');
+        } finally {
+            window.fetch=request;
+        }
+    })()""", await_promise=True)
+    browser.click("#mediaRefresh")
+    browser.wait_for("document.querySelectorAll('#mediaGrid .media-card').length===1")
     log_scenario("Parent-managed media folders reconnect and disconnect without exposing paths")
     browser.click("#mediaBack")
     browser.wait_for(
