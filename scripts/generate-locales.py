@@ -4,16 +4,20 @@
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
+from language_registry import LANGUAGE_CODES
+
 INSTALLER = REPOSITORY_ROOT / "scripts" / "install.sh"
 STATE_TEMPLATE = REPOSITORY_ROOT / "src" / "frontend" / "state.js"
 LOCALE_ROOT = REPOSITORY_ROOT / "src" / "frontend" / "locales"
 
 TEXT_CASE = re.compile(
-    r'^\s+(de|en):([a-z0-9_]+)\) echo "(.*)" ;;$',
+    r'^\s+([a-z][a-z0-9-]*):([a-z0-9_]+)\) echo "(.*)" ;;$',
     re.MULTILINE,
 )
 TEXT_ASSIGNMENT = re.compile(
@@ -76,9 +80,10 @@ EXTRA_UI_KEYS = {
 def locale_payloads():
     installer = INSTALLER.read_text(encoding="utf-8")
     state = STATE_TEMPLATE.read_text(encoding="utf-8")
-    translations = {"de": {}, "en": {}}
+    translations = {language: {} for language in LANGUAGE_CODES}
     for language, key, value in TEXT_CASE.findall(installer):
-        translations[language][key] = value
+        if language in translations:
+            translations[language][key] = value
 
     variable_to_text = dict(TEXT_ASSIGNMENT.findall(installer))
     json_to_variable = dict(JSON_ASSIGNMENT.findall(installer))
@@ -93,7 +98,7 @@ def locale_payloads():
     ui_to_text.update(EXTRA_UI_KEYS)
 
     payloads = {}
-    for language in ("de", "en"):
+    for language in LANGUAGE_CODES:
         missing = sorted(set(ui_to_text.values()) - set(translations[language]))
         if missing:
             raise ValueError(f"Missing {language} translations: {', '.join(missing)}")
@@ -101,8 +106,6 @@ def locale_payloads():
             ui_key: translations[language][text_key]
             for ui_key, text_key in ui_to_text.items()
         }
-    if payloads["de"].keys() != payloads["en"].keys():
-        raise ValueError("German and English locale keys differ")
     return payloads
 
 

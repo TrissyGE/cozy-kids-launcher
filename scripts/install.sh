@@ -42,7 +42,6 @@ if [[ ! -d "$SRC_DIR" ]] || [[ ! -f "$SRC_DIR/server.py" ]]; then
   exec bash "$TMP_DIR/cozy-kids-launcher-main/scripts/install.sh" "$@"
 fi
 
-DEFAULT_LANG="en"
 APP_ID="cozy-kids-launcher"
 APP_DIR_NAME="$APP_ID"
 APP_BIN_NAME="cozy-kids-launcher"
@@ -82,7 +81,7 @@ Usage: scripts/install.sh [options]
 Options:
   --user <name>              Install for this Linux user
   --home <path>              Override user home directory
-  --lang <auto|de|en>        Installer and default UI language
+  --lang <auto|code>         Installer and default UI language (see language registry)
   --browser <auto|firefox|chromium|chromium-browser|google-chrome|google-chrome-stable|brave|opera|opera-stable|vivaldi|vivaldi-stable|microsoft-edge|microsoft-edge-stable|cachy-browser|librewolf>
                              Preferred kiosk browser
   --title <text>             Default launcher title
@@ -131,17 +130,30 @@ lang_base() {
   raw="${raw%%.*}"
   raw="${raw%%@*}"
   raw="${raw%%_*}"
+  raw="${raw%%-*}"
   printf '%s' "${raw,,}"
 }
 
-auto_detect_lang() {
-  local candidate="${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}"
-  candidate="$(lang_base "$candidate")"
-  case "$candidate" in
-    de) printf 'de' ;;
-    en) printf 'en' ;;
-    *) printf '%s' "$DEFAULT_LANG" ;;
-  esac
+language_supported() {
+  local code
+  for code in "${LANGUAGE_CODES[@]}"; do
+    [[ "$code" != "$1" ]] || return 0
+  done
+  return 1
+}
+
+resolve_language() {
+  if [[ "$LANG_MODE" == "auto" ]]; then
+    local candidate
+    candidate="$(lang_base "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}")"
+    ACTIVE_LANG="$DEFAULT_LANG"
+    if language_supported "$candidate"; then
+      ACTIVE_LANG="$candidate"
+    fi
+  else
+    language_supported "$LANG_MODE" || die "Unsupported language: $LANG_MODE"
+    ACTIVE_LANG="$LANG_MODE"
+  fi
 }
 
 text() {
@@ -876,11 +888,19 @@ fi
 [[ -n "$TARGET_HOME" ]] || die "Could not resolve home directory for user '$TARGET_USER'."
 [[ -d "$TARGET_HOME" ]] || die "Home directory does not exist: $TARGET_HOME"
 
-case "$LANG_MODE" in
-  auto) ACTIVE_LANG="$(auto_detect_lang)" ;;
-  de|en) ACTIVE_LANG="$LANG_MODE" ;;
-  *) die "Unsupported language: $LANG_MODE" ;;
-esac
+command -v python3 >/dev/null 2>&1 || die "python3 is required"
+registry_rows="$(python3 "$SRC_DIR/language_registry.py")" || die "Could not load language registry"
+LANGUAGE_CODES=()
+LANGUAGE_NAMES=()
+{
+  read -r DEFAULT_LANG
+  while IFS=$'\t' read -r code name; do
+    LANGUAGE_CODES+=("$code")
+    LANGUAGE_NAMES+=("$name")
+  done
+} <<< "$registry_rows"
+JSON_LANGUAGE_REGISTRY="$(cat "$SRC_DIR/language_registry.json")"
+resolve_language
 
 case "$DEFAULT_THEME" in
   rosa|lila|blau|gruen|regenbogen|wald|weltraum|ocean|dinosaurier|baustelle|prinzessin|bauernhof|katzen|hunde) ;;
@@ -898,7 +918,7 @@ case "$DEFAULT_LAUNCH_MODE" in
 esac
 
 guided_setup() {
-  local input
+  local input index auto_choice
   echo ""
   echo "========================================="
   echo "  Guided Setup"
@@ -907,19 +927,20 @@ guided_setup() {
 
   if [[ "$EXPLICIT_LANG" == "0" ]]; then
     echo "Choose language:"
-    echo "  1) English"
-    echo "  2) Deutsch"
-    echo "  3) Auto-detect (default)"
-    prompt_read "Choice [3]: " input
-    case "$input" in
-      1) LANG_MODE="en"; EXPLICIT_LANG=1 ;;
-      2) LANG_MODE="de"; EXPLICIT_LANG=1 ;;
-      *) ;;
-    esac
-    case "$LANG_MODE" in
-      auto) ACTIVE_LANG="$(auto_detect_lang)" ;;
-      de|en) ACTIVE_LANG="$LANG_MODE" ;;
-    esac
+    for index in "${!LANGUAGE_CODES[@]}"; do
+      printf '  %s) %s\n' "$((index + 1))" "${LANGUAGE_NAMES[index]}"
+    done
+    auto_choice="$((${#LANGUAGE_CODES[@]} + 1))"
+    echo "  $auto_choice) Auto-detect (default)"
+    prompt_read "Choice [$auto_choice]: " input
+    for index in "${!LANGUAGE_CODES[@]}"; do
+      if [[ "$input" == "$((index + 1))" ]]; then
+        LANG_MODE="${LANGUAGE_CODES[index]}"
+        EXPLICIT_LANG=1
+        break
+      fi
+    done
+    resolve_language
   fi
 
   if [[ "$EXPLICIT_BROWSER" == "0" ]]; then
@@ -1068,11 +1089,6 @@ if is_interactive; then
     *) echo "Using defaults..." ;;
   esac
 
-  # Re-derive language if it changed during guided setup
-  case "$LANG_MODE" in
-    auto) ACTIVE_LANG="$(auto_detect_lang)" ;;
-    de|en) ACTIVE_LANG="$LANG_MODE" ;;
-  esac
 fi
 
 find_browser() {
@@ -1110,7 +1126,6 @@ find_browser() {
 }
 
 BROWSER_CMD="$(find_browser)"
-command -v python3 >/dev/null 2>&1 || die "python3 is required"
 command -v install >/dev/null 2>&1 || die "install is required"
 command -v flock >/dev/null 2>&1 || die "flock is required (provided by util-linux)"
 
@@ -1293,6 +1308,7 @@ render_template() {
   export JSON_CATALOG_WEB_PRIVACY
   export JSON_CATALOG_SOURCE
   export JSON_CATALOG_REVIEWED
+  export JSON_LANGUAGE_REGISTRY
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -1907,6 +1923,7 @@ install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/browser_policy.py" "$APP_ROOT/browser_policy.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/config_validation.py" "$APP_ROOT/config_validation.py"
+install -m 0644 "$SRC_DIR/language_registry.py" "$SRC_DIR/language_registry.json" "$APP_ROOT/"
 install -m 0644 "$SRC_DIR/profile_config.py" "$APP_ROOT/profile_config.py"
 install -m 0644 "$SRC_DIR/schedule_rules.py" "$APP_ROOT/schedule_rules.py"
 install -m 0644 "$SRC_DIR/lifecycle_state.py" "$APP_ROOT/lifecycle_state.py"
@@ -1927,8 +1944,9 @@ render_template "$SRC_DIR/frontend/styles.css" "$FRONTEND_STYLES_FILE" 0644
 render_template "$SRC_DIR/frontend/state.js" "$FRONTEND_STATE_FILE" 0644
 render_template "$SRC_DIR/frontend/localization.js" "$FRONTEND_LOCALIZATION_FILE" 0644
 install -d -m 0755 "$FRONTEND_LOCALES_DIR"
-install -m 0644 "$SRC_DIR/frontend/locales/de.json" "$FRONTEND_LOCALES_DIR/de.json"
-install -m 0644 "$SRC_DIR/frontend/locales/en.json" "$FRONTEND_LOCALES_DIR/en.json"
+for code in "${LANGUAGE_CODES[@]}"; do
+  install -m 0644 "$SRC_DIR/frontend/locales/$code.json" "$FRONTEND_LOCALES_DIR/$code.json"
+done
 render_template "$SRC_DIR/frontend/icons.js" "$FRONTEND_ICONS_FILE" 0644
 render_template "$SRC_DIR/frontend/dialogs.js" "$FRONTEND_DIALOGS_FILE" 0644
 install -m 0644 "$SRC_DIR/frontend/theme-runtime.js" "$FRONTEND_THEME_RUNTIME_FILE"

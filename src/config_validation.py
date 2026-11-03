@@ -5,6 +5,7 @@ import re
 
 from browser_policy import normalize_browser_allowed_origins
 from config_store import migrate_config
+from language_registry import LANGUAGE_CODES
 from parent_auth import is_supported_pin_hash
 from profile_config import (
     MAX_PROFILES,
@@ -96,8 +97,8 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
     if "name" in result and not result["name"]:
         raise ValueError("name must not be empty")
 
-    if "language" in result and result["language"] not in ("de", "en"):
-        raise ValueError("language must be 'de' or 'en'")
+    if "language" in result and result["language"] not in LANGUAGE_CODES:
+        raise ValueError("language must be one of: " + ", ".join(LANGUAGE_CODES))
     if "layoutMode" in result and result["layoutMode"] not in ("gross", "klein"):
         raise ValueError("layoutMode must be 'gross' or 'klein'")
     if "browser" in result and result["browser"] and not re.fullmatch(

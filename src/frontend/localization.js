@@ -1,7 +1,8 @@
-const SUPPORTED_INTERFACE_LANGUAGES=Object.freeze(['de','en']);
+const INTERFACE_LANGUAGE_REGISTRY={{JSON_LANGUAGE_REGISTRY}};
 
 function normalizedInterfaceLanguage(language){
-  return SUPPORTED_INTERFACE_LANGUAGES.includes(language)?language:'en';
+  return INTERFACE_LANGUAGE_REGISTRY.languages.some(entry=>entry.code===language)
+    ?language:INTERFACE_LANGUAGE_REGISTRY.default;
 }
 
 async function loadInterfaceLanguage(language){
