@@ -335,6 +335,7 @@
     "notInstalled": "El paquete nativo de esta aplicación no está instalado.",
     "noUpdate": "No se encontró ninguna actualización en las fuentes de paquetes configuradas.",
     "interrupted": "El estado del paquete es incierto. Vuelve a comprobar la aplicación o su estado.",
+    "reconnecting": "Comprobando la operación de paquetes anterior…",
     "unsupported": "Esta operación no está disponible aquí. Usa el gestor gráfico de software del sistema.",
     "updating": "Actualizando la aplicación…",
     "removing": "Desinstalando la aplicación…",

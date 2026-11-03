@@ -65,7 +65,7 @@ function renderPackageJob(){
   document.getElementById('packageAction').hidden=true;
   progress.hidden=true; summary.hidden=true; details.hidden=true; hint.textContent='';
   if(job.status==='checking'||job.status==='installing'){
-    const checking=operation==='install'?uiText.packageCheck:maintenance.checking;
+    const checking=job.recovered?maintenance.reconnecting:operation==='install'?uiText.packageCheck:maintenance.checking;
     const running=isRemoval?maintenance.removing:isUpdate?maintenance.updating:uiText.packageInstalling;
     const authorization=operation==='install'?uiText.packageAuth:maintenance.auth;
     const text=job.status==='checking'?checking:

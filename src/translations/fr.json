@@ -284,6 +284,7 @@
   "package_maintenance_keep_open": "Vous pouvez fermer cette fenêtre. Le gestionnaire de logiciels poursuit l’opération en cours.",
   "package_maintenance_no_update": "Aucune mise à jour n’a été trouvée dans les sources de paquets configurées.",
   "package_maintenance_not_installed": "Le paquet natif de cette application n’est pas installé.",
+  "package_maintenance_reconnecting": "Vérification de l’opération précédente sur les paquets…",
   "package_maintenance_remove": "Désinstaller l’application…",
   "package_maintenance_remove_consent": "Le paquet système est supprimé. Les tuiles existantes sont conservées. Linux peut demander une autorisation.",
   "package_maintenance_remove_now": "Désinstaller maintenant",

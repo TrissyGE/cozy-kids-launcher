@@ -5,11 +5,11 @@ import sys
 import tempfile
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from package_install import PackageInstaller
-from packagekit_backend import InstallError, error_category
+from packagekit_backend import InstallError, PackageKitBackend, error_category
 
 PLAN = {'installed': False, 'packageIds': ['paint;1;amd64;repo'],
         'changeIds': ['paint;1;amd64;+manual:repo'], 'packages': ['paint'], 'downloadBytes': 1024}
@@ -31,7 +31,7 @@ class Backend:
             raise self.failure
         return copy.deepcopy(self.plan)
 
-    def perform(self, operation, plan, progress):
+    def perform(self, operation, plan, progress, transaction=None):
         self.calls += 1
         self.operation = operation
         progress('waiting-for-auth', 101)
@@ -117,6 +117,79 @@ class InstallTests(unittest.TestCase):
         if sys.platform != 'win32':
             self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
 
+    def test_restart_monitors_only_the_recorded_transaction_and_keeps_job_busy(self):
+        ready = self.prepare()
+        started = threading.Event()
+        release = threading.Event()
+        self.addCleanup(release.set)
+
+        def perform(operation, plan, progress, transaction):
+            transaction("/42_abcdef")
+            started.set()
+            release.wait(5)
+
+        with patch.object(self.backend, "perform", side_effect=perform):
+            self.manager.start(ready["jobId"], ready["confirmationToken"])
+            try:
+                self.assertTrue(started.wait(5))
+                record = json.loads(self.path.read_text())
+                self.assertEqual(record["transactionId"], "/42_abcdef")
+                self.assertEqual(record["target"], ["paint", "1", "amd64"])
+                self.assertNotIn("transactionId", self.manager.snapshot())
+                self.assertNotIn(ready["confirmationToken"], self.path.read_text())
+            finally:
+                release.set()
+                self.manager.worker.join(5)
+
+        # Restore the snapshot taken while the original process owned the transaction.
+        self.path.write_text(json.dumps(record))
+        observing = threading.Event()
+        finish = threading.Event()
+        self.addCleanup(finish.set)
+        backend = Backend()
+
+        def recover(transaction, operation, target, progress):
+            self.assertEqual((transaction, operation, target), ("/42_abcdef", "install", ["paint", "1", "amd64"]))
+            progress("download", 42)
+            observing.set()
+            return finish.wait(5)
+
+        backend.recover = recover
+        restarted = PackageInstaller(self.path, lambda: backend)
+        try:
+            self.assertTrue(observing.wait(5))
+            snapshot = restarted.snapshot()
+            self.assertEqual(snapshot["jobId"], ready["jobId"])
+            self.assertEqual(snapshot["percent"], 42)
+            self.assertTrue(snapshot["recovered"])
+            self.assertNotIn("target", snapshot)
+            with self.assertRaisesRegex(InstallError, "busy"):
+                restarted.prepare("paint", CATALOG)
+            with self.assertRaises(InstallError):
+                restarted.start(ready["jobId"], ready["confirmationToken"])
+        finally:
+            finish.set()
+            restarted.worker.join(5)
+        self.assertEqual(restarted.snapshot()["status"], "complete")
+        self.assertEqual(backend.calls, 0)
+        self.assertNotIn("transactionId", json.loads(self.path.read_text()))
+
+    def test_invalid_journal_or_missing_transaction_is_interrupted(self):
+        self.path.parent.mkdir(parents=True)
+        record = {"jobId": "a" * 32, "appId": "paint", "operation": "remove",
+                  "status": "installing", "target": ["paint", "1", "amd64"]}
+        backend = Backend()
+        def unavailable(*args):
+            raise InstallError("interrupted")
+        backend.recover = unavailable
+        for transaction in ("../../foreign", "/52_abcdef"):
+            self.path.write_text(json.dumps(dict(record, transactionId=transaction)))
+            restarted = PackageInstaller(self.path, lambda: backend)
+            if restarted.worker:
+                restarted.worker.join(5)
+            self.assertEqual(restarted.snapshot()["status"], "interrupted")
+            self.assertEqual(backend.calls, 0)
+
     def test_installed_and_error_states_do_not_claim_a_new_installation(self):
         self.backend.plan = {'installed': True}
         self.assertEqual(self.prepare()['status'], 'complete')
@@ -182,3 +255,24 @@ class InstallTests(unittest.TestCase):
         for operation in ("purge", None, [], {"command": "remove"}):
             with self.assertRaises(ValueError):
                 self.manager.prepare("paint", CATALOG, operation)
+
+
+
+class RecoveryIdentityTests(unittest.TestCase):
+    def test_foreign_role_uid_and_simulation_are_rejected(self):
+        backend = PackageKitBackend.__new__(PackageKitBackend)
+        backend.pk = Mock()
+        backend.pk.RoleEnum.UPDATE_PACKAGES = 9
+        backend.pk.TransactionFlagEnum.SIMULATE = 2
+        backend.gio = Mock()
+        backend.client = Mock()
+        backend._transaction_properties = Mock()
+        for uid, role, flags in ((2000, 9, 0), (1000, 3, 0), (1000, 9, 4)):
+            with self.subTest(uid=uid, role=role, flags=flags):
+                backend._transaction_properties.return_value = {
+                    "Uid": uid, "Role": role, "TransactionFlags": flags,
+                }
+                with patch("packagekit_backend.os.getuid", return_value=1000, create=True):
+                    with self.assertRaisesRegex(InstallError, "interrupted"):
+                        backend.recover("/50_abc", "update", ["paint", "1", "amd64"], Mock())
+        backend.client.get_old_transactions.assert_not_called()

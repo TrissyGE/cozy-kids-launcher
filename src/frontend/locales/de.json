@@ -335,6 +335,7 @@
     "notInstalled": "Das native Paket dieser App ist nicht installiert.",
     "noUpdate": "In den eingerichteten Paketquellen wurde kein Update für diese App gefunden.",
     "interrupted": "Der aktuelle Paketstatus ist unklar. Prüfe die App oder ihren Status erneut.",
+    "reconnecting": "Der vorherige Paketvorgang wird geprüft…",
     "unsupported": "Diese Paketaktion ist hier nicht verfügbar. Nutze die grafische Softwareverwaltung.",
     "updating": "App wird aktualisiert …",
     "removing": "App wird deinstalliert …",

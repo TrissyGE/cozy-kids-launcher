@@ -88,7 +88,12 @@ def run_catalog_install_scenarios(browser, artifacts):
             document.getElementById('packageMessage').textContent.includes(uiText.packageAuth)
         """, 'Double click/lost acknowledgement repeated consent or fabricated progress')
         browser.click('#packageClose')
-        browser.evaluate("window.__pkgMode='ok'; window.__pkgState.phase='downloading'; window.__pkgState.percent=42; openPackageStatus()", await_promise=True)
+        browser.evaluate("window.__pkgMode='ok'; window.__pkgState.phase='checking'; window.__pkgState.recovered=true; openPackageStatus()", await_promise=True)
+        check("""
+            document.getElementById('packageMessage').textContent.includes(uiText.packageMaintenance.reconnecting) &&
+            document.getElementById('packageAction').hidden && window.__pkgInstallCalls===1
+        """, 'Recovering an existing transaction offered or repeated consent')
+        browser.evaluate("window.__pkgState.phase='downloading'; window.__pkgState.percent=42; refreshPackageStatus()", await_promise=True)
         check("document.getElementById('packageProgress').value===42 && window.__pkgInstallCalls===1", 'Reopening failed to reconnect to progress')
         browser.screenshot(artifacts / 'catalog-install-progress.png')
         browser.evaluate("window.__pkgState={status:'complete',appId:'e2e-catalog',jobId:'fixture-job',percent:100}; refreshPackageStatus()", await_promise=True)

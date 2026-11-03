@@ -1,5 +1,9 @@
 """Optional system PackageKit binding. No shell, root helper, or password handling."""
 
+import os
+import re
+import time
+
 from package_provider import detect_native_provider, read_os_release
 
 
@@ -9,7 +13,9 @@ class InstallError(Exception):
         super().__init__(code)
 
 
-PACKAGE_OPERATIONS = {"install", "update", "remove"}
+PACKAGE_ROLES = {"install": "INSTALL_PACKAGES", "update": "UPDATE_PACKAGES", "remove": "REMOVE_PACKAGES"}
+PACKAGE_OPERATIONS = set(PACKAGE_ROLES)
+TRANSACTION_ID = re.compile(r"/[0-9]{1,20}_[a-zA-Z0-9_]{1,80}")
 
 
 def package_identity(package_id):
@@ -41,7 +47,8 @@ class PackageKitBackend:
         try:
             import gi
             gi.require_version("PackageKitGlib", "1.0")
-            from gi.repository import GLib, PackageKitGlib
+            from gi.repository import Gio, GLib, PackageKitGlib
+            self.gio, self.glib = Gio, GLib
             self.pk = PackageKitGlib
             # Each server worker owns its synchronous client's callback context.
             self.context = GLib.MainContext.new()
@@ -70,8 +77,10 @@ class PackageKitBackend:
     def _flags(self, *values):
         return sum(1 << int(value) for value in values)
 
-    def _call(self, method, *arguments, progress=None):
+    def _call(self, method, *arguments, progress=None, transaction=None):
         def report(value, kind, unused):
+            if transaction is not None:
+                transaction(value.get_transaction_id())
             if progress is not None:
                 phase = self.pk.status_enum_to_string(value.get_status())
                 progress(phase, value.get_percentage())
@@ -169,7 +178,7 @@ class PackageKitBackend:
             raise InstallError("no_update")
         return candidates
 
-    def _transaction(self, operation, package_ids, *, simulate=False, progress=None):
+    def _transaction(self, operation, package_ids, *, simulate=False, progress=None, transaction=None):
         if operation not in PACKAGE_OPERATIONS:
             raise ValueError("Unknown package operation")
         flags = []
@@ -178,15 +187,15 @@ class PackageKitBackend:
         if operation == "remove":
             # No dependent removals and no autoremove, even at execution time.
             return self._call(self.client.remove_packages, self._flags(*flags), package_ids,
-                              False, False, progress=progress)
+                              False, False, progress=progress, transaction=transaction)
         flags.append(self.pk.TransactionFlagEnum.ONLY_TRUSTED)
         method = self.client.update_packages if operation == "update" else self.client.install_packages
-        return self._call(method, self._flags(*flags), package_ids, progress=progress)
+        return self._call(method, self._flags(*flags), package_ids, progress=progress, transaction=transaction)
 
-    def perform(self, operation, plan, progress):
+    def perform(self, operation, plan, progress, transaction=None):
         # Polkit owns the password dialog. Do not use Pk.Task to answer prompts.
         self.client.set_interactive(True)
-        self._transaction(operation, plan["packageIds"], progress=progress)
+        self._transaction(operation, plan["packageIds"], progress=progress, transaction=transaction)
 
     def verify(self, package, operation, plan):
         installed = [item for item in self._resolve(package) if item.get_info() == self.pk.InfoEnum.INSTALLED]
@@ -196,3 +205,57 @@ class PackageKitBackend:
             expected = package_identity(plan["packageIds"][0])
             return any(package_identity(item.get_id()) == expected for item in installed)
         return bool(installed)
+
+
+    def recover(self, transaction_id, operation, target, progress):
+        """Observe the existing transaction, then verify the exact reviewed outcome."""
+        if not TRANSACTION_ID.fullmatch(transaction_id):
+            raise InstallError("interrupted")
+        role = getattr(self.pk.RoleEnum, PACKAGE_ROLES[operation])
+        bus = self.gio.bus_get_sync(self.gio.BusType.SYSTEM, None)
+        while (state := self._transaction_properties(bus, transaction_id)) is not None:
+            flags = state.get("TransactionFlags")
+            if (state.get("Uid") != os.getuid() or state.get("Role") != int(role)
+                    or not isinstance(flags, int) or flags & self._flags(self.pk.TransactionFlagEnum.SIMULATE)):
+                raise InstallError("interrupted")
+            status = state.get("Status")
+            if status == int(self.pk.StatusEnum.FINISHED):
+                break
+            if not isinstance(status, int):
+                raise InstallError("interrupted")
+            progress(self.pk.status_enum_to_string(self.pk.StatusEnum(status)), state.get("Percentage"))
+            time.sleep(1)
+
+        self._verify_history(transaction_id, role)
+        installed = [package_identity(item.get_id()) for item in self._resolve(target[0])
+                     if item.get_info() == self.pk.InfoEnum.INSTALLED]
+        return not installed if operation == "remove" else tuple(target) in installed
+
+    def _transaction_properties(self, bus, transaction_id):
+        # Observe read-only properties. Some older libpackagekit builds can
+        # leave Client.adopt waiting even after the daemon finishes the job.
+        try:
+            (properties,) = bus.call_sync(
+                "org.freedesktop.PackageKit", transaction_id,
+                "org.freedesktop.DBus.Properties", "GetAll",
+                self.glib.Variant("(s)", ("org.freedesktop.PackageKit.Transaction",)),
+                self.glib.VariantType.new("(a{sv})"),
+                self.gio.DBusCallFlags.NO_AUTO_START, 3000, None,
+            ).unpack()
+        except self.glib.Error:
+            return None
+        return properties or None
+
+    def _verify_history(self, transaction_id, role):
+        try:
+            results = self._call(self.client.get_old_transactions, 50)
+            match = next((item for item in results.get_transaction_array()
+                          if item.get_id() == transaction_id
+                          and item.get_uid() == os.getuid()
+                          and item.get_role() == role), None)
+        except Exception:
+            raise InstallError("interrupted") from None
+        if match is None:
+            raise InstallError("interrupted")
+        if not match.get_succeeded():
+            raise InstallError("failed")

@@ -47,13 +47,25 @@ and consistency; this layer does not offer a universal rollback guarantee.
 
 `package_install.py` owns one background job. Double clicks, concurrent requests,
 lost HTTP replies, stale tokens and unreviewed client-supplied package IDs cannot
-start a second job. A private atomic journal records only job ID, catalog app ID
-operation and status. It never stores passwords, confirmation tokens or executable plans.
-After a launcher restart it reports uncertainty and never replays an action.
-Before preparing another plan, the backend checks for existing transactions.
-Closing the dialog does not terminate the system package manager. In-place
-reconnection after closing/reopening the dialog works; full daemon-transaction
-reattachment across process restarts is future work.
+start a second job. A private atomic journal records the job and operation. Once the confirmed
+PackageKit call reports its transaction ID, the journal also records that ID
+and the reviewed target name, version and architecture. It stores no passwords,
+confirmation tokens or executable plans.
+
+After a restart the worker checks the recorded transaction on the system bus.
+It matches the exact daemon ID, user and operation, then observes the existing
+job through read-only PackageKit D-Bus properties. If the transaction already ended, the
+worker checks recent daemon history for the same ID, user and operation.
+Success requires a successful daemon result and a fresh package lookup matching
+the reviewed version and architecture, or absence after a removal. An
+unavailable daemon, expired history or missing ID leaves the result uncertain.
+The launcher never repeats the original install, update or removal call.
+
+While a job is being recovered, the launcher rejects new package plans. Closing
+or reopening the status dialog only changes local polling. The restored
+progress is available in Parent settings without a fresh confirmation.
+See the [PackageKit transaction properties](https://github.com/PackageKit/PackageKit/blob/v1.2.8/src/org.freedesktop.PackageKit.Transaction.xml)
+and [transaction history API](https://packagekit.freedesktop.org/doc/class.TransactionPast.html).
 
 The existing local-origin and Parent-session guards protect all new routes:
 
