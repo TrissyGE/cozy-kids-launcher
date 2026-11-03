@@ -545,7 +545,9 @@ function renderRetroEmulators(){
   const container=document.getElementById('retroEmulators');
   container.replaceChildren();
   if(recommendationState!=='ready'){
-    const message=recommendationState==='error'?uiText.recommendationsError:uiText.recommendationsLoading;
+    const message={
+      error:uiText.recommendationsError,empty:uiText.recommendationsEmpty,loading:uiText.recommendationsLoading
+    }[recommendationState];
     renderUiState(container,recommendationState,message,recommendationState==='error'?loadRecommendations:null);
     return;
   }

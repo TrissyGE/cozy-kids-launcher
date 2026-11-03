@@ -2,6 +2,7 @@
 """Exercise core launcher journeys in a real Chromium browser."""
 
 import argparse
+import base64
 import getpass
 import hashlib
 import http.server
@@ -400,6 +401,9 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     retro_root = test_home / "Game Fixtures"
     retro_root.mkdir()
     (retro_root / "Local Test.gba").write_bytes(b"scanner fixture")
+    (retro_root / "Local Test.png").write_bytes(base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
+    ))
     browser.evaluate("enterAdmin(); activateAdminSection('retro')")
     browser.wait_for("!document.getElementById('retroRoots').disabled")
     browser.set_value("#retroRoots", str(retro_root))
@@ -419,6 +423,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
               "Approved games appeared as extra Home tiles")
     browser.click('#grid .tile[data-tile-id="retro-corner"]')
     browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
+    browser.wait_for("document.querySelector('.media-cover img')?.naturalWidth>0",
+                     message="The approved game did not display its local cover")
     (retro_root / "Local Test.gba").write_bytes(b"replacement")
     browser.click(".media-card")
     browser.wait_for("document.querySelector('#mediaState .ui-state-message')?.textContent===mediaText.retroUnavailable")

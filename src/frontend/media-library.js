@@ -93,7 +93,7 @@ function hideMediaState(){
 function mediaCoverFallback(container,kind){
   const playMark=container.querySelector('.media-play-mark');
   container.classList.add('media-cover-fallback');
-  const icon=createLocalIcon(kind==='video'?'video':'media');
+  const icon=createLocalIcon(retroLibrary?'apps':kind==='video'?'video':'media');
   container.replaceChildren(...(icon?[icon]:[]),...(playMark?[playMark]:[]));
 }
 
@@ -138,8 +138,8 @@ function mediaCard(item){
   const kind=document.createElement('span');
   kind.className='media-card-kind';
   kind.textContent=retroLibrary?'':item.kind==='video'?mediaText.mediaLibraryVideo:mediaText.mediaLibraryAudio;
-  kind.hidden=retroLibrary;
-  copy.append(title,kind);
+  copy.appendChild(title);
+  if(!retroLibrary) copy.appendChild(kind);
   button.append(cover,copy);
   const favorite=mediaFavoriteIds.has(item.id);
   if(retroLibrary){
@@ -357,6 +357,7 @@ async function initializeMediaLibrary(){
     const tile=mediaTile(mediaConfig,mediaTileId);
     if(!tile){ mediaHome(); return; }
     retroLibrary=tile.cmd[0]==='special:retro-library';
+    document.body.classList.toggle('retro-library',retroLibrary);
     applyMediaTheme(mediaConfig);
     localizeMediaPage(tile);
     await loadMediaCatalog();
