@@ -26,6 +26,16 @@ def subprocess_result(returncode=0, stdout="", stderr=""):
 
 
 class SmokeConfigTests(unittest.TestCase):
+    def test_proportional_memory_sample_reports_unreadable_processes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proc = Path(directory)
+            (proc / "12").mkdir()
+            (proc / "12" / "smaps_rollup").write_text("Rss: 100 kB\nPss: 34 kB\nPss_Dirty: 7 kB\n")
+            self.assertEqual(desktop_smoke.pss_sample({12, 13}, proc),
+                             {"pssKiB": 34, "measured": 1, "processes": 2})
+            self.assertEqual(desktop_smoke.pss_sample({13}, proc),
+                             {"pssKiB": None, "measured": 0, "processes": 1})
+
     def test_snap_firefox_isolation_is_created_under_its_accessible_common_root(self):
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(desktop_smoke.Path, "home", return_value=Path(directory)), \

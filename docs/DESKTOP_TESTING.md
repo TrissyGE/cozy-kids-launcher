@@ -151,6 +151,33 @@ Run the exact release candidate on the test laptop before publishing v0.8.
 Record the laptop model, Linux distribution, desktop session, browser mode,
 controller model and candidate commit. Use a disposable user or test profile.
 
+### First-launch and idle-memory budgets
+
+Run the desktop smoke with `--performance-only` three times per candidate on the
+same low-powered device. Each run creates a fresh browser profile. Keep the
+same desktop and browser versions, connect AC power, and close unrelated
+applications. A fresh profile measures first launch with the current OS
+caches. For cold-boot evidence, repeat after reboot and label that sample
+separately.
+
+Record median server-ready time, browser process startup time, and X11 window
+visibility time where observable. Browser startup on Wayland measures the
+browser executable, so record the visible launcher separately. Idle memory
+uses three samples of the launcher, server, and owned browser process trees
+from Linux proportional set size (PSS) after a 15-second settling period.
+Missing process readings mark the
+sample incomplete. Initial investigation budgets for a 4 GiB device are
+5 s for server readiness, 15 s for browser startup, and 450 MiB idle PSS.
+These are provisional thresholds for comparing candidates on the test laptop.
+
+The first pilot on Ubuntu 24.04.4 in VirtualBox used one logical CPU,
+5907 MiB of guest memory, Plasma Wayland and Chrome 152 fullscreen.
+It measured 932 ms for server readiness, 1589 ms for the browser
+executable, and 514 MiB median idle PSS across three complete samples.
+The memory result exceeded the provisional budget. This run used the
+`53c99ea` launcher and a fresh browser profile. It provides an initial
+comparison point for the physical device.
+
 - Verify first setup, normal relaunch, Parent PIN, time limits and profile isolation.
 - Run a Parent-authorized app installation and exercise the updater with the candidate release channel.
 - With a physical gamepad, navigate Home and the RetroGameCorner library. Confirm that Parent controls stay behind the PIN.

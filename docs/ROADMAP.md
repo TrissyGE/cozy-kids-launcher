@@ -301,6 +301,8 @@ that lack an equivalent core, including Wii U and PS3.
 - [ ] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
 - [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
+  - [x] Add first-launch timings and proportional idle memory to the opt-in desktop smoke report
+  - [ ] Establish a repeatable baseline and confirm the provisional budgets on the low-powered physical test device
 
 ## v1.0.0 — Long-term Stable
 
