@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate browser locale JSON from the installer's canonical translations."""
+"""Generate browser locale JSON from the canonical translation data."""
 
 import argparse
 import json
@@ -11,15 +11,12 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 from language_registry import LANGUAGE_CODES
+from translation_data import load_translations
 
 INSTALLER = REPOSITORY_ROOT / "scripts" / "install.sh"
 STATE_TEMPLATE = REPOSITORY_ROOT / "src" / "frontend" / "state.js"
 LOCALE_ROOT = REPOSITORY_ROOT / "src" / "frontend" / "locales"
 
-TEXT_CASE = re.compile(
-    r'^\s+([a-z][a-z0-9-]*):([a-z0-9_]+)\) echo "(.*)" ;;$',
-    re.MULTILINE,
-)
 TEXT_ASSIGNMENT = re.compile(
     r'^([A-Z0-9_]+)="\$\(text ([a-z0-9_]+)\)"$',
     re.MULTILINE,
@@ -80,11 +77,6 @@ EXTRA_UI_KEYS = {
 def locale_payloads():
     installer = INSTALLER.read_text(encoding="utf-8")
     state = STATE_TEMPLATE.read_text(encoding="utf-8")
-    translations = {language: {} for language in LANGUAGE_CODES}
-    for language, key, value in TEXT_CASE.findall(installer):
-        if language in translations:
-            translations[language][key] = value
-
     variable_to_text = dict(TEXT_ASSIGNMENT.findall(installer))
     json_to_variable = dict(JSON_ASSIGNMENT.findall(installer))
     ui_to_text = {}
@@ -98,12 +90,15 @@ def locale_payloads():
     ui_to_text.update(EXTRA_UI_KEYS)
 
     payloads = {}
+    required_keys = set(re.findall(r'\$\(text ([a-z0-9_]+)\)', installer))
+    required_keys.update(ui_to_text.values())
     for language in LANGUAGE_CODES:
-        missing = sorted(set(ui_to_text.values()) - set(translations[language]))
+        translations = load_translations(language)
+        missing = sorted(required_keys - translations.keys())
         if missing:
             raise ValueError(f"Missing {language} translations: {', '.join(missing)}")
         payloads[language] = {
-            ui_key: translations[language][text_key]
+            ui_key: translations[text_key]
             for ui_key, text_key in ui_to_text.items()
         }
     return payloads
