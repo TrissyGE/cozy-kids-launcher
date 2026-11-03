@@ -110,6 +110,15 @@ class RetroArchiveTests(unittest.TestCase):
                         self.assertEqual(retro_games.retro_cover(game, download=True), b"cover")
                         self.assertEqual(cover.call_args.args[:2], (cover_system, "Local Game"))
 
+    def test_mednafen_does_not_launch_with_an_unapproved_ips_sidecar(self):
+        rom = self.root / "Local Game.nes"
+        rom.write_bytes(b"fixture")
+        games, _, _ = retro_games.scan_retro_games([str(self.root)])
+        game = next(iter(games.values()))
+        Path(str(rom) + ".ips").write_bytes(b"patch")
+        with self.assertRaisesRegex(ValueError, "unapproved IPS patch"):
+            retro_games.emulator_command("mednafen", game, self.root / "state", "default")
+
 
 if __name__ == "__main__":
     unittest.main()

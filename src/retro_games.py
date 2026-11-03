@@ -249,13 +249,16 @@ def emulator_command(executable, game, save_root, profile_id):
     """Keep battery saves and state slots in a private child/game directory."""
     if game.get("zipMember") is not None and inspect_rom_zip(game["path"], verify=True) != game["zipMember"]:
         raise ValueError("ROM archive is unavailable or damaged")
+    _, module, _ = ROM_SYSTEMS[game["romExtension"]]
+    if module and os.path.lexists(game["path"] + ".ips"):
+        raise ValueError("Mednafen would apply an unapproved IPS patch")
     profile = prepare_profile_resume_directory(save_root, profile_id)
     game_directory = prepare_profile_resume_directory(profile, game["id"])
-    _, module, _ = ROM_SYSTEMS[game["romExtension"]]
     if module:
-        # Use X11 or XWayland so the supervisor can confirm the fullscreen window.
+        # Keep fullscreen observable by the supervisor and visible while the overlay has focus.
         return [
             "kstart", "--fullscreen", "/usr/bin/env", "SDL_VIDEODRIVER=x11",
+            "SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0",
             f"MEDNAFEN_HOME={game_directory}", executable,
             "-force_module", module, "-video.driver", "softfb", "-video.fs", "1",
             f"-{module}.stretch", "aspect",

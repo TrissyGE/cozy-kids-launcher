@@ -227,6 +227,8 @@ and system inside the archive. The scanner limits archives to 40 MiB, their
 ROMs to 32 MiB and their central directories to 64 KiB and 32 entries. It
 checks ZIP integrity on launch and passes the approved archive to the emulator.
 The launcher leaves the archive in place. A scan lists up to 512 candidates.
+Mednafen launches reject a neighboring `.ips` patch because the emulator would
+automatically apply it to the approved ROM or archive.
 
 The per-child automatic cover option starts disabled. Once enabled, the launcher looks up
 missing covers by console and game title in the
