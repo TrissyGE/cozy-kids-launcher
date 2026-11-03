@@ -30,7 +30,7 @@ async function loadMediaText(language){
     const locale=await response.json();
     if(locale&&typeof locale==='object'&&!Array.isArray(locale)&&locale.mediaLibraryTitle){
       mediaText={...MEDIA_FALLBACK_TEXT,...locale};
-      document.documentElement.lang=normalized;
+      applyDocumentLanguage(normalized);
     }
   }catch(e){}
 }
@@ -274,7 +274,7 @@ function handleMediaKeys(event){
   const cards=Array.from(document.querySelectorAll('.media-card'));
   const index=cards.indexOf(event.target);
   const columns=getComputedStyle(document.getElementById('mediaGrid')).gridTemplateColumns.split(' ').length;
-  const offset={ArrowLeft:-1,ArrowRight:1,ArrowUp:-columns,ArrowDown:columns}[event.key];
+  const offset={ArrowLeft:-inlineDirection(),ArrowRight:inlineDirection(),ArrowUp:-columns,ArrowDown:columns}[event.key];
   const target=cards[index+offset];
   if(target){ event.preventDefault(); target.focus(); }
 }

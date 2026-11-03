@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{ACTIVE_LANG}}">
+<html lang="{{ACTIVE_LANG}}" dir="{{ACTIVE_DIRECTION}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,7 +16,7 @@
 <button id="navRight" class="nav right hidden" data-local-icon="nav-right" data-icon-only aria-label="{{ADMIN_PAGE_NEXT}}" onclick="changePage(1)"></button>
 <div id="kids" class="screen">
   <div class="wrap">
-    <div class="titlewrap"><h1 id="title"></h1></div>
+    <div class="titlewrap"><h1 id="title" dir="auto"></h1></div>
     <p id="budgetRemaining" class="budget-remaining" hidden></p>
     <div id="grid" class="grid {{DEFAULT_LAYOUT}}">
       <section id="startupState" class="ui-state ui-state-loading launcher-state" role="status" aria-live="polite" aria-busy="true">
@@ -28,7 +28,7 @@
 <div id="pin" class="pinoverlay hidden">
   <div class="pinbox">
     <h2 id="pinTitle">{{PIN_TITLE}}</h2>
-    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')submitPin()">
+    <input id="pinInput" type="password" inputmode="numeric" dir="ltr" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')submitPin()">
     <div class="err" id="pinErr"></div>
     <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
       <button id="pinCancelBtn" class="smallbtn" data-local-icon="back" onclick="cancelPin()">{{LABEL_BACK}}</button>
@@ -90,7 +90,7 @@
     <h2 id="installTitle"></h2>
     <div id="installMessage"></div>
     <div class="command-box">
-      <span id="installCommand"></span>
+      <span id="installCommand" dir="ltr"></span>
       <button id="installCopyBtn" class="smallbtn" data-local-icon="copy" onclick="copyInstallCommand()">{{LABEL_COPY_COMMAND}}</button>
     </div>
     <div id="installHint" class="muted" style="margin-top:12px;"></div>
@@ -130,7 +130,7 @@
     <div class="emoji" data-local-icon="timer" data-icon-only aria-label="{{TIMER_EXPIRED_TITLE}}"></div>
     <h2 id="timerBlockTitle">{{TIMER_EXPIRED_TITLE}}</h2>
     <p id="timerBlockBody">{{TIMER_EXPIRED_BODY}}</p>
-    <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')extendFromBlock()">
+    <input id="timerBlockPin" type="password" inputmode="numeric" dir="ltr" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}" onkeydown="if(event.key==='Enter')extendFromBlock()">
     <div class="err" id="timerBlockErr"></div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
       <button class="smallbtn" onclick="extendFromBlock(15)">+15</button>
@@ -166,7 +166,7 @@
         <input id="budgetExtraMinutes" type="number" min="1" step="1" inputmode="numeric" value="15" required>
       </label>
       <label><span id="budgetPinLabel"></span>
-        <input id="budgetPin" type="password" inputmode="numeric" maxlength="6" required>
+        <input id="budgetPin" type="password" inputmode="numeric" dir="ltr" maxlength="6" required>
       </label>
       <button id="budgetExtendBtn" class="smallbtn" type="submit"></button>
       <button id="budgetCancelBtn" class="smallbtn" type="button" onclick="cancelBudgetExtension()"></button>
@@ -256,20 +256,20 @@
               <section class="profile-editor" aria-labelledby="profileEditorTitle">
                 <h4 id="profileEditorTitle"></h4>
                 <label class="admin-field-label" for="cfgProfileName"><span id="profileNameLabel"></span>
-                  <input id="cfgProfileName" maxlength="40">
+                  <input id="cfgProfileName" dir="auto" maxlength="40">
                 </label>
                 <label class="admin-field-label" for="cfgProfileAvatar"><span id="profileAvatarLabel"></span>
                   <input id="cfgProfileAvatar" maxlength="16">
                 </label>
                 <label class="admin-field-label" for="cfgTitle"><span id="profileLauncherTitleLabel"></span>
-                  <input id="cfgTitle" placeholder="{{PLACEHOLDER_TITLE}}" oninput="renderAppearancePreview()">
+                  <input id="cfgTitle" dir="auto" placeholder="{{PLACEHOLDER_TITLE}}" oninput="renderAppearancePreview()">
                 </label>
               </section>
             </div>
             <section class="profile-create" aria-labelledby="profileCreateTitle">
               <h4 id="profileCreateTitle"></h4>
               <div class="row2">
-                <input id="newProfileName" maxlength="40">
+                <input id="newProfileName" dir="auto" maxlength="40">
                 <input id="newProfileAvatar" maxlength="16">
                 <label id="newProfileSourceLabel" for="newProfileSource"></label>
                 <select id="newProfileSource"></select>
@@ -278,8 +278,8 @@
               <div id="profileAdminMessage" class="ui-state" aria-live="polite" hidden></div>
             </section>
             <div class="row2 profile-global-settings">
-              <input id="cfgParentLabel" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
-              <input id="cfgExitLabel" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
+              <input id="cfgParentLabel" dir="auto" placeholder="{{PLACEHOLDER_PARENT_LABEL}}">
+              <input id="cfgExitLabel" dir="auto" placeholder="{{PLACEHOLDER_EXIT_LABEL}}">
             </div>
           </section>
 
@@ -460,8 +460,8 @@
               <select id="cfgLanguage"></select>
             </div>
             <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
-              <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
-              <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">
+              <input id="cfgPin" type="password" inputmode="numeric" dir="ltr" maxlength="6" placeholder="{{PIN_SET}}">
+              <input id="cfgPinConfirm" type="password" inputmode="numeric" dir="ltr" maxlength="6" placeholder="{{PIN_CONFIRM}}">
               <button class="smallbtn" id="setPinBtn" data-local-icon="lock" onclick="savePin()">{{PIN_SET}}</button>
               <button class="smallbtn" id="removePinBtn" onclick="removePin()">{{PIN_REMOVE}}</button>
             </div>

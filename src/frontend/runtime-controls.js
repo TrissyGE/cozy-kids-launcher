@@ -150,7 +150,7 @@ document.addEventListener('touchend',function(e){
   if(Math.abs(dx)<50 || Math.abs(dy)>Math.abs(dx)) return;
   e.preventDefault();
   suppressTileClicks();
-  if(dx>0) changePage(-1); else changePage(1);
+  changePage((dx>0?-1:1)*inlineDirection());
 },{passive:false});
 
 // Clock
@@ -443,8 +443,10 @@ document.addEventListener('keydown',function(e){
   if(tileKey||e.key==='Escape'){
     e.preventDefault();
   }
-  if(tileFocused&&e.key==='ArrowRight') focusTileByDir('right');
-  else if(tileFocused&&e.key==='ArrowLeft') focusTileByDir('left');
+  if(tileFocused&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){
+    const step=(e.key==='ArrowRight'?1:-1)*inlineDirection();
+    focusTileByDir(step>0?'right':'left');
+  }
   else if(tileFocused&&e.key==='ArrowDown') focusTileByDir('down');
   else if(tileFocused&&e.key==='ArrowUp') focusTileByDir('up');
   else if(e.key==='Escape') exitKids();

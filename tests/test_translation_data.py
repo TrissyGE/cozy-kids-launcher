@@ -61,3 +61,15 @@ class TranslationDataTests(unittest.TestCase):
         self.assertIn('&lt;/script&gt;&lt;img src=x onerror=&quot;alert(1)&quot;&gt;', page)
         self.assertNotIn("<img", page)
         self.assertEqual(page.count("</script>"), 1)
+
+
+    def test_direction_defaults_to_ltr_and_respects_registry_metadata(self):
+        from language_registry import REGISTRY, language_direction
+        from runtime_locale import render_browser_wrapper
+
+        self.assertEqual(language_direction("en"), "ltr")
+        self.assertEqual(language_direction("unknown"), "ltr")
+        with patch.dict(REGISTRY, {"languages": [{"code": "en", "direction": "rtl"}]}):
+            self.assertEqual(language_direction("en"), "rtl")
+            page = render_browser_wrapper('<html lang="{{html_language}}" dir="{{html_direction}}">', "en")
+            self.assertEqual(page, '<html lang="en" dir="rtl">')

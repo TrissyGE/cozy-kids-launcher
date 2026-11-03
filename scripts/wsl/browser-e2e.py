@@ -392,6 +392,24 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         "document.activeElement===document.querySelectorAll('.media-card')[1]",
         "Arrow-key navigation did not move between media cards",
     )
+    browser.evaluate("""
+        INTERFACE_LANGUAGE_REGISTRY.languages.find(entry=>entry.code===mediaConfig.language).direction='rtl';
+        loadMediaText(mediaConfig.language);
+    """, await_promise=True)
+    browser.wait_for("document.documentElement.dir==='rtl'")
+    browser.evaluate("document.querySelector('.media-card').focus()")
+    browser.key_press("ArrowLeft")
+    assert_js(
+        browser,
+        "document.activeElement===document.querySelectorAll('.media-card')[1] && "
+        "document.querySelectorAll('.media-card')[0].getBoundingClientRect().left > "
+        "document.querySelectorAll('.media-card')[1].getBoundingClientRect().left",
+        "RTL media layout and arrow navigation disagreed",
+    )
+    browser.evaluate("""
+        delete INTERFACE_LANGUAGE_REGISTRY.languages.find(entry=>entry.code===mediaConfig.language).direction;
+        applyDocumentLanguage(mediaConfig.language);
+    """)
     browser.screenshot(artifacts / "media-library.png")
     browser.click("#mediaBack")
     browser.wait_for(
@@ -1237,6 +1255,65 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     log_scenario("update check renders current, available, and error states")
 
 
+def run_rtl_layout_scenario(browser, artifacts):
+    browser.set_device_metrics(800, 600)
+    browser.evaluate("""
+        window.__rtlConfig=JSON.parse(JSON.stringify(cfg));
+        const entry=INTERFACE_LANGUAGE_REGISTRY.languages.find(item=>item.code===cfg.language);
+        entry.direction='rtl';
+        applyInterfaceLocale(cfg.language,uiText);
+        cfg.title='مرحبا Cozy Kids';
+        cfg.layoutMode='gross';
+        cfg.currentPage=0;
+        const tile=cfg.tiles.find(item=>item.visible);
+        cfg.tiles=Array.from({length:5},(_,index)=>({...tile,id:'rtl-'+index,visible:true}));
+        focusedTileIndex=0;
+        renderAll();
+    """)
+    try:
+        assert_js(
+            browser,
+            """
+            document.documentElement.dir==='rtl' &&
+            document.documentElement.scrollWidth<=800 &&
+            document.querySelector('#title').dir==='auto' &&
+            document.querySelectorAll('#grid .tile')[0].getBoundingClientRect().left >
+                document.querySelectorAll('#grid .tile')[1].getBoundingClientRect().left &&
+            document.getElementById('navRight').getBoundingClientRect().left<100 &&
+            getComputedStyle(document.querySelector('#navRight .ui-icon')).transform==='matrix(-1, 0, 0, 1, 0, 0)'
+            """,
+            "RTL tiles, paging control or its chevron did not mirror",
+        )
+        browser.key_press("ArrowLeft")
+        assert_js(browser, "document.activeElement===document.querySelectorAll('#grid .tile')[1]",
+                  "RTL left arrow did not focus the tile to the left")
+        browser.touch_swipe(100, 400, 700, 400)
+        browser.wait_for("cfg.currentPage===1")
+        browser.touch_swipe(700, 400, 100, 400)
+        browser.wait_for("cfg.currentPage===0")
+        browser.evaluate("enterAdmin()")
+        browser.key_press("ArrowLeft")
+        assert_js(browser, "adminSection==='children' && document.activeElement.id==='adminNavChildren'",
+                  "RTL Parent tabs did not follow visual arrow direction")
+        assert_js(
+            browser,
+            "document.querySelector('#admin .wrap').scrollWidth<=document.querySelector('#admin .wrap').clientWidth+1",
+            "RTL Parent settings overflow horizontally at 800x600",
+        )
+        browser.screenshot(artifacts / "rtl-parent-800x600.png")
+        browser.key_press("Escape")
+    finally:
+        browser.evaluate("""
+            delete INTERFACE_LANGUAGE_REGISTRY.languages.find(item=>item.code===cfg.language).direction;
+            cfg=window.__rtlConfig;
+            applyDocumentLanguage(cfg.language);
+            focusedTileIndex=0;
+            renderAll();
+        """)
+        browser.set_device_metrics(1440, 900)
+    log_scenario("RTL registry direction, pager, swipes, grid and Parent focus")
+
+
 def run_accessibility_scenarios(browser, artifacts):
     prepare_two_pages = (
         "(() => {"
@@ -1480,6 +1557,7 @@ def run_accessibility_scenarios(browser, artifacts):
     )
     browser.set_device_metrics(1440, 900)
     log_scenario("800x600 home and Parent flows avoid clipping and horizontal scroll")
+    run_rtl_layout_scenario(browser, artifacts)
 
 
 def main():

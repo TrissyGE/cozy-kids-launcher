@@ -27,6 +27,7 @@ function firstRunLabel(text,control){
 
 function firstRunInput(id,value,placeholder,maxLength){
   const input=document.createElement('input');
+  input.dir='auto';
   input.id=id;
   input.value=value||'';
   input.placeholder=placeholder||'';
