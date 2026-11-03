@@ -1239,85 +1239,20 @@
         "mouse"
       ],
       "source": "https://apps.kde.org/kgeography/",
-      "reviewed": "2026-11-03"
-    }
-  },
-  {
-    "id": "kstars",
-    "emoji": "🌟",
-    "label_de": "Sternkarte",
-    "label_en": "Star chart",
-    "label_es": "Carta celeste",
-    "label_fr": "Carte du ciel",
-    "name_de": "KStars",
-    "name_en": "KStars",
-    "desc_de": "Erkunde den Himmel und beobachte, wie er sich mit Zeit und Ort verändert.",
-    "desc_en": "Explore the sky and see how it changes with time and location.",
-    "desc_es": "Explora el cielo y observa cómo cambia con la hora y el lugar.",
-    "desc_fr": "Explore le ciel et observe comment il change avec l’heure et le lieu.",
-    "cmd": [
-      "kstart",
-      "--fullscreen",
-      "kstars"
-    ],
-    "alt_cmds": [
-      "kstars"
-    ],
-    "package": "kstars",
-    "category": "learning",
-    "guidance": {
-      "age_de": "Für neugierige Kinder, die eine Sternkarte mit etwas Begleitung erkunden möchten (Elternorientierung).",
-      "age_en": "For curious children ready to explore a sky chart with some help (parent guidance).",
-      "age_es": "Para niños curiosos que quieren explorar una carta celeste con ayuda (orientación para familias).",
-      "age_fr": "Pour les enfants curieux qui souhaitent explorer une carte du ciel avec un peu d’aide (conseil aux parents).",
-      "offline": "yes",
-      "input": [
-        "mouse",
-        "keyboard"
-      ],
-      "source": "https://apps.kde.org/kstars/",
       "reviewed": "2026-11-03",
-      "network_de": "Die Sternkarte mit vorhandenen Daten funktioniert lokal. Optionale Zusatzdaten benötigen eine Internetverbindung.",
-      "network_en": "The sky chart works locally with available data. Optional extra data requires an internet connection.",
-      "network_es": "La carta celeste funciona en local con los datos disponibles. Los datos adicionales opcionales requieren internet.",
-      "network_fr": "La carte du ciel fonctionne en local avec les données disponibles. Les données supplémentaires facultatives nécessitent Internet."
-    }
-  },
-  {
-    "id": "stellarium",
-    "emoji": "🌌",
-    "label_de": "Planetarium",
-    "label_en": "Planetarium",
-    "label_es": "Planetario",
-    "label_fr": "Planétarium",
-    "name_de": "Stellarium",
-    "name_en": "Stellarium",
-    "desc_de": "Entdecke Sterne, Planeten und Sternbilder in einem virtuellen Planetarium.",
-    "desc_en": "Discover stars, planets and constellations in a virtual planetarium.",
-    "desc_es": "Descubre estrellas, planetas y constelaciones en un planetario virtual.",
-    "desc_fr": "Découvre les étoiles, les planètes et les constellations dans un planétarium virtuel.",
-    "cmd": [
-      "kstart",
-      "--fullscreen",
-      "stellarium"
-    ],
-    "alt_cmds": [
-      "stellarium"
-    ],
-    "package": "stellarium",
-    "category": "learning",
-    "guidance": {
-      "age_de": "Für Kinder, die den Himmel gemeinsam entdecken und eine 3D-Ansicht steuern möchten (Elternorientierung).",
-      "age_en": "For children ready to explore the sky together and navigate a 3D view (parent guidance).",
-      "age_es": "Para quienes quieren explorar el cielo en compañía y manejar una vista 3D (orientación para familias).",
-      "age_fr": "Pour les enfants qui souhaitent explorer le ciel ensemble et se déplacer dans une vue 3D (conseil aux parents).",
-      "offline": "yes",
-      "input": [
-        "mouse",
-        "keyboard"
-      ],
-      "source": "https://stellarium.org/",
-      "reviewed": "2026-11-03"
+      "network_de": "Die Kartenübungen funktionieren offline. Infotasten können Wikipedia im Standardbrowser öffnen.",
+      "network_en": "Map exercises work offline. Information buttons can open Wikipedia in the default browser.",
+      "network_es": "Los ejercicios con mapas funcionan sin conexión. Los botones de información pueden abrir Wikipedia en el navegador predeterminado.",
+      "network_fr": "Les exercices sur les cartes fonctionnent hors ligne. Les boutons d’information peuvent ouvrir Wikipédia dans le navigateur par défaut.",
+      "references": [
+        {
+          "label_de": "Kurzanleitung",
+          "label_en": "Quick start",
+          "label_es": "Guía de inicio",
+          "label_fr": "Guide de démarrage",
+          "url": "https://docs.kde.org/stable_kf6/en/kgeography/kgeography/quick-start.html"
+        }
+      ]
     }
   }
 ]

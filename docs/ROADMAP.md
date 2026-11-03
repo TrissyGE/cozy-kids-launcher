@@ -182,7 +182,8 @@ their own evidence is complete. See the release standard at the end.
 - [x] Review the remaining six web recommendations with provider sources, including online requirements and profile controls where applicable
 - [x] Add sourced learning guidance for Blinken, KWordQuiz and Parley
 - [x] Review the remaining eleven native recommendations and document network/privacy findings with explicit unknowns ([catalog guidance](CATALOG_GUIDANCE.md))
-- [ ] Add new curated apps such as KolourPaint, KGeography, KStars and Stellarium after package availability and per-app fullscreen/input/return acceptance
+- [x] Add curated KolourPaint and KGeography recommendations after package, fullscreen, input and return checks
+- [ ] Qualify KStars and Stellarium for the catalog after reliable launch and input across the desktop matrix
 - [x] Detect native APT, DNF, Pacman and Zypper environments and prepare allowlisted manual plans (#59; [provider scope](PACKAGE_PROVIDERS.md))
 - [x] Add terminal-free PackageKit/APT review, consent, system authorization, progress and add-tile flow (#60)
 - [x] Protect existing package routes with Parent/origin checks, catalog-controlled names and expiring single-use confirmation (#60)
