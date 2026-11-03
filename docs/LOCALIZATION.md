@@ -12,20 +12,20 @@ detection, the guided menu and locale installation. Backend configuration
 validation reads the same registry, and the installed frontend uses it for
 first-run choices and locale loading on the launcher and media screens.
 
-The installer in `scripts/install.sh` currently contains the canonical German
-and English UI strings. `src/frontend/state.js` maps the generated template
-values to `uiText`; `scripts/generate-locales.py` exports the corresponding
-JSON resources in `src/frontend/locales/`. After changing UI strings, run:
+Edit the canonical German and English translation tables in
+`src/translations/`. The installer reads these tables directly.
+`scripts/generate-locales.py` maps the same keys to `uiText` and generates
+the browser resources in `src/frontend/locales/`. After editing a table, run:
 
 ```bash
 python3 scripts/generate-locales.py
 python3 scripts/check.py
 ```
 
-Keep both enabled languages aligned. Use `uiText` for interface labels rather
-than writing new translated literals into rendering code. Existing freshness
-and language-switching checks protect the generated resources. Plural and
-placeholder validation are planned separately.
+English supplies missing strings. The loader rejects unknown or duplicate keys,
+changed named placeholders such as `{count}`, and values with line breaks.
+The generator also checks that every key referenced by the installer and browser
+mapping is available. Keep both enabled languages aligned when changing text.
 
 Catalog data is already open to additional language keys: `name_es`,
 `desc_fr`, `age_it` or a reference's `label_es`, for example. The shared
@@ -35,13 +35,12 @@ alone does not enable its language in settings.
 
 ## Planned foundation before enabling more UI languages
 
-Move canonical translations into data files. A reviewed language should be
-enabled by adding its data and registry entry. Until that migration, each
-enabled language still needs translations in the installer and the existing
-specialized text tables. Add direction metadata when implementing RTL support.
+Move the remaining specialized frontend text tables and language-specific
+rendering branches to locale data. Add direction metadata when implementing
+RTL support.
 
-Use a shared English fallback and validate keys, placeholders and plural
-forms. Document terminology, contribution/review ownership and missing strings.
+Validate plural forms and document terminology, contribution/review ownership
+and missing strings.
 Review all installer, child, Parent, setup and recovery surfaces for Spanish
 and French, then Italian, before enabling each pack. Include long labels,
 localized dates/numbers, keyboard use, speech availability and 800×600 layouts

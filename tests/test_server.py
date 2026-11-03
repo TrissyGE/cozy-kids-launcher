@@ -24,6 +24,11 @@ import lifecycle_state
 import activity_store
 import media_state
 import profile_config
+from translation_data import load_translations
+
+
+def translation_values():
+    return (*load_translations("de").values(), *load_translations("en").values())
 
 
 def frontend_source():
@@ -1912,9 +1917,6 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("function handleAdminNavKey(", source)
         self.assertIn("button.tabIndex=active?0:-1", source)
 
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         for label in (
             "Übersicht",
             "Kinder",
@@ -1927,13 +1929,10 @@ class FrontendSafetyTests(unittest.TestCase):
             "Screen Time",
             "Appearance",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_app_editor_search_and_visibility_filters_are_localized(self):
         source = frontend_source()
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         self.assertIn('id="tileSearch" type="search"', source)
         self.assertIn('id="tileVisibilityFilter"', source)
         self.assertIn('id="adminTileEmptyState"', source)
@@ -1953,7 +1952,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "Filter by visibility",
             "No tiles match your search and filter.",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_appearance_live_preview_does_not_apply_unsaved_settings(self):
         source = frontend_source()
@@ -1971,17 +1970,11 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertNotIn("document.body.className", preview)
         self.assertNotIn("persistConfig", preview)
 
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('de:preview_title) echo "Vorschau"', installer)
-        self.assertIn('en:preview_title) echo "Preview"', installer)
+        self.assertEqual(load_translations("de")["preview_title"], "Vorschau")
+        self.assertEqual(load_translations("en")["preview_title"], "Preview")
 
     def test_app_editor_bulk_actions_use_stable_tile_ids(self):
         source = frontend_source()
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         self.assertIn("adminSelectedTileIds=new Set()", source)
         self.assertIn('id="bulkSelectFiltered"', source)
         self.assertIn('id="bulkShowTilesBtn"', source)
@@ -2004,7 +1997,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "Select results",
             "Delete selection",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_destructive_frontend_actions_share_an_accessible_confirmation_dialog(self):
         source = frontend_source()
@@ -2023,17 +2016,11 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("event.stopImmediatePropagation()", dialogs)
         self.assertIn("buttons[buttons.length-1].focus()", dialogs)
 
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn('de:confirm_title) echo "Bitte bestätigen"', installer)
-        self.assertIn('en:confirm_title) echo "Please confirm"', installer)
+        self.assertEqual(load_translations("de")["confirm_title"], "Bitte bestätigen")
+        self.assertEqual(load_translations("en")["confirm_title"], "Please confirm")
 
     def test_async_frontend_resources_have_localized_recoverable_states(self):
         source = frontend_source()
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         self.assertIn('id="startupState"', source)
         self.assertIn('id="appCatalogState"', source)
         self.assertIn('id="browserCatalogState"', source)
@@ -2067,7 +2054,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "The launcher settings could not be loaded.",
             "App recommendations could not be loaded.",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_tile_content_is_rendered_as_text(self):
         source = frontend_source()
@@ -2199,7 +2186,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "Looking for your media",
             "Recently played",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
         self.assertIn('id="mediaFilters"', page)
         self.assertIn('.media-favorite[aria-pressed="true"]', styles)
         self.assertIn('install -m 0644 "$SRC_DIR/media_state.py"', installer)
@@ -2215,21 +2202,15 @@ class FrontendSafetyTests(unittest.TestCase):
 
     def test_diagnostics_download_is_local_and_bilingual(self):
         source = frontend_source()
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         self.assertIn("fetch('/api/diagnostics')", source)
         self.assertIn("{{LABEL_EXPORT_DIAGNOSTICS}}", source)
-        self.assertIn('de:export_diagnostics) echo "Diagnose herunterladen"', installer)
-        self.assertIn('en:export_diagnostics) echo "Download diagnostics"', installer)
+        self.assertEqual(load_translations("de")["export_diagnostics"], "Diagnose herunterladen")
+        self.assertEqual(load_translations("en")["export_diagnostics"], "Download diagnostics")
 
     def test_activity_dashboard_is_local_bounded_and_bilingual(self):
         dashboard = (
             REPOSITORY_ROOT / "src" / "frontend" / "activity-dashboard.js"
         ).read_text(encoding="utf-8")
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         self.assertIn("fetch('/api/activity'", dashboard)
         self.assertIn("fetch('/api/activity/export'", dashboard)
         self.assertIn("fetch('/api/activity/clear'", dashboard)
@@ -2243,7 +2224,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "Activity overview",
             "Export activity",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_theme_and_browser_labels_follow_the_interface_language(self):
         source = frontend_source()
@@ -2261,9 +2242,6 @@ class FrontendSafetyTests(unittest.TestCase):
     def test_embedded_browser_editor_explains_and_validates_exact_origin_boundaries(self):
         source = frontend_source()
         browser = (REPOSITORY_ROOT / "src" / "browser.html").read_text(
-            encoding="utf-8"
-        )
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
         self.assertIn("function parseBrowserAllowedOrigins(value)", source)
@@ -2285,13 +2263,10 @@ class FrontendSafetyTests(unittest.TestCase):
             "Diese Seite ist nicht erlaubt",
             "This page is not allowed",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_backup_restore_ui_uses_local_api_and_text_content(self):
         source = frontend_source()
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
-            encoding="utf-8"
-        )
         backup_functions = source[
             source.index("function backupLabel"):source.index("// Keyboard navigation")
         ]
@@ -2299,8 +2274,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("fetch('/api/backups/restore'", backup_functions)
         self.assertIn("option.textContent=backupLabel(backup)", backup_functions)
         self.assertNotIn("innerHTML", backup_functions)
-        self.assertIn('de:backup_title) echo "Sicherungen"', installer)
-        self.assertIn('en:backup_title) echo "Backups"', installer)
+        self.assertEqual(load_translations("de")["backup_title"], "Sicherungen")
+        self.assertEqual(load_translations("en")["backup_title"], "Backups")
 
     def test_accessibility_preferences_and_compact_layout_are_explicit(self):
         frontend = REPOSITORY_ROOT / "src" / "frontend"
@@ -2313,9 +2288,6 @@ class FrontendSafetyTests(unittest.TestCase):
         source = frontend_source()
         media = (frontend / "media-library.js").read_text(encoding="utf-8")
         page = (REPOSITORY_ROOT / "src" / "media.html").read_text(
-            encoding="utf-8"
-        )
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(
             encoding="utf-8"
         )
         self.assertIn("@media (prefers-reduced-motion: reduce)", styles)
@@ -2348,7 +2320,7 @@ class FrontendSafetyTests(unittest.TestCase):
             "Accessibility presets",
             "Keyboard mode with a strong focus marker",
         ):
-            self.assertIn(label, installer)
+            self.assertTrue(any(label in text for text in translation_values()), label)
 
     def test_world_theme_effects_are_profile_scoped_optional_and_time_local(self):
         frontend = REPOSITORY_ROOT / "src" / "frontend"
@@ -2395,9 +2367,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("animation-duration:.01ms !important", styles)
         self.assertIn('role="status" aria-live="polite"', page)
         self.assertIn('<script defer src="/frontend/transition-runtime.js"></script>', page)
-        installer = (REPOSITORY_ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
-        self.assertIn('de:started_app) echo "{app} ist bereit"', installer)
-        self.assertIn('en:started_app) echo "{app} is ready"', installer)
+        self.assertEqual(load_translations("de")["started_app"], "{app} ist bereit")
+        self.assertEqual(load_translations("en")["started_app"], "{app} is ready")
 
     def test_local_feedback_is_optional_bounded_and_dependency_free(self):
         frontend = REPOSITORY_ROOT / "src" / "frontend"
@@ -2420,8 +2391,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("configured_feedback_tile(cfg, body.get(\"tileId\"))", server)
         self.assertIn('role="status"', page)
         self.assertIn('<script defer src="/frontend/feedback-runtime.js"></script>', page)
-        self.assertIn('de:speech_unavailable)', installer)
-        self.assertIn('en:speech_unavailable)', installer)
+        self.assertTrue(load_translations("de")["speech_unavailable"])
+        self.assertTrue(load_translations("en")["speech_unavailable"])
         self.assertIn('"soundFeedbackEnabled": False', installer)
         self.assertIn('"speechFeedbackEnabled": False', installer)
         self.assertIn("soundFeedbackEnabled", profile_config.PROFILE_FIELDS)
@@ -2453,8 +2424,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('<script defer src="/frontend/celebration-runtime.js"></script>', index)
         self.assertIn('<script defer src="/frontend/celebration-runtime.js"></script>', media_page)
         self.assertIn('"celebrationEnabled": False', installer)
-        self.assertIn("ohne Punkte, Serien oder Belohnungen", installer)
-        self.assertIn("without points, streaks, or rewards", installer)
+        self.assertIn("ohne Punkte, Serien oder Belohnungen", load_translations("de")["celebration_hint"])
+        self.assertIn("without points, streaks, or rewards", load_translations("en")["celebration_hint"])
 
     def test_keyboard_and_touch_navigation_respect_ui_boundaries(self):
         source = frontend_source()
