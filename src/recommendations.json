@@ -108,7 +108,23 @@
     "desc_fr": "Entraîne-toi aux additions, soustractions, multiplications et divisions avec le manchot Tux.",
     "cmd": ["tuxmath","--fullscreen"],
     "package": "tuxmath",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "source": "https://github.com/tux4kids/tuxmath/blob/master/doc/README",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die Rechenaufgaben unter Zeitdruck lösen möchten (Elternorientierung).",
+      "age_en": "For children ready to practise arithmetic under time pressure (parent guidance).",
+      "age_es": "Para quienes quieren practicar cálculo con tiempo limitado (orientación para familias).",
+      "age_fr": "Pour les enfants prêts à faire du calcul en temps limité (conseil aux parents).",
+      "network_de": "Einzelspiel ist lokal. Der optionale Mehrspielermodus verwendet das lokale Netzwerk.",
+      "network_en": "Single-player play is local. Optional multiplayer uses the local network.",
+      "network_es": "El modo individual es local. El multijugador opcional usa la red local.",
+      "network_fr": "Le jeu en solo est local. Le mode multijoueur facultatif utilise le réseau local.",
+      "offline": "yes",
+      "input": [
+        "keyboard"
+      ]
+    }
   },
   {
     "id": "tuxtype",
@@ -125,7 +141,19 @@
     "desc_fr": "Apprends à taper au clavier avec des jeux et des exercices.",
     "cmd": ["tuxtype","--fullscreen"],
     "package": "tuxtype",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "source": "https://github.com/tux4kids/tuxtype",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die Buchstaben erkennen und Tippen üben möchten (Elternorientierung).",
+      "age_en": "For children ready to recognise letters and practise typing (parent guidance).",
+      "age_es": "Para quienes reconocen letras y quieren practicar mecanografía (orientación para familias).",
+      "age_fr": "Pour les enfants qui reconnaissent les lettres et souhaitent s’exercer au clavier (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "keyboard"
+      ]
+    }
   },
   {
     "id": "kturtle",
@@ -295,7 +323,20 @@
     "cmd": ["supertux2","--fullscreen"],
     "alt_cmds": ["supertux"],
     "package": "supertux",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "source": "https://www.supertux.org/discover.html",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die Laufen und Springen im Spiel koordinieren können (Elternorientierung).",
+      "age_en": "For children ready to coordinate running and jumping in a platform game (parent guidance).",
+      "age_es": "Para quienes pueden coordinar carreras y saltos en un juego de plataformas (orientación para familias).",
+      "age_fr": "Pour les enfants prêts à coordonner la course et les sauts dans un jeu de plateforme (conseil aux parents).",
+      "network_de": "Der Story-Modus ist lokal. Zusätzliche Levels aus der Community sind als optionale Downloads verfügbar.",
+      "network_en": "Story mode is local. Community levels are available as optional downloads.",
+      "network_es": "El modo historia es local. Hay niveles de la comunidad como descargas opcionales.",
+      "network_fr": "Le mode histoire est local. Des niveaux de la communauté sont proposés en téléchargement facultatif.",
+      "offline": "yes"
+    }
   },
   {
     "id": "supertuxkart",
@@ -312,7 +353,29 @@
     "desc_fr": "Participe à des courses de kart avec Tux et ses amis sur des circuits déjantés.",
     "cmd": ["supertuxkart","--fullscreen"],
     "package": "supertuxkart",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "source": "https://supertuxkart.net/Discover",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die gleichzeitig lenken und auf Hindernisse reagieren können (Elternorientierung).",
+      "age_en": "For children ready to steer and react to obstacles at the same time (parent guidance).",
+      "age_es": "Para quienes pueden conducir y reaccionar ante obstáculos a la vez (orientación para familias).",
+      "age_fr": "Pour les enfants prêts à piloter et à réagir aux obstacles en même temps (conseil aux parents).",
+      "network_de": "Einzelrennen und geteilter Bildschirm sind offline möglich. Online-Funktionen und Extras hängen vom jeweiligen Dienst ab.",
+      "network_en": "Solo races and split-screen play work offline. Online features and extras depend on the relevant service.",
+      "network_es": "Las carreras en solitario y en pantalla dividida funcionan sin conexión. Las funciones en línea y extras dependen del servicio.",
+      "network_fr": "Les courses en solo et en écran partagé fonctionnent hors ligne. Les fonctions en ligne et les extras dépendent du service.",
+      "references": [
+        {
+          "url": "https://members.supertuxkart.net/posts/supertuxkart-has-173200716",
+          "label_de": "Status der Online-Dienste",
+          "label_en": "Online service status",
+          "label_es": "Estado de los servicios en línea",
+          "label_fr": "État des services en ligne"
+        }
+      ],
+      "offline": "yes"
+    }
   },
   {
     "id": "frozen-bubble",
@@ -329,7 +392,23 @@
     "desc_fr": "Un jeu de tir de bulles colorées avec de charmants manchots.",
     "cmd": ["frozen-bubble","--fullscreen"],
     "package": "frozen-bubble",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "source": "https://manpages.debian.org/unstable/frozen-bubble/frozen-bubble.1p.en.html",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die Farben zuordnen und zielen können (Elternorientierung). Das Handbuch dokumentiert einen Modus ohne Schuss-Zeitlimit.",
+      "age_en": "For children ready to match colours and aim (parent guidance). The manual documents a mode without a shot timer.",
+      "age_es": "Para quienes pueden agrupar colores y apuntar (orientación para familias). El manual describe un modo sin límite de tiempo por tiro.",
+      "age_fr": "Pour les enfants prêts à associer les couleurs et à viser (conseil aux parents). Le manuel décrit un mode sans délai de tir.",
+      "network_de": "Einzelspiel und Spiel zu zweit am selben Rechner sind lokal. Weitere Modi nutzen LAN oder Netzwerkserver.",
+      "network_en": "Solo and two-player games on the same computer are local. Other modes use LAN or network servers.",
+      "network_es": "El modo individual y el modo de dos jugadores en el mismo equipo son locales. Otros modos usan la red local o servidores.",
+      "network_fr": "Les modes solo et deux joueurs sur un même ordinateur sont locaux. D’autres modes utilisent le réseau local ou des serveurs.",
+      "offline": "yes",
+      "input": [
+        "keyboard"
+      ]
+    }
   },
   {
     "id": "minetest",
@@ -348,7 +427,29 @@
     "hint_de": "Tipp: Vollbild kannst du in den Minetest-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the Minetest settings.",
     "package": "minetest",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "source": "https://www.luanti.org/en/",
+      "reviewed": "2026-11-03",
+      "age_de": "Luanti hieß früher Minetest. Inhalte und Schwierigkeit hängen vom installierten Spiel ab (Elternorientierung).",
+      "age_en": "Luanti was formerly Minetest. Content and difficulty depend on the installed game (parent guidance).",
+      "age_es": "Luanti antes se llamaba Minetest. El contenido y la dificultad dependen del juego instalado (orientación para familias).",
+      "age_fr": "Luanti s’appelait auparavant Minetest. Le contenu et la difficulté dépendent du jeu installé (conseil aux parents).",
+      "network_de": "Installierte Spiele können lokal gespielt werden. Serverliste, Inhaltsdownloads und fremde Mehrspieler-Server nutzen Internet.",
+      "network_en": "Installed games can be played locally. The server list, content downloads and third-party multiplayer servers use the internet.",
+      "network_es": "Los juegos instalados se pueden jugar en local. La lista de servidores, las descargas y los servidores de terceros usan internet.",
+      "network_fr": "Les jeux installés se jouent en local. La liste des serveurs, les téléchargements et les serveurs tiers utilisent Internet.",
+      "references": [
+        {
+          "url": "https://www.luanti.org/app-privacy-policy/",
+          "label_de": "Datenschutzhinweise",
+          "label_en": "Privacy policy",
+          "label_es": "Política de privacidad",
+          "label_fr": "Politique de confidentialité"
+        }
+      ],
+      "offline": "yes"
+    }
   },
   {
     "id": "extremetuxracer",
@@ -368,7 +469,16 @@
     "hint_de": "Tipp: Vollbild kannst du in den ETR-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the ETR settings.",
     "package": "extremetuxracer",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "source": "https://sourceforge.net/projects/extremetuxracer/",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die bei schnellen Abfahrten lenken und reagieren können (Elternorientierung).",
+      "age_en": "For children ready to steer and react during fast downhill races (parent guidance).",
+      "age_es": "Para quienes pueden dirigir al personaje y reaccionar en descensos rápidos (orientación para familias).",
+      "age_fr": "Pour les enfants prêts à diriger le personnage et à réagir pendant des descentes rapides (conseil aux parents).",
+      "offline": "yes"
+    }
   },
   {
     "id": "pingus",
@@ -387,7 +497,16 @@
     "hint_de": "Tipp: Vollbild kannst du in den Pingus-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the Pingus settings.",
     "package": "pingus",
-    "category": "game"
+    "category": "game",
+    "guidance": {
+      "source": "https://github.com/Pingus/pingus",
+      "reviewed": "2026-11-03",
+      "age_de": "Für Kinder, die Hindernisse erkennen und Aktionen im Voraus planen möchten (Elternorientierung).",
+      "age_en": "For children ready to spot obstacles and plan actions ahead (parent guidance).",
+      "age_es": "Para quienes quieren identificar obstáculos y planificar acciones (orientación para familias).",
+      "age_fr": "Pour les enfants prêts à repérer les obstacles et à anticiper leurs actions (conseil aux parents).",
+      "offline": "yes"
+    }
   },
   {
     "id": "blinken",
@@ -445,7 +564,20 @@
     "desc_fr": "Des jeux simples pour les plus petits avec des couleurs, des lettres et des exercices de mémoire.",
     "cmd": ["childsplay","--fullscreen"],
     "package": "childsplay",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "source": "https://childsplay.sourceforge.net/",
+      "reviewed": "2026-11-03",
+      "age_de": "Das Projekt richtet sich an jüngere Kinder. Es bietet unter anderem Gedächtnis- und Eingabeübungen.",
+      "age_en": "The project is aimed at young children and includes memory and input exercises.",
+      "age_es": "El proyecto se dirige a niños pequeños e incluye ejercicios de memoria y manejo del ordenador.",
+      "age_fr": "Le projet s’adresse aux jeunes enfants et propose des exercices de mémoire et de manipulation.",
+      "offline": "yes",
+      "input": [
+        "mouse",
+        "keyboard"
+      ]
+    }
   },
   {
     "id": "pysycache",
@@ -464,7 +596,28 @@
     "hint_de": "Tipp: Vollbild kannst du in den Pysycache-Einstellungen aktivieren.",
     "hint_en": "Tip: You can enable fullscreen in the Pysycache settings.",
     "package": "pysycache",
-    "category": "learning"
+    "category": "learning",
+    "guidance": {
+      "source": "https://pysycache.org/user-manual/en/index.html",
+      "reviewed": "2026-11-03",
+      "age_de": "Laut Projekt für etwa 4 bis 7 Jahre. Geübt werden Mausbewegung, Klicken und Ziehen.",
+      "age_en": "The project suggests ages 4–7. Activities practise moving, clicking and dragging with a mouse.",
+      "age_es": "El proyecto recomienda de 4 a 7 años. Se practica mover el ratón, hacer clic y arrastrar.",
+      "age_fr": "Le projet indique de 4 à 7 ans. Les activités font travailler les déplacements, les clics et le glisser-déposer.",
+      "references": [
+        {
+          "url": "https://pysycache.org/contrib/UserManual/UserManual-en.pdf",
+          "label_de": "Handbuch",
+          "label_en": "Handbook",
+          "label_es": "Manual",
+          "label_fr": "Manuel"
+        }
+      ],
+      "offline": "yes",
+      "input": [
+        "mouse"
+      ]
+    }
   },
   {
     "id": "ktuberling",
@@ -693,7 +846,24 @@
     "cmd": ["kstart","--fullscreen","potato-guy"],
     "alt_cmds": ["potato-guy"],
     "package": "potato-guy",
-    "category": "creative"
+    "category": "creative",
+    "guidance": {
+      "source": "https://apps.kde.org/ktuberling/",
+      "reviewed": "2026-11-03",
+      "age_de": "Historischer Katalogeintrag zum Figurenbasteln. Dieselbe Spielidee gibt es im aktuellen KDE-Projekt KTuberling.",
+      "age_en": "Legacy catalog entry for making figures. The current KDE project KTuberling offers this type of play.",
+      "age_es": "Entrada histórica para crear figuras. El proyecto actual KTuberling de KDE ofrece este tipo de juego.",
+      "age_fr": "Ancienne entrée du catalogue pour créer des personnages. Le projet KDE actuel KTuberling propose ce type de jeu.",
+      "references": [
+        {
+          "url": "https://packages.ubuntu.com/ktuberling",
+          "label_de": "Ubuntu-Paket KTuberling",
+          "label_en": "KTuberling Ubuntu package",
+          "label_es": "Paquete KTuberling de Ubuntu",
+          "label_fr": "Paquet Ubuntu de KTuberling"
+        }
+      ]
+    }
   },
   {
     "id": "kblocks",

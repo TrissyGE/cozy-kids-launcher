@@ -17,10 +17,10 @@ class CatalogGuidanceTests(unittest.TestCase):
                     self.assertIsNotNone(info)
                     self.assertEqual(info["offline"], "no")
                     self.assertTrue(info["network_en"].strip())
-            if not info:
-                continue
             with self.subTest(app=entry["id"]):
-                self.assertIn(info["offline"], ("yes", "partial", "no"))
+                self.assertTrue(info)
+                if "offline" in info:
+                    self.assertIn(info["offline"], ("yes", "partial", "no"))
                 self.assertEqual(urlsplit(info["source"]).scheme, "https")
                 self.assertTrue(urlsplit(info["source"]).hostname)
                 self.assertIsNone(urlsplit(info["source"]).username)
