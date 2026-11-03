@@ -743,6 +743,54 @@ class ServerApiTests(unittest.TestCase):
                     urllib.request.urlopen(self.base_url + path, timeout=5)
                 self.assertEqual(error.exception.code, 404)
 
+    @unittest.skipUnless(sys.platform.startswith("linux"), "managed folders use Linux paths")
+    def test_managed_media_roots_are_parent_only_and_recover_after_disconnect(self):
+        root = Path(self.temp_dir.name).resolve() / "External Media"
+        detached = root.with_name("Detached")
+        root.mkdir()
+        (root / "Family_Film.mp4").write_bytes(b"video")
+        (root / "Family_Film.jpg").write_bytes(b"old cover")
+        endpoint = "/api/media/roots"
+        body = {"roots": [str(root), str(root) + "/"]}
+        self.enable_pin()
+        self.assertEqual(self.request(endpoint)[0], 403)
+        self.assertEqual(self.request(endpoint, "POST", body)[0], 403)
+        cookie = self.authenticate()
+        self.assertEqual(self.request(endpoint, "POST", body, cookie, "https://elsewhere.example")[0], 403)
+        for invalid in (["relative"], ["/"], ["/mnt/../home"], ["/mnt/.hidden"], ["/mnt/x"] * 9):
+            with self.subTest(invalid=invalid):
+                self.assertEqual(self.request(endpoint, "POST", {"roots": invalid}, cookie)[0], 400)
+        status, saved, _ = self.request(endpoint, "POST", body, cookie)
+        self.assertEqual((status, saved), (200, {"roots": [str(root)]}))
+        self.assertEqual(self.request(endpoint, cookie=cookie)[1], saved)
+        for url in ("/api/config", "/api/media", "/api/media/sources"):
+            self.assertNotIn(str(root), json.dumps(self.request(url)[1]))
+        self.assertNotIn("mediaRoots", self.request("/api/config")[1])
+        _, catalog, _ = self.request("/api/media")
+        item = catalog["items"][0]
+        self.assertEqual(item["title"], "Family Film")
+        self.assertEqual(catalog["unavailableSources"], 0)
+
+        root.rename(detached)
+        root.symlink_to(detached, target_is_directory=True)
+        _, missing, _ = self.request("/api/media")
+        self.assertEqual((missing["items"], missing["unavailableSources"]), ([], 1))
+        self.assertNotEqual(missing["sourceRevision"], catalog["sourceRevision"])
+        self.assertEqual(self.request("/api/media/sources")[1]["sourceRevision"], missing["sourceRevision"])
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            urllib.request.urlopen(self.base_url + item["coverUrl"], timeout=5)
+        self.assertEqual(error.exception.code, 404)
+
+        root.unlink()
+        detached.rename(root)
+        (root / "Family_Film.jpg").write_bytes(b"new cover")
+        _, restored, _ = self.request("/api/media")
+        self.assertEqual(restored["unavailableSources"], 0)
+        self.assertEqual(restored["items"][0]["id"], item["id"])
+        with urllib.request.urlopen(self.base_url + item["coverUrl"], timeout=5) as response:
+            self.assertIn("no-store", response.headers["Cache-Control"])
+            self.assertEqual(response.read(), b"new cover")
+
     def test_media_cover_endpoint_rejects_oversized_images(self):
         (Path(server_module.VIDEOS) / "Film.mp4").write_bytes(b"video")
         (Path(server_module.VIDEOS) / "Film.jpg").write_bytes(b"large")

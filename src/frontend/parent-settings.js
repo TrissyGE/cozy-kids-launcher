@@ -377,7 +377,75 @@ function renderCatalogStates(){
   );
 }
 
+let mediaRootsSession=null;
+
+function clearMediaRoots(){
+  if(mediaRootsSession) mediaRootsSession.abort();
+  mediaRootsSession=null;
+  document.getElementById('mediaRootsInput').value='';
+  document.getElementById('mediaRootsInput').disabled=true;
+  document.getElementById('mediaRootsInput').readOnly=false;
+  document.getElementById('mediaRootsSave').disabled=true;
+  document.getElementById('mediaRootsSave').removeAttribute('aria-busy');
+  document.getElementById('mediaRootsStatus').textContent='';
+}
+
+async function loadMediaRoots(){
+  clearMediaRoots();
+  mediaRootsSession=new AbortController();
+  const {signal}=mediaRootsSession;
+  try{
+    const response=await fetch('/api/media/roots',{cache:'no-store',signal});
+    if(!response.ok) throw new Error('Media folders unavailable');
+    const {roots}=await response.json();
+    if(!Array.isArray(roots)||roots.some(root=>typeof root!=='string')) throw new Error('Invalid media folders');
+    if(signal.aborted) return;
+    const input=document.getElementById('mediaRootsInput');
+    input.value=roots.join('\n');
+    input.disabled=false;
+    document.getElementById('mediaRootsSave').disabled=false;
+  }catch(e){
+    if(!signal.aborted) document.getElementById('mediaRootsStatus').textContent=uiText.mediaRootsLoadError;
+  }
+}
+
+async function saveMediaRoots(){
+  const input=document.getElementById('mediaRootsInput');
+  const button=document.getElementById('mediaRootsSave');
+  const status=document.getElementById('mediaRootsStatus');
+  if(!mediaRootsSession||button.disabled||button.hasAttribute('aria-busy')) return;
+  const {signal}=mediaRootsSession;
+  const roots=input.value.split('\n').filter(path=>path.trim());
+  button.setAttribute('aria-busy','true');
+  input.readOnly=true;
+  status.textContent='';
+  try{
+    const response=await fetch('/api/media/roots',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roots}),signal
+    });
+    if(response.status===400){
+      if(!signal.aborted) status.textContent=uiText.mediaRootsInvalid;
+      return;
+    }
+    if(!response.ok) throw new Error('Media folders could not be saved');
+    const result=await response.json();
+    if(signal.aborted) return;
+    input.value=result.roots.join('\n');
+    status.textContent=uiText.mediaRootsSaved;
+  }catch(e){
+    if(!signal.aborted) status.textContent=uiText.saveError;
+  }finally{
+    if(!signal.aborted){
+      input.readOnly=false;
+      button.removeAttribute('aria-busy');
+    }
+  }
+}
+
 function renderAdmin(){
+  document.getElementById('mediaRootsLabel').textContent=uiText.mediaRootsLabel;
+  document.getElementById('mediaRootsHint').textContent=uiText.mediaRootsHint;
+  document.getElementById('mediaRootsSave').textContent=uiText.mediaRootsSave;
   document.getElementById('adminTitle').textContent=uiText.adminTitle;
   document.getElementById('cfgLanguageLabel').textContent=uiText.languageLabel;
   const languages=document.getElementById('cfgLanguage');

@@ -150,7 +150,7 @@ def enter_parent_settings(browser):
     )
 
 
-def run_scenarios(browser, release_fixture, installed_version, artifacts):
+def run_scenarios(browser, release_fixture, installed_version, artifacts, test_home):
     browser.wait_for(
         "typeof cfg !== 'undefined' && cfg !== null && "
         "bootstrapPromise===null && "
@@ -343,6 +343,13 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         ".map(tile => tile.textContent.trim()).join('|').includes('Paint')",
         "Home title or tiles are incorrect",
     )
+    managed_root = test_home / "External Media"
+    browser.evaluate("enterAdmin(); activateAdminSection('apps')")
+    browser.wait_for("!document.getElementById('mediaRootsInput').disabled")
+    browser.set_value("#mediaRootsInput", str(managed_root))
+    browser.click("#mediaRootsSave")
+    browser.wait_for("document.getElementById('mediaRootsStatus').textContent===uiText.mediaRootsSaved")
+    browser.evaluate("closeAdmin()")
     browser.click('#grid .tile[data-tile-id="music"]')
     browser.wait_for(
         "location.pathname==='/media.html' && "
@@ -424,6 +431,40 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         applyDocumentLanguage(mediaConfig.language);
     """)
     browser.screenshot(artifacts / "media-library.png")
+    browser.set_device_metrics(800, 600)
+    assert_js(browser, "document.getElementById('mediaSourcesNotice').getBoundingClientRect().height>0",
+              "A disconnected managed folder was not reported")
+    managed_root.mkdir()
+    (managed_root / "Drive_Film.mp4").write_bytes(b"video fixture")
+    shutil.copyfile(test_home / "Videos" / "E2E_Film.jpg", managed_root / "Drive_Film.jpg")
+    browser.wait_for(
+        "document.querySelectorAll('#mediaGrid .media-card').length===3 && "
+        "document.getElementById('mediaSourcesNotice').hidden && "
+        "document.body.textContent.includes('Drive Film') && !document.body.textContent.includes('External Media')",
+        message="A reconnected source did not appear without revealing its directory",
+    )
+    managed_root.rename(test_home / "Detached Media")
+    browser.wait_for(
+        "document.querySelectorAll('#mediaGrid .media-card').length===2 && "
+        "!document.getElementById('mediaSourcesNotice').hidden && !document.body.textContent.includes('Drive Film')",
+        message="A disconnected source left a stale card or cover",
+    )
+    browser.evaluate("""(async () => {
+        const request=window.fetch;
+        try {
+            window.fetch=(url,...args)=>url==='/api/media'
+                ? Promise.resolve(new Response(null,{status:503})) : request(url,...args);
+            await loadMediaCatalog();
+            setMediaFilter('favorites');
+            if(document.querySelector('#mediaGrid .media-card')) throw new Error('Stale cards survived a failed refresh');
+        } finally {
+            window.fetch=request;
+        }
+    })()""", await_promise=True)
+    browser.click("#mediaRefresh")
+    browser.wait_for("document.querySelectorAll('#mediaGrid .media-card').length===1")
+    browser.set_device_metrics(1440, 900)
+    log_scenario("Parent-managed media folders reconnect and disconnect without exposing paths")
     browser.click("#mediaBack")
     browser.wait_for(
         "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg!==null && "
@@ -1706,6 +1747,7 @@ def main():
                             ReleaseFixtureHandler,
                             installed_version,
                             args.artifacts,
+                            test_home,
                         )
                         run_accessibility_scenarios(browser, args.artifacts)
                     if args.suite in ("all", "regressions"):

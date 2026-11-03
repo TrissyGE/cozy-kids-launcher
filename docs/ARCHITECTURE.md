@@ -203,6 +203,17 @@ fails closed and tears down the newly owned process tree.
 
 ### 4. Parent security boundary
 
+Parents can save up to eight additional local media folders under Apps & Media.
+The global folder list is included in Parent configuration exports and backups.
+The regular launcher configuration, library and source status responses omit
+the folder paths. Existing Videos and Music locations remain available.
+Configured folders that are missing, unreadable, or redirected by a symbolic
+link are omitted from the catalog. The visible library checks for changes to
+these folders every ten seconds and refreshes the cards when a source changes.
+Use Refresh library after editing files in nested folders. A mount point that
+still exists as an empty directory after eject appears as an empty source.
+Favorite and recent IDs remain stored while the source is away.
+
 - the public config API exposes only whether a PIN exists, never its hash
 - successful PIN verification creates a short-lived HTTP-only session
 - configuration, timer administration, updates, exit, and shutdown require that session when a PIN is configured
