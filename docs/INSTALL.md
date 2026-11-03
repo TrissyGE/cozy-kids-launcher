@@ -58,6 +58,8 @@ bash scripts/install.sh \
 | `--lang auto` | Detect language automatically (default) |
 | `--lang de` | German |
 | `--lang en` | English |
+| `--lang es` | Spanish |
+| `--lang fr` | French |
 | `--theme rosa` | Pink theme (default) |
 | `--theme lila` | Purple |
 | `--theme blau` | Blue |

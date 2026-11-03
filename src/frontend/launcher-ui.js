@@ -342,12 +342,8 @@ const ALL_THEMES=[
   {id:'hunde',type:'world',img:'/themes/dogs.jpg'},
   {id:'custom',type:'color',gradient:'linear-gradient(180deg,#ffd6e8,#ffeef6)'}
 ];
-const THEME_LABELS={
-  de:{rosa:'Rosa',lila:'Lila',blau:'Blau',gruen:'Grün',regenbogen:'Regenbogen',wald:'Wald',weltraum:'Weltraum',ocean:'Ozean',dinosaurier:'Dinosaurier',baustelle:'Baustelle',prinzessin:'Prinzessin',bauernhof:'Bauernhof',katzen:'Katzen',hunde:'Hunde',custom:'Eigene Farben'},
-  en:{rosa:'Pink',lila:'Purple',blau:'Blue',gruen:'Green',regenbogen:'Rainbow',wald:'Forest',weltraum:'Space',ocean:'Ocean',dinosaurier:'Dinosaurs',baustelle:'Construction',prinzessin:'Princess',bauernhof:'Farm',katzen:'Cats',hunde:'Dogs',custom:'Custom'}
-};
-function interfaceLanguage(){ return ((cfg&&cfg.language)||'{{ACTIVE_LANG}}')==='de'?'de':'en'; }
-function themeLabel(id){ return THEME_LABELS[interfaceLanguage()][id]||id; }
+function interfaceLanguage(){ return normalizedInterfaceLanguage(document.documentElement.lang); }
+function themeLabel(id){ return uiText.themes[id]||id; }
 function openThemePicker(){ document.getElementById('themeOverlay').classList.remove('hidden'); renderThemeChooser(); requestAnimationFrame(()=>{ const first=document.querySelector('#themeChooser .theme-thumb'); if(first) first.focus(); }); }
 function closeThemePicker(){
   document.getElementById('themeOverlay').classList.add('hidden');

@@ -195,6 +195,24 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         )
     finally:
         browser.evaluate("window.fetch=window.setupLocaleFetch; delete window.setupLocaleFetch")
+    browser.set_device_metrics(800, 600)
+    for language, title in (
+        ("es", "Te damos la bienvenida a Cozy Kids"),
+        ("fr", "Bienvenue dans Cozy Kids"),
+    ):
+        browser.click(f'.first-run-choice[data-language="{language}"]')
+        browser.wait_for(
+            f"cfg.language==={json.dumps(language)} && document.documentElement.lang===cfg.language && "
+            f"document.getElementById('firstRunTitle').textContent==={json.dumps(title)} && "
+            "document.activeElement.matches('.first-run-choice[aria-pressed=\"true\"]')",
+            message=f"The setup did not switch to {language}",
+        )
+        assert_js(
+            browser,
+            "document.querySelector('.first-run-box').scrollWidth<=document.querySelector('.first-run-box').clientWidth+1",
+            f"{language} setup overflows at 800×600",
+        )
+    browser.set_device_metrics(1440, 900)
     browser.click('.first-run-choice[data-language="de"]')
     browser.wait_for(
         "cfg.language==='de' && document.documentElement.lang==='de' && "
@@ -261,6 +279,35 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     })()""", await_promise=True)
     log_scenario("guided first run covers language, child, apps, time, and appearance")
     log_scenario("real desktop-entry discovery follows German/English config reloads")
+    browser.set_device_metrics(800, 600)
+    for language, title, theme, singular, plural in (
+        ("es", "Ajustes parentales", "Bosque", "1 paquete", "2 paquetes"),
+        ("fr", "Paramètres parentaux", "Forêt", "1 paquet", "2 paquets"),
+        ("en", "Parent settings", "Forest", "1 package", "2 packages"),
+    ):
+        browser.evaluate("enterAdmin(); activateAdminSection('system')")
+        browser.set_value("#cfgLanguage", language)
+        browser.click("#saveBtn")
+        browser.wait_for(
+            f"document.documentElement.lang==={json.dumps(language)} && "
+            "document.getElementById('admin').classList.contains('hidden')",
+            message=f"Parent settings did not save and apply {language}",
+        )
+        assert_js(
+            browser,
+            f"uiText.adminTitle==={json.dumps(title)} && themeLabel('wald')==={json.dumps(theme)} && "
+            f"localizedCount('packageCount',1).startsWith({json.dumps(singular)}) && "
+            f"localizedCount('packageCount',2).startsWith({json.dumps(plural)}) && "
+            "document.getElementById('appearancePreviewHeading').textContent===uiText.previewTitle && "
+            "document.getElementById('navRight').getAttribute('aria-label')===uiText.adminPageNext && "
+            "document.getElementById('title').textContent==='E2E Home' && cfg.name==='Kiddo'",
+            f"{language} interface, plural rules or preserved profile labels are incorrect",
+        )
+        persisted = browser.evaluate("fetch('/api/config').then(response=>response.json())", await_promise=True)
+        if persisted.get("language") != language:
+            raise AssertionError(f"Parent settings did not persist {language}")
+    browser.set_device_metrics(1440, 900)
+    log_scenario("Spanish and French setup, Parent language changes and localized counts")
     assert_js(
         browser,
         "document.getElementById('title').textContent === 'E2E Home' && "

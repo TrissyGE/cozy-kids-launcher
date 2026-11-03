@@ -2,6 +2,8 @@
   "default": "en",
   "languages": [
     {"code": "en", "name": "English", "icon": "🇬🇧"},
-    {"code": "de", "name": "Deutsch", "icon": "🇩🇪"}
+    {"code": "de", "name": "Deutsch", "icon": "🇩🇪"},
+    {"code": "es", "name": "Español", "icon": "🇪🇸"},
+    {"code": "fr", "name": "Français", "icon": "🇫🇷"}
   ]
 }

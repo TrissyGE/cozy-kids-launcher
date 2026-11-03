@@ -296,7 +296,7 @@
               </div>
             </div>
             <div class="row2" style="grid-template-columns:1fr 1fr; margin-top:8px; align-items:center;">
-              <label style="font-weight:700; color:var(--text);">Browser</label>
+              <label style="font-weight:700; color:var(--text);"><span id="browserLabel"></span></label>
               <select id="cfgBrowser"></select>
             </div>
             <div id="browserHint" class="muted" style="margin-bottom:8px;"></div>
@@ -361,11 +361,11 @@
                   <select id="cfgLayoutMode" onchange="renderAppearancePreview()"><option id="layoutOptionLarge" value="gross">{{LABEL_LAYOUT_LARGE}}</option><option id="layoutOptionSmall" value="klein">{{LABEL_LAYOUT_SMALL}}</option></select>
                 </div>
                 <div id="customThemePanel" class="row2" style="display:none; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-top:8px;">
-                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG1 <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
-                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">BG2 <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
-                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Text <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
-                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Btn <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
-                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;">Card <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;"><span id="paletteBgStart"></span> <input type="color" id="cfgCustomBg1" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;"><span id="paletteBgEnd"></span> <input type="color" id="cfgCustomBg2" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;"><span id="paletteText"></span> <input type="color" id="cfgCustomText" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;"><span id="paletteButton"></span> <input type="color" id="cfgCustomBtn" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:700;"><span id="paletteCard"></span> <input type="color" id="cfgCustomCard" style="width:50px;padding:0;border:0;" oninput="renderAppearancePreview()"></label>
                   <input id="cfgCustomBg" placeholder="Hintergrundbild Pfad (optional)">
                 </div>
                 <fieldset id="worldThemeOptions" class="world-theme-options">
@@ -434,6 +434,10 @@
 
           <section id="adminSectionSystem" class="admin-section" data-admin-panel="system" aria-labelledby="adminNavSystem" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
+            <div class="row2" style="grid-template-columns:1fr 1fr; align-items:center;">
+              <label id="cfgLanguageLabel" for="cfgLanguage"></label>
+              <select id="cfgLanguage"></select>
+            </div>
             <div class="row2" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-top:8px;">
               <input id="cfgPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_SET}}">
               <input id="cfgPinConfirm" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_CONFIRM}}">

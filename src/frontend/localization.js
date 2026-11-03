@@ -5,26 +5,58 @@ function normalizedInterfaceLanguage(language){
     ?language:INTERFACE_LANGUAGE_REGISTRY.default;
 }
 
+function localizedCount(key,count,total){
+  const language=interfaceLanguage();
+  const category=new Intl.PluralRules(language).select(total??count);
+  const numbers=new Intl.NumberFormat(language);
+  const message=uiText.counts[key][category]||uiText[key];
+  return message.replace('{count}',numbers.format(count))
+    .replace('{total}',()=>numbers.format(total));
+}
+
+async function fetchInterfaceLocale(normalized){
+  const response=await fetch('/frontend/locales/'+normalized+'.json',{cache:'no-store'});
+  if(!response.ok) throw new Error('Locale could not be loaded');
+  const locale=await response.json();
+  if(!locale||typeof locale!=='object'||Array.isArray(locale)||
+    !locale.adminTitle||!locale.firstRun?.languageTitle||!locale.profiles?.pickerTitle||
+    !locale.themes||!locale.counts){
+    throw new Error('Invalid locale response');
+  }
+  return locale;
+}
+
+function applyInterfaceLocale(language,locale){
+  uiText=locale;
+  document.documentElement.lang=language;
+}
+
 async function loadInterfaceLanguage(language){
   const normalized=normalizedInterfaceLanguage(language);
   try{
-    const response=await fetch('/frontend/locales/'+normalized+'.json',{cache:'no-store'});
-    if(!response.ok) throw new Error('Locale could not be loaded');
-    const locale=await response.json();
-    if(!locale||typeof locale!=='object'||Array.isArray(locale)||
-      !locale.adminTitle||!locale.firstRun?.languageTitle||!locale.profiles?.pickerTitle){
-      throw new Error('Invalid locale response');
-    }
-    uiText=locale;
+    applyInterfaceLocale(normalized,await fetchInterfaceLocale(normalized));
+    return true;
   }catch(e){
     // Keep the installer-rendered language as a complete offline fallback.
     return false;
   }
-  document.documentElement.lang=normalized;
-  return true;
 }
 
 function renderLocalizedChrome(){
+  for(const [id,key] of Object.entries({
+    browserLabel:'browserLabel',paletteBgStart:'paletteBgStart',paletteBgEnd:'paletteBgEnd',
+    paletteText:'paletteText',paletteButton:'paletteButton',paletteCard:'paletteCard',
+    appearancePreviewHeading:'previewTitle'
+  })){
+    document.getElementById(id).textContent=uiText[key];
+  }
+  for(const [selector,key] of Object.entries({
+    '#navLeft':'adminPagePrev','#navRight':'adminPageNext','#backupSelect':'backupTitle',
+    '#updating .emoji':'updateProgress','#timerWarning .emoji':'timerWarningTitle',
+    '#timerBlock .emoji':'timerExpiredTitle'
+  })){
+    document.querySelector(selector).setAttribute('aria-label',uiText[key]);
+  }
   document.getElementById('pinTitle').textContent=uiText.pinTitle;
   document.getElementById('pinInput').placeholder=uiText.pinPlaceholder;
   setIconLabel(document.getElementById('pinCancelBtn'),'back',uiText.back);

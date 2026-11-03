@@ -197,9 +197,12 @@ their own evidence is complete. See the release standard at the end.
 - [x] Introduce one language registry for installer, backend validation and all language pickers
 - [x] Move the installer translation table into locale data files shared with browser locale generation, with English fallback and key and placeholder validation
 - [x] Move setup and child profile texts into locale data and handle unavailable language files during setup
-- [ ] Migrate the remaining frontend text tables and language-specific branches to locale data and validate plural forms
-- [ ] Translate and review Spanish across installer, child UI, Parent settings and recovery messages
-- [ ] Translate and review French across the same surfaces
+- [x] Localize themes, media startup text, settings labels, dates and catalog actions through shared data
+- [x] Validate count placeholders and select singular or plural catalog and package messages using the active locale
+- [x] Translate Spanish across guided installation, child UI, Parent settings, catalog and recovery messages
+- [x] Translate French across the same surfaces
+- [x] Let existing families change the launcher language in Parent settings while preserving profile names and tile labels
+- [ ] Apply the saved language to native helper windows and the embedded browser wrapper after an in-app language change
 - [ ] Translate and review Italian after Spanish/French
 - [x] Make app descriptions, guidance and source labels use locale-key fallbacks so new packs can add translations through data
 - [ ] Document translation contributions, terminology and review ownership; track missing strings without silently claiming a complete language pack
@@ -207,8 +210,8 @@ their own evidence is complete. See the release standard at the end.
 - [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
 
 The [translation guide](LOCALIZATION.md) explains the current German/English
-pipeline, the shared registry and the remaining localization work. Spanish, French and
-Italian remain upcoming packs, rather than already-enabled settings options.
+pipeline and the shared registry. Spanish and French are enabled. Italian and
+physical-device language acceptance remain separate tasks.
 
 ### Lifecycle and reach
 

@@ -6,9 +6,10 @@ import threading
 import time
 import unicodedata
 
+from language_registry import DEFAULT_LANGUAGE, LANGUAGE_CODES
+
 
 SPEECH_ENGINES = ("spd-say", "espeak-ng", "espeak")
-SUPPORTED_LANGUAGES = {"de", "en"}
 MAX_SPEECH_TEXT_LENGTH = 200
 MIN_SPEECH_INTERVAL_SECONDS = 0.2
 MAX_SPEECH_DURATION_SECONDS = 20
@@ -43,7 +44,7 @@ def find_speech_engine(which=shutil.which):
 def speech_command(engine, executable, text, language):
     """Build an argv-only command for one known local speech engine."""
     normalized = normalize_speech_text(text)
-    voice = language if language in SUPPORTED_LANGUAGES else "en"
+    voice = language if language in LANGUAGE_CODES else DEFAULT_LANGUAGE
     if engine == "spd-say":
         return [executable, "-w", "-l", voice, normalized]
     if engine in ("espeak-ng", "espeak"):
