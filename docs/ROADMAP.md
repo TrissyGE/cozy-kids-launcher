@@ -245,7 +245,9 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 
 #### RetroGameCorner
 
-- [x] Add an optional RetroGameCorner with Parent-approved game tiles and an mGBA entry using the existing direct-install flow
+- [x] Put emulator installation in a dedicated RetroGameCorner Parent section using the shared app-store flow
+- [x] Show one optional RetroGameCorner Home tile that opens the child's approved games in a cover library
+- [x] Support local cover images and opt-in automatic cover downloads from Libretro
 - [x] Explain local ROMs, BIOS files, controls, age/content choices and save data in Parent settings
 - [x] Accept Parent-supplied Game Boy, Game Boy Color and Game Boy Advance ROMs from bounded local folders
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs

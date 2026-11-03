@@ -4,17 +4,79 @@ import hashlib
 import os
 import re
 import stat
+import threading
+import time
+from functools import lru_cache
+from urllib.parse import quote
+from urllib.request import HTTPRedirectHandler, build_opener
 
 from media_library import managed_media_sources
 from media_resume import prepare_profile_resume_directory
 
 
 RETRO_PREFIX = "special:retro:"
+HUB_COMMAND = "special:retro-library"
+HUB_ID = "retro-corner"
 ROM_EXTENSIONS = frozenset({".gb", ".gbc", ".gba"})
 MAX_ROMS = 100
 MAX_SCAN_DIRECTORIES = 250
 MAX_SCAN_ENTRIES = 2500
 ROM_ID = re.compile(r"[a-f0-9]{24}")
+COVER_SYSTEMS = {
+    ".gb": "Nintendo - Game Boy",
+    ".gbc": "Nintendo - Game Boy Color",
+    ".gba": "Nintendo - Game Boy Advance",
+}
+MAX_COVER_BYTES = 1024 * 1024
+_cover_slots = threading.BoundedSemaphore(2)
+
+
+def retro_hub(cfg, require_visible=True):
+    return next((tile for tile in cfg["tiles"] if tile["id"] == HUB_ID
+                 and tile["cmd"] == [HUB_COMMAND] and (not require_visible or tile["visible"])), None)
+
+
+def approved_retro_ids(cfg):
+    return {identifier: tile for tile in cfg["tiles"] if tile["visible"]
+            if (identifier := retro_id(tile["cmd"]))}
+
+
+class _NoCoverRedirect(HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+@lru_cache(maxsize=32)
+def _download_cover(system, name, cache_hour):
+    url = f"https://thumbnails.libretro.com/{quote(system, safe='')}/Named_Boxarts/{quote(name, safe='')}.png"
+    try:
+        with build_opener(_NoCoverRedirect()).open(url, timeout=4) as response:
+            payload = response.read(MAX_COVER_BYTES + 1)
+    except OSError:
+        return b""
+    if len(payload) <= MAX_COVER_BYTES and payload.startswith(b"\x89PNG\r\n\x1a\n"):
+        return payload
+    return b""
+
+
+def retro_cover(game, download=False):
+    stem, extension = os.path.splitext(game["path"])
+    sidecar = stem + ".png"
+    try:
+        if os.path.realpath(sidecar) == sidecar and os.path.isfile(sidecar):
+            with open(sidecar, "rb") as cover:
+                payload = cover.read(MAX_COVER_BYTES + 1)
+            if len(payload) <= MAX_COVER_BYTES and payload.startswith(b"\x89PNG\r\n\x1a\n"):
+                return payload
+    except OSError:
+        pass
+    if not download or not _cover_slots.acquire(timeout=15):
+        return b""
+    try:
+        title = re.sub(r'[&*/:`<>?\\|]', "_", game["title"])
+        return _download_cover(COVER_SYSTEMS[extension.casefold()], title, int(time.time() // 3600))
+    finally:
+        _cover_slots.release()
 
 
 def retro_id(command):

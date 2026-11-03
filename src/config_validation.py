@@ -70,6 +70,8 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         visible = tile.get("visible", True)
         if not isinstance(visible, bool):
             raise ValueError(f"tiles[{index}].visible must be a boolean")
+        if "retroCovers" in tile and type(tile["retroCovers"]) is not bool:
+            raise ValueError("retroCovers must be a boolean")
         validated_tile = {
             **tile,
             "id": tile_id,

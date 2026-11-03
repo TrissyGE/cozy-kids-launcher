@@ -3,6 +3,7 @@ const MEDIA_FALLBACK_TEXT=Object.freeze({{JSON_MEDIA_LOCALE}});
 let mediaText=MEDIA_FALLBACK_TEXT;
 let mediaConfig=null;
 let mediaTileId='';
+let retroLibrary=false;
 let mediaItems=[];
 let mediaFavoriteIds=new Set();
 let mediaRecentIds=[];
@@ -19,13 +20,14 @@ function mediaHome(){ window.location='/index.html'; }
 
 function mediaTile(config,tileId){
   return (config.tiles||[]).find(tile=>tile.id===tileId&&tile.visible!==false&&
-    Array.isArray(tile.cmd)&&tile.cmd.length===1&&tile.cmd[0]==='special:filme-musik');
+    Array.isArray(tile.cmd)&&tile.cmd.length===1&&['special:filme-musik','special:retro-library'].includes(tile.cmd[0]));
 }
 
 function applyMediaTheme(config){
-  applyThemeRuntime(document.body,config,['media-page']);
+  const classes=retroLibrary?['media-page','retro-library']:['media-page'];
+  applyThemeRuntime(document.body,config,classes);
   applyAccessibilityRuntime(document.body,config);
-  scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,['media-page']);
+  scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,classes);
   applyCustomThemeRuntime(document.body,config,document.getElementById('themeBg'));
 }
 
@@ -57,6 +59,7 @@ function localizeMediaPage(tile){
   };
   filters.querySelectorAll('[data-media-filter]').forEach(button=>{
     button.textContent=labels[button.dataset.mediaFilter];
+    button.hidden=retroLibrary;
   });
   document.getElementById('mediaRefresh').textContent=mediaText.mediaLibraryRefresh;
 }
@@ -91,7 +94,7 @@ function hideMediaState(){
 function mediaCoverFallback(container,kind){
   const playMark=container.querySelector('.media-play-mark');
   container.classList.add('media-cover-fallback');
-  const icon=createLocalIcon(kind==='video'?'video':'media');
+  const icon=createLocalIcon(retroLibrary?'apps':kind==='video'?'video':'media');
   container.replaceChildren(...(icon?[icon]:[]),...(playMark?[playMark]:[]));
 }
 
@@ -135,10 +138,15 @@ function mediaCard(item){
   title.textContent=item.title;
   const kind=document.createElement('span');
   kind.className='media-card-kind';
-  kind.textContent=item.kind==='video'?mediaText.mediaLibraryVideo:mediaText.mediaLibraryAudio;
-  copy.append(title,kind);
+  kind.textContent=retroLibrary?'':item.kind==='video'?mediaText.mediaLibraryVideo:mediaText.mediaLibraryAudio;
+  copy.appendChild(title);
+  if(!retroLibrary) copy.appendChild(kind);
   button.append(cover,copy);
   const favorite=mediaFavoriteIds.has(item.id);
+  if(retroLibrary){
+    shell.appendChild(button);
+    return shell;
+  }
   const favoriteButton=document.createElement('button');
   favoriteButton.type='button';
   favoriteButton.className='media-favorite';
@@ -162,6 +170,7 @@ function visibleMediaItems(){
 }
 
 function emptyMediaMessage(){
+  if(retroLibrary) return mediaText.retroLibraryEmpty;
   if(mediaFilter==='favorites') return mediaText.mediaLibraryFavoritesEmpty;
   if(mediaFilter==='recents') return mediaText.mediaLibraryRecentsEmpty;
   return mediaText.mediaLibraryEmpty;
@@ -205,25 +214,26 @@ async function loadMediaCatalog(){
   showMediaState('loading',mediaText.mediaLibraryLoading);
   document.getElementById('mediaGrid').hidden=true;
   try{
-    const response=await fetch('/api/media',{cache:'no-store'});
+    const response=await fetch(retroLibrary?'/api/retro/library':'/api/media',{cache:'no-store'});
     if(!response.ok) throw new Error('Catalog unavailable');
     const payload=await response.json();
     if(!payload||!Array.isArray(payload.items)||typeof payload.truncated!=='boolean'||
-        typeof payload.sourceRevision!=='string'||!Number.isInteger(payload.unavailableSources)||
-        !Array.isArray(payload.favoriteIds)||!Array.isArray(payload.recentIds)){
+        !Number.isInteger(payload.unavailableSources)||(!retroLibrary&&(
+          typeof payload.sourceRevision!=='string'||!Array.isArray(payload.favoriteIds)||!Array.isArray(payload.recentIds)
+        ))){
       throw new Error('Invalid catalog');
     }
     mediaItems=payload.items;
     mediaCoverRevision+=1;
     mediaSourceRevision=payload.sourceRevision;
-    mediaFavoriteIds=new Set(payload.favoriteIds);
-    mediaRecentIds=payload.recentIds;
+    mediaFavoriteIds=new Set(payload.favoriteIds||[]);
+    mediaRecentIds=payload.recentIds||[];
     const notice=document.getElementById('mediaSourcesNotice');
     notice.hidden=!(payload.unavailableSources>0);
     notice.textContent=notice.hidden?'':mediaText.mediaLibrarySourcesMissing;
     const truncated=document.getElementById('mediaTruncated');
     truncated.hidden=!payload.truncated;
-    truncated.textContent=payload.truncated?mediaText.mediaLibraryTruncated:'';
+    truncated.textContent=payload.truncated?(retroLibrary?mediaText.retroLimit:mediaText.mediaLibraryTruncated):'';
     renderMediaCatalog();
     if(focusedId&&document.activeElement===refresh){
       const replacement=Array.from(document.querySelectorAll('['+focusAttribute+']'))
@@ -290,10 +300,10 @@ async function playMedia(item,button){
   button.classList.add('is-starting');
   showMediaState('loading',mediaText.mediaLibraryStarting.replace('{title}',item.title));
   try{
-    const response=await fetch('/api/media/play',{
+    const response=await fetch(retroLibrary?'/api/retro/play':'/api/media/play',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({mediaId:item.id,tileId:mediaTileId})
+      body:JSON.stringify(retroLibrary?{gameId:item.id}:{mediaId:item.id,tileId:mediaTileId})
     });
     if(response.status===403){
       button.classList.remove('is-starting');
@@ -308,7 +318,7 @@ async function playMedia(item,button){
     playCelebrationMoment(mediaConfig);
   }catch(e){
     button.classList.remove('is-starting');
-    showMediaState('error',mediaText.mediaLibraryPlayError);
+    showMediaState('error',retroLibrary?mediaText.retroUnavailable:mediaText.mediaLibraryPlayError);
   }finally{
     button.disabled=false;
   }
@@ -347,12 +357,15 @@ async function initializeMediaLibrary(){
     await loadMediaText(mediaConfig.language);
     const tile=mediaTile(mediaConfig,mediaTileId);
     if(!tile){ mediaHome(); return; }
+    retroLibrary=tile.cmd[0]==='special:retro-library';
     applyMediaTheme(mediaConfig);
     localizeMediaPage(tile);
     await loadMediaCatalog();
     configureMediaController(mediaConfig.controllerNavigationEnabled===true);
-    window.setInterval(checkMediaSources,10000);
-    document.addEventListener('visibilitychange',checkMediaSources);
+    if(!retroLibrary){
+      window.setInterval(checkMediaSources,10000);
+      document.addEventListener('visibilitychange',checkMediaSources);
+    }
   }catch(e){
     localizeMediaPage(null);
     showMediaState('error',mediaText.mediaLibraryError,()=>window.location.reload());

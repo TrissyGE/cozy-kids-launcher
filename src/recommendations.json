@@ -1410,6 +1410,7 @@
     "package": "mgba-qt",
     "category": "games",
     "installOnly": true,
+    "retroEmulator": true,
     "guidance": {
       "offline": "yes",
       "input": ["keyboard"],

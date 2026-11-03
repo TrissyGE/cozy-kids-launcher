@@ -190,6 +190,7 @@
           <button id="adminNavOverview" class="admin-tab" type="button" data-admin-section="overview" aria-controls="adminSectionOverview" onclick="activateAdminSection('overview')"></button>
           <button id="adminNavChildren" class="admin-tab" type="button" data-admin-section="children" aria-controls="adminSectionChildren" onclick="activateAdminSection('children')"></button>
           <button id="adminNavApps" class="admin-tab" type="button" data-admin-section="apps" aria-controls="adminSectionApps" onclick="activateAdminSection('apps')"></button>
+          <button id="adminNavRetro" class="admin-tab" type="button" data-admin-section="retro" aria-controls="adminSectionRetro" onclick="activateAdminSection('retro')"></button>
           <button id="adminNavScreenTime" class="admin-tab" type="button" data-admin-section="screen-time" aria-controls="adminSectionScreenTime" onclick="activateAdminSection('screen-time')"></button>
           <button id="adminNavAppearance" class="admin-tab" type="button" data-admin-section="appearance" aria-controls="adminSectionAppearance" onclick="activateAdminSection('appearance')"></button>
           <button id="adminNavSystem" class="admin-tab" type="button" data-admin-section="system" aria-controls="adminSectionSystem" onclick="activateAdminSection('system')"></button>
@@ -328,6 +329,17 @@
               <button id="mediaRootsSave" class="smallbtn" type="button" onclick="saveMediaRoots()" disabled></button>
               <div id="mediaRootsStatus" role="status" aria-live="polite"></div>
             </section>
+            <div id="recommendations" style="margin-top:18px;"></div>
+          </section>
+
+          <section id="adminSectionRetro" class="admin-section" data-admin-panel="retro" aria-labelledby="adminNavRetro" hidden>
+            <h3 class="section-heading" tabindex="-1"></h3>
+            <div id="retroEmulators"></div>
+            <div class="backup-panel media-roots-panel">
+              <label class="chk"><input id="retroEnabled" type="checkbox"><span id="retroEnabledLabel"></span></label>
+              <label class="chk"><input id="retroCovers" type="checkbox"><span id="retroCoversLabel"></span></label>
+              <button id="retroSettingsSave" class="smallbtn" type="button" onclick="saveRetroSettings()"></button>
+            </div>
             <section class="backup-panel media-roots-panel" aria-labelledby="retroTitle">
               <h3 id="retroTitle">RetroGameCorner</h3>
               <p id="retroGuide" class="muted"></p>
@@ -342,7 +354,6 @@
               <button id="retroApprove" class="smallbtn" type="button" onclick="approveRetroGame()" disabled></button>
               <div id="retroStatus" role="status" aria-live="polite"></div>
             </section>
-            <div id="recommendations" style="margin-top:18px;"></div>
           </section>
 
           <section id="adminSectionScreenTime" class="admin-section" data-admin-panel="screen-time" aria-labelledby="adminNavScreenTime" hidden>
