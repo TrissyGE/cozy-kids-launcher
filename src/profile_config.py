@@ -28,6 +28,7 @@ PROFILE_FIELDS = (
     "currentPage",
     "timerMinutes",
     "timerWarningMinutes",
+    "dailyBudgetMinutes",
     "tiles",
     "favorites",
     "appLimits",
@@ -102,7 +103,7 @@ def merge_active_config(data, runtime_config):
     return result
 
 
-def add_profile(data, name, avatar="", profile_id=None):
+def add_profile(data, name, avatar="", profile_id=None, source_profile_id=None):
     """Clone the active profile so a new child starts with usable settings."""
     result = copy.deepcopy(data)
     profiles = result.setdefault("profiles", [])
@@ -115,7 +116,13 @@ def add_profile(data, name, avatar="", profile_id=None):
     if any(profile.get("id") == new_id for profile in profiles):
         raise ValueError("Profile id already exists")
 
-    profile = copy.deepcopy(active_profile(result))
+    if source_profile_id is None:
+        source = active_profile(result)
+    else:
+        source = next((item for item in profiles if item["id"] == source_profile_id), None)
+        if source is None:
+            raise ValueError("Unknown source profile")
+    profile = copy.deepcopy(source)
     profile["id"] = new_id
     profile["name"] = name
     profile["avatar"] = avatar
@@ -123,8 +130,10 @@ def add_profile(data, name, avatar="", profile_id=None):
     profile["currentPage"] = 0
     profile["favorites"] = []
     profile["appLimits"] = {}
-    profile["weeklySchedule"] = {"enabled": False, "days": {}}
-    profile["appAvailability"] = {}
+    if source_profile_id is None:
+        profile["weeklySchedule"] = {"enabled": False, "days": {}}
+        profile["appAvailability"] = {}
+        profile["dailyBudgetMinutes"] = 0
     profiles.append(profile)
     return result, new_id
 

@@ -301,6 +301,21 @@
   "themeMotion": "Animation douce de l’arrière-plan",
   "themeTimeOfDay": "Adapter à l’heure locale",
   "worldThemeHint": "Disponible pour les univers illustrés. Le réglage de réduction des animations de l’appareil est prioritaire.",
+  "budget": {
+    "label": "Budget quotidien des applications en minutes",
+    "hint": "Saisissez 0 pour le désactiver. Le temps passé dans les applications lancées s’additionne pour ce profil.",
+    "remaining": "Temps restant aujourd’hui : {minutes} min",
+    "nextAllowed": "Disponible à nouveau : {time}",
+    "exhausted": "Ton temps d’application est écoulé pour aujourd’hui.",
+    "unavailable": "Impossible de vérifier le temps d’application. Demande de l’aide à un parent.",
+    "request": "Demander 15 minutes de plus",
+    "extend": "Autoriser 15 minutes de plus",
+    "extendError": "Impossible d’ajouter du temps. Vérifiez la limite quotidienne dans les paramètres parentaux.",
+    "newProfile": "Nouveau profil avec les applications actuelles",
+    "copySource": "Commencer avec",
+    "copy": "Copier les paramètres",
+    "copyConfirm": "Copier les applications, l’apparence et les règles horaires de {profile} ? L’activité et la progression des médias repartent de zéro."
+  },
   "packageMaintenance": {
     "checkUpdate": "Rechercher une mise à jour",
     "remove": "Désinstaller l’application…",

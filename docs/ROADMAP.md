@@ -219,12 +219,16 @@ physical-device language acceptance remain separate tasks.
 - [ ] Add stable and opt-in preview update channels without weakening immutable releases
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
 
-### Later family increments
+### Family time and profiles
 
-- [ ] Add optional per-child daily budgets shared across apps, surviving launcher restarts and profile switches, with defined suspend, midnight and clock-change behavior
-- [ ] Show the next allowed time and remaining budget without exposing the full family schedule to children
-- [ ] Add a local request for more time with PIN-confirmed one-off extensions
-- [ ] Add Parent-reviewed profile duplication without copying usage history or media resume state
+- [x] Add an optional daily allowance per child, shared across supported app types
+- [x] Persist consumption per profile across launcher restarts and profile switches, with defined suspend, midnight and clock-change behavior
+- [x] Enforce the allowance on new launches and stop the currently owned activity when time runs out
+- [x] Show the next allowed time and remaining budget without exposing the full family schedule in the child-facing view
+- [x] Add a local request for more time with PIN-confirmed one-off extensions
+- [x] Add Parent-reviewed profile duplication without copying usage history or media resume state
+
+See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-profile-copying) for runtime behavior.
 
 ## v0.9.0 — Living Room
 

@@ -5,9 +5,9 @@ function isMediaLibraryTile(tile){
 }
 function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageSize())); }
 function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }
-async function loadConfig(){
+async function loadConfig(parent=false){
   const previousLanguage=cfg&&cfg.language;
-  const response=await fetch('/api/config',{cache:'no-store'});
+  const response=await fetch(parent?'/api/config?parent=1':'/api/config',{cache:'no-store'});
   if(!response.ok) throw new Error('Config could not be loaded');
   const data=await response.json();
   if(!data||typeof data!=='object'||!Array.isArray(data.tiles)) throw new Error('Invalid config response');
@@ -172,7 +172,7 @@ function renderAll(){
   renderNav();
   maybeOpenFirstRun();
   if(!availabilityStatus.profileAllowed&&document.getElementById('admin').classList.contains('hidden')){
-    showAvailabilityBlock('profile_schedule');
+    showAvailabilityBlock(availabilityStatus.reason||'profile_schedule');
   }
 }
 function renderKids(){
@@ -211,7 +211,7 @@ function renderKids(){
         if(blocked.has(tile.id)){
           playFeedbackSound('blocked');
           showAvailabilityBlock(
-            availabilityStatus.profileAllowed?'app_schedule':'profile_schedule'
+            availabilityStatus.profileAllowed?'app_schedule':(availabilityStatus.reason||'profile_schedule')
           );
         }else{
           launchTile(tile.id);
@@ -315,7 +315,19 @@ async function launchTile(id){
 // PIN handling
 function handleParentClick(){ if(document.getElementById('admin').classList.contains('hidden')){ openAdmin(); } else { closeAdmin(); } }
 function requestPin(callback){ pinCallback=callback; showPin(); }
-function openAdmin(){ if(cfg.pinConfigured){ requestPin(enterAdmin); return; } enterAdmin(); }
+function openAdmin(){
+  if(cfg.pinConfigured){
+    requestPin(async()=>{
+      try{
+        await loadConfig(true);
+        hideAvailabilityBlock(true);
+        enterAdmin();
+      }catch(e){ showLauncherStartupState('error'); }
+    });
+    return;
+  }
+  enterAdmin();
+}
 function showPin(){ pinReturnFocus=document.activeElement; document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
 function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; if(pinReturnFocus&&pinReturnFocus.isConnected) pinReturnFocus.focus(); pinReturnFocus=null; }

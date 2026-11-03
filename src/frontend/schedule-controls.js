@@ -111,6 +111,9 @@ function renderScheduleEditor(container,schedule,onchange){
 }
 function renderScheduleControls(){
   if(!cfg) return;
+  document.getElementById('dailyBudgetLabel').textContent=uiText.budget.label;
+  document.getElementById('dailyBudgetHint').textContent=uiText.budget.hint;
+  document.getElementById('cfgDailyBudget').value=cfg.dailyBudgetMinutes||0;
   ensureScheduleData();
   document.getElementById('weeklyScheduleTitle').textContent=uiText.weeklyScheduleTitle;
   document.getElementById('weeklyScheduleHint').textContent=uiText.weeklyScheduleHint;
@@ -157,21 +160,78 @@ function blockedTileIds(){
 }
 function showAvailabilityBlock(reason='profile_schedule'){
   const overlay=document.getElementById('availabilityBlock');
+  const reopen=overlay.classList.contains('hidden')||overlay.dataset.reason!==reason;
   overlay.dataset.reason=reason;
   document.getElementById('availabilityBlockTitle').textContent=uiText.scheduleBlockedTitle;
-  document.getElementById('availabilityBlockBody').textContent=reason==='app_schedule'?uiText.scheduleAppBlocked:uiText.scheduleProfileBlocked;
+  document.getElementById('availabilityBlockBody').textContent=({
+    app_schedule:uiText.scheduleAppBlocked,daily_budget:uiText.budget.exhausted,
+    budget_unavailable:uiText.budget.unavailable
+  })[reason]||uiText.scheduleProfileBlocked;
+  const next=document.getElementById('availabilityNextAllowed');
+  const timestamp=reason==='app_schedule'?null:availabilityStatus.nextAllowedAt;
+  next.hidden=!Number.isFinite(timestamp);
+  if(!next.hidden){
+    const formatted=new Intl.DateTimeFormat(cfg.language,{dateStyle:'short',timeStyle:'short'}).format(new Date(timestamp*1000));
+    next.textContent=uiText.budget.nextAllowed.replace('{time}',()=>formatted);
+  }
+  const request=document.getElementById('budgetRequestBtn');
+  request.textContent=uiText.budget.request;
+  request.hidden=reason!=='daily_budget'||!cfg.pinConfigured;
   const close=document.getElementById('availabilityBlockClose');
   setIconLabel(close,'close',uiText.close);
   close.hidden=reason!=='app_schedule';
   setIconLabel(document.getElementById('availabilityParentsBtn'),'system',uiText.scheduleOpenParents);
   setIconLabel(document.getElementById('availabilityExitBtn'),'exit',uiText.timerExit);
   overlay.classList.remove('hidden');
-  (close.hidden?document.getElementById('availabilityParentsBtn'):close).focus();
+  if(reopen){
+    clearBudgetExtensionForm();
+    (close.hidden?document.getElementById('availabilityParentsBtn'):close).focus();
+  }
 }
 function hideAvailabilityBlock(force=false){
   const overlay=document.getElementById('availabilityBlock');
-  if(!force&&overlay.dataset.reason==='profile_schedule'&&!availabilityStatus.profileAllowed) return;
+  if(!force&&overlay.dataset.reason!=='app_schedule'&&!availabilityStatus.profileAllowed) return;
   overlay.classList.add('hidden');
+  clearBudgetExtensionForm();
+}
+function clearBudgetExtensionForm(){
+  document.getElementById('budgetExtensionForm').hidden=true;
+  document.getElementById('budgetPin').value='';
+  document.getElementById('budgetExtensionMessage').textContent='';
+}
+function requestBudgetExtension(){
+  document.getElementById('budgetPinLabel').textContent=uiText.pinTitle;
+  document.getElementById('budgetExtendBtn').textContent=uiText.budget.extend;
+  document.getElementById('budgetCancelBtn').textContent=uiText.confirmCancel;
+  document.getElementById('budgetExtensionForm').hidden=false;
+  document.getElementById('budgetPin').focus();
+}
+function cancelBudgetExtension(){
+  clearBudgetExtensionForm();
+  document.getElementById('budgetRequestBtn').focus();
+}
+async function extendDailyBudget(event){
+  event.preventDefault();
+  const button=document.getElementById('budgetExtendBtn');
+  const field=document.getElementById('budgetPin');
+  const message=document.getElementById('budgetExtensionMessage');
+  if(button.disabled) return;
+  button.disabled=true;
+  const pin=field.value;
+  field.value='';
+  try{
+    const response=await fetch('/api/budget/extend',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pin})});
+    if(!response.ok){
+      message.textContent=response.status===403?uiText.pinWrong:uiText.budget.extendError;
+      field.focus();
+      return;
+    }
+    clearBudgetExtensionForm();
+    await pollAvailability();
+  }catch(e){
+    message.textContent=uiText.budget.extendError;
+  }finally{ button.disabled=false; }
 }
 function openParentsFromAvailability(){ hideAvailabilityBlock(true); openAdmin(); }
 async function pollAvailability(){
@@ -183,9 +243,17 @@ async function pollAvailability(){
     const changed=data.profileAllowed!==availabilityStatus.profileAllowed||
       data.blockedTileIds.join('\n')!==availabilityStatus.blockedTileIds.join('\n');
     availabilityStatus=data;
+    const remaining=document.getElementById('budgetRemaining');
+    remaining.hidden=!data.budget?.enabled||data.budget.unavailable;
+    if(!remaining.hidden){
+      const minutes=new Intl.NumberFormat(cfg.language).format(Math.ceil(data.budget.remainingSeconds/60));
+      remaining.textContent=uiText.budget.remaining.replace('{minutes}',()=>minutes);
+    }
     if(!data.profileAllowed){
-      if(document.getElementById('admin').classList.contains('hidden')) showAvailabilityBlock('profile_schedule');
-    }else if(document.getElementById('availabilityBlock').dataset.reason==='profile_schedule'){
+      if(document.getElementById('admin').classList.contains('hidden')&&document.getElementById('pin').classList.contains('hidden')){
+        showAvailabilityBlock(data.reason||'profile_schedule');
+      }
+    }else if(document.getElementById('availabilityBlock').dataset.reason!=='app_schedule'){
       hideAvailabilityBlock(true);
     }
     if(cfg&&changed) renderKids();
@@ -193,7 +261,8 @@ async function pollAvailability(){
 }
 document.getElementById('availabilityBlock').addEventListener('keydown',event=>{
   if(event.key!=='Tab') return;
-  const buttons=Array.from(document.querySelectorAll('#availabilityBlock button:not([hidden]):not([disabled])'));
+  const buttons=Array.from(document.querySelectorAll('#availabilityBlock button:not([hidden]):not([disabled]),#budgetPin'))
+    .filter(control=>control.getClientRects().length);
   if(!buttons.length) return;
   const index=buttons.indexOf(document.activeElement);
   const next=event.shiftKey

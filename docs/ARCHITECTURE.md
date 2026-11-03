@@ -288,3 +288,33 @@ Because desktop-shell configuration becomes brittle fast:
 - switching modes by rewriting Plasma config is unreliable
 
 The browser-overlay approach is much more robust.
+
+
+### Daily allowance and profile copying
+
+Each profile can have an optional daily allowance from 1 to 1,440 minutes.
+The launcher counts one owned app, media player, or embedded web session at a
+time. Opening another tile, switching profiles, or leaving the launcher ends
+the previous session. Embedded pages use a profile- and tile-bound token with
+a 15-second heartbeat expiry. Native enforcement covers processes owned by the
+launcher. With an allowance enabled, it declines launcher paths that hand off
+to an unowned desktop opener.
+
+A private local file holds each profile's current day, consumed time and any
+extra minutes independently of optional activity history. Consumption uses
+the Linux monotonic clock, which pauses during suspend. An atomic two-second
+reservation limits lost accounting on abrupt exits. A clean exit reconciles
+the reservation. The allowance resets at the next local date, and a backward
+date change retains the most recent recorded day. A checkpoint that crosses
+midnight charges its elapsed interval to the new day.
+
+The child-facing availability API reports remaining time and the next profile
+opening when one is known. With a PIN configured, the weekly rules and
+configured allowance are available through the Parent configuration endpoint.
+A fresh PIN grants 15 extra minutes for the current day, up to 60 extra minutes
+per child, while weekly and per-app schedules still apply.
+
+Parents can review and confirm a copy of a named profile. The copy gets a new
+identity with its own daily consumption, activity history, favorites and media
+resume state. The source's tiles, appearance, weekly rules and configured
+allowance carry over.

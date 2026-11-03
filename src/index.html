@@ -17,6 +17,7 @@
 <div id="kids" class="screen">
   <div class="wrap">
     <div class="titlewrap"><h1 id="title"></h1></div>
+    <p id="budgetRemaining" class="budget-remaining" hidden></p>
     <div id="grid" class="grid {{DEFAULT_LAYOUT}}">
       <section id="startupState" class="ui-state ui-state-loading launcher-state" role="status" aria-live="polite" aria-busy="true">
         <span class="ui-state-message">{{STARTUP_LOADING}}</span>
@@ -153,11 +154,21 @@
     <div class="emoji" data-local-icon="timer" data-icon-only aria-hidden="true"></div>
     <h2 id="availabilityBlockTitle"></h2>
     <p id="availabilityBlockBody"></p>
+    <p id="availabilityNextAllowed" hidden></p>
     <div class="availability-actions">
       <button id="availabilityBlockClose" class="smallbtn" type="button" onclick="hideAvailabilityBlock()"></button>
       <button id="availabilityParentsBtn" class="smallbtn" type="button" onclick="openParentsFromAvailability()"></button>
       <button id="availabilityExitBtn" class="smallbtn" type="button" onclick="exitKids()"></button>
+      <button id="budgetRequestBtn" class="smallbtn" type="button" onclick="requestBudgetExtension()" hidden></button>
     </div>
+    <form id="budgetExtensionForm" class="availability-actions" onsubmit="extendDailyBudget(event)" hidden>
+      <label><span id="budgetPinLabel"></span>
+        <input id="budgetPin" type="password" inputmode="numeric" maxlength="6" required>
+      </label>
+      <button id="budgetExtendBtn" class="smallbtn" type="submit"></button>
+      <button id="budgetCancelBtn" class="smallbtn" type="button" onclick="cancelBudgetExtension()"></button>
+      <p id="budgetExtensionMessage" role="status"></p>
+    </form>
   </div>
 </div>
 <div id="admin" class="screen hidden">
@@ -257,6 +268,8 @@
               <div class="row2">
                 <input id="newProfileName" maxlength="40">
                 <input id="newProfileAvatar" maxlength="16">
+                <label id="newProfileSourceLabel" for="newProfileSource"></label>
+                <select id="newProfileSource"></select>
                 <button id="createProfileBtn" type="button" class="smallbtn" onclick="createProfileFromAdmin()"></button>
               </div>
               <div id="profileAdminMessage" class="ui-state" aria-live="polite" hidden></div>
@@ -323,6 +336,11 @@
               <button class="smallbtn" id="timerToggleBtn" onclick="toggleTimer()">{{TIMER_START}}</button>
             </div>
             <div id="timerStatus" class="muted"></div>
+            <div class="row2">
+              <label id="dailyBudgetLabel" for="cfgDailyBudget"></label>
+              <input id="cfgDailyBudget" type="number" min="0" max="1440" step="1" aria-describedby="dailyBudgetHint">
+            </div>
+            <p id="dailyBudgetHint" class="muted"></p>
             <div class="schedule-settings-grid">
               <section class="schedule-panel" aria-labelledby="weeklyScheduleTitle">
                 <h4 id="weeklyScheduleTitle"></h4>

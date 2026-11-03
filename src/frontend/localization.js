@@ -20,7 +20,7 @@ async function fetchInterfaceLocale(normalized){
   const locale=await response.json();
   if(!locale||typeof locale!=='object'||Array.isArray(locale)||
     !locale.adminTitle||!locale.firstRun?.languageTitle||!locale.profiles?.pickerTitle||
-    !locale.themes||!locale.counts){
+    !locale.themes||!locale.counts||!locale.budget){
     throw new Error('Invalid locale response');
   }
   return locale;

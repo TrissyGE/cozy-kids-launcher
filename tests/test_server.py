@@ -481,6 +481,7 @@ class ServerApiTests(unittest.TestCase):
         server_module.BACKUP_ROOT = str(root / "backups")
         server_module.LOG_FILE = str(root / "state" / "runtime.jsonl")
         server_module.ACTIVITY_FILE = str(root / "state" / "activity.json")
+        server_module.BUDGET_FILE = str(root / "state" / "daily-budget.json")
         server_module.MEDIA_STATE_FILE = str(root / "state" / "media.json")
         server_module.MEDIA_RESUME_ROOT = str(root / "state" / "media-resume")
         server_module.MEDIA_SESSION_SCRIPT = str(app_root / "media_session.py")
@@ -643,6 +644,65 @@ class ServerApiTests(unittest.TestCase):
         self.assertNotIn("pinHash", data)
         self.assertEqual(headers["X-Frame-Options"], "DENY")
         self.assertEqual(headers["X-Content-Type-Options"], "nosniff")
+
+    def test_daily_budget_blocks_launch_and_requires_fresh_parent_pin_for_extension(self):
+        self.enable_pin("1234")
+        config = server_module.load_cfg()
+        config["dailyBudgetMinutes"] = 1
+        config["weeklySchedule"] = {"enabled": False, "days": {}}
+        server_module.save_cfg(config)
+        cookie = self.authenticate("1234")
+        status, public, _ = self.request("/api/config", cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertNotIn("dailyBudgetMinutes", public)
+        self.assertNotIn("weeklySchedule", public)
+        status, _, _ = self.request("/api/config?parent=1")
+        self.assertEqual(status, 403)
+        status, policy, _ = self.request("/api/config?parent=1", cookie=cookie)
+        self.assertEqual((status, policy["dailyBudgetMinutes"]), (200, 1))
+        tracker = server_module.budget()
+        records = {}
+        tracker._entry(records, config["activeProfileId"])["usedMs"] = 60_000
+        tracker._write(records)
+        status, availability, _ = self.request("/api/availability/status")
+        self.assertEqual(status, 200)
+        self.assertEqual(availability["reason"], "daily_budget")
+        self.assertEqual(availability["budget"]["remainingSeconds"], 0)
+        self.assertIn("nextAllowedAt", availability)
+        self.assertNotIn("weeklySchedule", availability)
+        with mock.patch.object(server_module, "launch_owned_tile") as launch:
+            status, response, _ = self.request("/launch/paint", method="POST", origin=self.base_url)
+            self.assertEqual((status, response["reason"]), (403, "daily_budget"))
+            launch.assert_not_called()
+        for pin, expected in (("0000", 403), ("1234", 200), ("1234", 409)):
+            status, payload, headers = self.request("/api/budget/extend", method="POST",
+                                                    body={"pin": pin}, origin=self.base_url)
+            self.assertEqual(status, expected)
+            self.assertNotIn("Set-Cookie", headers)
+            if expected == 200:
+                self.assertEqual(payload["budget"]["remainingSeconds"], 900)
+
+    def test_copy_profile_requires_parent_and_copies_policy_without_consumed_time(self):
+        self.enable_pin("1234")
+        config = server_module.load_cfg()
+        config["dailyBudgetMinutes"] = 30
+        config["weeklySchedule"] = {"enabled": True, "days": {"monday": [{"start": "10:00", "end": "12:00"}]}}
+        server_module.save_cfg(config)
+        tracker = server_module.budget()
+        records = {}
+        tracker._entry(records, config["activeProfileId"])["usedMs"] = 90_000
+        tracker._write(records)
+        body = {"name": "Copy", "sourceProfileId": config["activeProfileId"]}
+        status, _, _ = self.request("/api/profiles/create", method="POST", body=body, origin=self.base_url)
+        self.assertEqual(status, 403)
+        cookie = self.authenticate("1234")
+        status, created, _ = self.request("/api/profiles/create", method="POST", body=body,
+                                           origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 200)
+        child = next(item for item in server_module.load_stored_cfg()["profiles"] if item["id"] == created["profileId"])
+        self.assertEqual(child["dailyBudgetMinutes"], 30)
+        self.assertEqual(child["weeklySchedule"], config["weeklySchedule"])
+        self.assertEqual(tracker.status(child["id"], 30)["remainingSeconds"], 1800)
 
     def test_media_catalog_returns_opaque_metadata_and_safe_cover_urls(self):
         media_file = Path(server_module.VIDEOS) / "My_Film.mp4"

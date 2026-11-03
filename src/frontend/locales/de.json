@@ -301,6 +301,21 @@
   "themeMotion": "Sanfte Hintergrundbewegung",
   "themeTimeOfDay": "An lokale Tageszeit anpassen",
   "worldThemeHint": "Nur für illustrierte Welten. Die Einstellung für reduzierte Bewegung des Geräts hat immer Vorrang.",
+  "budget": {
+    "label": "Tägliches App-Budget in Minuten",
+    "hint": "0 schaltet das Budget aus. Zeit in gestarteten Apps zählt für dieses Kind über mehrere Sitzungen hinweg.",
+    "remaining": "Heute noch Zeit: {minutes} Min.",
+    "nextAllowed": "Wieder verfügbar: {time}",
+    "exhausted": "Deine App-Zeit für heute ist aufgebraucht.",
+    "unavailable": "Die App-Zeit konnte nicht geprüft werden. Bitte einen Elternteil um Hilfe.",
+    "request": "Um 15 Minuten mehr bitten",
+    "extend": "15 Minuten freigeben",
+    "extendError": "Die Verlängerung war nicht möglich. Prüfe das Tageslimit in den Eltern-Einstellungen.",
+    "newProfile": "Neues Profil mit aktuellen Apps",
+    "copySource": "Vorlage",
+    "copy": "Einstellungen kopieren",
+    "copyConfirm": "Apps, Aussehen und Zeitregeln von {profile} kopieren? Nutzungsdaten und Medienfortschritt beginnen neu."
+  },
   "packageMaintenance": {
     "checkUpdate": "Nach App-Update suchen",
     "remove": "App deinstallieren …",
