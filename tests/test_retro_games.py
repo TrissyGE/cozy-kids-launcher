@@ -71,6 +71,7 @@ class RetroArchiveTests(unittest.TestCase):
         state = self.root / "state"
         command = retro_games.emulator_command("mgba-qt", game, state, "default")
         self.assertEqual(command[-1], str(self.path))
+        self.assertEqual(command[4:6], ["mgba-qt", "--fullscreen"])
         self.assertIn(f"savestatePath={state / 'default' / game['id']}", command)
         before = self.path.stat()
         raw = self.path.read_bytes().replace(b"original payload", b"modified payload", 1)
@@ -78,6 +79,45 @@ class RetroArchiveTests(unittest.TestCase):
         os.utime(self.path, ns=(before.st_atime_ns, before.st_mtime_ns))
         with self.assertRaisesRegex(ValueError, "archive is unavailable or damaged"):
             retro_games.emulator_command("mgba-qt", game, state, "default")
+
+    def test_mednafen_routes_loose_and_archived_cartridges_to_their_system(self):
+        systems = {
+            "nes": ("nes", "Nintendo - Nintendo Entertainment System"),
+            "sfc": ("snes", "Nintendo - Super Nintendo Entertainment System"),
+            "smc": ("snes", "Nintendo - Super Nintendo Entertainment System"),
+            "sms": ("sms", "Sega - Master System - Mark III"),
+            "gg": ("gg", "Sega - Game Gear"),
+        }
+        for extension, (module, cover_system) in systems.items():
+            for archived in (False, True):
+                with self.subTest(extension=extension, archived=archived):
+                    filename = f"Local Game.{extension}"
+                    path = self.root / (f"{extension}.zip" if archived else filename)
+                    if archived:
+                        with ZipFile(path, "w", compression=ZIP_DEFLATED) as archive:
+                            archive.writestr(filename, b"fixture")
+                    else:
+                        path.write_bytes(b"fixture")
+                    games, _, _ = retro_games.scan_retro_games([str(self.root)])
+                    game = next(game for game in games.values() if game["path"] == str(path))
+                    self.assertEqual(retro_games.emulator_binary(game), "mednafen")
+                    state = self.root / "state"
+                    command = retro_games.emulator_command("/usr/games/mednafen", game, state, "default")
+                    self.assertEqual(command[-1], str(path))
+                    self.assertIn(f"MEDNAFEN_HOME={state / 'default' / game['id']}", command)
+                    self.assertEqual(command[command.index("-force_module") + 1], module)
+                    with patch.object(retro_games, "_download_cover", return_value=b"cover") as cover:
+                        self.assertEqual(retro_games.retro_cover(game, download=True), b"cover")
+                        self.assertEqual(cover.call_args.args[:2], (cover_system, "Local Game"))
+
+    def test_mednafen_does_not_launch_with_an_unapproved_ips_sidecar(self):
+        rom = self.root / "Local Game.nes"
+        rom.write_bytes(b"fixture")
+        games, _, _ = retro_games.scan_retro_games([str(self.root)])
+        game = next(iter(games.values()))
+        Path(str(rom) + ".ips").write_bytes(b"patch")
+        with self.assertRaisesRegex(ValueError, "unapproved IPS patch"):
+            retro_games.emulator_command("mednafen", game, self.root / "state", "default")
 
 
 if __name__ == "__main__":

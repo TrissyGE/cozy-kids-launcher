@@ -87,7 +87,7 @@ from media_state import (
     set_media_favorite,
 )
 from retro_games import (
-    HUB_COMMAND, HUB_ID, approved_retro_ids, emulator_command, retro_cover,
+    HUB_COMMAND, HUB_ID, approved_retro_ids, emulator_binary, emulator_command, retro_cover,
     retro_hub, scan_retro_games,
 )
 from media_resume import (
@@ -1979,8 +1979,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     return self.json_response({"status": "unavailable"}, 404)
                 games, _, _ = scan_retro_games(cfg.get("retroRoots", []))
                 game = games.get(launch["id"])
-                emulator = shutil.which("mgba-qt")
-                if not game or not emulator:
+                emulator = shutil.which(emulator_binary(game)) if game else None
+                if not emulator:
                     return self.json_response({"status": "unavailable"}, 503)
                 try:
                     clean = emulator_command(

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Living Room
 
 - Recognize single-ROM ZIP archives in RetroGameCorner, check them at launch and match covers by the ROM inside.
+- Add NES, Super Nintendo, Sega Master System and Game Gear to RetroGameCorner through the Parent Mednafen installer.
 
 - Give RetroGameCorner its own Parent section, one optional Home tile, and a cover library with opt-in Libretro artwork.
 

@@ -1417,5 +1417,31 @@
       "source": "https://mgba.io/",
       "reviewed": "2026-11-03"
     }
+  },
+  {
+    "id": "mednafen",
+    "emoji": "🎮",
+    "label_de": "Mednafen",
+    "label_en": "Mednafen",
+    "label_es": "Mednafen",
+    "label_fr": "Mednafen",
+    "label_it": "Mednafen",
+    "name_en": "Mednafen",
+    "desc_de": "Emulator für lokale Spiele für NES, Super Nintendo, Sega Master System und Game Gear.",
+    "desc_en": "Emulator for local NES, Super Nintendo, Sega Master System and Game Gear games.",
+    "desc_es": "Emulador para juegos locales de NES, Super Nintendo, Sega Master System y Game Gear.",
+    "desc_fr": "Émulateur pour les jeux locaux NES, Super Nintendo, Sega Master System et Game Gear.",
+    "desc_it": "Emulatore per giochi locali per NES, Super Nintendo, Sega Master System e Game Gear.",
+    "cmd": ["mednafen"],
+    "package": "mednafen",
+    "category": "games",
+    "installOnly": true,
+    "retroEmulator": true,
+    "guidance": {
+      "offline": "yes",
+      "input": ["keyboard"],
+      "source": "https://mednafen.github.io/documentation/",
+      "reviewed": "2026-11-03"
+    }
   }
 ]

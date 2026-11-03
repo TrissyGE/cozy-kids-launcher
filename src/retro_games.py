@@ -21,7 +21,16 @@ from media_resume import prepare_profile_resume_directory
 RETRO_PREFIX = "special:retro:"
 HUB_COMMAND = "special:retro-library"
 HUB_ID = "retro-corner"
-ROM_EXTENSIONS = frozenset({".gb", ".gbc", ".gba"})
+ROM_SYSTEMS = {
+    ".gb": ("mgba-qt", "", "Nintendo - Game Boy"),
+    ".gbc": ("mgba-qt", "", "Nintendo - Game Boy Color"),
+    ".gba": ("mgba-qt", "", "Nintendo - Game Boy Advance"),
+    ".nes": ("mednafen", "nes", "Nintendo - Nintendo Entertainment System"),
+    ".sfc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System"),
+    ".smc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System"),
+    ".sms": ("mednafen", "sms", "Sega - Master System - Mark III"),
+    ".gg": ("mednafen", "gg", "Sega - Game Gear"),
+}
 MAX_ROM_BYTES = 32 * 1024 * 1024
 MAX_ZIP_BYTES = 40 * 1024 * 1024
 MAX_ZIP_DIRECTORY_BYTES = 64 * 1024
@@ -31,11 +40,6 @@ MAX_ROMS = 512
 MAX_SCAN_DIRECTORIES = 250
 MAX_SCAN_ENTRIES = 2500
 ROM_ID = re.compile(r"[a-f0-9]{24}")
-COVER_SYSTEMS = {
-    ".gb": "Nintendo - Game Boy",
-    ".gbc": "Nintendo - Game Boy Color",
-    ".gba": "Nintendo - Game Boy Advance",
-}
 MAX_COVER_BYTES = 1024 * 1024
 _cover_slots = threading.BoundedSemaphore(2)
 
@@ -83,7 +87,7 @@ def retro_cover(game, download=False):
         return b""
     try:
         title = re.sub(r'[&*/:`<>?\\|]', "_", game["title"])
-        system = COVER_SYSTEMS[game.get("romExtension", extension.casefold())]
+        system = ROM_SYSTEMS[game.get("romExtension", extension.casefold())][2]
         return _download_cover(system, title, int(time.time() // 3600))
     finally:
         _cover_slots.release()
@@ -151,7 +155,7 @@ def inspect_rom_zip(path, verify=False):
                 rom = PurePosixPath(member.filename)
                 if (
                     any(part.startswith(".") for part in rom.parts)
-                    or rom.suffix.casefold() not in ROM_EXTENSIONS
+                    or rom.suffix.casefold() not in ROM_SYSTEMS
                     or mode not in (0, stat.S_IFREG)
                     or member.flag_bits & 0x41
                     or member.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
@@ -206,7 +210,7 @@ def scan_retro_games(roots):
                             continue
                         stem, extension = os.path.splitext(item.name)
                         extension = extension.casefold()
-                        if extension not in ROM_EXTENSIONS and extension != ".zip":
+                        if extension not in ROM_SYSTEMS and extension != ".zip":
                             continue
                         info = item.stat(follow_symlinks=False)
                         maximum = MAX_ZIP_BYTES if extension == ".zip" else MAX_ROM_BYTES
@@ -237,16 +241,35 @@ def scan_retro_games(roots):
     return games, sources["unavailableSources"], False
 
 
+def emulator_binary(game):
+    return ROM_SYSTEMS[game["romExtension"]][0]
+
+
 def emulator_command(executable, game, save_root, profile_id):
     """Keep battery saves and state slots in a private child/game directory."""
     if game.get("zipMember") is not None and inspect_rom_zip(game["path"], verify=True) != game["zipMember"]:
         raise ValueError("ROM archive is unavailable or damaged")
+    _, module, _ = ROM_SYSTEMS[game["romExtension"]]
+    if module and os.path.lexists(game["path"] + ".ips"):
+        raise ValueError("Mednafen would apply an unapproved IPS patch")
     profile = prepare_profile_resume_directory(save_root, profile_id)
     game_directory = prepare_profile_resume_directory(profile, game["id"])
+    if module:
+        # Keep fullscreen observable by the supervisor and visible while the overlay has focus.
+        return [
+            "kstart", "--fullscreen", "/usr/bin/env", "SDL_VIDEODRIVER=x11",
+            "SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0",
+            f"MEDNAFEN_HOME={game_directory}", executable,
+            "-force_module", module, "-video.driver", "softfb", "-video.fs", "1",
+            f"-{module}.stretch", "aspect",
+            game["path"],
+        ]
     config_directory = prepare_profile_resume_directory(game_directory, "config")
+    # Request mGBA's own fullscreen layout and keep compositor confirmation in the supervisor.
     return [
         "kstart", "--fullscreen",
         "/usr/bin/env", f"XDG_CONFIG_HOME={config_directory}", executable,
+        "--fullscreen",
         "-C", f"savegamePath={game_directory}",
         "-C", f"savestatePath={game_directory}",
         game["path"],

@@ -106,6 +106,31 @@ python3 scripts/linux/desktop_smoke.py \
 
 Answer `y` only for an observation performed on the exact VM, session, and commit under test. Answer `n` for a failure and `s` to leave it pending. The final report outcome becomes `passed` only when automation and all six observations pass.
 
+### RetroGameCorner
+
+For each supported emulator, approve a test game in Parent settings and open it
+from the child's RetroGameCorner library on each primary desktop. Record the
+following separately:
+
+- The emulator window enters fullscreen and the visible game image scales to the display while preserving its aspect ratio.
+- A gameplay action responds to the keyboard and a physical gamepad.
+- The close overlay can be clicked and the launcher regains focus after the emulator exits.
+
+Use a redistributable test ROM for shared screenshots. When verifying ZIP
+support, repeat a failing ZIP launch with the same ROM as a loose file.
+
+## Physical Linux test laptop
+
+Run the exact release candidate on the test laptop before publishing v0.8.
+Record the laptop model, Linux distribution, desktop session, browser mode,
+controller model and candidate commit. Use a disposable user or test profile.
+
+- Verify first setup, normal relaunch, Parent PIN, time limits and profile isolation.
+- Run a Parent-authorized app installation and exercise the updater with the candidate release channel.
+- With a physical gamepad, navigate Home and the RetroGameCorner library. Confirm that Parent controls stay behind the PIN.
+- For each supported emulator, confirm visible fullscreen, gameplay input from the keyboard and controller, save persistence, the close overlay and return to the launcher.
+- Reconnect the gamepad and removable game storage and check that the launcher recovers without restarting.
+
 ## Release evidence
 
 Attach the three primary `report.json` files to the release-candidate test notes or CI run. Record the exact commit, distribution version, desktop version, session type, browser version, display topology, and any compositor-specific workaround beside the reports.

@@ -252,11 +252,19 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Accept Parent-supplied Game Boy, Game Boy Color and Game Boy Advance ROMs from bounded local folders
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
 - [x] Assign private mGBA save and save-state directories per child and game
+- [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
+- [ ] Make PlayStation 1 the next optional system in RetroGameCorner using Mednafen
+  - [ ] Validate Parent-supplied BIOS files against the expected regional checksums and report missing firmware before launch
+  - [ ] Import single-disc CUE/BIN games first. Keep the CUE and every referenced track inside the approved source and invalidate approval when a disc component changes
+  - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
+  - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card
 - [ ] Add save backup and removal controls
-- [ ] Qualify additional emulators and add Parent-supplied BIOS configuration where required
+- [ ] Qualify PC Engine HuCards, Neo Geo Pocket / Color, WonderSwan / Color and Atari Lynx with Mednafen
+- [ ] Qualify Mega Drive, Nintendo 64 and Nintendo DS, including Parent-supplied BIOS configuration where required
+- [ ] Qualify Saturn after PS1, including BIOS, disc formats and device performance
 - [ ] Add a short local device check in Parent settings that recommends console systems using measured emulation performance and reviewed hardware requirements
   - [ ] Show supported, untested and incompatible systems separately. Explain which measurement or hardware requirement informed each result
-  - [ ] Disable the emulator install action for a confirmed incompatible system and explain the reason in the app store
+  - [ ] Disable installation for a confirmed incompatible system in the Parent RetroGameCorner panel and explain the reason next to the install button
   - [ ] Use locally generated test workloads so the device check can run before the family supplies any game files
 - [x] Support bounded single-ROM ZIP archives from handheld game libraries
 - [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
@@ -317,3 +325,5 @@ A work-item checkbox is complete when its stated scope is implemented and:
 A release milestone additionally requires its open distribution/desktop gates
 and the full gate in [RELEASING.md](RELEASING.md). A checked implementation task
 does not substitute for an unperformed release or physical-device acceptance.
+
+- [ ] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix.

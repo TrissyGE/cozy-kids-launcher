@@ -206,11 +206,11 @@ fails closed and tears down the newly owned process tree.
 RetroGameCorner has a dedicated Parent section. Its emulator cards use the
 same package review, confirmation and authorization flow as the app store.
 Add up to eight local game folders, then approve games
-individually for the active profile. The launcher accepts individual
-`.gb`, `.gbc` and `.gba` files, including ZIP archives containing exactly
-one such file. Parents supply game files themselves and
-review content and controls before approving a game. The mGBA integration
-uses its built-in BIOS behavior.
+individually for the active profile. mGBA handles `.gb`, `.gbc` and `.gba`.
+Mednafen handles NES (`.nes`), Super Nintendo (`.sfc`, `.smc`), Sega Master
+System (`.sms`) and Game Gear (`.gg`). These cartridge formats do not need an
+external BIOS. Each supported ROM can also be in a ZIP archive by itself.
+Parents supply game files and review content and controls before approval.
 
 Enabling RetroGameCorner for a child creates one Home tile for that child's
 cover library. Game approvals retain their opaque IDs and per-game time rules.
@@ -225,8 +225,10 @@ Place an optional same-name PNG next to a ROM or ZIP archive for a local cover.
 Online lookups use the ROM name
 and system inside the archive. The scanner limits archives to 40 MiB, their
 ROMs to 32 MiB and their central directories to 64 KiB and 32 entries. It
-checks ZIP integrity on launch and passes the approved archive to mGBA.
+checks ZIP integrity on launch and passes the approved archive to the emulator.
 The launcher leaves the archive in place. A scan lists up to 512 candidates.
+Mednafen launches reject a neighboring `.ips` patch because the emulator would
+automatically apply it to the approved ROM or archive.
 
 The per-child automatic cover option starts disabled. Once enabled, the launcher looks up
 missing covers by console and game title in the
@@ -234,14 +236,15 @@ missing covers by console and game title in the
 The child browser loads the cover through the local launcher.
 An unmatched title shows a placeholder.
 
-mGBA receives a private configuration, battery-save and state directory
+Each emulator receives a private configuration, battery-save and state directory
 for each child and approved game under
 `~/.local/state/cozy-kids-launcher/retro/`. The emulator remains a native
 application with its own controls and file dialogs.
 Its window uses the existing owned fullscreen supervisor on X11 or XWayland.
 The normal launcher configuration export contains settings and approvals.
 Use the state directory for a separate save backup.
-See the [mGBA command-line manual](https://manpages.debian.org/testing/mgba-qt/mgba-qt.6.en.html).
+See the [mGBA command-line manual](https://manpages.debian.org/testing/mgba-qt/mgba-qt.6.en.html)
+and the [Mednafen documentation](https://mednafen.github.io/documentation/).
 
 Enable controller and remote navigation in Parent settings under System.
 On Home and in the media library, the D-pad or left stick moves focus in the
