@@ -5,11 +5,11 @@ import sys
 import tempfile
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from package_install import PackageInstaller
-from packagekit_backend import InstallError, error_category
+from packagekit_backend import InstallError, PackageKitBackend, error_category
 
 PLAN = {'installed': False, 'packageIds': ['paint;1;amd64;repo'],
         'changeIds': ['paint;1;amd64;+manual:repo'], 'packages': ['paint'], 'downloadBytes': 1024}
@@ -255,3 +255,24 @@ class InstallTests(unittest.TestCase):
         for operation in ("purge", None, [], {"command": "remove"}):
             with self.assertRaises(ValueError):
                 self.manager.prepare("paint", CATALOG, operation)
+
+
+
+class RecoveryIdentityTests(unittest.TestCase):
+    def test_foreign_role_uid_and_simulation_are_rejected(self):
+        backend = PackageKitBackend.__new__(PackageKitBackend)
+        backend.pk = Mock()
+        backend.pk.RoleEnum.UPDATE_PACKAGES = 9
+        backend.pk.TransactionFlagEnum.SIMULATE = 2
+        backend.gio = Mock()
+        backend.client = Mock()
+        backend._transaction_properties = Mock()
+        for uid, role, flags in ((2000, 9, 0), (1000, 3, 0), (1000, 9, 4)):
+            with self.subTest(uid=uid, role=role, flags=flags):
+                backend._transaction_properties.return_value = {
+                    "Uid": uid, "Role": role, "TransactionFlags": flags,
+                }
+                with patch("packagekit_backend.os.getuid", return_value=1000, create=True):
+                    with self.assertRaisesRegex(InstallError, "interrupted"):
+                        backend.recover("/50_abc", "update", ["paint", "1", "amd64"], Mock())
+        backend.client.get_old_transactions.assert_not_called()

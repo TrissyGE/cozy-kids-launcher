@@ -2,6 +2,7 @@
 
 import os
 import re
+import time
 
 from package_provider import detect_native_provider, read_os_release
 
@@ -46,7 +47,8 @@ class PackageKitBackend:
         try:
             import gi
             gi.require_version("PackageKitGlib", "1.0")
-            from gi.repository import GLib, PackageKitGlib
+            from gi.repository import Gio, GLib, PackageKitGlib
+            self.gio, self.glib = Gio, GLib
             self.pk = PackageKitGlib
             # Each server worker owns its synchronous client's callback context.
             self.context = GLib.MainContext.new()
@@ -210,33 +212,39 @@ class PackageKitBackend:
         if not TRANSACTION_ID.fullmatch(transaction_id):
             raise InstallError("interrupted")
         role = getattr(self.pk.RoleEnum, PACKAGE_ROLES[operation])
-        try:
-            active = transaction_id in self.control.get_transaction_list(None)
-            if active:
-                state = self.client.get_progress(transaction_id, None)
-                if (state.get_uid() != os.getuid() or state.get_role() != role
-                        or state.get_transaction_flags() & self._flags(self.pk.TransactionFlagEnum.SIMULATE)):
-                    raise InstallError("interrupted")
-                progress(self.pk.status_enum_to_string(state.get_status()), state.get_percentage())
-        except InstallError:
-            raise
-        except Exception:
-            # The daemon can remove the object between listing and reading it.
-            active = False
+        bus = self.gio.bus_get_sync(self.gio.BusType.SYSTEM, None)
+        while (state := self._transaction_properties(bus, transaction_id)) is not None:
+            flags = state.get("TransactionFlags")
+            if (state.get("Uid") != os.getuid() or state.get("Role") != int(role)
+                    or not isinstance(flags, int) or flags & self._flags(self.pk.TransactionFlagEnum.SIMULATE)):
+                raise InstallError("interrupted")
+            status = state.get("Status")
+            if status == int(self.pk.StatusEnum.FINISHED):
+                break
+            if not isinstance(status, int):
+                raise InstallError("interrupted")
+            progress(self.pk.status_enum_to_string(self.pk.StatusEnum(status)), state.get("Percentage"))
+            time.sleep(1)
 
-        if active:
-            try:
-                self._call(self.client.adopt, transaction_id, progress=progress)
-            except InstallError:
-                # Completion can race adoption. Only exact daemon history can
-                # settle the outcome after the object disappears.
-                self._verify_history(transaction_id, role)
-        else:
-            self._verify_history(transaction_id, role)
-
+        self._verify_history(transaction_id, role)
         installed = [package_identity(item.get_id()) for item in self._resolve(target[0])
                      if item.get_info() == self.pk.InfoEnum.INSTALLED]
         return not installed if operation == "remove" else tuple(target) in installed
+
+    def _transaction_properties(self, bus, transaction_id):
+        # Observe read-only properties. Some older libpackagekit builds can
+        # leave Client.adopt waiting even after the daemon finishes the job.
+        try:
+            (properties,) = bus.call_sync(
+                "org.freedesktop.PackageKit", transaction_id,
+                "org.freedesktop.DBus.Properties", "GetAll",
+                self.glib.Variant("(s)", ("org.freedesktop.PackageKit.Transaction",)),
+                self.glib.VariantType.new("(a{sv})"),
+                self.gio.DBusCallFlags.NO_AUTO_START, 3000, None,
+            ).unpack()
+        except self.glib.Error:
+            return None
+        return properties or None
 
     def _verify_history(self, transaction_id, role):
         try:

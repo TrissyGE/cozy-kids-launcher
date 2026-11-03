@@ -54,7 +54,7 @@ confirmation tokens or executable plans.
 
 After a restart the worker checks the recorded transaction on the system bus.
 It matches the exact daemon ID, user and operation, then observes the existing
-job with PackageKit's adoption API. If the transaction already ended, the
+job through read-only PackageKit D-Bus properties. If the transaction already ended, the
 worker checks recent daemon history for the same ID, user and operation.
 Success requires a successful daemon result and a fresh package lookup matching
 the reviewed version and architecture, or absence after a removal. An
@@ -64,7 +64,7 @@ The launcher never repeats the original install, update or removal call.
 While a job is being recovered, the launcher rejects new package plans. Closing
 or reopening the status dialog only changes local polling. The restored
 progress is available in Parent settings without a fresh confirmation.
-See the [PackageKit adoption API](https://packagekit.freedesktop.org/doc/method.Client.adopt.html)
+See the [PackageKit transaction properties](https://github.com/PackageKit/PackageKit/blob/v1.2.8/src/org.freedesktop.PackageKit.Transaction.xml)
 and [transaction history API](https://packagekit.freedesktop.org/doc/class.TransactionPast.html).
 
 The existing local-origin and Parent-session guards protect all new routes:
