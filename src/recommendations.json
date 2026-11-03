@@ -1169,5 +1169,155 @@
         }
       ]
     }
+  },
+  {
+    "id": "kolourpaint",
+    "emoji": "🖌️",
+    "label_de": "Zeichnen",
+    "label_en": "Drawing",
+    "label_es": "Dibujo",
+    "label_fr": "Dessin",
+    "name_de": "KolourPaint",
+    "name_en": "KolourPaint",
+    "desc_de": "Zeichne mit Stift, Farben und Formen.",
+    "desc_en": "Draw with a pencil, colours and shapes.",
+    "desc_es": "Dibuja con lápiz, colores y formas.",
+    "desc_fr": "Dessine avec un crayon, des couleurs et des formes.",
+    "cmd": [
+      "kstart",
+      "--fullscreen",
+      "kolourpaint"
+    ],
+    "alt_cmds": [
+      "kolourpaint"
+    ],
+    "package": "kolourpaint",
+    "category": "creative",
+    "guidance": {
+      "age_de": "Für Kinder, die mit dem Mauszeiger Linien und Formen zeichnen möchten (Elternorientierung).",
+      "age_en": "For children ready to draw lines and shapes with a pointer (parent guidance).",
+      "age_es": "Para quienes quieren dibujar líneas y formas con el puntero (orientación para familias).",
+      "age_fr": "Pour les enfants qui souhaitent dessiner des lignes et des formes au pointeur (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "mouse"
+      ],
+      "source": "https://apps.kde.org/kolourpaint/",
+      "reviewed": "2026-11-03"
+    }
+  },
+  {
+    "id": "kgeography",
+    "emoji": "🗺️",
+    "label_de": "Karten entdecken",
+    "label_en": "Explore maps",
+    "label_es": "Explorar mapas",
+    "label_fr": "Explorer les cartes",
+    "name_de": "KGeography",
+    "name_en": "KGeography",
+    "desc_de": "Entdecke Regionen, Hauptstädte und Flaggen auf Karten.",
+    "desc_en": "Explore regions, capitals and flags on maps.",
+    "desc_es": "Explora regiones, capitales y banderas en mapas.",
+    "desc_fr": "Explore les régions, les capitales et les drapeaux sur des cartes.",
+    "cmd": [
+      "kstart",
+      "--fullscreen",
+      "kgeography"
+    ],
+    "alt_cmds": [
+      "kgeography"
+    ],
+    "package": "kgeography",
+    "category": "learning",
+    "guidance": {
+      "age_de": "Für Kinder, die Kartennamen lesen und Regionen auf einer Karte finden möchten (Elternorientierung).",
+      "age_en": "For children ready to read map names and locate regions (parent guidance).",
+      "age_es": "Para quienes pueden leer nombres en un mapa y localizar regiones (orientación para familias).",
+      "age_fr": "Pour les enfants qui savent lire des noms sur une carte et souhaitent repérer des régions (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "mouse"
+      ],
+      "source": "https://apps.kde.org/kgeography/",
+      "reviewed": "2026-11-03"
+    }
+  },
+  {
+    "id": "kstars",
+    "emoji": "🌟",
+    "label_de": "Sternkarte",
+    "label_en": "Star chart",
+    "label_es": "Carta celeste",
+    "label_fr": "Carte du ciel",
+    "name_de": "KStars",
+    "name_en": "KStars",
+    "desc_de": "Erkunde den Himmel und beobachte, wie er sich mit Zeit und Ort verändert.",
+    "desc_en": "Explore the sky and see how it changes with time and location.",
+    "desc_es": "Explora el cielo y observa cómo cambia con la hora y el lugar.",
+    "desc_fr": "Explore le ciel et observe comment il change avec l’heure et le lieu.",
+    "cmd": [
+      "kstart",
+      "--fullscreen",
+      "kstars"
+    ],
+    "alt_cmds": [
+      "kstars"
+    ],
+    "package": "kstars",
+    "category": "learning",
+    "guidance": {
+      "age_de": "Für neugierige Kinder, die eine Sternkarte mit etwas Begleitung erkunden möchten (Elternorientierung).",
+      "age_en": "For curious children ready to explore a sky chart with some help (parent guidance).",
+      "age_es": "Para niños curiosos que quieren explorar una carta celeste con ayuda (orientación para familias).",
+      "age_fr": "Pour les enfants curieux qui souhaitent explorer une carte du ciel avec un peu d’aide (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://apps.kde.org/kstars/",
+      "reviewed": "2026-11-03",
+      "network_de": "Die Sternkarte mit vorhandenen Daten funktioniert lokal. Optionale Zusatzdaten benötigen eine Internetverbindung.",
+      "network_en": "The sky chart works locally with available data. Optional extra data requires an internet connection.",
+      "network_es": "La carta celeste funciona en local con los datos disponibles. Los datos adicionales opcionales requieren internet.",
+      "network_fr": "La carte du ciel fonctionne en local avec les données disponibles. Les données supplémentaires facultatives nécessitent Internet."
+    }
+  },
+  {
+    "id": "stellarium",
+    "emoji": "🌌",
+    "label_de": "Planetarium",
+    "label_en": "Planetarium",
+    "label_es": "Planetario",
+    "label_fr": "Planétarium",
+    "name_de": "Stellarium",
+    "name_en": "Stellarium",
+    "desc_de": "Entdecke Sterne, Planeten und Sternbilder in einem virtuellen Planetarium.",
+    "desc_en": "Discover stars, planets and constellations in a virtual planetarium.",
+    "desc_es": "Descubre estrellas, planetas y constelaciones en un planetario virtual.",
+    "desc_fr": "Découvre les étoiles, les planètes et les constellations dans un planétarium virtuel.",
+    "cmd": [
+      "kstart",
+      "--fullscreen",
+      "stellarium"
+    ],
+    "alt_cmds": [
+      "stellarium"
+    ],
+    "package": "stellarium",
+    "category": "learning",
+    "guidance": {
+      "age_de": "Für Kinder, die den Himmel gemeinsam entdecken und eine 3D-Ansicht steuern möchten (Elternorientierung).",
+      "age_en": "For children ready to explore the sky together and navigate a 3D view (parent guidance).",
+      "age_es": "Para quienes quieren explorar el cielo en compañía y manejar una vista 3D (orientación para familias).",
+      "age_fr": "Pour les enfants qui souhaitent explorer le ciel ensemble et se déplacer dans une vue 3D (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "mouse",
+        "keyboard"
+      ],
+      "source": "https://stellarium.org/",
+      "reviewed": "2026-11-03"
+    }
   }
 ]
