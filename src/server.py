@@ -15,6 +15,7 @@ from package_provider import prepare_install
 from package_install import PackageInstaller
 from packagekit_backend import InstallError
 from daily_budget import DailyBudget
+from runtime_locale import render_browser_wrapper
 from app_detection import (
     BROWSER_CANDIDATES,
     browser_statuses,
@@ -828,7 +829,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except ValueError:
                 self.send_error(404)
                 return
-            return super().do_GET()
+            try:
+                template = (Path(APP_ROOT) / "browser.html").read_text(encoding="utf-8")
+                page = render_browser_wrapper(template, cfg.get("language")).encode("utf-8")
+            except (OSError, ValueError):
+                self.send_error(503)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page)))
+            self.end_headers()
+            self.wfile.write(page)
+            return
         if request_url.path == "/api/media":
             entries, truncated = media_catalog()
             cfg = load_cfg()

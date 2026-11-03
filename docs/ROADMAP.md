@@ -202,16 +202,17 @@ their own evidence is complete. See the release standard at the end.
 - [x] Translate Spanish across guided installation, child UI, Parent settings, catalog and recovery messages
 - [x] Translate French across the same surfaces
 - [x] Let existing families change the launcher language in Parent settings while preserving profile names and tile labels
-- [ ] Apply the saved language to native helper windows and the embedded browser wrapper after an in-app language change
+- [x] Apply the saved language to native helper windows and the embedded browser wrapper after an in-app language change
 - [ ] Translate and review Italian after Spanish/French
 - [x] Make app descriptions, guidance and source labels use locale-key fallbacks so new packs can add translations through data
-- [ ] Document translation contributions, terminology and review ownership; track missing strings without silently claiming a complete language pack
-- [ ] Test longer labels, dates/numbers, keyboard navigation, speech availability and 800×600 layouts for each enabled language
+- [x] Document translation contributions, terminology and review ownership; report missing source keys for draft and enabled languages
+- [x] Exercise all four enabled languages in the 800×600 Parent layout with localized counts and keyboard focus recovery
+- [ ] Complete physical-device language acceptance for long labels, localized dates and available speech voices
 - [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
 
-The [translation guide](LOCALIZATION.md) explains the current German/English
-pipeline and the shared registry. Spanish and French are enabled. Italian and
-physical-device language acceptance remain separate tasks.
+The [translation guide](LOCALIZATION.md) describes the shared registry,
+contributor workflow, and coverage reports. German, English, Spanish and
+French are enabled.
 
 ### Lifecycle and reach
 

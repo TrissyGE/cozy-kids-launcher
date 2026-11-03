@@ -281,6 +281,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     log_scenario("real desktop-entry discovery follows German/English config reloads")
     browser.set_device_metrics(800, 600)
     for language, title, theme, singular, plural in (
+        ("de", "Eltern-Einstellungen", "Wald", "1 Paket", "2 Pakete"),
         ("es", "Ajustes parentales", "Bosque", "1 paquete", "2 paquetes"),
         ("fr", "Paramètres parentaux", "Forêt", "1 paquet", "2 paquets"),
         ("en", "Parent settings", "Forest", "1 package", "2 packages"),
@@ -306,6 +307,19 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         persisted = browser.evaluate("fetch('/api/config').then(response=>response.json())", await_promise=True)
         if persisted.get("language") != language:
             raise AssertionError(f"Parent settings did not persist {language}")
+        browser.evaluate("enterAdmin(); activateAdminSection('screen-time')")
+        assert_js(
+            browser,
+            "document.documentElement.scrollWidth<=800 && "
+            "document.querySelector('#admin .wrap').scrollWidth<=document.querySelector('#admin .wrap').clientWidth+1",
+            f"{language} Parent screen-time settings overflow at 800x600",
+        )
+        browser.key_press("Escape")
+        browser.wait_for(
+            "document.getElementById('admin').classList.contains('hidden') && "
+            "document.activeElement.matches('#grid .tile:not(.placeholder)')",
+            message=f"{language} keyboard navigation did not restore home focus",
+        )
     browser.set_device_metrics(1440, 900)
     log_scenario("Spanish and French setup, Parent language changes and localized counts")
     assert_js(

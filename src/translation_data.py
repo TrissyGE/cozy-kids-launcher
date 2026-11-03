@@ -42,12 +42,16 @@ def load_translations(language):
     if language == DEFAULT_LANGUAGE:
         return baseline
     translated = read_table(language)
+    validate_translation(language, baseline, translated)
+    return {**baseline, **translated}
+
+
+def validate_translation(language, baseline, translated):
     for key, value in translated.items():
         if key not in baseline:
             raise ValueError(f"{language}: unknown translation key {key}")
         if Counter(PLACEHOLDER.findall(value)) != Counter(PLACEHOLDER.findall(baseline[key])):
             raise ValueError(f"{language}: placeholders differ for {key}")
-    return {**baseline, **translated}
 
 
 if __name__ == "__main__":

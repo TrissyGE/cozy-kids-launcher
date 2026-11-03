@@ -17,8 +17,11 @@ from process_state import (
     write_process_record,
 )
 
+from runtime_locale import saved_locale
+
 HOME = os.path.expanduser("~")
 APP_ID = "{{APP_ID}}"
+CONFIG = os.path.join(HOME, ".config", APP_ID, "config.json")
 APP_NAME = "{{APP_NAME}}"
 CACHE_DIR = os.path.join(HOME, ".cache", APP_ID)
 BROWSER_PIDFILE = os.path.join(CACHE_DIR, "browser.pid")
@@ -257,14 +260,15 @@ class AppOverlay:
             return
         data = api("/api/timer/status")
         if data.get("active"):
+            text = saved_locale(CONFIG)
             remaining = data.get("remainingSeconds", 0)
             mins = max(0, remaining // 60)
             if data.get("expired"):
-                self.timer_lbl.config(text="⏰ {{TIMER_EXPIRED}}", fg="#c00")
+                self.timer_lbl.config(text="⏰ " + text["timer_expired"], fg="#c00")
             elif data.get("warning"):
-                self.timer_lbl.config(text=f"⏱️ {mins} {{TIMER_MINUTES}}", fg="#e65100")
+                self.timer_lbl.config(text=f"⏱️ {mins} {text['timer_minutes']}", fg="#e65100")
             else:
-                self.timer_lbl.config(text=f"⏱️ {mins} {{TIMER_MINUTES}}", fg=THEME["timer_text"])
+                self.timer_lbl.config(text=f"⏱️ {mins} {text['timer_minutes']}", fg=THEME["timer_text"])
         else:
             self.timer_lbl.config(text="")
         self.root.after(10000, self.poll_timer)
