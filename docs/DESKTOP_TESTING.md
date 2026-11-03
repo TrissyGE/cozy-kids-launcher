@@ -170,6 +170,14 @@ sample incomplete. Initial investigation budgets for a 4 GiB device are
 5 s for server readiness, 15 s for browser startup, and 450 MiB idle PSS.
 These are provisional thresholds for comparing candidates on the test laptop.
 
+The first pilot on Ubuntu 24.04.4 in VirtualBox used one logical CPU,
+5907 MiB of guest memory, Plasma Wayland and Chrome 152 fullscreen.
+It measured 932 ms for server readiness, 1589 ms for the browser
+executable, and 514 MiB median idle PSS across three complete samples.
+The memory result exceeded the provisional budget. This run used the
+`53c99ea` launcher and a fresh browser profile. It provides an initial
+comparison point for the physical device.
+
 - Verify first setup, normal relaunch, Parent PIN, time limits and profile isolation.
 - Run a Parent-authorized app installation and exercise the updater with the candidate release channel.
 - With a physical gamepad, navigate Home and the RetroGameCorner library. Confirm that Parent controls stay behind the PIN.
