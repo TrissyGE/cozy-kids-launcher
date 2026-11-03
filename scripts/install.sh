@@ -726,7 +726,7 @@ keys = (
     "firstRun", "profiles", "defaultTitle", "defaultParentLabel", "defaultExitLabel",
     "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
     "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
-    "paletteText", "paletteButton", "paletteCard", "packageMaintenance",
+    "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget",
 )
 print(json.dumps({key: locale[key] for key in keys}, ensure_ascii=True))
 PY
@@ -1327,6 +1327,7 @@ install -m 0644 "$SRC_DIR/packagekit_backend.py" "$APP_ROOT/packagekit_backend.p
 install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launcher.py"
 install -m 0644 "$SRC_DIR/app_display.py" "$APP_ROOT/app_display.py"
 install -m 0644 "$SRC_DIR/activity_store.py" "$APP_ROOT/activity_store.py"
+install -m 0644 "$SRC_DIR/daily_budget.py" "$APP_ROOT/daily_budget.py"
 install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/browser_policy.py" "$APP_ROOT/browser_policy.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"

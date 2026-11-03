@@ -301,6 +301,22 @@
   "themeMotion": "Movimiento suave del fondo",
   "themeTimeOfDay": "Adaptar a la hora local",
   "worldThemeHint": "Disponible para los mundos ilustrados. La preferencia del dispositivo de reducir el movimiento tiene prioridad.",
+  "budget": {
+    "label": "Presupuesto diario de aplicaciones en minutos",
+    "hint": "Introduce 0 para desactivarlo. Se suma el tiempo en aplicaciones iniciadas durante todas las sesiones de este perfil.",
+    "remaining": "Tiempo restante hoy: {minutes} min",
+    "nextAllowed": "Disponible de nuevo: {time}",
+    "exhausted": "Se acabó tu tiempo de aplicaciones por hoy.",
+    "unavailable": "No se pudo comprobar el tiempo de aplicaciones. Pide ayuda a un adulto.",
+    "request": "Pedir más tiempo",
+    "extraMinutes": "Minutos adicionales",
+    "extend": "Permitir más tiempo",
+    "extendError": "No se pudo añadir el tiempo adicional.",
+    "newProfile": "Perfil nuevo con las aplicaciones actuales",
+    "copySource": "Empezar con",
+    "copy": "Copiar ajustes",
+    "copyConfirm": "¿Copiar las aplicaciones, la apariencia y los límites de {profile}? La actividad y el progreso multimedia empiezan de cero."
+  },
   "packageMaintenance": {
     "checkUpdate": "Buscar actualización",
     "remove": "Desinstalar aplicación…",

@@ -111,6 +111,7 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         ("currentPage", 0, 10_000),
         ("timerMinutes", 0, 180),
         ("timerWarningMinutes", 0, 60),
+        ("dailyBudgetMinutes", 0, 1440),
     ):
         if field in result:
             value = result[field]

@@ -81,7 +81,9 @@
 const browserParams = new URLSearchParams(location.search);
 const tileId = browserParams.get('tile') || '';
 const activityToken = browserParams.get('activity') || '';
+const budgetToken = browserParams.get('budget') || '';
 let activityFinished = false;
+let budgetFinished = false;
 (function(){
   const url = browserParams.get('url');
   if (!url) {
@@ -110,8 +112,15 @@ function finishActivity(){
     fetch('/api/activity/finish',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});
   }
 }
-function goHome() { finishActivity(); window.location.href = '/index.html'; }
+function finishBudget(){
+  if(!budgetToken||budgetFinished) return;
+  budgetFinished=true;
+  fetch('/api/budget/session',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({token:budgetToken,finished:true}),keepalive:true}).catch(()=>{});
+}
+function goHome() { finishActivity(); finishBudget(); window.location.href = '/index.html'; }
 window.addEventListener('pagehide',finishActivity);
+window.addEventListener('pagehide',finishBudget);
 function showNavigationBlock(){
   const block=document.getElementById('navigationBlock');
   block.classList.remove('hidden');
@@ -218,11 +227,23 @@ async function pollAvailability(){
     const response=await fetch('/api/availability/status',{cache:'no-store'});
     const data=await response.json();
     const blocked=Array.isArray(data.blockedTileIds)?data.blockedTileIds:[];
-    if(data.profileAllowed===false||(tileId&&blocked.includes(tileId))) goHome();
+    if(data.profileAllowed===false||(data.budget?.enabled&&!budgetToken)||(tileId&&blocked.includes(tileId))) goHome();
   }catch(e){}
 }
 pollAvailability();
 setInterval(pollAvailability,10000);
+async function budgetHeartbeat(){
+  if(!budgetToken||budgetFinished) return;
+  try{
+    const response=await fetch('/api/budget/session',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:budgetToken,finished:false})});
+    if(!response.ok||!(await response.json()).valid) goHome();
+  }catch(e){ goHome(); }
+}
+if(budgetToken){
+  budgetHeartbeat();
+  setInterval(budgetHeartbeat,3000);
+}
 </script>
 </body>
 </html>

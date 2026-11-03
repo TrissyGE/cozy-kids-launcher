@@ -1,6 +1,6 @@
 """Validation and local-time evaluation for child availability schedules."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 
 
@@ -120,6 +120,21 @@ def tile_availability(config, tile_id, when=None):
     if not schedule_is_open(app_schedule, when=when):
         return {"allowed": False, "reason": "app_schedule"}
     return {"allowed": True, "reason": ""}
+
+
+def next_profile_opening(schedule, earliest):
+    """Return the first local opening timestamp at or after earliest."""
+    current = datetime.fromtimestamp(earliest)
+    if schedule_is_open(schedule, current):
+        return int(earliest)
+    for offset in range(8):
+        day = current.date() + timedelta(days=offset)
+        for window in schedule["days"].get(WEEKDAYS[day.weekday()], []):
+            start = datetime.combine(day, datetime.strptime(window["start"], "%H:%M").time())
+            timestamp = start.timestamp()
+            if timestamp >= earliest:
+                return int(timestamp)
+    return None
 
 
 def availability_summary(config, when=None):

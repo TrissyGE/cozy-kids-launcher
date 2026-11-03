@@ -228,6 +228,7 @@ async function saveConfig(){
     minutes=parseInt(document.getElementById('cfgTimerCustom').value,10)||0;
   }
   cfg.timerMinutes=minutes;
+  cfg.dailyBudgetMinutes=Number(document.getElementById('cfgDailyBudget').value);
   cfg.timerWarningMinutes=cfg.timerWarningMinutes||5;
   if(cfg.theme==='custom'){
     cfg.customColors={
@@ -296,8 +297,12 @@ async function importConfig(input){
     if(result.status==='ok'){
       msg.textContent=uiText.importSuccess||'Config imported';
       msg.style.color='green';
-      await loadConfig();
-      renderAll();
+      if(result.requiresPin){
+        await loadConfig();
+        closeAdmin();
+      }else{
+        await loadConfig(true);
+      }
     }else{
       msg.textContent=result.message||(uiText.importError||'Import failed');
       msg.style.color='#c00';
@@ -381,7 +386,7 @@ async function restoreBackup(){
     });
     const result=await response.json();
     if(!response.ok||result.status!=='ok') throw new Error('backup restore failed');
-    await loadConfig();
+    await loadConfig(true);
     await loadBackups();
     renderUiState(msg,'success',uiText.backupSuccess);
   }catch(e){

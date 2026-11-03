@@ -82,6 +82,10 @@ EXTRA_UI_KEYS = {
 }
 
 UI_GROUPS = {
+    "budget": ("budget", (
+        "label hint remaining nextAllowed exhausted unavailable request extraMinutes extend extendError "
+        "newProfile copySource copy copyConfirm"
+    ).split()),
     "packageMaintenance": ("package_maintenance", (
         "checkUpdate remove checking auth denied changes changed failed notInstalled noUpdate "
         "interrupted unsupported updating removing keepOpen updateReview removeReview version versions "

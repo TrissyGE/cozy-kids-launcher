@@ -301,6 +301,22 @@
   "themeMotion": "Gentle background motion",
   "themeTimeOfDay": "Match the local time of day",
   "worldThemeHint": "Available for illustrated worlds. The device reduced-motion preference always takes priority.",
+  "budget": {
+    "label": "Daily app budget in minutes",
+    "hint": "Set 0 to turn it off. Time in launched apps counts across sessions for this child.",
+    "remaining": "Time left today: {minutes} min",
+    "nextAllowed": "Available again: {time}",
+    "exhausted": "Your app time for today has been used up.",
+    "unavailable": "App time could not be checked. Ask a parent for help.",
+    "request": "Ask for more time",
+    "extraMinutes": "Extra minutes",
+    "extend": "Allow extra time",
+    "extendError": "Extra time could not be added.",
+    "newProfile": "New profile with current apps",
+    "copySource": "Start with",
+    "copy": "Copy settings",
+    "copyConfirm": "Copy the apps, appearance and time rules from {profile}? Usage and media progress start fresh."
+  },
   "packageMaintenance": {
     "checkUpdate": "Check for an app update",
     "remove": "Uninstall app…",

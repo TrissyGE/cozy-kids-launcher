@@ -8,11 +8,13 @@ import subprocess
 import sys
 import threading
 import time
+from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from package_provider import prepare_install
 from package_install import PackageInstaller
 from packagekit_backend import InstallError
+from daily_budget import DailyBudget
 from app_detection import (
     BROWSER_CANDIDATES,
     browser_statuses,
@@ -116,7 +118,7 @@ from runtime_diagnostics import (
     configure_runtime_logging,
     log_runtime_event,
 )
-from schedule_rules import availability_summary, tile_availability
+from schedule_rules import availability_summary, next_profile_opening, tile_availability
 from speech_feedback import SpeechFeedback
 from timer_state import (
     clear_timer as remove_timer_state,
@@ -153,6 +155,9 @@ CFG = os.path.join(HOME, ".config", "{{APP_ID}}", "config.json")
 BACKUP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}-backups")
 LOG_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "runtime.jsonl")
 ACTIVITY_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "activity.json")
+BUDGET_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "daily-budget.json")
+_family_lock = threading.RLock()
+_budget = None
 MEDIA_STATE_FILE = os.path.join(HOME, ".local", "state", "{{APP_ID}}", "media.json")
 MEDIA_RESUME_ROOT = os.path.join(
     HOME,
@@ -590,6 +595,7 @@ def start_overlay(mode, url="", tile_id=""):
 
 
 def reset_active_tile():
+    finish_budget_session()
     embedded_activity_sessions().finish_all()
     application_launcher().reset_active_tile()
 
@@ -602,7 +608,8 @@ def launch_owned_tile(
     profile_id="",
     track_activity=False,
 ):
-    return application_launcher().launch_owned_tile(
+    finish_budget_session()
+    process = application_launcher().launch_owned_tile(
         command,
         mode,
         url=url,
@@ -610,6 +617,61 @@ def launch_owned_tile(
         profile_id=profile_id,
         track_activity=track_activity,
     )
+    try:
+        budget().begin(profile_id, tile_id, load_cfg().get("dailyBudgetMinutes", 0),
+                       alive=lambda: process.poll() is None)
+    except (OSError, ValueError):
+        application_launcher().reset_active_tile()
+        raise OSError("Daily budget could not be reserved") from None
+    return process
+
+
+def budget():
+    global _budget
+    if _budget is None or _budget.path != Path(BUDGET_FILE):
+        _budget = DailyBudget(BUDGET_FILE)
+    return _budget
+
+
+def finish_budget_session():
+    try:
+        budget().finish()
+    except (OSError, ValueError):
+        log_runtime_event("budget.storage.unavailable", level="warning")
+
+
+def retain_profile_budgets(stored):
+    try:
+        budget().retain_profiles({profile["id"] for profile in stored["profiles"]})
+    except (OSError, ValueError):
+        log_runtime_event("budget.storage.unavailable", level="warning")
+
+
+def budget_status(cfg):
+    return budget().status(cfg.get("activeProfileId", ""), cfg.get("dailyBudgetMinutes", 0))
+
+
+def family_tile_availability(cfg, tile_id):
+    state = budget_status(cfg)
+    if state.get("enabled") and not state.get("remainingSeconds"):
+        return {"allowed": False, "reason": "budget_unavailable" if state.get("unavailable") else "daily_budget"}
+    return tile_availability(cfg, tile_id)
+
+
+def budget_monitor(stop):
+    while not stop.wait(1):
+        with _family_lock:
+            if _budget is None or not _budget.session:
+                continue
+            cfg = load_cfg()
+            try:
+                should_stop = budget().tick(cfg["activeProfileId"], cfg.get("dailyBudgetMinutes", 0))
+            except (OSError, ValueError):
+                finish_budget_session()
+                should_stop = True
+            if should_stop:
+                # The overlay notices the stopped process and restores launcher focus.
+                stop_active_tile()
 
 
 def load_timer():
@@ -750,10 +812,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if request_url.path == "/browser.html":
             try:
+                cfg = load_cfg()
                 self.browser_content_security_policy = browser_wrapper_policy(
-                    load_cfg(),
+                    cfg,
                     request_url.query,
                 )
+                if cfg.get("dailyBudgetMinutes"):
+                    params = parse_qs(request_url.query, max_num_fields=8)
+                    tile = params.get("tile", [""])[0]
+                    token = params.get("budget", [""])[0]
+                    with _family_lock:
+                        if not budget().matches(token, cfg["activeProfileId"], tile):
+                            self.send_error(403)
+                            return
             except ValueError:
                 self.send_error(404)
                 return
@@ -782,8 +853,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             entries, _ = media_catalog()
             return self.media_cover_response(catalog_item(entries, media_ids[0]))
-        if self.path == "/api/config":
-            return self.json_response(public_config(load_cfg()))
+        if request_url.path == "/api/config":
+            cfg = load_cfg()
+            parent = request_url.query == "parent=1"
+            if parent and not self.require_admin(cfg):
+                return
+            result = public_config(cfg)
+            if cfg.get("pinHash") and not parent:
+                for field in ("weeklySchedule", "appAvailability", "appLimits", "dailyBudgetMinutes"):
+                    result.pop(field, None)
+            return self.json_response(result)
         if self.path == "/api/profiles":
             data = load_stored_cfg()
             if not self.require_admin(active_config(data)):
@@ -830,7 +909,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
         if self.path == "/api/availability/status":
-            return self.json_response(availability_summary(load_cfg()))
+            with _family_lock:
+                cfg = load_cfg()
+                result = availability_summary(cfg)
+                state = budget_status(cfg)
+                if state.get("enabled"):
+                    result["budget"] = state
+                    if not state.get("remainingSeconds"):
+                        result.update(profileAllowed=False,
+                                      reason="budget_unavailable" if state.get("unavailable") else "daily_budget")
+                        result["blockedTileIds"] = [tile["id"] for tile in cfg.get("tiles", [])]
+                if not result["profileAllowed"]:
+                    earliest = state.get("nextAvailableAt") if result.get("reason") == "daily_budget" else time.time()
+                    if not state.get("unavailable") and earliest is not None:
+                        next_opening = next_profile_opening(cfg.get("weeklySchedule"), earliest)
+                        if next_opening is not None:
+                            result["nextAllowedAt"] = next_opening
+            return self.json_response(result)
         if self.path == "/api/activity":
             stored = load_stored_cfg()
             data = active_config(stored)
@@ -905,6 +1000,52 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
+        if action.startswith("launch/") or action in {
+            "api/media/play", "api/profiles/create", "api/profiles/select", "api/profiles/delete",
+            "api/save-config", "api/import-config", "api/backups/restore", "api/budget/session",
+            "api/budget/extend", "exit-kids",
+        }:
+            with _family_lock:
+                return self.dispatch_post(action)
+        return self.dispatch_post(action)
+
+    def dispatch_post(self, action):
+        if action in ("api/budget/session", "api/budget/extend"):
+            body = self.read_json_body()
+            if body is None:
+                return
+            cfg = load_cfg()
+            profile = cfg["activeProfileId"]
+            if action == "api/budget/session":
+                if set(body) != {"token", "finished"} or type(body["finished"]) is not bool:
+                    return self.json_response({"valid": False}, 400)
+                try:
+                    valid = budget().heartbeat(body["token"], profile, body["finished"])
+                except (OSError, ValueError):
+                    valid = False
+                return self.json_response({"valid": valid})
+            if set(body) != {"pin", "minutes"}:
+                return self.json_response({"valid": False}, 400)
+            pin_hash = cfg.get("pinHash", "")
+            if not pin_hash:
+                return self.json_response({"valid": False}, 403)
+            if pin_attempt_blocked():
+                return self.json_response({"valid": False}, 429)
+            pin = body["pin"]
+            if not isinstance(pin, str) or not verify_pin(pin_hash, pin):
+                record_pin_failure()
+                return self.json_response({"valid": False}, 403)
+            clear_pin_failures()
+            state = budget_status(cfg)
+            if not state.get("enabled") or state.get("remainingSeconds") or state.get("unavailable"):
+                return self.json_response({"valid": False}, 409)
+            try:
+                state = budget().extend(profile, cfg.get("dailyBudgetMinutes", 0), body["minutes"])
+            except ValueError:
+                return self.json_response({"valid": False}, 409)
+            except OSError:
+                return self.json_response({"valid": False}, 503)
+            return self.json_response({"valid": True, "budget": state})
         if action in ("api/packages/prepare", "api/packages/install", "api/packages/confirm"):
             if not self.require_admin():
                 return
@@ -971,7 +1112,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(404)
                 self.end_headers()
                 return
-            availability = tile_availability(cfg, tile_id)
+            availability = family_tile_availability(cfg, tile_id)
             if not availability["allowed"]:
                 self.json_response({
                     "status": "blocked",
@@ -1012,7 +1153,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(404)
                 self.end_headers()
                 return
-            availability = tile_availability(cfg, tile_id)
+            availability = family_tile_availability(cfg, tile_id)
             if not availability["allowed"]:
                 self.json_response({
                     "status": "blocked",
@@ -1065,7 +1206,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         "--",
                         *command,
                     ]
-            elif shutil.which("xdg-open"):
+            elif not cfg.get("dailyBudgetMinutes") and shutil.which("xdg-open"):
                 command = ["xdg-open", item["path"]]
             else:
                 log_runtime_event(
@@ -1148,6 +1289,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     stored,
                     body.get("name"),
                     body.get("avatar", ""),
+                    source_profile_id=body.get("sourceProfileId"),
                 )
                 stored = save_stored_cfg(stored)
             except (OSError, ValueError) as exc:
@@ -1170,6 +1312,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             try:
                 stored = select_profile(stored, body.get("profileId"))
+                reset_active_tile()
                 stored = save_stored_cfg(stored)
                 clear_timer()
             except (OSError, ValueError) as exc:
@@ -1191,6 +1334,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             try:
                 stored = remove_profile(stored, body.get("profileId"))
                 remove_profile_activity(ACTIVITY_FILE, body.get("profileId"))
+                budget().forget(body.get("profileId"))
                 remove_profile_media_state(MEDIA_STATE_FILE, body.get("profileId"))
                 remove_profile_resume_directory(
                     MEDIA_RESUME_ROOT,
@@ -1220,6 +1364,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
+            if data.get("dailyBudgetMinutes", 0) != cfg.get("dailyBudgetMinutes", 0):
+                reset_active_tile()
             write_browser_override(data)
             log_runtime_event(
                 "config.saved",
@@ -1307,17 +1453,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     allow_pin_hash="pinHash" in data,
                 )
                 imported = save_stored_cfg(imported)
+                reset_active_tile()
+                retain_profile_budgets(imported)
                 write_browser_override(active_config(imported))
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
-            if imported.get("pinHash", "") != cfg.get("pinHash", ""):
+            pin_changed = imported.get("pinHash", "") != cfg.get("pinHash", "")
+            if pin_changed:
                 clear_admin_sessions()
             log_runtime_event(
                 "config.imported",
                 configVersion=imported.get("configVersion", CURRENT_CONFIG_VERSION),
             )
-            self.json_response({"status": "ok"})
+            self.json_response({"status": "ok", "requiresPin": pin_changed and bool(imported.get("pinHash"))})
             return
         if action == "api/backups/restore":
             cfg = load_cfg()
@@ -1335,6 +1484,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             try:
                 restored, safety_backup = restore_config_backup(backup_id)
+                reset_active_tile()
+                retain_profile_budgets(restored)
             except FileNotFoundError as exc:
                 self.json_response(
                     {"status": "error", "message": str(exc)},
@@ -1495,7 +1646,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(404)
                 self.end_headers()
                 return
-            availability = tile_availability(cfg, tile_id)
+            availability = family_tile_availability(cfg, tile_id)
             if not availability["allowed"]:
                 self.json_response({
                     "status": "blocked",
@@ -1524,11 +1675,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.end_headers()
                     return
                 player = find_media_player()
-                command = (
-                    media_player_command(player, locations)
-                    if player
-                    else ["xdg-open", locations[0]]
-                )
+                if not player and cfg.get("dailyBudgetMinutes"):
+                    self.json_response({"status": "error", "message": "No supervised media player found"}, 503)
+                    return
+                command = media_player_command(player, locations) if player else ["xdg-open", locations[0]]
                 try:
                     launch_owned_tile(
                         command,
@@ -1557,6 +1707,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 url = launch["url"]
                 if launch["mode"] == "embedded":
                     reset_active_tile()
+                    try:
+                        budget_token = budget().begin(cfg["activeProfileId"], tile_id, cfg.get("dailyBudgetMinutes", 0))
+                    except (OSError, ValueError):
+                        self.json_response({"status": "blocked", "reason": "budget_unavailable"}, 403)
+                        return
                     activity_token = ""
                     if cfg.get("activityTrackingEnabled", False):
                         activity_token = embedded_activity_sessions().start(
@@ -1567,7 +1722,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.send_header(
                         "Location",
                         f"/browser.html?url={quote(url, safe='')}&tile={quote(tile_id, safe='')}"
-                        f"&activity={quote(activity_token, safe='')}",
+                        f"&activity={quote(activity_token, safe='')}"
+                        + (f"&budget={quote(budget_token, safe='')}" if budget_token else ""),
                     )
                     self.end_headers()
                     return
@@ -1575,7 +1731,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 command = None
                 if browser:
                     command = external_browser_command(browser, url)
-                elif shutil.which("xdg-open"):
+                elif not cfg.get("dailyBudgetMinutes") and shutil.which("xdg-open"):
                     command = ["xdg-open", url]
                 else:
                     reset_active_tile()
@@ -1613,6 +1769,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
 
             clean = launch.get("argv", [])
+            if cfg.get("dailyBudgetMinutes") and clean and os.path.basename(clean[0]) in {"xdg-open", "gio"}:
+                self.json_response({"status": "error", "message": "This opener cannot be supervised"}, 503)
+                return
             if launch["type"] == "none" or not clean:
                 reset_active_tile()
                 self.send_response(204)
@@ -1655,6 +1814,7 @@ def create_server(host="127.0.0.1", port=PORT):
 
 
 def main():
+    stop_budget = threading.Event()
     try:
         configure_runtime_logging(LOG_FILE)
     except OSError:
@@ -1684,6 +1844,7 @@ def main():
                     "launcher.recovered",
                     attempt=recovery_attempt,
                 )
+            threading.Thread(target=budget_monitor, args=(stop_budget,), daemon=True).start()
             httpd.serve_forever()
     except Exception as exc:
         log_runtime_event(
@@ -1693,6 +1854,9 @@ def main():
         )
         raise
     finally:
+        stop_budget.set()
+        with _family_lock:
+            finish_budget_session()
         embedded_activity_sessions().finish_all()
         if _speech_feedback is not None:
             _speech_feedback.close()

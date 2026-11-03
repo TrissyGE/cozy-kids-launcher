@@ -46,6 +46,12 @@ function renderProfileAdmin(){
   nameInput.placeholder=text.namePlaceholder;
   avatarInput.placeholder=text.avatarPlaceholder;
   setIconLabel(document.getElementById('createProfileBtn'),'add',text.create);
+  const source=document.getElementById('newProfileSource');
+  const selected=source.value;
+  source.replaceChildren(new Option(uiText.budget.newProfile,''));
+  for(const profile of cfg.profiles||[]) source.appendChild(new Option(profile.name,profile.id));
+  if(Array.from(source.options).some(option=>option.value===selected)) source.value=selected;
+  document.getElementById('newProfileSourceLabel').textContent=uiText.budget.copySource;
 
   const list=document.getElementById('profileList');
   list.replaceChildren();
@@ -143,13 +149,21 @@ async function createProfileFromAdmin(){
     return;
   }
   const button=document.getElementById('createProfileBtn');
+  const sourceId=document.getElementById('newProfileSource').value;
+  if(sourceId){
+    const source=cfg.profiles.find(profile=>profile.id===sourceId);
+    if(!source||!(await requestConfirmation(uiText.budget.copyConfirm.replace('{profile}',()=>source.name),uiText.budget.copy))) return;
+  }
   button.disabled=true;
   renderUiState(message,'loading',uiText.saveLoading);
   try{
-    const created=await profileApi('/api/profiles/create',{name:name,avatar:avatarInput.value.trim()});
+    const body={name,avatar:avatarInput.value.trim()};
+    if(sourceId) body.sourceProfileId=sourceId;
+    const created=await profileApi('/api/profiles/create',body);
     cfg.profiles=created.profiles;
     nameInput.value='';
     avatarInput.value='';
+    document.getElementById('newProfileSource').value='';
     await activateProfile(created.profileId,{admin:true});
   }catch(e){
     renderUiState(message,'error',profileText().error);

@@ -1217,7 +1217,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
 
 
 def run_accessibility_scenarios(browser, artifacts):
-    prepared = browser.evaluate(
+    prepare_two_pages = (
         "(() => {"
         " if(!document.getElementById('admin').classList.contains('hidden')) closeAdmin();"
         " cfg.layoutMode='gross'; cfg.currentPage=0;"
@@ -1231,7 +1231,7 @@ def run_accessibility_scenarios(browser, artifacts):
         "document.querySelectorAll('#grid .tile:not(.placeholder)').length===4;"
         "})()"
     )
-    if prepared is not True:
+    if browser.evaluate(prepare_two_pages) is not True:
         raise AssertionError("Accessibility fixture did not create a second page")
 
     assert_js(
@@ -1329,7 +1329,9 @@ def run_accessibility_scenarios(browser, artifacts):
     )
     log_scenario("keyboard-only flow keeps real focus and operates Parent settings")
 
-    browser.evaluate("cfg.currentPage=0; focusedTileIndex=0; renderAll()")
+    # Parent reloads persisted settings, so reapply the in-memory touch fixture.
+    if browser.evaluate(prepare_two_pages) is not True:
+        raise AssertionError("Touch fixture did not restore the second page")
     browser.touch_swipe(700, 400, 100, 400)
     browser.wait_for(
         "location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg.currentPage===1 && "
