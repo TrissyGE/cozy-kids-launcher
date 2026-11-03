@@ -244,6 +244,7 @@ def emulator_command(executable, game, save_root, profile_id):
     profile = prepare_profile_resume_directory(save_root, profile_id)
     game_directory = prepare_profile_resume_directory(profile, game["id"])
     config_directory = prepare_profile_resume_directory(game_directory, "config")
+    # Request mGBA's own fullscreen layout and keep compositor confirmation in the supervisor.
     return [
         "kstart", "--fullscreen",
         "/usr/bin/env", f"XDG_CONFIG_HOME={config_directory}", executable,
