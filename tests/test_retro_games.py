@@ -46,6 +46,7 @@ class RetroArchiveTests(unittest.TestCase):
             (("C:\\Game.gba", b"fixture"),),
             (("Game.gba", b"fixture"), ("Second.gba", b"fixture")),
             (("Game.gba", b"fixture"), ("readme.txt", b"note")),
+            (("Folder/", b"unexpected data"), ("Game.gba", b"fixture")),
             ((symlink, b"/tmp/game.gba"),),
             (("Game.gba", b""),),
         )

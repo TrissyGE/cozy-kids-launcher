@@ -141,7 +141,7 @@ def inspect_rom_zip(path, verify=False):
                         character in name for character in ("\x00", "\\", ":")
                     ):
                         return None
-                    if stat.S_ISLNK(entry.external_attr >> 16):
+                    if stat.S_ISLNK(entry.external_attr >> 16) or (entry.is_dir() and entry.file_size):
                         return None
                 files = [entry for entry in entries if not entry.is_dir()]
                 if len(files) != 1:
@@ -155,6 +155,7 @@ def inspect_rom_zip(path, verify=False):
                     or mode not in (0, stat.S_IFREG)
                     or member.flag_bits & 0x41
                     or member.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
+                    or not 0 < member.compress_size <= info.st_size
                     or not 0 < member.file_size <= MAX_ROM_BYTES
                 ):
                     return None
