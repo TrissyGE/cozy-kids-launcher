@@ -252,8 +252,10 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Accept Parent-supplied Game Boy, Game Boy Color and Game Boy Advance ROMs from bounded local folders
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
 - [x] Assign private mGBA save and save-state directories per child and game
+- [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
 - [ ] Add save backup and removal controls
-- [ ] Qualify additional emulators and add Parent-supplied BIOS configuration where required
+- [ ] Qualify Mega Drive, PlayStation, Nintendo 64 and Nintendo DS, including Parent-supplied BIOS configuration where required
+- [ ] Verify disc and multi-disc imports, approval and save isolation for supported disc systems
 - [ ] Add a short local device check in Parent settings that recommends console systems using measured emulation performance and reviewed hardware requirements
   - [ ] Show supported, untested and incompatible systems separately. Explain which measurement or hardware requirement informed each result
   - [ ] Disable installation for a confirmed incompatible system in the Parent RetroGameCorner panel and explain the reason next to the install button
@@ -317,3 +319,5 @@ A work-item checkbox is complete when its stated scope is implemented and:
 A release milestone additionally requires its open distribution/desktop gates
 and the full gate in [RELEASING.md](RELEASING.md). A checked implementation task
 does not substitute for an unperformed release or physical-device acceptance.
+
+- [ ] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix.

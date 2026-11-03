@@ -557,13 +557,15 @@ function renderRetroEmulators(){
     card.dataset.retroEmulator=emulator.id;
     const name=document.createElement('h4');
     name.textContent=catalogName(emulator);
+    const description=document.createElement('p');
+    description.textContent=catalogText(emulator,'desc');
     const button=document.createElement('button');
     button.className='smallbtn';
     button.type='button';
     button.disabled=emulator.installed;
     button.textContent=emulator.installed?uiText.installed:uiText.install;
     button.onclick=()=>triggerInstall(emulator);
-    card.append(name,button,catalogDetails(emulator));
+    card.append(name,description,button,catalogDetails(emulator));
     container.appendChild(card);
   }
 }

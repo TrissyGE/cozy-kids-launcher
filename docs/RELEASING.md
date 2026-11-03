@@ -43,6 +43,8 @@ The release workflow checks this credential against the repository before it run
 
    For a release claiming the v0.5 desktop matrix, also attach passing GNOME Wayland, KDE Plasma Wayland, and XFCE X11 reports produced according to [DESKTOP_TESTING.md](DESKTOP_TESTING.md). Automated-only reports with pending manual checks are not sufficient.
 
+   Before publishing v0.8, run the exact release candidate end to end on the physical Linux test laptop. Record the hardware, desktop session, browser mode and results alongside the VM reports. Include setup, the Parent install flow, child restrictions, updates, and real keyboard and gamepad input on Home and in RetroGameCorner. Use the [physical laptop checklist](DESKTOP_TESTING.md#physical-linux-test-laptop).
+
 5. Create and push an annotated tag pointing at that release-branch commit. Push the tag, **not the development branch to `main`**:
 
    ```bash
