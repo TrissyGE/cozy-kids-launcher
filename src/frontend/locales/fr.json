@@ -254,6 +254,8 @@
   "activityLessMinute": "< 1 min",
   "activityMinutes": "{count} min",
   "activityHoursMinutes": "{hours} h {minutes} min",
+  "controllerNavigationLabel": "Navigation à la manette et à la télécommande",
+  "controllerNavigationHint": "Utilisez une manette standard ou une télécommande avec les touches fléchées et Entrée sur l’accueil et dans la médiathèque.",
   "browserHint": "Les changements s’appliquent à la prochaine ouverture de session.",
   "browserLabel": "Navigateur",
   "languageLabel": "Langue",

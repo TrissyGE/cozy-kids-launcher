@@ -462,6 +462,11 @@
 
           <section id="adminSectionSystem" class="admin-section" data-admin-panel="system" aria-labelledby="adminNavSystem" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
+            <label class="chk">
+              <input type="checkbox" id="cfgControllerNavigation" aria-describedby="controllerNavigationHint">
+              <span id="controllerNavigationLabel"></span>
+            </label>
+            <p id="controllerNavigationHint" class="muted"></p>
             <div class="row2" style="grid-template-columns:1fr 1fr; align-items:center;">
               <label id="cfgLanguageLabel" for="cfgLanguage"></label>
               <select id="cfgLanguage"></select>
@@ -525,6 +530,7 @@
 <script defer src="/frontend/feedback-runtime.js"></script>
 <script defer src="/frontend/celebration-runtime.js"></script>
 <script defer src="/frontend/transition-runtime.js"></script>
+<script defer src="/frontend/controller-navigation.js"></script>
 <script defer src="/frontend/launcher-ui.js"></script>
 <script defer src="/frontend/profiles.js"></script>
 <script defer src="/frontend/schedule-controls.js"></script>

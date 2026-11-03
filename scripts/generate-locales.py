@@ -31,6 +31,8 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "controllerNavigationLabel": "controller_navigation_label",
+    "controllerNavigationHint": "controller_navigation_hint",
     "browserHint": "browser_hint",
     "browserLabel": "cli_browser",
     "languageLabel": "cli_language",

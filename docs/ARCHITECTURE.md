@@ -203,6 +203,16 @@ fails closed and tears down the newly owned process tree.
 
 ### 4. Parent security boundary
 
+Enable controller and remote navigation in Parent settings under System.
+On Home and in the media library, the D-pad or left stick moves focus in the
+direction shown on screen. The lower face button selects, and the right face
+button goes back from the library or supported child dialogs. Remotes that
+send arrow keys and Enter use the same directional focus.
+The gamepad uses the browser's [standard mapping](https://www.w3.org/TR/gamepad/#remapping)
+and requires the launcher to be in the foreground. The first press may expose
+the controller to the browser. Release it before navigating. PIN entry,
+system authorization and native apps use their existing input controls.
+
 Parents can save up to eight additional local media folders under Apps & Media.
 The global folder list is included in Parent configuration exports and backups.
 The regular launcher configuration, library and source status responses omit

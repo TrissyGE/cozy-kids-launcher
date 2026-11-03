@@ -254,7 +254,8 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 
 #### Living-room foundations
 
-- [ ] Add optional gamepad and simple remote-control navigation with the same focus and modal boundaries as keyboard input
+- [x] Add optional standard gamepad and keyboard-style remote navigation on Home and in the media library, with modal focus boundaries
+- [ ] Verify standard gamepads and physical remotes on the release desktop matrix
 - [x] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
 - [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
 - [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix

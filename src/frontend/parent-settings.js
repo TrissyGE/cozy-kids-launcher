@@ -443,6 +443,9 @@ async function saveMediaRoots(){
 }
 
 function renderAdmin(){
+  document.getElementById('controllerNavigationLabel').textContent=uiText.controllerNavigationLabel;
+  document.getElementById('controllerNavigationHint').textContent=uiText.controllerNavigationHint;
+  document.getElementById('cfgControllerNavigation').checked=cfg.controllerNavigationEnabled===true;
   document.getElementById('mediaRootsLabel').textContent=uiText.mediaRootsLabel;
   document.getElementById('mediaRootsHint').textContent=uiText.mediaRootsHint;
   document.getElementById('mediaRootsSave').textContent=uiText.mediaRootsSave;

@@ -170,6 +170,8 @@
   "confirm_cancel": "Annuler",
   "confirm_continue": "Continuer",
   "confirm_title": "Veuillez confirmer",
+  "controller_navigation_hint": "Utilisez une manette standard ou une télécommande avec les touches fléchées et Entrée sur l’accueil et dans la médiathèque.",
+  "controller_navigation_label": "Navigation à la manette et à la télécommande",
   "copy_command": "Copier",
   "custom_cmd": "Personnalisé",
   "delete": "Supprimer",

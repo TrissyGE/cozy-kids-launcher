@@ -170,6 +170,8 @@
   "confirm_cancel": "Abbrechen",
   "confirm_continue": "Fortfahren",
   "confirm_title": "Bitte bestätigen",
+  "controller_navigation_hint": "Nutze auf der Startseite und in der Mediathek einen Standard-Controller oder eine Fernbedienung mit Pfeil- und Eingabetasten.",
+  "controller_navigation_label": "Navigation mit Controller und Fernbedienung",
   "copy_command": "Kopieren",
   "custom_cmd": "Benutzerdefiniert",
   "delete": "Löschen",

@@ -1370,6 +1370,7 @@ install -m 0644 "$SRC_DIR/frontend/accessibility-runtime.js" "$FRONTEND_ACCESSIB
 install -m 0644 "$SRC_DIR/frontend/feedback-runtime.js" "$FRONTEND_FEEDBACK_RUNTIME_FILE"
 install -m 0644 "$SRC_DIR/frontend/celebration-runtime.js" "$FRONTEND_CELEBRATION_RUNTIME_FILE"
 install -m 0644 "$SRC_DIR/frontend/transition-runtime.js" "$FRONTEND_TRANSITION_RUNTIME_FILE"
+install -m 0644 "$SRC_DIR/frontend/controller-navigation.js" "$FRONTEND_DIR/controller-navigation.js"
 render_template "$SRC_DIR/frontend/launcher-ui.js" "$FRONTEND_LAUNCHER_FILE" 0644
 render_template "$SRC_DIR/frontend/profiles.js" "$FRONTEND_PROFILES_FILE" 0644
 render_template "$SRC_DIR/frontend/schedule-controls.js" "$FRONTEND_SCHEDULE_FILE" 0644

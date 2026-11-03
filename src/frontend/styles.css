@@ -468,7 +468,7 @@
       border:2px solid ButtonText;
       box-shadow:none;
     }
-    button:focus-visible, input:focus-visible, select:focus-visible,
+    button:focus-visible, .controller-focus button:focus, input:focus-visible, select:focus-visible,
     .theme-thumb:focus-visible, .tile.focused {
       outline:var(--focus-ring-width) solid Highlight !important;
       outline-offset:3px;
