@@ -58,6 +58,83 @@ class Ps1DiscSetTests(unittest.TestCase):
             self.assertIsNone(retro_games._ps1_disc_set(str(playlist)))
 
 
+@unittest.skipUnless(sys.platform.startswith("linux"), "PS1 runtime uses Linux paths")
+class Ps1CueTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.root = Path(directory.name).resolve()
+        self.data = self.root / "Data Track.bin"
+        self.audio = self.root / "audio.bin"
+        self.cue = self.root / "Game.cue"
+        for track in (self.data, self.audio):
+            track.write_bytes(bytes(2352 * 10))
+        self.contents = ('REM test metadata\nFILE "Data Track.bin" BINARY\n'
+                         '  TRACK 01 MODE2/2352\n    INDEX 01 00:00:00\n'
+                         'FILE audio.bin BINARY\n  TRACK 02 AUDIO\n    INDEX 00 00:00:00\n'
+                         '    INDEX 01 00:00:02\n')
+        self.cue.write_text(self.contents, encoding="utf-8-sig")
+
+    def test_cue_and_mixed_playlist_approve_every_track(self):
+        header = bytearray(124)
+        struct.pack_into(">8sII", header, 0, b"MComprHD", 124, 5)
+        struct.pack_into(">QQQII", header, 32, 19584, 124, 125, 19584, 2448)
+        chd = self.root / "Second.chd"
+        chd.write_bytes(header + b"fixture")
+        playlist = self.root / "Collection.m3u"
+        playlist.write_text("Game.cue\nSecond.chd\n", encoding="utf-8")
+        games, _, _ = retro_games.scan_retro_games([str(self.root)])
+        self.assertEqual(len(games), 3)
+        cue, mixed = (next(game for game in games.values() if game["path"] == str(path))
+                      for path in (self.cue, playlist))
+        bios = self.root / "ps1-bios"
+        bios.mkdir()
+        (bios / "scph5502.bin").touch()
+        save = self.root / "retro"
+        save.mkdir()
+        statuses = {region: "ready" if region == "eu" else "missing" for region in retro_games.PS1_BIOS}
+        with patch.object(retro_games, "ps1_core_path", return_value="/reviewed-core"), \
+                patch.object(retro_games, "ps1_bios_status", return_value=statuses):
+            command = retro_games.emulator_command("retroarch", cue, str(save), "default")
+            private = Path(command[-1])
+            self.assertEqual(private.name, "disc.cue")
+            canonical = private.read_text(encoding="utf-8")
+            self.assertIn(f'FILE "{self.data}" BINARY', canonical)
+            self.assertIn(f'FILE "{self.audio}" BINARY', canonical)
+            self.assertNotIn("REM", canonical)
+            command = retro_games.emulator_command("retroarch", mixed, str(save), "default")
+            private = Path(command[-1])
+            self.assertEqual(private.read_text(encoding="utf-8").splitlines(), ["disc-01.cue", str(chd)])
+            self.assertEqual(private.with_name("disc-01.cue").read_text(encoding="utf-8"), canonical)
+            chd.with_suffix(".toc").touch()
+            with self.assertRaisesRegex(ValueError, "sidecars"):
+                retro_games.emulator_command("retroarch", mixed, str(save), "default")
+            chd.with_suffix(".toc").unlink()
+            self.cue.write_text(self.contents + "REM changed\n", encoding="utf-8-sig")
+            with self.assertRaisesRegex(ValueError, "has changed"):
+                retro_games.emulator_command("retroarch", mixed, str(save), "default")
+            self.cue.write_text(self.contents, encoding="utf-8-sig")
+            stat_before = self.audio.stat()
+            self.audio.write_bytes(b"x" * stat_before.st_size)
+            os.utime(self.audio, ns=(stat_before.st_atime_ns, stat_before.st_mtime_ns))
+            for game in (cue, mixed):
+                with self.assertRaisesRegex(ValueError, "has changed"):
+                    retro_games.emulator_command("retroarch", game, str(save), "default")
+
+    def test_rejects_unsafe_references_and_invalid_track_layouts(self):
+        (self.root / "link.bin").symlink_to(self.audio)
+        for name in ("../audio.bin", str(self.audio), "missing.bin", "link.bin", "C:/audio.bin"):
+            with self.subTest(name=name):
+                self.cue.write_text(self.contents.replace("FILE audio.bin", f'FILE "{name}"'), encoding="utf-8")
+                self.assertIsNone(retro_games._cue_metadata(str(self.cue)))
+        for old, new in (("INDEX 01 00:00:02", "INDEX 01 00:00:11"), ("TRACK 02", "TRACK 03"),
+                         ("FILE audio.bin BINARY", 'FILE "Data Track.bin" BINARY'),
+                         ("INDEX 01 00:00:02", ""), ("REM test metadata", 'CDTEXTFILE "text.bin"')):
+            with self.subTest(line=new):
+                self.cue.write_text(self.contents.replace(old, new), encoding="utf-8")
+                self.assertIsNone(retro_games._cue_metadata(str(self.cue)))
+
+
 class RetroArchiveTests(unittest.TestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()

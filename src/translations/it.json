@@ -376,7 +376,7 @@
   "retro_limit": "La ricerca ha raggiunto il limite. Scegli una cartella più piccola.",
   "retro_unavailable": "Questo gioco non è disponibile. Chiedi a un genitore di controllare la cartella, l’autorizzazione e l’emulatore corrispondente.",
   "ps1_bios_title": "Preparare il BIOS di PlayStation 1",
-  "ps1_bios_guide": "Importa un file BIOS dalla tua console. Il launcher lo verifica e lo salva in locale. Seleziona una cartella con file CHD o playlist M3U con più CHD. Quando il gioco chiede di cambiare disco, premi F9 per aprire il vassoio, F10 per scegliere il disco successivo e F9 per chiudere il vassoio.",
+  "ps1_bios_guide": "Importa un file BIOS dalla tua console. Il launcher lo verifica e lo salva in locale. Seleziona una cartella con file CHD, dischi CUE/BIN o playlist M3U con più dischi. Quando il gioco chiede di cambiare disco, premi F9 per aprire il vassoio, F10 per scegliere il disco successivo e F9 per chiudere il vassoio.",
   "ps1_bios_label": "Scegli un file BIOS da importare",
   "ps1_bios_ready": "Verificato",
   "ps1_bios_missing": "Mancante",

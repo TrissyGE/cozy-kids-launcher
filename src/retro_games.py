@@ -34,11 +34,19 @@ ROM_SYSTEMS = {
     ".gg": ("mednafen", "gg", "Sega - Game Gear"),
     ".chd": ("retroarch", "", "Sony - PlayStation"),
     ".m3u": ("retroarch", "", "Sony - PlayStation"),
+    ".cue": ("retroarch", "", "Sony - PlayStation"),
 }
+PS1_EXTENSIONS = {".chd", ".m3u", ".cue"}
 MAX_ROM_BYTES = 32 * 1024 * 1024
 MAX_CHD_BYTES = 1024 * 1024 * 1024
 MAX_PLAYLIST_BYTES = 16 * 1024
 MAX_PLAYLIST_DISCS = 8
+MAX_CUE_BYTES = 32 * 1024
+RAW_CD_SECTOR_BYTES = 2352
+CUE_FILE = re.compile(r'FILE\s+(?:"([^"]+)"|([^"\s]+))\s+BINARY', re.IGNORECASE)
+CUE_TRACK = re.compile(r'TRACK\s+([0-9]{2})\s+(MODE[12]/2352|AUDIO)', re.IGNORECASE)
+CUE_TIME = re.compile(r'(INDEX\s+0[01]|PREGAP|POSTGAP)\s+([0-9]{2}):([0-5][0-9]):([0-7][0-9])',
+                      re.IGNORECASE)
 CHD_HEADER = struct.Struct(">8sII")
 PS1_CORE_FILENAME = "pcsx_rearmed_libretro.so"
 PS1_CORE_BYTES = 2250248
@@ -216,7 +224,7 @@ def inspect_rom_zip(path, verify=False):
                 if (
                     any(part.startswith(".") for part in rom.parts)
                     or rom.suffix.casefold() not in ROM_SYSTEMS
-                    or rom.suffix.casefold() in (".chd", ".m3u")
+                    or rom.suffix.casefold() in PS1_EXTENSIONS
                     or mode not in (0, stat.S_IFREG)
                     or member.flag_bits & 0x41
                     or member.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
@@ -249,6 +257,108 @@ def _open_local_regular(path):
     return os.fdopen(os.open(path, flags | getattr(os, "O_BINARY", 0)), "rb")
 
 
+def _read_local_descriptor(path, maximum):
+    with _open_local_regular(path) as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= maximum:
+            raise ValueError("Invalid disc descriptor")
+        payload = handle.read(maximum + 1)
+        if len(payload) > maximum:
+            raise ValueError("Oversized disc descriptor")
+        return payload
+
+
+def _ps1_reference(descriptor, entry, extension):
+    parts = entry.split("/")
+    if (any(not part or part.startswith(".") for part in parts)
+            or PurePosixPath(entry).suffix.casefold() != extension
+            or any(char in entry for char in "\\:#")
+            or not entry.isprintable()):
+        raise ValueError("Invalid disc reference")
+    path = os.path.join(os.path.dirname(descriptor), *parts)
+    if any(char in path for char in "#\r\n") or os.path.realpath(path) != path:
+        raise ValueError("Invalid disc path")
+    return path
+
+
+def _cue_metadata(path):
+    """Return approved BIN paths, canonical CUE text and an approval fingerprint."""
+    try:
+        payload = _read_local_descriptor(path, MAX_CUE_BYTES)
+        fingerprint = hashlib.sha256(payload)
+        lines = []
+        files = []
+        seen = set()
+        total_bytes = 0
+        tracks = 0
+        file_has_track = False
+        last_index = -1
+        times = {}
+        for line in payload.decode("utf-8-sig").splitlines():
+            line = line.strip()
+            if not line or line.split()[0].upper() in {"REM", "TITLE", "PERFORMER", "CATALOG", "ISRC", "SONGWRITER"}:
+                continue
+            if match := CUE_FILE.fullmatch(line):
+                if files and (not file_has_track or "INDEX 01" not in times):
+                    return None
+                track_file = _ps1_reference(path, match[1] or match[2], ".bin")
+                canonical = f'FILE "{track_file}" BINARY'
+                # The pinned core reads CUE lines with a 256-byte fgets buffer.
+                if '"' in track_file or len(os.fsencode(canonical)) > 254:
+                    return None
+                with _open_local_regular(track_file) as handle:
+                    info = os.fstat(handle.fileno())
+                identity = (info.st_dev, info.st_ino)
+                total_bytes += info.st_size
+                if (not stat.S_ISREG(info.st_mode) or not info.st_size or info.st_size % RAW_CD_SECTOR_BYTES
+                        or total_bytes > MAX_CHD_BYTES or identity in seen):
+                    return None
+                seen.add(identity)
+                files.append(track_file)
+                fingerprint.update(f"{info.st_dev}:{info.st_ino}:{info.st_size}:"
+                                   f"{info.st_mtime_ns}:{info.st_ctime_ns}\n".encode("ascii"))
+                file_sectors = info.st_size // RAW_CD_SECTOR_BYTES
+                file_has_track = False
+                last_index = -1
+                lines.append(canonical)
+            elif match := CUE_TRACK.fullmatch(line):
+                if not files or (file_has_track and "INDEX 01" not in times):
+                    return None
+                tracks += 1
+                mode = match[2].upper()
+                expected_modes = ("MODE1/2352", "MODE2/2352") if tracks == 1 else ("AUDIO",)
+                if int(match[1]) != tracks or mode not in expected_modes:
+                    return None
+                file_has_track = True
+                times = {}
+                lines.append(f"  TRACK {tracks:02d} {mode}")
+            elif match := CUE_TIME.fullmatch(line):
+                if not file_has_track:
+                    return None
+                label = " ".join(match[1].upper().split())
+                minute, second, frame = map(int, match.groups()[1:])
+                sector = (minute * 60 + second) * 75 + frame
+                if label in times or frame >= 75:
+                    return None
+                if label.startswith("INDEX") and not last_index < sector < file_sectors:
+                    return None
+                if label == "INDEX 00" and "INDEX 01" in times:
+                    return None
+                if label == "INDEX 01":
+                    if sector < times.get("INDEX 00", 0):
+                        return None
+                    last_index = sector
+                times[label] = sector
+                lines.append(f"    {label} {minute:02d}:{second:02d}:{frame:02d}")
+            else:
+                return None
+        if file_has_track and "INDEX 01" in times:
+            return files, "\n".join(lines) + "\n", fingerprint.digest()
+    except (OSError, UnicodeError, ValueError):
+        return None
+    return None
+
+
 def _chd_fingerprint(path):
     try:
         with _open_local_regular(path) as handle:
@@ -276,45 +386,42 @@ def _chd_metadata(path, identity):
 
 def _ps1_disc_set(path, verify=False):
     try:
-        with _open_local_regular(path) as handle:
-            info = os.fstat(handle.fileno())
-            if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_PLAYLIST_BYTES:
-                return None
-            payload = handle.read(MAX_PLAYLIST_BYTES + 1)
-        if len(payload) > MAX_PLAYLIST_BYTES:
-            return None
+        payload = _read_local_descriptor(path, MAX_PLAYLIST_BYTES)
         entries = [line.strip() for line in payload.decode("utf-8-sig").split("\n")]
         entries = [line for line in entries if line and not line.startswith("#")]
         if not 2 <= len(entries) <= MAX_PLAYLIST_DISCS:
             return None
         discs = []
+        cue_discs = {}
         seen = set()
         fingerprint = hashlib.sha256(payload)
         for entry in entries:
             # Miyoo playlists use /_hidden/ relative to the playlist's directory.
             if entry.startswith("/_hidden/"):
                 entry = entry[1:]
-            parts = entry.split("/")
-            if (any(not part or part.startswith(".") for part in parts)
-                    or PurePosixPath(entry).suffix.casefold() != ".chd"
-                    or any(char in entry for char in "\\:#")
-                    or not entry.isprintable()):
+            extension = PurePosixPath(entry).suffix.casefold()
+            if extension not in (".chd", ".cue"):
                 return None
-            disc = os.path.join(os.path.dirname(path), *parts)
-            if any(char in disc for char in "#\r\n") or os.path.realpath(disc) != disc:
-                return None
+            disc = _ps1_reference(path, entry, extension)
             info = os.stat(disc, follow_symlinks=False)
             if not stat.S_ISREG(info.st_mode) or (info.st_dev, info.st_ino) in seen:
                 return None
             seen.add((info.st_dev, info.st_ino))
             identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
-            member = _chd_fingerprint(disc) if verify else _chd_metadata(disc, identity)
+            if extension == ".cue":
+                cue = _cue_metadata(disc)
+                if cue is None:
+                    return None
+                tracks, contents, member = cue
+                cue_discs[disc] = tracks, contents
+            else:
+                member = _chd_fingerprint(disc) if verify else _chd_metadata(disc, identity)
             if member is None:
                 return None
             discs.append(disc)
             fingerprint.update(member)
-        return discs, fingerprint.digest()
-    except (OSError, UnicodeError):
+        return discs, cue_discs, fingerprint.digest()
+    except (OSError, UnicodeError, ValueError):
         return None
 
 
@@ -355,7 +462,7 @@ def scan_retro_games(roots):
                             continue
                         info = item.stat(follow_symlinks=False)
                         maximum = {".zip": MAX_ZIP_BYTES, ".chd": MAX_CHD_BYTES,
-                                   ".m3u": MAX_PLAYLIST_BYTES}.get(extension, MAX_ROM_BYTES)
+                                   ".m3u": MAX_PLAYLIST_BYTES, ".cue": MAX_CUE_BYTES}.get(extension, MAX_ROM_BYTES)
                         if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= maximum:
                             continue
                         fingerprint = f"{info.st_size}:{info.st_mtime_ns}".encode("ascii")
@@ -370,7 +477,12 @@ def scan_retro_games(roots):
                             disc_set = _ps1_disc_set(item.path)
                             if disc_set is None:
                                 continue
-                            discs, fingerprint = disc_set
+                            discs, _, fingerprint = disc_set
+                        elif extension == ".cue":
+                            cue = _cue_metadata(item.path)
+                            if cue is None:
+                                continue
+                            _, _, fingerprint = cue
                         elif extension == ".zip":
                             member = _zip_metadata(item.path, identity)
                             if member is None:
@@ -431,17 +543,30 @@ def _ps1_command(executable, game, state_root, game_directory):
         raise ValueError("Reviewed PS1 core is unavailable")
     path = game["path"]
     playlist = game["romExtension"] == ".m3u"
+    cue_discs = {}
     if playlist:
         disc_set = _ps1_disc_set(path, verify=True)
         if disc_set is None:
             raise ValueError("Approved PS1 disc set has changed")
-        discs, fingerprint = disc_set
+        discs, cue_discs, fingerprint = disc_set
+    elif game["romExtension"] == ".cue":
+        cue = _cue_metadata(path)
+        if cue is None:
+            raise ValueError("Approved PS1 tracks have changed")
+        tracks, cue_text, fingerprint = cue
+        discs = [path]
+        cue_discs[path] = tracks, cue_text
     else:
         discs, fingerprint = [path], _chd_fingerprint(path)
     if fingerprint is None or _game_id(path, fingerprint) != game["id"]:
         raise ValueError("Approved PS1 disc has changed")
-    if any(os.path.lexists(os.path.splitext(disc)[0] + extension)
-           for disc in discs for extension in (".sbi", ".lsd")):
+    # PCSX ReARMed can automatically open metadata alongside a CHD.
+    sidecars = [(disc, (".sbi", ".lsd", ".sub", ".toc", ".ccd", ".mds", ".cue"))
+                for disc in discs if disc not in cue_discs]
+    sidecars.extend((file, (".sbi", ".lsd", ".sub"))
+                    for disc, (tracks, _) in cue_discs.items() for file in (disc, *tracks))
+    if any(os.path.lexists(os.path.splitext(file)[0] + extension)
+           for file, extensions in sidecars for extension in extensions):
         raise ValueError("PS1 disc sidecars require approval support")
     statuses = ps1_bios_status(state_root)
     system_directory = os.path.join(state_root, "ps1-bios")
@@ -453,14 +578,24 @@ def _ps1_command(executable, game, state_root, game_directory):
     config_home = prepare_profile_resume_directory(game_directory, "config")
     config = os.path.join(game_directory, "retroarch.cfg")
     disc_controls = ""
+    content_paths = []
+    for index, disc in enumerate(discs, 1):
+        if disc in cue_discs:
+            name = f"disc-{index:02d}.cue" if playlist else "disc.cue"
+            _write_private_text(os.path.join(game_directory, name), cue_discs[disc][1])
+            content_paths.append(name)
+        else:
+            content_paths.append(disc)
     if playlist:
         path = os.path.join(game_directory, "disc-set.m3u")
-        _write_private_text(path, "\n".join(discs) + "\n")
+        _write_private_text(path, "\n".join(content_paths) + "\n")
         disc_controls = (
             'input_audio_mute = "nul"\n'
             'input_disk_eject_toggle = "f9"\n'
             'input_disk_next = "f10"\n'
         )
+    elif cue_discs:
+        path = os.path.join(game_directory, content_paths[0])
     _write_private_text(config, (
         f'system_directory = "{system_directory}"\n'
         f'savefile_directory = "{game_directory}"\n'
@@ -491,7 +626,7 @@ def emulator_command(executable, game, save_root, profile_id):
         raise ValueError("Mednafen would apply an unapproved IPS patch")
     profile = prepare_profile_resume_directory(save_root, profile_id)
     game_directory = prepare_profile_resume_directory(profile, game["id"])
-    if game["romExtension"] in (".chd", ".m3u"):
+    if game["romExtension"] in PS1_EXTENSIONS:
         return _ps1_command(executable, game, os.path.dirname(save_root), game_directory)
     if module:
         # Keep fullscreen observable by the supervisor and visible while the overlay has focus.

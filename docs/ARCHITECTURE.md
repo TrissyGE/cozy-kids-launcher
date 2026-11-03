@@ -257,13 +257,17 @@ identifies the supported Japan, North America, Europe and PSP BIOS images by
 SHA-256 and stores verified files under
 `~/.local/state/cozy-kids-launcher/ps1-bios/`. Only Parent requests can import
 firmware or view its readiness. BIOS files are stored separately from config
-exports. The launcher discovers version 5 CD CHDs as standalone discs or as
-ordered M3U sets of two to eight discs. It resolves playlist entries within the
-playlist's own folder, including Miyoo's `/_hidden/` convention. A set needs one
-approval and the launcher checks the identity and headers of all its discs again
-at launch. Individual discs already approved separately remain available.
-The launcher refuses adjacent SBI or LSD
-files until the launcher can include them in approvals. The PS1 launch uses
+exports. The launcher discovers version 5 CD CHDs and CUE/BIN discs as
+standalone discs or as ordered M3U sets of two to eight discs. It resolves
+playlist entries within the playlist's own folder, including Miyoo's
+`/_hidden/` convention. A set needs one approval and the launcher revalidates
+all discs at launch. Individual discs already approved separately remain
+available.
+A CUE can list a raw 2352-byte data track and additional audio tracks. Each
+BIN must be within the CUE folder, and changes to any BIN or the CUE
+invalidate approval. RetroArch receives a private CUE with the validated
+tracks. The launcher refuses unapproved sidecars that the core could
+auto-load, including SBI, SUB and alternate CHD layouts. The PS1 launch uses
 RetroArch with the reviewed Linux x86-64 PCSX ReARMed build, whose SHA-256 is
 checked before loading from `~/.local/state/cozy-kids-launcher/ps1-cores/`.
 RetroArch stores saves, states and screenshots in the child's private game
@@ -272,7 +276,7 @@ When the game requests the next disc, F9 opens the virtual tray, F10 selects
 the next disc and F9 closes the tray. Local PNG covers can sit beside the game
 file or in the adjacent Miyoo `Imgs/` folder. The Parent catalog installs
 RetroArch. One-click core delivery remains on the roadmap.
-See the [PCSX ReARMed disc documentation](https://docs.libretro.com/library/pcsx_rearmed/#multiple-disk-games).
+See the [PCSX ReARMed disc documentation](https://docs.libretro.com/library/pcsx_rearmed/#loading-content).
 
 Enable controller and remote navigation in Parent settings under System.
 On Home and in the media library, the D-pad or left stick moves focus in the
