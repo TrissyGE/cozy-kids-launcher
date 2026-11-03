@@ -2,13 +2,16 @@
 
 import json
 from pathlib import Path
+import re
 import secrets
 import threading
 import time
 
 from config_store import atomic_write_config
 from package_provider import PACKAGE_NAME
-from packagekit_backend import InstallError, PACKAGE_OPERATIONS, PackageKitBackend
+from packagekit_backend import (
+    InstallError, PACKAGE_OPERATIONS, PackageKitBackend, TRANSACTION_ID, package_identity,
+)
 
 
 ACTIVE_STATES = {"checking", "installing"}
@@ -30,22 +33,67 @@ class PackageInstaller:
         self.plan = None
         self.token = None
         self.worker = None
+        self.recovery = None
         try:
             with self.journal.open(encoding="utf-8") as handle:
                 previous = json.loads(handle.read(65537))
             if isinstance(previous, dict) and previous.get("status") != "idle":
-                # No consent or executable plan survives a process restart.
                 self.job = {"status": "interrupted", "error": "interrupted"}
                 operation = previous.get("operation")
                 if isinstance(operation, str) and operation in PACKAGE_OPERATIONS:
                     self.job["operation"] = operation
+                    self._resume(previous)
         except (OSError, ValueError):
             pass
 
+    def _resume(self, previous):
+        if previous.get("status") != "installing":
+            return
+        transaction = previous.get("transactionId")
+        target = previous.get("target")
+        job_id, app_id = previous.get("jobId"), previous.get("appId")
+        if (not isinstance(transaction, str) or not TRANSACTION_ID.fullmatch(transaction)
+                or not isinstance(job_id, str) or not re.fullmatch(r"[a-f0-9]{32}", job_id)
+                or not isinstance(app_id, str) or not 1 <= len(app_id) <= 100
+                or not isinstance(target, list) or len(target) != 3
+                or any(not isinstance(value, str) or not re.fullmatch(r"[a-zA-Z0-9.+:~_-]{1,200}", value)
+                       for value in target)
+                or not PACKAGE_NAME.fullmatch(target[0])):
+            return
+        self.recovery = {"transactionId": transaction, "target": target}
+        self.job = {"status": "installing", "operation": previous["operation"], "jobId": job_id,
+                    "appId": app_id, "phase": "checking", "percent": None, "recovered": True}
+        self.worker = threading.Thread(target=self._recover, daemon=True)
+        self.worker.start()
+
+    def _recover(self):
+        backend = None
+        try:
+            backend = self.backend_factory()
+            if not backend.recover(self.recovery["transactionId"], self.job["operation"],
+                                   self.recovery["target"], self._progress):
+                raise InstallError("failed")
+            self._update(status="complete", phase="complete", percent=100)
+        except Exception as error:
+            code = error.code if isinstance(error, InstallError) and error.code in ERRORS else "interrupted"
+            with self.lock:
+                self.job.update(status="interrupted" if code == "interrupted" else "error",
+                                error=code, percent=None)
+                try:
+                    self._persist()
+                except OSError:
+                    pass
+        finally:
+            if backend:
+                backend.close()
+
     def _persist(self):
         self.journal.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        atomic_write_config(str(self.journal), {key: self.job[key] for key in
-                            ("jobId", "appId", "operation", "status") if key in self.job})
+        record = {key: self.job[key] for key in
+                  ("jobId", "appId", "operation", "status") if key in self.job}
+        if self.job["status"] == "installing" and self.recovery:
+            record.update(self.recovery)
+        atomic_write_config(str(self.journal), record)
 
     def snapshot(self):
         with self.lock:
@@ -80,6 +128,7 @@ class PackageInstaller:
                         "status": "checking", "phase": "checking", "percent": None}
             self.plan = None
             self.token = None
+            self.recovery = None
             try:
                 self._persist()
             except OSError:
@@ -122,6 +171,20 @@ class PackageInstaller:
             self.job["phase"] = PHASES.get(phase, self.job.get("phase", "installing"))
             self.job["percent"] = percentage if isinstance(percentage, int) and 0 <= percentage <= 100 else None
 
+    def _record_transaction(self, transaction, target):
+        if not isinstance(transaction, str) or not TRANSACTION_ID.fullmatch(transaction):
+            return
+        with self.lock:
+            if self.recovery is not None:
+                return
+            self.recovery = {"transactionId": transaction, "target": list(target)}
+            try:
+                self._persist()
+            except OSError:
+                # The daemon already owns the transaction. Keep reporting
+                # progress and retry persistence on the next callback.
+                self.recovery = None
+
     def _run(self, confirmed):
         backend = None
         operation = self.job["operation"]
@@ -134,7 +197,9 @@ class PackageInstaller:
             if confirmed:
                 if plan != self.plan:
                     raise InstallError("plan_changed")
-                backend.perform(operation, plan, self._progress)
+                target = package_identity(plan["packageIds"][0])
+                backend.perform(operation, plan, self._progress,
+                                transaction=lambda value: self._record_transaction(value, target))
                 if not backend.verify(self.package, operation, plan):
                     raise InstallError("failed")
                 self._update(status="complete", phase="complete", percent=100)

@@ -89,7 +89,7 @@ UI_GROUPS = {
     ).split()),
     "packageMaintenance": ("package_maintenance", (
         "checkUpdate remove checking auth denied changes changed failed notInstalled noUpdate "
-        "interrupted unsupported updating removing keepOpen updateReview removeReview version versions "
+        "interrupted reconnecting unsupported updating removing keepOpen updateReview removeReview version versions "
         "consent removeConsent removeNow updateNow removed updated"
     ).split()),
     "themes": ("theme_name", (

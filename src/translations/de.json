@@ -284,6 +284,7 @@
   "package_maintenance_keep_open": "Du kannst dieses Fenster schließen. Die Softwareverwaltung führt eine gestartete Aktion weiter aus.",
   "package_maintenance_no_update": "In den eingerichteten Paketquellen wurde kein Update für diese App gefunden.",
   "package_maintenance_not_installed": "Das native Paket dieser App ist nicht installiert.",
+  "package_maintenance_reconnecting": "Der vorherige Paketvorgang wird geprüft…",
   "package_maintenance_remove": "App deinstallieren …",
   "package_maintenance_remove_consent": "Das Systempaket wird entfernt. Vorhandene Kacheln bleiben erhalten. Linux kann eine Bestätigung verlangen.",
   "package_maintenance_remove_now": "Jetzt deinstallieren",

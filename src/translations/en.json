@@ -284,6 +284,7 @@
   "package_maintenance_keep_open": "You can close this window. The system software manager continues an action that has started.",
   "package_maintenance_no_update": "No update was found for this app in the configured package sources.",
   "package_maintenance_not_installed": "This app’s native package is not installed.",
+  "package_maintenance_reconnecting": "Checking the previous package operation…",
   "package_maintenance_remove": "Uninstall app…",
   "package_maintenance_remove_consent": "This removes the system package. Existing launcher tiles are kept. Linux may ask for authorization.",
   "package_maintenance_remove_now": "Uninstall now",

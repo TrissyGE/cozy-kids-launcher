@@ -335,6 +335,7 @@
     "notInstalled": "This app’s native package is not installed.",
     "noUpdate": "No update was found for this app in the configured package sources.",
     "interrupted": "The current package status is unclear. Check the app or its status again.",
+    "reconnecting": "Checking the previous package operation…",
     "unsupported": "This package action is unavailable here. Use your graphical system software manager.",
     "updating": "Updating the app…",
     "removing": "Uninstalling the app…",
