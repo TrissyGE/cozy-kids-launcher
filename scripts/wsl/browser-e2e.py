@@ -1537,7 +1537,12 @@ def run_accessibility_scenarios(browser, artifacts):
         ".hidden===false",
         message="Keyboard PIN submission did not focus the Parent overview",
     )
-    for _ in range(4):
+    for _ in range(3):
+        browser.key_press("ArrowRight")
+    assert_js(browser, "document.activeElement.id==='adminNavRetro' && "
+              "!document.querySelector('[data-admin-panel=retro]').hidden",
+              "Arrow navigation skipped RetroGameCorner")
+    for _ in range(2):
         browser.key_press("ArrowRight")
     assert_js(
         browser,
