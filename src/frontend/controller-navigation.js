@@ -8,6 +8,7 @@ function createControllerNavigation(getScope){
   let lastScope=null;
   let lastPad=null;
   let lastAction='';
+  let activationHeld=false;
   let nextRepeat=0;
   let needsRelease=true;
 
@@ -60,6 +61,7 @@ function createControllerNavigation(getScope){
     lastScope=null;
     lastPad=null;
     lastAction='';
+    activationHeld=false;
     needsRelease=true;
   }
 
@@ -81,14 +83,19 @@ function createControllerNavigation(getScope){
     if(!action){
       needsRelease=false;
       lastAction='';
+      activationHeld=false;
       return;
     }
     if(needsRelease) return;
     const now=performance.now();
     const direction=Object.hasOwn(directions,action);
+    if(direction) activationHeld=false;
+    else if(activationHeld) return;
+    else activationHeld=true;
     if(action===lastAction&&(!direction||now<nextRepeat)) return;
     nextRepeat=now+(action===lastAction?140:360);
     lastAction=action;
+    document.documentElement.classList.add('controller-focus');
     if(action==='back'){ scope.back?.(); return; }
     const buttons=availableButtons(scope);
     const focused=buttons.includes(document.activeElement)?document.activeElement:null;
@@ -99,6 +106,7 @@ function createControllerNavigation(getScope){
 
   window.addEventListener('blur',reset);
   window.addEventListener('gamepaddisconnected',reset);
+  document.addEventListener('pointerdown',()=>document.documentElement.classList.remove('controller-focus'),true);
   document.addEventListener('visibilitychange',reset);
   document.addEventListener('keydown',event=>{
     if(!enabled||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey) return;
@@ -127,6 +135,7 @@ function createControllerNavigation(getScope){
     if(value===enabled) return;
     enabled=value;
     reset();
+    if(!value) document.documentElement.classList.remove('controller-focus');
     if(pollId!==null) window.clearInterval(pollId);
     pollId=value&&typeof navigator.getGamepads==='function'?window.setInterval(poll,50):null;
   };

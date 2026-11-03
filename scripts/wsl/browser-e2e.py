@@ -184,8 +184,9 @@ def run_controller_home_scenario(browser):
     browser.evaluate("new Promise(resolve=>setTimeout(resolve,150))", await_promise=True)
     browser.evaluate("document.querySelector('[data-tile-id=paint]').focus()")
     browser.evaluate("padButton(15)", await_promise=True)
-    assert_js(browser, "document.activeElement.dataset.tileId==='music'",
-              "The standard D-pad did not move to the tile on the right")
+    assert_js(browser, "document.activeElement.dataset.tileId==='music' && "
+              "document.documentElement.classList.contains('controller-focus')",
+              "The standard D-pad did not visibly focus the tile on the right")
     browser.key_press("ArrowLeft")
     assert_js(browser, "document.activeElement.dataset.tileId==='paint'",
               "A keyboard-style remote could not move focus left")
