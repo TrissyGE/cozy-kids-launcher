@@ -254,8 +254,9 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Assign private mGBA save and save-state directories per child and game
 - [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
 - [ ] Add save backup and removal controls
-- [ ] Qualify Mega Drive, PlayStation, Nintendo 64 and Nintendo DS, including Parent-supplied BIOS configuration where required
-- [ ] Verify disc and multi-disc imports, approval and save isolation for supported disc systems
+- [ ] Qualify PC Engine HuCards, Neo Geo Pocket / Color, WonderSwan / Color and Atari Lynx with Mednafen
+- [ ] Qualify Mega Drive, Nintendo 64 and Nintendo DS, including Parent-supplied BIOS configuration where required
+- [ ] Qualify PlayStation and Saturn disc workflows, including multi-disc imports, BIOS checks, approval and save isolation
 - [ ] Add a short local device check in Parent settings that recommends console systems using measured emulation performance and reviewed hardware requirements
   - [ ] Show supported, untested and incompatible systems separately. Explain which measurement or hardware requirement informed each result
   - [ ] Disable installation for a confirmed incompatible system in the Parent RetroGameCorner panel and explain the reason next to the install button
