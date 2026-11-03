@@ -253,6 +253,7 @@ that lack an equivalent core, including Wii U and PS3.
 - [x] Put emulator installation in a dedicated RetroGameCorner Parent section using the shared app-store flow
 - [x] Show one optional RetroGameCorner Home tile that opens the child's approved games in a cover library
 - [x] Support local cover images and opt-in automatic cover downloads from Libretro
+  - [x] Read local Miyoo cover art from the adjacent `Imgs/` directory
 - [x] Explain local ROMs, BIOS files, controls, age/content choices and save data in Parent settings
 - [x] Accept Parent-supplied Game Boy, Game Boy Color and Game Boy Advance ROMs from bounded local folders
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
@@ -266,7 +267,8 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Discover single-disc CHDs, enforce per-child approval and verify the firmware, disc and pre-provisioned core before launch
   - [ ] Add CUE/BIN support with every referenced track inside the approved source. Invalidate approval when a disc component changes
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
-  - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card. Support handheld playlists by resolving disc entries unambiguously inside the selected game source without following the original absolute paths
+  - [x] Import M3U sets of CHD discs with a single approval, including Miyoo playlists whose entries are resolved within the playlist folder
+  - [ ] Verify a disc change requested during gameplay and memory-card persistence on the desktop matrix and the physical Linux test laptop
 - [ ] Add save backup and removal controls
 - [ ] Compare RetroArch cores for the existing cartridge systems. Switch a system only after verifying that existing game approvals and saves still work or have a tested migration.
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import stat
+import struct
 import sys
 import tempfile
 import unittest
@@ -9,6 +10,52 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import retro_games
+
+
+class Ps1DiscSetTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Test requires symbolic links")
+    def test_miyoo_cover_is_local_and_same_folder_cover_takes_priority(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            sidecar = root / "Game.png"
+            images = root / "Imgs"
+            images.mkdir()
+            miyoo = images / sidecar.name
+            png = b"\x89PNG\r\n\x1a\n"
+            miyoo.write_bytes(png + b"miyoo")
+            game = {"path": str(root / "Game.m3u"), "title": "Game"}
+            with patch.object(retro_games, "_download_cover") as download:
+                self.assertEqual(retro_games.retro_cover(game), png + b"miyoo")
+                sidecar.write_bytes(png + b"sidecar")
+                self.assertEqual(retro_games.retro_cover(game), png + b"sidecar")
+                sidecar.unlink()
+                target = root / "Unrelated.png"
+                target.write_bytes(png + b"unrelated")
+                miyoo.unlink()
+                miyoo.symlink_to(target)
+                self.assertEqual(retro_games.retro_cover(game), b"")
+                download.assert_not_called()
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "PS1 runtime uses Linux paths")
+    def test_playlist_rejects_unsafe_or_ambiguous_disc_references(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            header = bytearray(124)
+            struct.pack_into(">8sII", header, 0, b"MComprHD", 124, 5)
+            struct.pack_into(">QQQII", header, 32, 19584, 124, 125, 19584, 2448)
+            for name in ("One.chd", "Two.chd"):
+                (root / name).write_bytes(header + b"fixture")
+            (root / "Link.chd").symlink_to(root / "Two.chd")
+            (root / "Broken.chd").write_bytes(b"invalid")
+            playlist = root / "Test.m3u"
+            for reference in ("../Two.chd", "/Two.chd", "/_hidden/../Two.chd", "//Two.chd",
+                              "C:/Two.chd", "Link.chd", "Broken.chd", "Test.m3u", "One.chd",
+                              "Two.chd#member", "Missing.chd"):
+                with self.subTest(reference=reference):
+                    playlist.write_text(f"One.chd\n{reference}\n", encoding="utf-8")
+                    self.assertIsNone(retro_games._ps1_disc_set(str(playlist)))
+            playlist.write_bytes(b"#" * (retro_games.MAX_PLAYLIST_BYTES + 1))
+            self.assertIsNone(retro_games._ps1_disc_set(str(playlist)))
 
 
 class RetroArchiveTests(unittest.TestCase):

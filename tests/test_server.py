@@ -968,6 +968,67 @@ class ServerApiTests(unittest.TestCase):
             self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
             launch.assert_called_once()
 
+    @unittest.skipUnless(sys.platform.startswith("linux"), "PS1 runtime uses Linux paths")
+    def test_ps1_disc_set_uses_one_approval_and_private_playlist(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        root = Path(self.temp_dir.name).resolve() / "Disc Games"
+        hidden = root / "_hidden" / "multi-disc"
+        hidden.mkdir(parents=True)
+        first = hidden / "Disc One.chd"
+        second = hidden / "Disc Two.chd"
+        header = bytearray(124)
+        struct.pack_into(">8sII", header, 0, b"MComprHD", 124, 5)
+        struct.pack_into(">QQQII", header, 32, 19584, 124, 125, 19584, 2448)
+        for disc in (first, second):
+            disc.write_bytes(header + b"fixture")
+        endpoint = "/api/retro/games"
+        self.assertEqual(self.request(endpoint, "POST", {"roots": [str(root)]}, cookie)[0], 200)
+        self.assertEqual(self.request("/api/retro/settings", "POST", {
+            "profileId": "default", "enabled": True, "covers": False,
+        }, cookie)[0], 200)
+        initial = self.request(endpoint, cookie=cookie)[1]["games"]
+        first_id = next(game["id"] for game in initial if game["path"] == str(first))
+        approve = "/api/retro/approve"
+        self.assertEqual(self.request(approve, "POST", {"profileId": "default", "gameId": first_id}, cookie)[0], 200)
+        playlist = root / "Collection.m3u"
+        playlist.write_text(
+            "# Disc order\n/_hidden/multi-disc/Disc One.chd\n_hidden/multi-disc/Disc Two.chd\n",
+            encoding="utf-8-sig",
+        )
+        games = self.request(endpoint, cookie=cookie)[1]["games"]
+        self.assertEqual([game["title"] for game in games], ["Collection", "Disc One"])
+        game_id = games[0]["id"]
+        play = {"gameId": game_id}
+        self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 404)
+        self.assertEqual(self.request(approve, "POST", {"profileId": "default", **play}, cookie)[0], 200)
+        public = self.request("/api/retro/library")[1]
+        self.assertEqual({item["id"] for item in public["items"]}, {game_id, first_id})
+        self.assertNotIn(str(root), json.dumps(public))
+
+        state = Path(server_module.MEDIA_STATE_FILE).parent
+        bios = state / "ps1-bios" / "scph5502.bin"
+        bios.parent.mkdir(parents=True)
+        bios.touch()
+        statuses = {region: "ready" if region == "eu" else "missing" for region in retro_games.PS1_BIOS}
+        with mock.patch.object(retro_games, "ps1_core_path", return_value="/path/to/core"), \
+                mock.patch.object(retro_games, "ps1_bios_status", return_value=statuses), \
+                mock.patch.object(server_module.shutil, "which", return_value="/usr/bin/retroarch"), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 204)
+            private = Path(launch.call_args.args[0][-1])
+            self.assertEqual(private.read_text(encoding="utf-8").splitlines(), [str(first), str(second)])
+            config = private.with_name("retroarch.cfg").read_text(encoding="utf-8")
+            self.assertIn(f'savefile_directory = "{private.parent}"', config)
+            self.assertIn('input_disk_eject_toggle = "f9"', config)
+            self.assertIn('input_disk_next = "f10"', config)
+            second.with_suffix(".sbi").touch()
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
+            second.with_suffix(".sbi").unlink()
+            second.write_bytes(header + b"changed")
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
+            launch.assert_called_once()
+
     def test_media_play_launches_only_a_catalog_item_for_a_visible_media_tile(self):
         media_file = Path(server_module.VIDEOS) / "Film.mp4"
         media_file.write_bytes(b"video")

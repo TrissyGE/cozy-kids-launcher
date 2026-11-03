@@ -868,14 +868,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             roots = cfg.get("retroRoots", [])
             games, unavailable, truncated = scan_retro_games(roots)
+            approved = approved_retro_ids(cfg)
+            playlist_discs = {disc for game in games.values() for disc in game.get("discPaths", ())}
+            visible_games = (game for game in games.values()
+                             if game["path"] not in playlist_discs or game["id"] in approved)
             return self.json_response({
                 "roots": roots,
-                "games": sorted(games.values(), key=lambda game: (game["title"].casefold(), game["path"])),
+                "games": sorted(visible_games, key=lambda game: (game["title"].casefold(), game["path"])),
                 "unavailable": unavailable,
                 "truncated": truncated,
                 "enabled": bool(retro_hub(cfg)),
                 "covers": (retro_hub(cfg, require_visible=False) or {}).get("retroCovers", False),
-                "approvedIds": list(approved_retro_ids(cfg)),
+                "approvedIds": list(approved),
                 "ps1Bios": ps1_bios_status(os.path.dirname(MEDIA_STATE_FILE)),
                 "ps1Runtime": {
                     "retroarch": bool(shutil.which("retroarch")),

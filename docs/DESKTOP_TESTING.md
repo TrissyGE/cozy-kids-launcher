@@ -115,6 +115,7 @@ following separately:
 - The emulator window enters fullscreen and the visible game image scales to the display while preserving its aspect ratio.
 - A gameplay action responds to the keyboard and a physical gamepad.
 - The close overlay can be clicked and the launcher regains focus after the emulator exits.
+- For a PS1 multi-disc set, reach a disc change in the game. Open the virtual tray with F9, select the next disc with F10 and close the tray with F9. Verify play continues and the same memory card is available after exiting and relaunching the set.
 
 Use a redistributable test ROM for shared screenshots. When verifying ZIP
 support, repeat a failing ZIP launch with the same ROM as a loose file.
