@@ -205,7 +205,8 @@ their own evidence is complete. See the release standard at the end.
 - [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
 
 The [translation guide](LOCALIZATION.md) explains the current German/English
-pipeline and the planned registry/data-file migration. Spanish, French and
+pipeline, the shared registry and the planned migration to translation data
+files. Spanish, French and
 Italian remain upcoming packs, rather than already-enabled settings options.
 
 ### Lifecycle and reach
