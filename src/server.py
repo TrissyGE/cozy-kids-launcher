@@ -13,7 +13,7 @@ from contextlib import ExitStack
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-from package_provider import prepare_install
+from package_provider import catalog_package_route, detect_native_provider, prepare_install, read_os_release
 from package_install import PackageInstaller
 from packagekit_backend import InstallError
 from daily_budget import DailyBudget
@@ -540,6 +540,8 @@ def load_recommendations():
             recs = json.load(fh)
     except Exception:
         return []
+    release = read_os_release()
+    provider = detect_native_provider(release)
     result = []
     for rec in recs:
         all_cmds = []
@@ -561,7 +563,10 @@ def load_recommendations():
         installed = any(shutil.which(c) for c in all_cmds if c)
         if not installed and rec.get("category") == "browser":
             installed = True
-        result.append({**rec, "installed": installed})
+        entry = {**rec, "installed": installed}
+        if "package" in rec or "packages" in rec:
+            entry["packageRoute"] = catalog_package_route(rec, release, provider)
+        result.append(entry)
     return result
 
 
