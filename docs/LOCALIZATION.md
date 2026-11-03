@@ -7,7 +7,9 @@ preserved. Italian is tracked in [ROADMAP.md](ROADMAP.md).
 
 The guided installer, launcher, app catalog and media library use these packs.
 Standalone bootstrap diagnostics and `--help` are in English. Native helpers
-and the embedded browser wrapper use the language selected at installation.
+read the saved language when displaying timer messages, and the local server
+renders each new embedded browser wrapper in the saved language. Both use the
+same canonical translation tables as the installer.
 Speech feedback requires a local engine and an available voice for the
 selected language.
 
@@ -50,7 +52,26 @@ The catalog result and package counts use browser plural rules. Their singular
 and general forms must carry the same placeholders. The browser also formats
 dates and numbers using the current interface locale.
 
-Before enabling Italian, review the installer, child UI, Parent settings and
-recovery screens. Include long labels, localized dates and numbers, keyboard
-use, speech availability and 800×600 layouts. Direction-aware layout and
-per-language review ownership are tracked separately in the roadmap.
+## Reviewing a new language
+
+Start a draft in `src/translations/<code>.json`. Keep it out of
+`src/language_registry.json` while it is being translated. Run
+`python3 scripts/generate-locales.py --report <code>` to list missing keys
+without enabling the draft. The report measures key coverage. A complete key
+count still needs a language review.
+
+Use a consistent term for the adult settings area, keep the screen timer
+distinct from a child's daily app budget, and keep PIN and package confirmation
+labels explicit about what the action does. Preserve placeholders, family
+labels, product names and commands. Follow the existing catalog guidance for
+claims about privacy, network access and age suitability.
+
+The PR author records the tested flows and remaining gaps. A fluent reviewer
+checks terminology, tone, and the rendered screens before the maintainer
+enables the pack. Review the installer, child view, Parent settings, catalog,
+and error states. Include long labels, localized dates and numbers, keyboard
+use, available local voices, and 800×600 layouts. Use the required Linux
+[desktop sessions](DESKTOP_TESTING.md) for native helper acceptance. Record
+which sessions were actually exercised.
+
+Italian and right-to-left acceptance remain tracked in [ROADMAP.md](ROADMAP.md).

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="{{ACTIVE_LANG}}">
+<html lang="{{html_language}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{APP_NAME}}</title>
+<title>{{html_app_name}}</title>
 <style>
   * { box-sizing:border-box; }
   body { margin:0; overflow:hidden; font-family:system-ui,sans-serif; background:#000; }
@@ -38,18 +38,18 @@
 </head>
 <body>
 <div id="appOverlay">
-  <button id="closeBtn" onclick="goHome()" title="{{LABEL_BACK}}">❌</button>
+  <button id="closeBtn" onclick="goHome()" title="{{html_back}}">❌</button>
   <div id="timerDisplay"></div>
 </div>
 <iframe id="frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-presentation" allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>
 <div id="navigationBlock" class="timeroverlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="navigationBlockTitle" aria-describedby="navigationBlockBody">
   <div class="timerbox">
     <div class="emoji">🧭</div>
-    <h2 id="navigationBlockTitle">{{BROWSER_BOUNDARY_TITLE}}</h2>
-    <p id="navigationBlockBody">{{BROWSER_BOUNDARY_BODY}}</p>
+    <h2 id="navigationBlockTitle">{{html_browser_boundary_title}}</h2>
+    <p id="navigationBlockBody">{{html_browser_boundary_body}}</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
-      <button id="navigationStayBtn" style="border:0;border-radius:18px;padding:10px 18px;font-size:1rem;font-weight:700;background:#fff7fb;color:#333;cursor:pointer;" onclick="hideNavigationBlock()">{{BROWSER_BOUNDARY_STAY}}</button>
-      <button style="border:0;border-radius:18px;padding:10px 18px;font-size:1rem;font-weight:700;background:#e85a9c;color:#fff;cursor:pointer;" onclick="goHome()">{{LABEL_BACK}}</button>
+      <button id="navigationStayBtn" style="border:0;border-radius:18px;padding:10px 18px;font-size:1rem;font-weight:700;background:#fff7fb;color:#333;cursor:pointer;" onclick="hideNavigationBlock()">{{html_browser_boundary_stay}}</button>
+      <button style="border:0;border-radius:18px;padding:10px 18px;font-size:1rem;font-weight:700;background:#e85a9c;color:#fff;cursor:pointer;" onclick="goHome()">{{html_back}}</button>
     </div>
   </div>
 </div>
@@ -57,15 +57,15 @@
   <div class="timerbox">
     <div class="emoji">⏰</div>
     <h2 id="timerWarningTitle"></h2>
-    <div style="color:#666;">{{TIMER_WARNING_TEXT}}</div>
+    <div style="color:#666;">{{html_timer_warning_text}}</div>
   </div>
 </div>
 <div id="timerBlock" class="timeroverlay hidden">
   <div class="timerbox">
     <div class="emoji">⏰</div>
-    <h2>{{TIMER_EXPIRED_TITLE}}</h2>
-    <p>{{TIMER_EXPIRED_BODY}}</p>
-    <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{PIN_PLACEHOLDER}}">
+    <h2>{{html_timer_expired_title}}</h2>
+    <p>{{html_timer_expired_body}}</p>
+    <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{html_pin_placeholder}}">
     <div id="timerBlockErr" style="color:#c00; font-weight:600; min-height:24px;"></div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
       <button style="border:0; border-radius:18px; padding:10px 18px; font-size:1rem; font-weight:700; background:#e85a9c; color:#fff; cursor:pointer;" onclick="extendFromBlock(15)">+15</button>
@@ -73,7 +73,7 @@
       <button style="border:0; border-radius:18px; padding:10px 18px; font-size:1rem; font-weight:700; background:#e85a9c; color:#fff; cursor:pointer;" onclick="extendFromBlock(60)">+60</button>
     </div>
     <div style="margin-top:12px;">
-      <button style="border:0; border-radius:18px; padding:10px 18px; font-size:1rem; font-weight:700; background:#fff7fb; color:#333; cursor:pointer;" onclick="goHome()">{{TIMER_EXIT}}</button>
+      <button style="border:0; border-radius:18px; padding:10px 18px; font-size:1rem; font-weight:700; background:#fff7fb; color:#333; cursor:pointer;" onclick="goHome()">{{html_timer_exit}}</button>
     </div>
   </div>
 </div>
@@ -166,7 +166,7 @@ resetInactivity();
 // Timer support
 function formatTime(sec){
   const m=Math.max(0,Math.floor(sec/60));
-  return m+' {{TIMER_MINUTES}}';
+  return new Intl.NumberFormat(document.documentElement.lang).format(m)+' '+{{js_timer_minutes}};
 }
 let timerWarningShown=false;
 async function pollTimer(){
@@ -179,7 +179,7 @@ async function pollTimer(){
       badge.textContent='⏱️ '+formatTime(data.remainingSeconds);
       if(data.expired){
         badge.style.color='#c00';
-        badge.textContent='⏰ {{TIMER_EXPIRED}}';
+        badge.textContent='⏰ '+{{js_timer_expired}};
         showTimerBlock();
       }else if(data.warning && !timerWarningShown){
         badge.style.color='#e65100';
@@ -200,7 +200,7 @@ async function pollTimer(){
 function showTimerWarning(remaining){
   const el=document.getElementById('timerWarning');
   if(!el.classList.contains('hidden')) return;
-  document.getElementById('timerWarningTitle').textContent='{{TIMER_WARNING_TITLE}}'.replace('{time}',formatTime(remaining));
+  document.getElementById('timerWarningTitle').textContent={{js_timer_warning_title}}.replace('{time}',formatTime(remaining));
   el.classList.remove('hidden');
   setTimeout(hideTimerWarning,6000);
 }
@@ -215,7 +215,7 @@ async function extendFromBlock(minutes){
     timerWarningShown=false;
     hideTimerBlock();
   }else{
-    document.getElementById('timerBlockErr').textContent='{{TIMER_WRONG_PIN}}';
+    document.getElementById('timerBlockErr').textContent={{js_timer_wrong_pin}};
     document.getElementById('timerBlockPin').value='';
     document.getElementById('timerBlockPin').focus();
   }

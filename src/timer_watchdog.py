@@ -13,8 +13,11 @@ import urllib.request
 
 from process_state import terminate_owned_process
 
+from runtime_locale import saved_locale
+
 HOME = os.path.expanduser("~")
 APP_ID = "{{APP_ID}}"
+CONFIG = os.path.join(HOME, ".config", APP_ID, "config.json")
 APP_NAME = "{{APP_NAME}}"
 PORT = int("{{DEFAULT_PORT}}")
 BASE_URL = f"http://127.0.0.1:{PORT}"
@@ -92,6 +95,7 @@ class WatchdogApp:
         if self.block_window is not None:
             return
 
+        text = saved_locale(CONFIG)
         w = tk.Toplevel(self.root)
         self.warn_window = w
         w.overrideredirect(True)
@@ -111,7 +115,7 @@ class WatchdogApp:
 
         lbl = tk.Label(
             frame,
-            text=f"⏰ {remaining} {{TIMER_MINUTES}}!",
+            text=f"⏰ {remaining} {text['timer_minutes']}!",
             font=("system-ui", 22, "bold"),
             bg=THEME["card"],
             fg=THEME["text"],
@@ -139,6 +143,7 @@ class WatchdogApp:
 
         self._destroy_warn()
 
+        text = saved_locale(CONFIG)
         b = tk.Toplevel(self.root)
         self.block_window = b
         b.overrideredirect(True)
@@ -171,7 +176,7 @@ class WatchdogApp:
 
         title = tk.Label(
             card,
-            text="{{TIMER_EXPIRED_TITLE}}",
+            text=text["timer_expired_title"],
             font=("system-ui", int(base_size * 0.045), "bold"),
             bg=THEME["card"],
             fg=THEME["text"],
@@ -180,7 +185,7 @@ class WatchdogApp:
 
         body = tk.Label(
             card,
-            text="{{TIMER_EXPIRED_BODY}}",
+            text=text["timer_expired_body"],
             font=("system-ui", int(base_size * 0.025)),
             bg=THEME["card"],
             fg=THEME["text"],
@@ -194,7 +199,7 @@ class WatchdogApp:
 
         pin_lbl = tk.Label(
             pin_frame,
-            text="{{TIMER_ENTER_PIN}}",
+            text=text["timer_enter_pin"],
             font=("system-ui", int(base_size * 0.022)),
             bg=THEME["card"],
             fg=THEME["text"],
@@ -233,10 +238,10 @@ class WatchdogApp:
             pin = pin_entry.get()
             res = api("/api/timer/extend", {"pin": pin, "minutes": minutes})
             if res.get("valid"):
-                err_lbl.config(text="{{TIMER_EXTENDED}}", fg="#27ae60")
+                err_lbl.config(text=text["timer_extended"], fg="#27ae60")
                 b.after(800, lambda: self._destroy_block())
             else:
-                err_lbl.config(text="{{TIMER_WRONG_PIN}}", fg="#c00")
+                err_lbl.config(text=text["timer_wrong_pin"], fg="#c00")
                 pin_entry.delete(0, tk.END)
                 pin_entry.focus_set()
 
@@ -276,7 +281,7 @@ class WatchdogApp:
 
         custom_btn = tk.Button(
             custom_frame,
-            text="{{TIMER_EXTEND}}",
+            text=text["timer_extend"],
             font=("system-ui", int(base_size * 0.022), "bold"),
             bg=THEME["btn"],
             fg=THEME["btn_text"],
@@ -293,7 +298,7 @@ class WatchdogApp:
         # Exit button
         exit_btn = tk.Button(
             card,
-            text="{{TIMER_EXIT}}",
+            text=text["timer_exit"],
             font=("system-ui", int(base_size * 0.022), "bold"),
             bg=THEME["smallbtn_bg"],
             fg=THEME["text"],

@@ -205,7 +205,7 @@ their own evidence is complete. See the release standard at the end.
 - [ ] Apply the saved language to native helper windows and the embedded browser wrapper after an in-app language change
 - [ ] Translate and review Italian after Spanish/French
 - [x] Make app descriptions, guidance and source labels use locale-key fallbacks so new packs can add translations through data
-- [ ] Document translation contributions, terminology and review ownership; track missing strings without silently claiming a complete language pack
+- [x] Document translation contributions, terminology and review ownership; report missing source keys for draft and enabled languages
 - [ ] Test longer labels, dates/numbers, keyboard navigation, speech availability and 800×600 layouts for each enabled language
 - [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
 

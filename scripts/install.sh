@@ -1332,7 +1332,12 @@ install -m 0644 "$SRC_DIR/backup_store.py" "$APP_ROOT/backup_store.py"
 install -m 0644 "$SRC_DIR/browser_policy.py" "$APP_ROOT/browser_policy.py"
 install -m 0644 "$SRC_DIR/config_store.py" "$APP_ROOT/config_store.py"
 install -m 0644 "$SRC_DIR/config_validation.py" "$APP_ROOT/config_validation.py"
-install -m 0644 "$SRC_DIR/language_registry.py" "$SRC_DIR/language_registry.json" "$APP_ROOT/"
+install -m 0644 "$SRC_DIR/language_registry.py" "$SRC_DIR/language_registry.json" \
+  "$SRC_DIR/translation_data.py" "$SRC_DIR/runtime_locale.py" "$APP_ROOT/"
+install -d -m 0755 "$APP_ROOT/translations"
+for code in "${LANGUAGE_CODES[@]}"; do
+  install -m 0644 "$SRC_DIR/translations/$code.json" "$APP_ROOT/translations/$code.json"
+done
 install -m 0644 "$SRC_DIR/profile_config.py" "$APP_ROOT/profile_config.py"
 install -m 0644 "$SRC_DIR/schedule_rules.py" "$APP_ROOT/schedule_rules.py"
 install -m 0644 "$SRC_DIR/lifecycle_state.py" "$APP_ROOT/lifecycle_state.py"
@@ -1378,7 +1383,7 @@ render_template "$SRC_DIR/frontend/runtime-controls.js" "$FRONTEND_RUNTIME_FILE"
 render_template "$SRC_DIR/no-media.html" "$MEDIA_FILE" 0644
 render_template "$SRC_DIR/media.html" "$MEDIA_LIBRARY_PAGE" 0644
 render_template "$SRC_DIR/launcher.sh" "$RUNTIME_BIN" 0755
-render_template "$SRC_DIR/browser.html" "$APP_ROOT/browser.html" 0644
+install -m 0644 "$SRC_DIR/browser.html" "$APP_ROOT/browser.html"
 render_template "$SRC_DIR/overlay.py" "$APP_ROOT/overlay.py" 0755
 render_template "$SRC_DIR/timer_watchdog.py" "$APP_ROOT/timer_watchdog.py" 0755
 

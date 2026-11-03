@@ -11,7 +11,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
 from language_registry import DEFAULT_LANGUAGE, LANGUAGE_CODES
-from translation_data import PLACEHOLDER, load_translations, read_table
+from translation_data import PLACEHOLDER, load_translations, read_table, validate_translation
 
 INSTALLER = REPOSITORY_ROOT / "scripts" / "install.sh"
 STATE_TEMPLATE = REPOSITORY_ROOT / "src" / "frontend" / "state.js"
@@ -170,12 +170,30 @@ def serialized(payload):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--report", metavar="LANG",
+        help="report missing source keys in an enabled language or an unregistered draft",
+    )
+    mode.add_argument(
         "--check",
         action="store_true",
         help="fail if committed locale files do not match their sources",
     )
     args = parser.parse_args()
+    if args.report:
+        language = args.report
+        if not re.fullmatch(r"[a-z]{2,3}", language):
+            parser.error("expected a two- or three-letter language code")
+        baseline = read_table(DEFAULT_LANGUAGE)
+        translated = read_table(language)
+        validate_translation(language, baseline, translated)
+        missing = sorted(baseline.keys() - translated.keys())
+        state = "enabled" if language in LANGUAGE_CODES else "draft"
+        print(f"{language} ({state}): {len(baseline) - len(missing)}/{len(baseline)} source keys")
+        for key in missing:
+            print(key)
+        return
     payloads = locale_payloads()
     if args.check:
         stale = []

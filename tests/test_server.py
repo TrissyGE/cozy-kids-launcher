@@ -1330,6 +1330,8 @@ class ServerApiTests(unittest.TestCase):
             "https://kids.example/duplicate",
         ]
         server_module.save_cfg(config)
+        wrapper = REPOSITORY_ROOT / "src" / "browser.html"
+        (Path(server_module.APP_ROOT) / "browser.html").write_bytes(wrapper.read_bytes())
 
         class NoRedirect(urllib.request.HTTPRedirectHandler):
             def redirect_request(self, request, file_pointer, code, message, headers, url):
@@ -1352,9 +1354,16 @@ class ServerApiTests(unittest.TestCase):
         location = launch_response.headers["Location"]
         launch_response.close()
 
-        with urllib.request.urlopen(self.base_url + location, timeout=5) as response:
-            self.assertEqual(response.status, 200)
-            policy = response.headers["Content-Security-Policy"]
+        for language in ("de", "es", "fr", "en"):
+            config["language"] = language
+            server_module.save_cfg(config)
+            with urllib.request.urlopen(self.base_url + location, timeout=5) as response:
+                self.assertEqual(response.status, 200)
+                policy = response.headers["Content-Security-Policy"]
+                page = response.read().decode("utf-8")
+            self.assertIn(f'<html lang="{language}">', page)
+            self.assertIn(load_translations(language)["browser_boundary_title"], page)
+            self.assertNotIn("{{", page)
         self.assertIn(
             "frame-src https://kids.example https://media.example;",
             policy,
