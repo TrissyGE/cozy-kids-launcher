@@ -330,6 +330,7 @@ def pss_sample(pids, proc=Path("/proc")):
 
 
 def idle_memory(roots):
+    time.sleep(15)
     samples = []
     for _ in range(3):
         time.sleep(3)
@@ -736,6 +737,8 @@ def run_smoke(args, browser_path, report):
                 args.launch_mode,
             )
             report.pass_check("browser launch mode", mode_details)
+            if args.performance_only:
+                return
 
             second = subprocess.run(
                 [str(runtime)],
@@ -912,6 +915,11 @@ def main():
         help="Record first-launch timings and three idle proportional-memory samples",
     )
     parser.add_argument(
+        "--performance-only",
+        action="store_true",
+        help="Measure first launch and idle memory without launching a test tile",
+    )
+    parser.add_argument(
         "--artifacts",
         type=Path,
         help=(
@@ -920,6 +928,9 @@ def main():
         ),
     )
     args = parser.parse_args()
+    args.performance = args.performance or args.performance_only
+    if args.performance_only and (args.interactive or args.catalog_app):
+        parser.error("--performance-only cannot be combined with --interactive or --catalog-app")
     try:
         args.catalog_entry = kde_catalog_entry(args.catalog_app) if args.catalog_app else None
     except ValueError as error:
@@ -965,6 +976,11 @@ def main():
         print(f"Desktop smoke failed: {exc}", flush=True)
         print(f"Report: {report.path}", flush=True)
         raise SystemExit(1) from exc
+    if args.performance_only:
+        report.data["outcome"] = "performance-measured"
+        report.write()
+        print(f"Performance report: {report.path}", flush=True)
+        return
     if args.interactive:
         report.collect_manual_checks()
     report.complete()

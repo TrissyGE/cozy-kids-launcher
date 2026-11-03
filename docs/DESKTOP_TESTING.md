@@ -153,7 +153,7 @@ controller model and candidate commit. Use a disposable user or test profile.
 
 ### First-launch and idle-memory budgets
 
-Run the desktop smoke with `--performance` three times per candidate on the
+Run the desktop smoke with `--performance-only` three times per candidate on the
 same low-powered device. Each run creates a fresh browser profile. Keep the
 same desktop and browser versions, connect AC power, and close unrelated
 applications. A fresh profile measures first launch with the current OS
@@ -164,7 +164,8 @@ Record median server-ready time, browser process startup time, and X11 window
 visibility time where observable. Browser startup on Wayland measures the
 browser executable, so record the visible launcher separately. Idle memory
 uses three samples of the launcher, server, and owned browser process trees
-from Linux proportional set size (PSS). Missing process readings mark the
+from Linux proportional set size (PSS) after a 15-second settling period.
+Missing process readings mark the
 sample incomplete. Initial investigation budgets for a 4 GiB device are
 5 s for server readiness, 15 s for browser startup, and 450 MiB idle PSS.
 These are provisional thresholds for comparing candidates on the test laptop.
