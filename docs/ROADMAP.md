@@ -196,6 +196,7 @@ their own evidence is complete. See the release standard at the end.
 - [x] Ship German/English UI resources with generated-locale freshness checks and live language switching
 - [x] Introduce one language registry for installer, backend validation and all language pickers
 - [x] Move the installer translation table into locale data files shared with browser locale generation, with English fallback and key and placeholder validation
+- [x] Move setup and child profile texts into locale data and handle unavailable language files during setup
 - [ ] Migrate the remaining frontend text tables and language-specific branches to locale data and validate plural forms
 - [ ] Translate and review Spanish across installer, child UI, Parent settings and recovery messages
 - [ ] Translate and review French across the same surfaces

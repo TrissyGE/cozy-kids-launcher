@@ -698,6 +698,7 @@ render_template() {
   export JSON_CATALOG_SOURCE
   export JSON_CATALOG_REVIEWED
   export JSON_LANGUAGE_REGISTRY
+  export JSON_SETUP_LOCALE
   export APP_NAME
 
   python3 - "$src" "$tmp" <<'PY'
@@ -721,6 +722,20 @@ PY
   install -m "$mode" "$tmp" "$dest"
   rm -f "$tmp"
 }
+
+JSON_SETUP_LOCALE="$(python3 - "$SRC_DIR/frontend/locales/$ACTIVE_LANG.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+locale = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+keys = (
+    "firstRun", "profiles", "defaultTitle", "defaultParentLabel", "defaultExitLabel",
+    "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
+)
+print(json.dumps({key: locale[key] for key in keys}, ensure_ascii=True))
+PY
+)" || die "Could not prepare setup and profile translations for $ACTIVE_LANG"
 
 DEFAULT_TITLE="$(trim "${DEFAULT_TITLE:-$(text config_title)}")"
 DEFAULT_PARENT_LABEL="$(trim "${DEFAULT_PARENT_LABEL:-$(text parent_label)}")"

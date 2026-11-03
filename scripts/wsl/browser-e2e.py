@@ -176,6 +176,25 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     )
     browser.screenshot(artifacts / "first-run-800x600.png")
     browser.set_device_metrics(1440, 900)
+    browser.evaluate("""window.setupLocaleFetch=window.fetch;
+        window.fetch=(input, options)=>String(input)==='/frontend/locales/de.json'
+            ?Promise.resolve(new Response(null,{status:404})):window.setupLocaleFetch(input,options);
+    """)
+    try:
+        browser.click('.first-run-choice[data-language="de"]')
+        browser.wait_for(
+            "document.getElementById('firstRunMessage').textContent.includes('The language could not be loaded')",
+            message="The setup did not explain the failed language load",
+        )
+        assert_js(
+            browser,
+            "cfg.language==='en' && document.documentElement.lang==='en' && "
+            "document.getElementById('firstRunTitle').textContent==='Welcome to Cozy Kids' && "
+            "document.querySelector('.first-run-choice[aria-pressed=\"true\"]').dataset.language==='en'",
+            "A failed locale load changed the active setup language",
+        )
+    finally:
+        browser.evaluate("window.fetch=window.setupLocaleFetch; delete window.setupLocaleFetch")
     browser.click('.first-run-choice[data-language="de"]')
     browser.wait_for(
         "cfg.language==='de' && document.documentElement.lang==='de' && "
@@ -225,12 +244,19 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     assert_js(browser, "appOptions.some(app=>app.name==='E2E Discovery App')",
               "The real desktop-entry fixture was not discovered after setup")
     browser.evaluate("""(async () => {
-        for(const [language,name] of [['de','E2E App-Erkennung'],['en','E2E Discovery App']]){
+        for(const [language,name,pickerTitle] of [
+            ['de','E2E App-Erkennung','Wer möchte starten?'],
+            ['en','E2E Discovery App','Who wants to start?']
+        ]){
             const updated={...cfg,language};
             const response=await fetch('/api/save-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
             if(!response.ok) throw new Error('Language fixture could not be saved');
             await loadConfig();
             if(!appOptions.some(app=>app.name===name)) throw new Error('Installed-app labels did not follow the interface language');
+            renderProfilePicker();
+            if(document.getElementById('profilePickerTitle').textContent!==pickerTitle){
+                throw new Error('Profile picker did not follow the interface language');
+            }
         }
     })()""", await_promise=True)
     log_scenario("guided first run covers language, child, apps, time, and appearance")

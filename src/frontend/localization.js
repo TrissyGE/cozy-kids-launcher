@@ -11,14 +11,17 @@ async function loadInterfaceLanguage(language){
     const response=await fetch('/frontend/locales/'+normalized+'.json',{cache:'no-store'});
     if(!response.ok) throw new Error('Locale could not be loaded');
     const locale=await response.json();
-    if(!locale||typeof locale!=='object'||Array.isArray(locale)||!locale.adminTitle){
+    if(!locale||typeof locale!=='object'||Array.isArray(locale)||
+      !locale.adminTitle||!locale.firstRun?.languageTitle||!locale.profiles?.pickerTitle){
       throw new Error('Invalid locale response');
     }
     uiText=locale;
   }catch(e){
     // Keep the installer-rendered language as a complete offline fallback.
+    return false;
   }
   document.documentElement.lang=normalized;
+  return true;
 }
 
 function renderLocalizedChrome(){

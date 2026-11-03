@@ -1,13 +1,9 @@
 let firstRunStep=0;
 let firstRunBusy=false;
-const FIRST_RUN_TEXT={
-  de:{progress:'Schritt {current} von {total}',languageTitle:'Willkommen bei Cozy Kids',languageBody:'In welcher Sprache soll der Launcher angezeigt werden?',childTitle:'Für wen ist dieser Launcher?',childBody:'Name, Avatar und Überschrift können später jederzeit geändert werden.',childName:'Name des Kindes',childAvatar:'Avatar-Emoji',homeTitle:'Überschrift auf dem Startbildschirm',appsTitle:'Welche Kacheln sollen sichtbar sein?',appsBody:'Programme können später in den Eltern-Einstellungen ergänzt oder geändert werden.',timeTitle:'Erste Bildschirmzeit-Regel',timeBody:'Lege eine einfache Sitzungsdauer fest oder starte zunächst ohne Timer.',appearanceTitle:'Wie soll es aussehen?',appearanceBody:'Wähle ein Thema und die Größe der Kacheln.',skip:'Vorerst überspringen',back:'Zurück',next:'Weiter',finish:'Fertig',saving:'Einrichtung wird gespeichert...',error:'Die Einrichtung konnte nicht gespeichert werden. Bitte erneut versuchen.',nameRequired:'Bitte einen Namen eingeben.',noApps:'Noch keine Kacheln verfügbar.',large:'Große Kacheln',small:'Kleine Kacheln'},
-  en:{progress:'Step {current} of {total}',languageTitle:'Welcome to Cozy Kids',languageBody:'Which language should the launcher use?',childTitle:'Who is this launcher for?',childBody:'The name, avatar, and home title can be changed at any time.',childName:"Child's name",childAvatar:'Avatar emoji',homeTitle:'Home screen title',appsTitle:'Which tiles should be visible?',appsBody:'Apps can be added or changed later in Parent settings.',timeTitle:'First screen-time rule',timeBody:'Choose a simple session length or start without a timer.',appearanceTitle:'How should it look?',appearanceBody:'Choose a theme and tile size.',skip:'Skip for now',back:'Back',next:'Next',finish:'Finish',saving:'Saving setup...',error:'Setup could not be saved. Please try again.',nameRequired:'Please enter a name.',noApps:'No tiles are available yet.',large:'Large tiles',small:'Small tiles'}
-};
 const FIRST_RUN_STEPS=['language','child','apps','time','appearance'];
 
 function firstRunText(){
-  return FIRST_RUN_TEXT[cfg&&cfg.language==='de'?'de':'en'];
+  return uiText.firstRun;
 }
 
 function maybeOpenFirstRun(){
@@ -102,12 +98,23 @@ function renderFirstRunLanguage(content){
 
 async function selectFirstRunLanguage(language){
   if(firstRunBusy) return;
-  cfg.language=normalizedInterfaceLanguage(language);
-  await loadInterfaceLanguage(cfg.language);
-  cfg.parentLabel=uiText.defaultParentLabel||(cfg.language==='de'?'Papa':'Parent');
-  cfg.exitLabel=uiText.defaultExitLabel||(cfg.language==='de'?'Kindermodus beenden':'Exit kids mode');
-  cfg.shutdownLabel=uiText.defaultShutdownLabel||(cfg.language==='de'?'Ausschalten':'Shut down');
-  cfg.title=uiText.defaultTitle||(cfg.language==='de'?'Hallo Kiddo 🌈':'Hello Kiddo 🌈');
+  const selected=normalizedInterfaceLanguage(language);
+  firstRunBusy=true;
+  let loaded;
+  try {
+    loaded=await loadInterfaceLanguage(selected);
+  } finally {
+    firstRunBusy=false;
+  }
+  if(!loaded){
+    renderUiState(document.getElementById('firstRunMessage'),'error',firstRunText().languageError);
+    return;
+  }
+  cfg.language=selected;
+  cfg.parentLabel=uiText.defaultParentLabel;
+  cfg.exitLabel=uiText.defaultExitLabel;
+  cfg.shutdownLabel=uiText.defaultShutdownLabel;
+  cfg.title=uiText.defaultTitle;
   const labels={paint:uiText.tilePaint,games:uiText.tileGames,music:uiText.tileMusic,browser:uiText.tileBrowser};
   for(const tile of cfg.tiles){ if(labels[tile.id]) tile.label=labels[tile.id]; }
   renderAll();

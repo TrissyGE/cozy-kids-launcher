@@ -27,6 +27,11 @@ changed named placeholders such as `{count}`, and values with line breaks.
 The generator also checks that every key referenced by the installer and browser
 mapping is available. Keep both enabled languages aligned when changing text.
 
+Setup and child profile texts use the `first_run_*` and `profile_*` keys. The
+generator groups them for the frontend, and the installer embeds the selected
+language in the launcher for startup. If a different locale cannot be loaded
+during setup, the screen keeps the current language and offers a retry.
+
 Catalog data is already open to additional language keys: `name_es`,
 `desc_fr`, `age_it` or a reference's `label_es`, for example. The shared
 `catalogText` lookup uses the configured language and falls back to English.
