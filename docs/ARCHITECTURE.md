@@ -221,6 +221,7 @@ mGBA receives a private configuration, battery-save and state directory
 for each child and approved game under
 `~/.local/state/cozy-kids-launcher/retro/`. The emulator remains a native
 application with its own controls and file dialogs.
+Its window uses the existing owned fullscreen supervisor on X11 or XWayland.
 The normal launcher configuration export contains settings and approvals.
 Use the state directory for a separate save backup.
 See the [mGBA command-line manual](https://manpages.debian.org/testing/mgba-qt/mgba-qt.6.en.html).

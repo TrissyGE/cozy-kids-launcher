@@ -78,7 +78,8 @@ def emulator_command(executable, game, save_root, profile_id):
     game_directory = prepare_profile_resume_directory(profile, game["id"])
     config_directory = prepare_profile_resume_directory(game_directory, "config")
     return [
-        "/usr/bin/env", f"XDG_CONFIG_HOME={config_directory}", executable, "--fullscreen",
+        "kstart", "--fullscreen",
+        "/usr/bin/env", f"XDG_CONFIG_HOME={config_directory}", executable,
         "-C", f"savegamePath={game_directory}",
         "-C", f"savestatePath={game_directory}",
         game["path"],

@@ -839,7 +839,7 @@ class ServerApiTests(unittest.TestCase):
             self.assertIn(f"savegamePath={save}", argv)
             self.assertIn(f"savestatePath={save}", argv)
             self.assertIn(f"XDG_CONFIG_HOME={save / 'config'}", argv)
-            self.assertIn("--fullscreen", argv)
+            self.assertEqual(argv[:2], ["kstart", "--fullscreen"])
             self.assertEqual(argv[-1], str(rom))
             self.assertEqual(save.stat().st_mode & 0o777, 0o700)
             rom.write_bytes(b"changed fixture")
