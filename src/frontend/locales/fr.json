@@ -254,6 +254,7 @@
   "activityLessMinute": "< 1 min",
   "activityMinutes": "{count} min",
   "activityHoursMinutes": "{hours} h {minutes} min",
+  "updatePackageManaged": "Installez les mises à jour via le gestionnaire de paquets du système.",
   "adminRetro": "RetroGameCorner",
   "retroEnabled": "Activer RetroGameCorner pour ce profil",
   "retroCovers": "Télécharger les jaquettes via Libretro (transmet le titre et la console)",

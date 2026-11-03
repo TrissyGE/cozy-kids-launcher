@@ -486,6 +486,7 @@
   "timer_warning_title": "Il reste 5 minutes !",
   "timer_wrong_pin": "Code PIN incorrect",
   "update_available": "Mise à jour disponible",
+  "update_package_managed": "Installez les mises à jour via le gestionnaire de paquets du système.",
   "update_check": "Rechercher des mises à jour",
   "update_confirm": "Fermer le navigateur et installer la mise à jour maintenant ?",
   "update_error": "Échec de la recherche de mises à jour",

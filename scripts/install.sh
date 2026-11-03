@@ -537,6 +537,9 @@ if is_interactive; then
 fi
 
 APP_ROOT="$TARGET_HOME/.local/share/$APP_DIR_NAME"
+if [[ -e "$APP_ROOT/package-managed" || -L "$APP_ROOT/package-managed" ]]; then
+  die "This installation is managed by the system package manager"
+fi
 FRONTEND_DIR="$APP_ROOT/frontend"
 BIN_DIR="$TARGET_HOME/.local/bin"
 CFG_DIR="$TARGET_HOME/.config/$APP_DIR_NAME"

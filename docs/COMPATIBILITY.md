@@ -38,6 +38,16 @@ autostart, and expose a clear uninstall path. Exercise clean install,
 upgrade, rollback, backup restore and removal on each claimed distribution
 before marking that package supported.
 
+For the current per-user runtime layout, a packager can place a
+`package-managed` marker next to the installed `version` file before the
+first start. In that mode the launcher shows the installed version and
+delegates updates to the system package manager. The release updater,
+update-channel changes and stale launcher update triggers are disabled.
+The script installer also refuses to overwrite a marked installation.
+This marker is a runtime contract for packaging. A system-wide package
+layout and migration from existing script installations still require
+their own implementation and acceptance tests.
+
 ## Stable and Preview updates
 
 Stable installations select a complete stable release. Preview is an

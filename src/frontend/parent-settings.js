@@ -20,13 +20,31 @@ function parseBrowserAllowedOrigins(value){
 // Update check
 let installedVersion='0.0.0';
 let savedUpdateTrack='stable';
+let packageManagedUpdates=false;
+function showPackageManagedUpdates(){
+  packageManagedUpdates=true;
+  updateAvailable=false;
+  document.getElementById('checkUpdateBtn').disabled=true;
+  document.getElementById('updateTrack').disabled=true;
+  document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
+  document.getElementById('updateTrackHint').textContent=uiText.updatePackageManaged;
+  document.getElementById('updateRow').style.display='none';
+  clearUiState(document.getElementById('updateMsg'));
+}
 async function loadUpdateTrack(){
   const select=document.getElementById('updateTrack');
   select.disabled=true;
   try{
     const response=await fetch('/api/update/channel',{cache:'no-store'});
     if(!response.ok) return;
-    savedUpdateTrack=(await response.json()).channel;
+    const data=await response.json();
+    if(data.managed){showPackageManagedUpdates();return;}
+    if(packageManagedUpdates){
+      packageManagedUpdates=false;
+      document.getElementById('checkUpdateBtn').disabled=false;
+      document.getElementById('updateTrackHint').textContent=uiText.updateTrack.hint;
+    }
+    savedUpdateTrack=data.channel;
     select.value=savedUpdateTrack;
     select.disabled=false;
   }catch(e){}
@@ -58,6 +76,7 @@ async function saveUpdateTrack(){
   }
 }
 async function checkUpdate(){
+  if(packageManagedUpdates) return;
   const btn=document.getElementById('checkUpdateBtn');
   const msg=document.getElementById('updateMsg');
   const updateRow=document.getElementById('updateRow');
@@ -70,6 +89,10 @@ async function checkUpdate(){
     const status=await statusR.json();
     installedVersion=status.installedVersion||'0.0.0';
     document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
+    if(status.source==='package-manager'){
+      showPackageManagedUpdates();
+      return;
+    }
     updateAvailable=Boolean(status.updateAvailable);
     if(status.updateAvailable){
       renderUiState(msg,'success',(uiText.updateAvailable||'Update available')+': '+status.latestVersion);
@@ -80,7 +103,7 @@ async function checkUpdate(){
   }catch(e){
     renderUiState(msg,'error',uiText.updateError||'Update check failed',checkUpdate);
   }finally{
-    btn.disabled=false;
+    btn.disabled=packageManagedUpdates;
   }
 }
 async function startupUpdateCheck(){
@@ -89,6 +112,7 @@ async function startupUpdateCheck(){
     if(!statusR.ok) return;
     const status=await statusR.json();
     installedVersion=status.installedVersion||'0.0.0';
+    if(status.source==='package-manager'){showPackageManagedUpdates();return;}
     if(status.updateAvailable){
       updateAvailable=true;
       renderAll();
@@ -97,7 +121,7 @@ async function startupUpdateCheck(){
 }
 let updateTriggerPending=false;
 async function installUpdate(){
-  if(updateTriggerPending) return;
+  if(updateTriggerPending||packageManagedUpdates) return;
   updateTriggerPending=true;
   const button=document.getElementById('updateNowBtn');
   try{
@@ -906,7 +930,7 @@ function renderAdmin(){
   document.getElementById('updateTrackLabel').textContent=uiText.updateTrack.label;
   document.getElementById('updateTrackStable').textContent=uiText.updateTrack.stable;
   document.getElementById('updateTrackPreview').textContent=uiText.updateTrack.preview;
-  document.getElementById('updateTrackHint').textContent=uiText.updateTrack.hint;
+  document.getElementById('updateTrackHint').textContent=packageManagedUpdates?uiText.updatePackageManaged:uiText.updateTrack.hint;
   setIconLabel(document.getElementById('checkUpdateBtn'),'refresh',uiText.updateCheck||'Check for updates');
   document.getElementById('versionDisplay').textContent=(uiText.versionLabel||'Version')+': '+installedVersion;
   clearUiState(document.getElementById('updateMsg'));

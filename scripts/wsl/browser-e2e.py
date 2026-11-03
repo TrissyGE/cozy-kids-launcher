@@ -1471,6 +1471,19 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     )
     log_scenario("update check renders current, available, and error states")
 
+    marker = test_home / ".local/share/cozy-kids-launcher/package-managed"
+    marker.touch()
+    try:
+        browser.evaluate("loadUpdateTrack()", await_promise=True)
+        assert_js(browser, "document.getElementById('checkUpdateBtn').disabled && "
+                  "document.getElementById('updateTrack').disabled && "
+                  "document.getElementById('updateTrackHint').textContent===uiText.updatePackageManaged",
+                  "Package-managed updates were not explained and disabled")
+    finally:
+        marker.unlink()
+        browser.evaluate("loadUpdateTrack()", await_promise=True)
+    log_scenario("Package-managed installation delegates updates to the system")
+
 
 def run_rtl_layout_scenario(browser, artifacts):
     browser.set_device_metrics(800, 600)

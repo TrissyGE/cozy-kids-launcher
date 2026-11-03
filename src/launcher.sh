@@ -4,6 +4,11 @@ if [[ -d /snap/bin ]] && [[ ":$PATH:" != *":/snap/bin:"* ]]; then
   export PATH="$PATH:/snap/bin"
 fi
 APP_ROOT="$HOME/.local/share/{{APP_ID}}"
+
+release_update_pending() {
+  [[ ! -e "$APP_ROOT/package-managed" && ! -L "$APP_ROOT/package-managed" &&
+     -f "$APP_ROOT/update-trigger.sh" ]]
+}
 case "${1:-}" in
   --service)
     shift
@@ -491,7 +496,7 @@ while true; do
   RUNTIME_REASON=""
   # Poll until browser exits, update/exit is requested, or the server fails.
   while process_alive "$BROWSER_PIDFILE" browser; do
-    if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
+    if release_update_pending; then
       RUNTIME_REASON="update"
       break
     fi
@@ -507,7 +512,7 @@ while true; do
   done
 
   if [[ -z "$RUNTIME_REASON" ]]; then
-    if [[ -f "$APP_ROOT/update-trigger.sh" ]]; then
+    if release_update_pending; then
       RUNTIME_REASON="update"
     elif [[ -f "$EXIT_FLAGFILE" ]]; then
       RUNTIME_REASON="exit"

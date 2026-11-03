@@ -254,6 +254,7 @@
   "activityLessMinute": "< 1 Min.",
   "activityMinutes": "{count} Min.",
   "activityHoursMinutes": "{hours} Std. {minutes} Min.",
+  "updatePackageManaged": "Updates werden über die Paketverwaltung des Systems installiert.",
   "adminRetro": "RetroGameCorner",
   "retroEnabled": "RetroGameCorner für dieses Kind einschalten",
   "retroCovers": "Cover automatisch von Libretro laden (übermittelt Spieltitel und Konsole)",

@@ -486,6 +486,7 @@
   "timer_warning_title": "5 minutes left!",
   "timer_wrong_pin": "Wrong PIN",
   "update_available": "Update available",
+  "update_package_managed": "Install updates through your system package manager.",
   "update_check": "Check for updates",
   "update_confirm": "Close browser and install update now?",
   "update_error": "Update check failed",

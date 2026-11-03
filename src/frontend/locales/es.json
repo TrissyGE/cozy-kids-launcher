@@ -254,6 +254,7 @@
   "activityLessMinute": "< 1 min",
   "activityMinutes": "{count} min",
   "activityHoursMinutes": "{hours} h {minutes} min",
+  "updatePackageManaged": "Instala las actualizaciones con el gestor de paquetes del sistema.",
   "adminRetro": "RetroGameCorner",
   "retroEnabled": "Activar RetroGameCorner para este perfil",
   "retroCovers": "Descargar carátulas de Libretro (envía el título y la consola)",
