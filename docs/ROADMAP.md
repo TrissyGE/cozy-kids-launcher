@@ -245,6 +245,11 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 
 #### RetroGameCorner
 
+Use RetroArch as the default for each system with a qualified core that matches
+or exceeds the standalone emulator in game compatibility, performance, input
+and desktop integration. Evaluate standalone emulators first for newer systems
+that lack an equivalent core, including Wii U and PS3.
+
 - [x] Put emulator installation in a dedicated RetroGameCorner Parent section using the shared app-store flow
 - [x] Show one optional RetroGameCorner Home tile that opens the child's approved games in a cover library
 - [x] Support local cover images and opt-in automatic cover downloads from Libretro
@@ -263,11 +268,12 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
   - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card. Support handheld playlists by resolving disc entries unambiguously inside the selected game source without following the original absolute paths
 - [ ] Add save backup and removal controls
+- [ ] Compare RetroArch cores for the existing cartridge systems. Switch a system only after verifying that existing game approvals and saves still work or have a tested migration.
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
   - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.
   - [ ] Use bounded, locally generated test workloads that require no family game files. When the emulator is available, measure emulation speed and frame pacing with a representative workload and record the tested settings.
   - [ ] Report recommended, limited, untested and incompatible separately. Explain the result beside the install button. Disable installation for a confirmed hardware incompatibility or unavailable install route, with a distinct explanation for each. Keep the install action available when performance is unknown and a reviewed install route exists.
-  - [ ] Scope results to the device, emulator version and tested settings. Allow a rerun after a driver or emulator update. Keep per-game compatibility separate from the device result.
+  - [ ] Scope results to the device, system, RetroArch core or standalone emulator version, and tested settings. Allow a rerun after a driver, core or emulator update. Keep per-game compatibility separate from the device result.
 - [ ] Qualify optional systems in groups after PS1
   - [ ] Earlier cartridges and arcade games including Atari 2600/5200/7800, ColecoVision, Intellivision, SG-1000, Mega Drive, PC Engine, Neo Geo and selected arcade boards. Review disc add-ons such as Sega CD and PC Engine CD separately.
   - [ ] Earlier handhelds including Atari Lynx, Neo Geo Pocket / Color, WonderSwan / Color, Nintendo DS and PSP. Evaluate Nintendo 3DS and PlayStation Vita as later handhelds in scope.

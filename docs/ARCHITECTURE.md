@@ -205,6 +205,12 @@ fails closed and tears down the newly owned process tree.
 
 RetroGameCorner has a dedicated Parent section. Its emulator cards use the
 same package review, confirmation and authorization flow as the app store.
+RetroArch is the preferred runtime for systems with a qualified core and wins
+ties on compatibility, performance, input and desktop behavior. Newer systems
+with a stronger standalone option use their own emulator. Both routes use the
+same child cover library, game approvals and owned launch lifecycle. Device
+results are scoped to the system, core or emulator version, and tested settings.
+
 Add up to eight local game folders, then approve games
 individually for the active profile. mGBA handles `.gb`, `.gbc` and `.gba`.
 Mednafen handles NES (`.nes`), Super Nintendo (`.sfc`, `.smc`), Sega Master
