@@ -31,6 +31,14 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "retroGuide": "retro_guide",
+    "retroRoots": "retro_roots",
+    "retroRefresh": "retro_refresh",
+    "retroGame": "retro_game",
+    "retroApprove": "retro_approve",
+    "retroEmpty": "retro_empty",
+    "retroLimit": "retro_limit",
+    "retroUnavailable": "retro_unavailable",
     "controllerNavigationLabel": "controller_navigation_label",
     "controllerNavigationHint": "controller_navigation_hint",
     "browserHint": "browser_hint",

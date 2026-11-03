@@ -37,8 +37,9 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         raise ValueError("Config must be a JSON object")
     result = copy.deepcopy(data)
     result.pop("pinConfigured", None)
-    if "mediaRoots" in result:
-        result["mediaRoots"] = validate_media_roots(result["mediaRoots"])
+    for field in ("mediaRoots", "retroRoots"):
+        if field in result:
+            result[field] = validate_media_roots(result[field])
     tiles = result.get("tiles")
     if not isinstance(tiles, list):
         raise ValueError("tiles must be a list")
@@ -258,8 +259,8 @@ def validate_stored_config(data, existing_pin_hash="", allow_pin_hash=False):
         seen_ids.add(profile_id)
 
         candidate = copy.deepcopy(profile)
-        if "mediaRoots" in candidate:
-            raise ValueError("Media folders must be stored in global settings")
+        if "mediaRoots" in candidate or "retroRoots" in candidate:
+            raise ValueError("Media and game folders must be stored in global settings")
         candidate["configVersion"] = result["configVersion"]
         candidate.setdefault("tiles", [])
         candidate.setdefault("favorites", [])
@@ -300,4 +301,5 @@ def public_config(data):
         result["profiles"] = profile_summaries(data)
     result["pinConfigured"] = bool(result.pop("pinHash", ""))
     result.pop("mediaRoots", None)
+    result.pop("retroRoots", None)
     return result

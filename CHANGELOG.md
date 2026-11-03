@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Living Room
 
+- Add the first RetroGameCorner integration with mGBA, local game folders, per-child approvals and private save directories.
+
 - Add Parent-managed media folders and refresh the cover library as local storage disconnects or reconnects.
 - Add optional standard gamepad and keyboard-style remote navigation on Home and in the media library.
 

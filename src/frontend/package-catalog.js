@@ -93,7 +93,7 @@ function renderPackageJob(){
     packageAction(isRemoval?maintenance.removeNow:isUpdate?maintenance.updateNow:uiText.packageConfirm,confirmPackageOperation);
   }else if(job.status==='complete'){
     renderUiState(message,'success',isRemoval?maintenance.removed:isUpdate?maintenance.updated:uiText.packageComplete);
-    if(operation==='install'&&rec&&!catalogAdded(rec)){
+    if(operation==='install'&&rec&&!rec.installOnly&&!catalogAdded(rec)){
       packageAction(uiText.packageAdd,()=>addInstalledPackageTile(rec));
     }
   }else if(job.status==='idle'){

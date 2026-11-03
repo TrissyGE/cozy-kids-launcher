@@ -79,6 +79,7 @@ function renderCatalogResults(){
     const actions=document.createElement('div'); actions.className='actions';
     const button=document.createElement('button'); button.className='smallbtn';
     if(!rec.installed){setIconLabel(button,'download',uiText.install); button.onclick=()=>triggerInstall(rec);}
+    else if(rec.installOnly){button.hidden=true;}
     else if(catalogAdded(rec)){button.disabled=true; setIconLabel(button,'save',uiText.added);}
     else {setIconLabel(button,'add',uiText.addTile); button.onclick=()=>addCatalogTile(rec,button);}
     actions.appendChild(button);
@@ -141,7 +142,7 @@ function catalogDetails(rec){
 }
 
 async function addCatalogTile(rec,button){
-  if(catalogAdded(rec)) return;
+  if(rec.installOnly||catalogAdded(rec)) return;
   const tile={id:rec.id,label:catalogText(rec,'label')||rec.id,emoji:rec.emoji||'✨',cmd:rec.cmd||[],visible:true};
   cfg.tiles.push(tile); button.disabled=true;
   try {await persistConfig(); renderAll();}

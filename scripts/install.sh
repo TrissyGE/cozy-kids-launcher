@@ -1346,6 +1346,7 @@ install -m 0644 "$SRC_DIR/service_control.py" "$SRC_DIR/cozy-kids-launcher.servi
 install -m 0644 "$SRC_DIR/media_library.py" "$APP_ROOT/media_library.py"
 install -m 0644 "$SRC_DIR/media_state.py" "$APP_ROOT/media_state.py"
 install -m 0644 "$SRC_DIR/media_resume.py" "$APP_ROOT/media_resume.py"
+install -m 0644 "$SRC_DIR/retro_games.py" "$APP_ROOT/retro_games.py"
 install -m 0644 "$SRC_DIR/media_session.py" "$APP_ROOT/media_session.py"
 install -m 0644 "$SRC_DIR/parent_auth.py" "$APP_ROOT/parent_auth.py"
 install -m 0644 "$SRC_DIR/speech_feedback.py" "$APP_ROOT/speech_feedback.py"
@@ -1447,6 +1448,8 @@ if recommended == "1" and os.path.isfile(rec_path):
     with open(rec_path, 'r', encoding='utf-8') as f:
         recs = json.load(f)
     for rec in recs:
+        if rec.get("installOnly"):
+            continue
         if rec["id"] in existing_ids:
             continue
         cmds = rec.get("cmd", [])

@@ -323,7 +323,14 @@ async function launchTile(id){
       await pollAvailability();
       return;
     }
-    if(!response.ok&&!response.redirected){ cancelLauncherFocusReturn(); return; }
+    if(!response.ok&&!response.redirected){
+      cancelLauncherFocusReturn();
+      if(tile.cmd?.[0]?.startsWith('special:retro:')){
+        hideStartFeedback();
+        showAvailabilityBlock('retro_unavailable');
+      }
+      return;
+    }
     try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
     if(response.redirected){
       cancelLauncherFocusReturn();
@@ -361,7 +368,7 @@ function hidePin(){ document.getElementById('pin').classList.add('hidden'); }
 function cancelPin(){ hidePin(); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; pinCallback=null; if(pinReturnFocus&&pinReturnFocus.isConnected) pinReturnFocus.focus(); pinReturnFocus=null; }
 async function submitPin(){ const val=document.getElementById('pinInput').value; const r=await fetch('/api/verify-pin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:val})}); const data=await r.json(); if(data.valid){ hidePin(); pinReturnFocus=null; if(pinCallback){ pinCallback(); pinCallback=null; } } else { document.getElementById('pinErr').textContent=uiText.pinWrong; document.getElementById('pinInput').value=''; document.getElementById('pinInput').focus(); } }
 function enterAdmin(){ cancelTileSpeech(); adminPage=cfg.currentPage; adminSection='overview'; adminTileQuery=''; adminTileVisibility='all'; adminSelectedTileIds.clear(); document.getElementById('kids').classList.add('hidden'); const admin=document.getElementById('admin'); admin.classList.remove('hidden'); document.querySelector('.cornerbar').classList.add('hidden'); document.getElementById('parentBtn').textContent=uiText.back||'{{LABEL_BACK}}'; renderAdmin(); renderNav(); playScreenTransition(admin); document.getElementById('adminNavOverview').focus(); loadBackups(); loadMediaRoots(); loadActivityDashboard(); }
-function closeAdmin(){ clearMediaRoots(); document.getElementById('admin').classList.add('hidden'); const kids=document.getElementById('kids'); kids.classList.remove('hidden'); document.querySelector('.cornerbar').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); playScreenTransition(kids,true); }
+function closeAdmin(){ clearMediaRoots(); clearRetroGames(); document.getElementById('admin').classList.add('hidden'); const kids=document.getElementById('kids'); kids.classList.remove('hidden'); document.querySelector('.cornerbar').classList.remove('hidden'); document.getElementById('parentBtn').textContent=cfg.parentLabel||'{{DEFAULT_PARENT_LABEL}}'; focusedTileIndex=0; renderAll(); playScreenTransition(kids,true); }
 function shutdownNow(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/shutdown',{method:'POST'}).catch(()=>{}); }); return; } fetch('/shutdown',{method:'POST'}).catch(()=>{}); }
 function exitKids(){ if(cfg.pinConfigured){ requestPin(() => { fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }); return; } fetch('/exit-kids',{method:'POST'}).catch(()=>{}); }
 

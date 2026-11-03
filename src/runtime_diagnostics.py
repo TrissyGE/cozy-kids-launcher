@@ -47,7 +47,7 @@ _SAFE_EVENT_FIELDS = {
     "update.triggered": set(),
 }
 _SAFE_LEVELS = {"debug", "info", "warning", "error", "critical"}
-_SAFE_ACTION_TYPES = {"app", "media", "none", "web"}
+_SAFE_ACTION_TYPES = {"app", "media", "none", "retro", "web"}
 _SAFE_EXCEPTION_TYPES = {
     "AttributeError",
     "ConnectionError",

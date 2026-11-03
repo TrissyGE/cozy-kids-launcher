@@ -328,6 +328,20 @@
               <button id="mediaRootsSave" class="smallbtn" type="button" onclick="saveMediaRoots()" disabled></button>
               <div id="mediaRootsStatus" role="status" aria-live="polite"></div>
             </section>
+            <section class="backup-panel media-roots-panel" aria-labelledby="retroTitle">
+              <h3 id="retroTitle">RetroGameCorner</h3>
+              <p id="retroGuide" class="muted"></p>
+              <label id="retroRootsLabel" for="retroRoots"></label>
+              <textarea id="retroRoots" rows="3" maxlength="16391" dir="ltr" spellcheck="false" disabled></textarea>
+              <div class="actions">
+                <button id="retroSave" class="smallbtn" type="button" onclick="saveRetroRoots()" disabled></button>
+                <button id="retroRefresh" class="smallbtn" type="button" onclick="loadRetroGames()"></button>
+              </div>
+              <label id="retroGameLabel" for="retroGame"></label>
+              <select id="retroGame" disabled></select>
+              <button id="retroApprove" class="smallbtn" type="button" onclick="approveRetroGame()" disabled></button>
+              <div id="retroStatus" role="status" aria-live="polite"></div>
+            </section>
             <div id="recommendations" style="margin-top:18px;"></div>
           </section>
 

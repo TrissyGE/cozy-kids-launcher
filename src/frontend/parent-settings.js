@@ -149,6 +149,7 @@ function activateAdminSection(section,focusHeading=false){
   const activePanel=document.querySelector('[data-admin-panel="'+section+'"]');
   if(changed) playAdminPanelTransition(activePanel);
   if(changed&&section==='system') void loadUpdateTrack();
+  if(changed&&section==='apps') void loadRetroGames();
   if(focusHeading){
     const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
     if(heading) heading.focus({preventScroll:true});
@@ -442,7 +443,92 @@ async function saveMediaRoots(){
   }
 }
 
+let retroSession=null;
+
+function clearRetroGames(){
+  retroSession?.abort();
+  retroSession=null;
+  document.getElementById('retroRoots').value='';
+  document.getElementById('retroGame').replaceChildren();
+  document.getElementById('retroStatus').textContent='';
+  for(const id of ['retroRoots','retroSave','retroGame','retroApprove']) document.getElementById(id).disabled=true;
+}
+
+async function loadRetroGames(){
+  clearRetroGames();
+  retroSession=new AbortController();
+  const {signal}=retroSession;
+  const status=document.getElementById('retroStatus');
+  try{
+    const response=await fetch('/api/retro/games',{cache:'no-store',signal});
+    if(!response.ok) throw new Error('Retro library unavailable');
+    const data=await response.json();
+    if(signal.aborted) return;
+    const roots=document.getElementById('retroRoots');
+    roots.value=data.roots.join('\n');
+    roots.disabled=false;
+    document.getElementById('retroSave').disabled=false;
+    const select=document.getElementById('retroGame');
+    for(const game of data.games){
+      if(cfg.tiles.some(tile=>tile.id==='retro-'+game.id)) continue;
+      const option=new Option(game.title,game.id);
+      option.title=game.path;
+      select.appendChild(option);
+    }
+    select.disabled=!select.options.length;
+    document.getElementById('retroApprove').disabled=select.disabled;
+    status.textContent=[
+      data.unavailable>0?uiText.mediaLibrarySourcesMissing:'',
+      data.truncated?uiText.retroLimit:'',
+      select.disabled?uiText.retroEmpty:''
+    ].filter(Boolean).join(' ');
+  }catch(e){
+    if(!signal.aborted) status.textContent=uiText.retroUnavailable;
+  }
+}
+
+async function updateRetroGames(endpoint,body,button){
+  if(!retroSession||button.disabled) return;
+  const {signal}=retroSession;
+  button.disabled=true;
+  const status=document.getElementById('retroStatus');
+  try{
+    const response=await fetch('/api/retro/'+endpoint,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal
+    });
+    if(!response.ok) throw new Error('Retro settings could not be saved');
+    const data=await response.json();
+    if(signal.aborted) return;
+    if(data.tile&&!cfg.tiles.some(tile=>tile.id===data.tile.id)){
+      cfg.tiles.push(data.tile);
+      renderAll();
+    }
+    await loadRetroGames();
+  }catch(e){
+    if(!signal.aborted){
+      button.disabled=false;
+      status.textContent=uiText.saveError;
+    }
+  }
+}
+
+function saveRetroRoots(){
+  const roots=document.getElementById('retroRoots').value.split('\n').filter(path=>path.trim());
+  return updateRetroGames('games',{roots},document.getElementById('retroSave'));
+}
+
+function approveRetroGame(){
+  const gameId=document.getElementById('retroGame').value;
+  return updateRetroGames('approve',{gameId,profileId:cfg.activeProfileId},document.getElementById('retroApprove'));
+}
+
 function renderAdmin(){
+  document.getElementById('retroGuide').textContent=uiText.retroGuide;
+  document.getElementById('retroRootsLabel').textContent=uiText.retroRoots;
+  document.getElementById('retroSave').textContent=uiText.save;
+  document.getElementById('retroRefresh').textContent=uiText.retroRefresh;
+  document.getElementById('retroGameLabel').textContent=uiText.retroGame;
+  document.getElementById('retroApprove').textContent=uiText.retroApprove;
   document.getElementById('controllerNavigationLabel').textContent=uiText.controllerNavigationLabel;
   document.getElementById('controllerNavigationHint').textContent=uiText.controllerNavigationHint;
   document.getElementById('cfgControllerNavigation').checked=cfg.controllerNavigationEnabled===true;
@@ -854,6 +940,7 @@ async function autoScanRecommendations(){
   const existingCmds=new Set(cfg.tiles.map(t=>JSON.stringify(t.cmd||[])));
   let added=false;
   for(const rec of recommendations){
+    if(rec.installOnly) continue;
     if(existingIds.has(rec.id)) continue;
     if(rec.installed && !existingCmds.has(JSON.stringify(rec.cmd||[]))){
       cfg.tiles.push({ id:rec.id, label:catalogText(rec,'label')||rec.id, emoji:rec.emoji||'✨', cmd:rec.cmd||[], visible:true });
