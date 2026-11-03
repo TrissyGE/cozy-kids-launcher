@@ -7,6 +7,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +44,18 @@ class OwnershipSourceTests(unittest.TestCase):
 
 @unittest.skipUnless(os.name == "posix", "Linux process supervision required")
 class ProcessSupervisorTests(unittest.TestCase):
+    def test_graceful_shutdown_notifies_each_child_once_before_escalating(self):
+        with mock.patch.object(process_supervisor, "owned_processes", side_effect=[
+            [123], [123, 124], [123, 124], [124], [],
+        ]), mock.patch.object(process_supervisor.time, "monotonic", side_effect=[0, 0, 0.1, 0.2, 1.1]), \
+                mock.patch.object(process_supervisor.time, "sleep"), \
+                mock.patch.object(process_supervisor, "_reap_children"), \
+                mock.patch.object(process_supervisor.os, "kill") as kill:
+            process_supervisor.terminate_owned_tree()
+        self.assertEqual(kill.call_args_list, [
+            mock.call(123, signal.SIGTERM), mock.call(124, signal.SIGTERM), mock.call(124, signal.SIGKILL),
+        ])
+
     def test_termination_follows_forks_without_touching_same_command_elsewhere(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
