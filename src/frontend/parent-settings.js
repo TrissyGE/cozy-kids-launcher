@@ -456,6 +456,7 @@ function clearRetroGames(){
   document.getElementById('ps1BiosInput').value='';
   document.getElementById('ps1BiosRegions').replaceChildren();
   document.getElementById('ps1BiosStatus').textContent='';
+  document.getElementById('ps1RuntimeStatus').textContent='';
   for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave','ps1BiosInput']) document.getElementById(id).disabled=true;
 }
 
@@ -510,6 +511,9 @@ async function loadRetroGames(){
     if(signal.aborted) return;
     renderPs1Bios(data.ps1Bios);
     document.getElementById('ps1BiosInput').disabled=false;
+    document.getElementById('ps1RuntimeStatus').textContent=[
+      ['RetroArch',data.ps1Runtime.retroarch],['PCSX ReARMed',data.ps1Runtime.core]
+    ].map(([name,ready])=>`${name} · ${ready?uiText.ps1BiosReady:uiText.ps1BiosMissing}`).join(' / ');
     const roots=document.getElementById('retroRoots');
     roots.value=data.roots.join('\n');
     roots.disabled=false;

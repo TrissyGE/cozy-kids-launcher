@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import platform
 import re
 import stat
 import struct
@@ -31,8 +32,14 @@ ROM_SYSTEMS = {
     ".smc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System"),
     ".sms": ("mednafen", "sms", "Sega - Master System - Mark III"),
     ".gg": ("mednafen", "gg", "Sega - Game Gear"),
+    ".chd": ("retroarch", "", "Sony - PlayStation"),
 }
 MAX_ROM_BYTES = 32 * 1024 * 1024
+MAX_CHD_BYTES = 1024 * 1024 * 1024
+CHD_HEADER = struct.Struct(">8sII")
+PS1_CORE_FILENAME = "pcsx_rearmed_libretro.so"
+PS1_CORE_BYTES = 2250248
+PS1_CORE_SHA256 = "b81ce0d92b66fac94788a94836430530cebed2f2ee77e384db87eb0273e49c3c"
 MAX_ZIP_BYTES = 40 * 1024 * 1024
 MAX_ZIP_DIRECTORY_BYTES = 64 * 1024
 MAX_ZIP_ENTRIES = 32
@@ -61,12 +68,8 @@ def ps1_bios_status(state_root):
         if not os.path.lexists(path):
             continue
         statuses[region] = "invalid"
-        if os.path.realpath(path) != path:
-            continue
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
-        flags |= getattr(os, "O_BINARY", 0)
         try:
-            with os.fdopen(os.open(path, flags), "rb") as handle:
+            with _open_local_regular(path) as handle:
                 info = os.fstat(handle.fileno())
                 if not stat.S_ISREG(info.st_mode) or info.st_size != PS1_BIOS_BYTES:
                     continue
@@ -180,11 +183,7 @@ def _zip_directory_is_bounded(handle, size):
 def inspect_rom_zip(path, verify=False):
     """Read one supported member's metadata and optionally verify its payload."""
     try:
-        if os.path.realpath(path) != path:
-            return None
-        flags = (os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-                 | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0))
-        with os.fdopen(os.open(path, flags), "rb") as handle:
+        with _open_local_regular(path) as handle:
             info = os.fstat(handle.fileno())
             if (not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_ZIP_BYTES
                     or not _zip_directory_is_bounded(handle, info.st_size)):
@@ -211,6 +210,7 @@ def inspect_rom_zip(path, verify=False):
                 if (
                     any(part.startswith(".") for part in rom.parts)
                     or rom.suffix.casefold() not in ROM_SYSTEMS
+                    or rom.suffix.casefold() == ".chd"
                     or mode not in (0, stat.S_IFREG)
                     or member.flag_bits & 0x41
                     or member.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
@@ -234,6 +234,38 @@ def inspect_rom_zip(path, verify=False):
 @lru_cache(maxsize=MAX_SCAN_ENTRIES)
 def _zip_metadata(path, identity):
     return inspect_rom_zip(path)
+
+
+def _open_local_regular(path):
+    if os.path.realpath(path) != path:
+        raise OSError("File path must not contain symbolic links")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    return os.fdopen(os.open(path, flags | getattr(os, "O_BINARY", 0)), "rb")
+
+
+def _chd_fingerprint(path):
+    try:
+        with _open_local_regular(path) as handle:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode) or not 124 < info.st_size <= MAX_CHD_BYTES:
+                return None
+            header = handle.read(124)
+            if len(header) != 124 or CHD_HEADER.unpack_from(header) != (b"MComprHD", 124, 5):
+                return None
+            logical, map_offset, metadata, hunk, sector = struct.unpack_from(">QQQII", header, 32)
+            if (sector != 2448 or not 0 < logical <= MAX_CHD_BYTES or logical % sector
+                    or not 0 < hunk <= 1024 * 1024 or hunk % sector
+                    or not 124 <= map_offset < info.st_size or not 124 <= metadata < info.st_size
+                    or any(header[104:])):
+                return None
+    except OSError:
+        return None
+    return f"{info.st_dev}:{info.st_ino}:{info.st_size}:{info.st_mtime_ns}:{info.st_ctime_ns}".encode() + header
+
+
+@lru_cache(maxsize=MAX_SCAN_ENTRIES)
+def _chd_metadata(path, identity):
+    return _chd_fingerprint(path)
 
 
 def scan_retro_games(roots):
@@ -268,13 +300,17 @@ def scan_retro_games(roots):
                         if extension not in ROM_SYSTEMS and extension != ".zip":
                             continue
                         info = item.stat(follow_symlinks=False)
-                        maximum = MAX_ZIP_BYTES if extension == ".zip" else MAX_ROM_BYTES
+                        maximum = {".zip": MAX_ZIP_BYTES, ".chd": MAX_CHD_BYTES}.get(extension, MAX_ROM_BYTES)
                         if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= maximum:
                             continue
                         fingerprint = f"{info.st_size}:{info.st_mtime_ns}".encode("ascii")
                         member = None
-                        if extension == ".zip":
-                            identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                        identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                        if extension == ".chd":
+                            fingerprint = _chd_metadata(item.path, identity)
+                            if fingerprint is None:
+                                continue
+                        elif extension == ".zip":
                             member = _zip_metadata(item.path, identity)
                             if member is None:
                                 continue
@@ -300,6 +336,67 @@ def emulator_binary(game):
     return ROM_SYSTEMS[game["romExtension"]][0]
 
 
+def ps1_core_path(state_root):
+    if platform.machine().lower() not in ("x86_64", "amd64"):
+        return None
+    path = os.path.join(state_root, "ps1-cores", PS1_CORE_FILENAME)
+    try:
+        with _open_local_regular(path) as handle:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_size != PS1_CORE_BYTES:
+                return None
+            payload = handle.read(PS1_CORE_BYTES + 1)
+    except OSError:
+        return None
+    return path if hashlib.sha256(payload).hexdigest() == PS1_CORE_SHA256 else None
+
+
+def _ps1_command(executable, game, state_root, game_directory):
+    core = ps1_core_path(state_root)
+    if core is None:
+        raise ValueError("Reviewed PS1 core is unavailable")
+    path = game["path"]
+    fingerprint = _chd_fingerprint(path)
+    if fingerprint is None or hashlib.sha256(os.fsencode(path) + b"\0" + fingerprint).hexdigest()[:24] != game["id"]:
+        raise ValueError("Approved PS1 disc has changed")
+    if any(os.path.lexists(os.path.splitext(path)[0] + extension) for extension in (".sbi", ".lsd")):
+        raise ValueError("PS1 disc sidecars require approval support")
+    statuses = ps1_bios_status(state_root)
+    system_directory = os.path.join(state_root, "ps1-bios")
+    expected = {filename for region, (filename, _) in PS1_BIOS.items() if statuses[region] == "ready"}
+    if not expected or set(os.listdir(system_directory)) != expected:
+        raise ValueError("Verified PS1 firmware is unavailable")
+    if any(character in system_directory + game_directory for character in '\\"\r\n'):
+        raise ValueError("Unsupported character in RetroArch configuration path")
+    config = os.path.join(game_directory, "retroarch.cfg")
+    descriptor, temporary = tempfile.mkstemp(prefix="retroarch-", dir=game_directory)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(
+                f'system_directory = "{system_directory}"\n'
+                f'savefile_directory = "{game_directory}"\n'
+                f'savestate_directory = "{game_directory}"\n'
+                f'screenshot_directory = "{game_directory}"\n'
+                f'core_options_path = "{game_directory}/core-options.cfg"\n'
+                'config_save_on_exit = "false"\n'
+                'auto_overrides_enable = "false"\n'
+                'auto_remaps_enable = "false"\n'
+                'video_driver = "gl"\n'
+                'video_context_driver = "x"\n'
+                'menu_driver = "rgui"\n'
+                'input_menu_toggle = "nul"\n'
+                'input_menu_toggle_gamepad_combo = "0"\n'
+                'kiosk_mode_enable = "true"\n'
+                'desktop_menu_enable = "false"\n'
+            )
+        os.replace(temporary, config)
+    finally:
+        if os.path.lexists(temporary):
+            os.unlink(temporary)
+    return ["kstart", "--fullscreen", executable, "--fullscreen", "--config", config,
+            "--no-patch", "-L", core, "--", path]
+
+
 def emulator_command(executable, game, save_root, profile_id):
     """Keep battery saves and state slots in a private child/game directory."""
     if game.get("zipMember") is not None and inspect_rom_zip(game["path"], verify=True) != game["zipMember"]:
@@ -309,6 +406,8 @@ def emulator_command(executable, game, save_root, profile_id):
         raise ValueError("Mednafen would apply an unapproved IPS patch")
     profile = prepare_profile_resume_directory(save_root, profile_id)
     game_directory = prepare_profile_resume_directory(profile, game["id"])
+    if game["romExtension"] == ".chd":
+        return _ps1_command(executable, game, os.path.dirname(save_root), game_directory)
     if module:
         # Keep fullscreen observable by the supervisor and visible while the overlay has focus.
         return [

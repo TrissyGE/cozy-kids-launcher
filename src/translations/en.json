@@ -376,7 +376,7 @@
   "retro_limit": "The scan reached its limit. Choose a smaller game folder.",
   "retro_unavailable": "This game is unavailable. Ask a parent to check the folder, game approval and the correct emulator.",
   "ps1_bios_title": "PlayStation 1 BIOS preparation",
-  "ps1_bios_guide": "Import a BIOS file from your own console. The launcher identifies the BIOS by checksum and stores it locally. PS1 game import is still in development.",
+  "ps1_bios_guide": "Import a BIOS file from your own console. The launcher identifies the BIOS by checksum and stores it locally. For single-disc PS1 games, select a game folder containing CHD files.",
   "ps1_bios_label": "Choose a BIOS file to import",
   "ps1_bios_ready": "Verified",
   "ps1_bios_missing": "Missing",

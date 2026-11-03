@@ -251,8 +251,14 @@ identifies the supported Japan, North America, Europe and PSP BIOS images by
 SHA-256 and stores verified files under
 `~/.local/state/cozy-kids-launcher/ps1-bios/`. Only Parent requests can import
 firmware or view its readiness. BIOS files are stored separately from config
-exports. PCSX ReARMed supports the PSP BIOS and CHDs. The PS1 install, game
-discovery and launch flows are tracked in the roadmap.
+exports. The launcher discovers standalone version 5 CD CHDs and checks their
+file identity and headers again at launch. It refuses adjacent SBI or LSD
+files until the launcher can include them in approvals. The PS1 launch uses
+RetroArch with the reviewed Linux x86-64 PCSX ReARMed build, whose SHA-256 is
+checked before loading from `~/.local/state/cozy-kids-launcher/ps1-cores/`.
+RetroArch stores saves, states and screenshots in the child's private game
+directory. The Parent catalog installs RetroArch. One-click delivery of the
+core and support for disc sets are tracked separately.
 See the [PCSX ReARMed BIOS documentation](https://docs.libretro.com/library/pcsx_rearmed/#bios).
 
 Enable controller and remote navigation in Parent settings under System.

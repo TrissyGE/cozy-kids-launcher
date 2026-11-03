@@ -256,8 +256,10 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [ ] Make PlayStation 1 the next optional system in RetroGameCorner
   - [x] Import Parent-supplied BIOS files locally, validate regional PS1 and supported PSP BIOS checksums and show readiness in Parent settings
   - [x] Verify that Ubuntu RetroArch can launch the upstream Linux x86-64 PCSX ReARMed core with a CHD, the supported PSP BIOS and a private save directory
-  - [ ] Wire RetroArch and a reviewed PCSX ReARMed build into the Parent install flow. Verify the downloaded core artifact and keep its version explicit. Evaluate Beetle PSX or DuckStation if needed for game compatibility
-  - [ ] Import single-disc CHDs and check firmware before launch. Add CUE/BIN support with every referenced track inside the approved source. Invalidate approval when a disc component changes
+  - [x] Offer the RetroArch package in the Parent installer and report whether the reviewed PCSX ReARMed core is available
+  - [ ] Add a maintained one-click delivery route for the reviewed PCSX ReARMed core, with artifact verification and explicit versioning. Evaluate Beetle PSX or DuckStation if needed for game compatibility
+  - [x] Discover single-disc CHDs, enforce per-child approval and verify the firmware, disc and pre-provisioned core before launch
+  - [ ] Add CUE/BIN support with every referenced track inside the approved source. Invalidate approval when a disc component changes
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
   - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card. Support handheld playlists by resolving disc entries unambiguously inside the selected game source without following the original absolute paths
 - [ ] Add save backup and removal controls
@@ -270,7 +272,7 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
   - [ ] Earlier cartridges and arcade games including Atari 2600/5200/7800, ColecoVision, Intellivision, SG-1000, Mega Drive, PC Engine, Neo Geo and selected arcade boards. Review disc add-ons such as Sega CD and PC Engine CD separately.
   - [ ] Earlier handhelds including Atari Lynx, Neo Geo Pocket / Color, WonderSwan / Color, Nintendo DS and PSP. Evaluate Nintendo 3DS and PlayStation Vita as later handhelds in scope.
   - [ ] Nintendo 64, Saturn and Dreamcast. Qualify firmware, disc formats, controls and save isolation for each system.
-  - [ ] PlayStation 2, GameCube, Wii and original Xbox. Review PCSX2, [Dolphin](https://dolphin-emu.org/docs/faq/) and [xemu](https://xemu.app/) as candidates, including Wii motion input and Xbox firmware setup.
+  - [ ] PlayStation 2, GameCube, Wii and original Xbox. Test [PCSX2](https://pcsx2.net/docs/setup/requirements/) first for PS2 on the physical Linux laptop and compare performance, input and fullscreen before selection. Review [Dolphin](https://dolphin-emu.org/docs/faq/) and [xemu](https://xemu.app/) for the other systems, including Wii motion input and Xbox firmware setup.
   - [ ] Wii U and PlayStation 3. Qualify [Cemu](https://cemu.info/faq.html) and [RPCS3](https://github.com/RPCS3/rpcs3), including firmware or game installation where required and per-game compatibility guidance. Evaluate [Xenia](https://github.com/xenia-project/xenia) for Xbox 360 in the same era once a Linux installation and launch path passes review.
   - [ ] For each new system, qualify the Parent install flow, supported game formats, required user-supplied files, child approvals, private saves and desktop acceptance before offering it in RetroGameCorner.
 - [x] Support bounded single-ROM ZIP archives from handheld game libraries

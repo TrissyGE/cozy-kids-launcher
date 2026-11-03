@@ -1443,5 +1443,31 @@
       "source": "https://mednafen.github.io/documentation/",
       "reviewed": "2026-11-03"
     }
+  },
+  {
+    "id": "retroarch",
+    "emoji": "🎮",
+    "label_de": "RetroArch für PlayStation 1",
+    "label_en": "RetroArch for PlayStation 1",
+    "label_es": "RetroArch para PlayStation 1",
+    "label_fr": "RetroArch pour PlayStation 1",
+    "label_it": "RetroArch per PlayStation 1",
+    "name_en": "RetroArch",
+    "desc_de": "Installiert RetroArch. Für PS1-Spiele ist zusätzlich der geprüfte PCSX-ReARMed-Core nötig.",
+    "desc_en": "Installs RetroArch. PS1 games also require the reviewed PCSX ReARMed core.",
+    "desc_es": "Instala RetroArch. Los juegos de PS1 también requieren el núcleo PCSX ReARMed verificado.",
+    "desc_fr": "Installe RetroArch. Les jeux PS1 nécessitent également le cœur PCSX ReARMed vérifié.",
+    "desc_it": "Installa RetroArch. I giochi PS1 richiedono anche il core PCSX ReARMed verificato.",
+    "cmd": ["retroarch"],
+    "package": "retroarch",
+    "category": "games",
+    "installOnly": true,
+    "retroEmulator": true,
+    "guidance": {
+      "offline": "yes",
+      "input": ["keyboard"],
+      "source": "https://retroarch.com/ps1.html",
+      "reviewed": "2026-11-03"
+    }
   }
 ]

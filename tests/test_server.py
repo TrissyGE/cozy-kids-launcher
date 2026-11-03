@@ -2,6 +2,7 @@ import copy
 import hashlib
 import json
 import os
+import struct
 import sys
 import tempfile
 import threading
@@ -907,6 +908,64 @@ class ServerApiTests(unittest.TestCase):
             self.assertNotIn("ps1Bios", self.request("/api/config")[1])
             bios.write_bytes(bytes(len(fixture)))
             self.assertEqual(self.request("/api/retro/games", cookie=cookie)[1]["ps1Bios"]["eu"], "invalid")
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "PS1 runtime uses Linux paths")
+    def test_ps1_launch_requires_approval_verified_core_and_bios(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        root = Path(self.temp_dir.name).resolve() / "Disc Games"
+        root.mkdir()
+        disc = root / "Test Disc.chd"
+        header = bytearray(124)
+        struct.pack_into(">8sII", header, 0, b"MComprHD", 124, 5)
+        struct.pack_into(">QQQII", header, 32, 19584, 124, 125, 19584, 2448)
+        disc.write_bytes(header + b"fixture")
+        (root / "Invalid.chd").write_bytes(b"not a CHD")
+        endpoint = "/api/retro/games"
+        self.assertEqual(self.request(endpoint, "POST", {"roots": [str(root)]}, cookie)[0], 200)
+        library = self.request(endpoint, cookie=cookie)[1]
+        self.assertEqual([game["title"] for game in library["games"]], ["Test Disc"])
+        game_id = library["games"][0]["id"]
+        settings = {"profileId": "default", "enabled": True, "covers": False}
+        self.assertEqual(self.request("/api/retro/settings", "POST", settings, cookie)[0], 200)
+        play = {"gameId": game_id}
+        self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 404)
+        approval = {**play, "profileId": "default"}
+        self.assertEqual(self.request("/api/retro/approve", "POST", approval, cookie)[0], 200)
+        _, public, _ = self.request("/api/retro/library")
+        self.assertNotIn(str(root), json.dumps(public))
+
+        state = Path(server_module.MEDIA_STATE_FILE).parent
+        core = state / "ps1-cores" / retro_games.PS1_CORE_FILENAME
+        core.parent.mkdir(parents=True)
+        core.write_bytes(b"fixture core")
+        bios = bytes(retro_games.PS1_BIOS_BYTES)
+        bios_list = {**retro_games.PS1_BIOS, "psp": ("psxonpsp660.bin", hashlib.sha256(bios).hexdigest())}
+        with mock.patch.object(retro_games.platform, "machine", return_value="x86_64"), \
+                mock.patch.object(retro_games, "PS1_CORE_BYTES", core.stat().st_size), \
+                mock.patch.object(retro_games, "PS1_CORE_SHA256", hashlib.sha256(core.read_bytes()).hexdigest()), \
+                mock.patch.object(retro_games, "PS1_BIOS", bios_list), \
+                mock.patch.object(server_module.shutil, "which", return_value="/usr/bin/retroarch"), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
+            retro_games.import_ps1_bios(str(state), bios)
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 204)
+            command = launch.call_args.args[0]
+            self.assertEqual(command[:3], ["kstart", "--fullscreen", "/usr/bin/retroarch"])
+            self.assertEqual(command[-4:], ["-L", str(core), "--", str(disc)])
+            directory = state / "retro" / "default" / game_id
+            config = (directory / "retroarch.cfg").read_text(encoding="utf-8")
+            self.assertIn(f'savefile_directory = "{directory}"', config)
+            self.assertIn(f'savestate_directory = "{directory}"', config)
+            sidecar = disc.with_suffix(".sbi")
+            sidecar.write_bytes(b"unapproved companion")
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
+            sidecar.unlink()
+            core.write_bytes(b"changed core")
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
+            disc.write_bytes(header + b"changed disc")
+            self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
+            launch.assert_called_once()
 
     def test_media_play_launches_only_a_catalog_item_for_a_visible_media_tile(self):
         media_file = Path(server_module.VIDEOS) / "Film.mp4"

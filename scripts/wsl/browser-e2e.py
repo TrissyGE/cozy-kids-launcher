@@ -428,7 +428,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.click("#retroApprove")
     browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
     browser.wait_for("!document.getElementById('retroEnabled').disabled")
-    assert_js(browser, "['mgba-qt','mednafen'].every(id=>"
+    assert_js(browser, "['mgba-qt','mednafen','retroarch'].every(id=>"
               "document.querySelector('[data-retro-emulator='+id+'] button') && "
               "!document.querySelector('[data-catalog-id='+id+']'))",
               "The emulator install action is outside RetroGameCorner")

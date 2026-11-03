@@ -376,7 +376,7 @@
   "retro_limit": "La limite de recherche est atteinte. Choisissez un dossier plus petit.",
   "retro_unavailable": "Ce jeu est indisponible. Demande à un parent de vérifier le dossier, l’autorisation et l’émulateur correspondant.",
   "ps1_bios_title": "Préparer le BIOS PlayStation 1",
-  "ps1_bios_guide": "Importez un fichier BIOS issu de votre propre console. Le lanceur identifie le BIOS par somme de contrôle et enregistre le fichier localement. L’importation des jeux PS1 est encore en développement.",
+  "ps1_bios_guide": "Importez un fichier BIOS issu de votre propre console. Le lanceur identifie le BIOS par somme de contrôle et enregistre le fichier localement. Pour les jeux PS1 sur un seul disque, choisissez un dossier contenant des fichiers CHD.",
   "ps1_bios_label": "Choisir un fichier BIOS à importer",
   "ps1_bios_ready": "Vérifié",
   "ps1_bios_missing": "Manquant",

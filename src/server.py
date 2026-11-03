@@ -88,7 +88,7 @@ from media_state import (
 )
 from retro_games import (
     HUB_COMMAND, HUB_ID, PS1_BIOS_BYTES, approved_retro_ids, emulator_binary, emulator_command,
-    import_ps1_bios, ps1_bios_status, retro_cover, retro_hub, scan_retro_games,
+    import_ps1_bios, ps1_bios_status, ps1_core_path, retro_cover, retro_hub, scan_retro_games,
 )
 from media_resume import (
     prepare_profile_resume_directory,
@@ -877,6 +877,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "covers": (retro_hub(cfg, require_visible=False) or {}).get("retroCovers", False),
                 "approvedIds": list(approved_retro_ids(cfg)),
                 "ps1Bios": ps1_bios_status(os.path.dirname(MEDIA_STATE_FILE)),
+                "ps1Runtime": {
+                    "retroarch": bool(shutil.which("retroarch")),
+                    "core": bool(ps1_core_path(os.path.dirname(MEDIA_STATE_FILE))),
+                },
             })
         if request_url.path in ("/api/retro/library", "/api/retro/cover"):
             cfg = load_cfg()

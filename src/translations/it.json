@@ -376,7 +376,7 @@
   "retro_limit": "La ricerca ha raggiunto il limite. Scegli una cartella più piccola.",
   "retro_unavailable": "Questo gioco non è disponibile. Chiedi a un genitore di controllare la cartella, l’autorizzazione e l’emulatore corrispondente.",
   "ps1_bios_title": "Preparare il BIOS di PlayStation 1",
-  "ps1_bios_guide": "Importa un file BIOS dalla tua console. Il launcher identifica il BIOS con una somma di controllo e salva il file in locale. L’importazione dei giochi PS1 è ancora in sviluppo.",
+  "ps1_bios_guide": "Importa un file BIOS dalla tua console. Il launcher identifica il BIOS con una somma di controllo e salva il file in locale. Per i giochi PS1 su disco singolo, scegli una cartella con file CHD.",
   "ps1_bios_label": "Scegli un file BIOS da importare",
   "ps1_bios_ready": "Verificato",
   "ps1_bios_missing": "Mancante",
