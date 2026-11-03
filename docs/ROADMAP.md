@@ -186,7 +186,8 @@ their own evidence is complete. See the release standard at the end.
 - [x] Protect existing package routes with Parent/origin checks, catalog-controlled names and expiring single-use confirmation (#60)
 - [x] Add private restart journaling that reports uncertainty and never replays installation consent (#60)
 - [x] Add explicit APT PackageKit update and removal review, consent and progress for a single selected app
-- [ ] Reattach supported system transactions after a launcher restart and recover full progress safely
+- [x] Reattach known APT PackageKit jobs after a launcher restart, with read-only progress and no replay of consent
+- [x] Reconcile jobs that finish while the launcher is offline using exact daemon history and a fresh package lookup
 - [ ] Implement tested native DNF/Pacman/Zypper and managed Flatpak execution adapters
 - [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
