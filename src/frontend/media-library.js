@@ -24,9 +24,10 @@ function mediaTile(config,tileId){
 }
 
 function applyMediaTheme(config){
-  applyThemeRuntime(document.body,config,['media-page']);
+  const classes=retroLibrary?['media-page','retro-library']:['media-page'];
+  applyThemeRuntime(document.body,config,classes);
   applyAccessibilityRuntime(document.body,config);
-  scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,['media-page']);
+  scheduleThemeRuntimeRefresh(document.body,()=>mediaConfig,classes);
   applyCustomThemeRuntime(document.body,config,document.getElementById('themeBg'));
 }
 
@@ -357,7 +358,6 @@ async function initializeMediaLibrary(){
     const tile=mediaTile(mediaConfig,mediaTileId);
     if(!tile){ mediaHome(); return; }
     retroLibrary=tile.cmd[0]==='special:retro-library';
-    document.body.classList.toggle('retro-library',retroLibrary);
     applyMediaTheme(mediaConfig);
     localizeMediaPage(tile);
     await loadMediaCatalog();

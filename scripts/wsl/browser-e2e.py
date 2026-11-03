@@ -425,6 +425,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
     browser.wait_for("document.querySelector('.media-cover img')?.naturalWidth>0",
                      message="The approved game did not display its local cover")
+    assert_js(browser, "getComputedStyle(document.querySelector('.media-cover img')).objectFit==='contain'",
+              "Portrait box art was cropped")
     (retro_root / "Local Test.gba").write_bytes(b"replacement")
     browser.click(".media-card")
     browser.wait_for("document.querySelector('#mediaState .ui-state-message')?.textContent===mediaText.retroUnavailable")
