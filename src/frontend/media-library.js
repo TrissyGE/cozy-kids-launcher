@@ -7,6 +7,10 @@ let mediaItems=[];
 let mediaFavoriteIds=new Set();
 let mediaRecentIds=[];
 let mediaFilter='all';
+let mediaSourceRevision='';
+let mediaCatalogLoading=false;
+let mediaSourceChecking=false;
+let mediaCoverRevision=0;
 
 function mediaHome(){ window.location='/index.html'; }
 
@@ -51,6 +55,7 @@ function localizeMediaPage(tile){
   filters.querySelectorAll('[data-media-filter]').forEach(button=>{
     button.textContent=labels[button.dataset.mediaFilter];
   });
+  document.getElementById('mediaRefresh').textContent=mediaText.mediaLibraryRefresh;
 }
 
 function showMediaState(kind,message,retryAction=null){
@@ -106,7 +111,7 @@ function mediaCard(item){
   cover.className='media-cover';
   if(item.coverUrl){
     const image=document.createElement('img');
-    image.src=item.coverUrl;
+    image.src=item.coverUrl+'&v='+mediaCoverRevision;
     image.alt='';
     image.loading='lazy';
     image.addEventListener('error',()=>mediaCoverFallback(cover,item.kind),{once:true});
@@ -177,6 +182,7 @@ function renderMediaCatalog(){
 }
 
 function setMediaFilter(filter){
+  if(mediaCatalogLoading) return;
   if(!['all','favorites','recents'].includes(filter)) return;
   mediaFilter=filter;
   renderMediaCatalog();
@@ -185,6 +191,14 @@ function setMediaFilter(filter){
 }
 
 async function loadMediaCatalog(){
+  if(mediaCatalogLoading) return;
+  mediaCatalogLoading=true;
+  const focused=document.activeElement;
+  const focusedId=focused?.dataset.mediaId||focused?.dataset.favoriteId;
+  const focusAttribute=focused?.dataset.favoriteId?'data-favorite-id':'data-media-id';
+  const refresh=document.getElementById('mediaRefresh');
+  if(focusedId) refresh.focus();
+  refresh.setAttribute('aria-busy','true');
   showMediaState('loading',mediaText.mediaLibraryLoading);
   document.getElementById('mediaGrid').hidden=true;
   try{
@@ -192,18 +206,47 @@ async function loadMediaCatalog(){
     if(!response.ok) throw new Error('Catalog unavailable');
     const payload=await response.json();
     if(!payload||!Array.isArray(payload.items)||typeof payload.truncated!=='boolean'||
+        typeof payload.sourceRevision!=='string'||!Number.isInteger(payload.unavailableSources)||
         !Array.isArray(payload.favoriteIds)||!Array.isArray(payload.recentIds)){
       throw new Error('Invalid catalog');
     }
     mediaItems=payload.items;
+    mediaCoverRevision+=1;
+    mediaSourceRevision=payload.sourceRevision;
     mediaFavoriteIds=new Set(payload.favoriteIds);
     mediaRecentIds=payload.recentIds;
+    const notice=document.getElementById('mediaSourcesNotice');
+    notice.hidden=!(payload.unavailableSources>0);
+    notice.textContent=notice.hidden?'':mediaText.mediaLibrarySourcesMissing;
     const truncated=document.getElementById('mediaTruncated');
     truncated.hidden=!payload.truncated;
     truncated.textContent=payload.truncated?mediaText.mediaLibraryTruncated:'';
     renderMediaCatalog();
+    if(focusedId&&document.activeElement===refresh){
+      const replacement=Array.from(document.querySelectorAll('['+focusAttribute+']'))
+        .find(button=>button.getAttribute(focusAttribute)===focusedId);
+      if(replacement) replacement.focus();
+    }
   }catch(e){
     showMediaState('error',mediaText.mediaLibraryError,loadMediaCatalog);
+  }finally{
+    mediaCatalogLoading=false;
+    refresh.removeAttribute('aria-busy');
+  }
+}
+
+async function checkMediaSources(){
+  if(document.hidden||mediaCatalogLoading||mediaSourceChecking||!mediaSourceRevision) return;
+  mediaSourceChecking=true;
+  try{
+    const response=await fetch('/api/media/sources',{cache:'no-store'});
+    if(!response.ok) return;
+    const {sourceRevision}=await response.json();
+    if(typeof sourceRevision==='string'&&sourceRevision!==mediaSourceRevision) await loadMediaCatalog();
+  }catch(e){
+    // The refresh control remains available during transient connection failures.
+  }finally{
+    mediaSourceChecking=false;
   }
 }
 
@@ -220,6 +263,7 @@ async function toggleMediaFavorite(item,button){
       showMediaState('error',mediaText.mediaLibraryUnavailable);
       return;
     }
+    if(response.status===404){ await loadMediaCatalog(); return; }
     if(!response.ok) throw new Error('Favorite failed');
     const payload=await response.json();
     if(!payload||payload.favorite!==favorite) throw new Error('Invalid favorite response');
@@ -251,6 +295,7 @@ async function playMedia(item,button){
       showMediaState('error',mediaText.mediaLibraryUnavailable);
       return;
     }
+    if(response.status===404){ await loadMediaCatalog(); return; }
     if(!response.ok) throw new Error('Launch failed');
     mediaRecentIds=[item.id,...mediaRecentIds.filter(mediaId=>mediaId!==item.id)].slice(0,50);
     if(mediaFilter==='recents') renderMediaCatalog();
@@ -281,6 +326,7 @@ function handleMediaKeys(event){
 
 async function initializeMediaLibrary(){
   document.getElementById('mediaBack').addEventListener('click',mediaHome);
+  document.getElementById('mediaRefresh').addEventListener('click',loadMediaCatalog);
   document.getElementById('mediaFilters').addEventListener('click',event=>{
     const button=event.target.closest('[data-media-filter]');
     if(button) setMediaFilter(button.dataset.mediaFilter);
@@ -299,6 +345,8 @@ async function initializeMediaLibrary(){
     applyMediaTheme(mediaConfig);
     localizeMediaPage(tile);
     await loadMediaCatalog();
+    window.setInterval(checkMediaSources,10000);
+    document.addEventListener('visibilitychange',checkMediaSources);
   }catch(e){
     localizeMediaPage(null);
     showMediaState('error',mediaText.mediaLibraryError,()=>window.location.reload());

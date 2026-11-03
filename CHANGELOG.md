@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Living Room
+
+- Add Parent-managed media folders and refresh the cover library as local storage disconnects or reconnects.
+
 ### Languages
 
 - Add Italian for guided installation, the launcher, native timer messages and catalog guidance.

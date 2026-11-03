@@ -255,8 +255,9 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 #### Living-room foundations
 
 - [ ] Add optional gamepad and simple remote-control navigation with the same focus and modal boundaries as keyboard input
-- [ ] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
-- [ ] Handle removable-media disconnect and reconnect states without stale covers, crashes, or path leakage
+- [x] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
+- [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
+- [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix
 - [ ] Add optional child-friendly folders and categories without recommendations, streaks, or engagement scoring
 - [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets

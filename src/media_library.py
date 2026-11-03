@@ -4,6 +4,8 @@ import glob
 import hashlib
 import os
 import shutil
+import stat
+from pathlib import PurePosixPath
 
 
 SUPPORTED_MEDIA_PATTERNS = (
@@ -25,9 +27,64 @@ MAX_MEDIA_ITEMS = 2000
 MAX_MEDIA_COVER_BYTES = 10 * 1024 * 1024
 MAX_MEDIA_SCAN_DIRECTORIES = 5000
 MAX_MEDIA_SCAN_FILES = 20000
+MAX_MEDIA_ROOTS = 8
 SUPPORTED_VIDEO_EXTENSIONS = frozenset({".avi", ".mkv", ".mov", ".mp4", ".webm"})
 SUPPORTED_AUDIO_EXTENSIONS = frozenset({".flac", ".m4a", ".mp3", ".ogg", ".wav"})
 SUPPORTED_COVER_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
+
+
+def validate_media_roots(value):
+    """Validate parent-entered Linux paths without requiring storage to be online."""
+    if not isinstance(value, list) or len(value) > MAX_MEDIA_ROOTS:
+        raise ValueError("A maximum of eight media folders is supported")
+    roots = []
+    for path in value:
+        if (
+            not isinstance(path, str)
+            or len(path) > 2048
+            or any(
+                ord(character) < 32 or ord(character) == 127 or "\ud800" <= character <= "\udfff"
+                for character in path
+            )
+        ):
+            raise ValueError("Invalid media folder")
+        directory = PurePosixPath(path)
+        if (
+            not directory.is_absolute()
+            or directory.anchor != "/"
+            or len(directory.parts) < 2
+            or any(part.startswith(".") for part in directory.parts[1:])
+        ):
+            raise ValueError("Media folders must be absolute, non-hidden paths")
+        normalized = str(directory)
+        if normalized not in roots:
+            roots.append(normalized)
+    return roots
+
+
+def managed_media_sources(roots):
+    """Return usable roots and a path-free snapshot of their availability."""
+    available = []
+    signatures = []
+    for root in roots:
+        try:
+            info = os.stat(root)
+            if (
+                not stat.S_ISDIR(info.st_mode)
+                or os.path.realpath(root) != root
+                or not os.access(root, os.R_OK | os.X_OK)
+            ):
+                raise OSError("Media folder unavailable")
+        except OSError:
+            signatures.append(None)
+        else:
+            available.append(root)
+            signatures.append((info.st_dev, info.st_ino, info.st_mtime_ns))
+    revision = hashlib.sha256(repr(signatures).encode("ascii")).hexdigest()[:24]
+    return available, {
+        "sourceRevision": revision,
+        "unavailableSources": len(roots) - len(available),
+    }
 
 
 def has_media(path, patterns=SUPPORTED_MEDIA_PATTERNS):

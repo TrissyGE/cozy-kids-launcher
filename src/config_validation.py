@@ -6,6 +6,7 @@ import re
 from browser_policy import normalize_browser_allowed_origins
 from config_store import migrate_config
 from language_registry import LANGUAGE_CODES
+from media_library import validate_media_roots
 from parent_auth import is_supported_pin_hash
 from profile_config import (
     MAX_PROFILES,
@@ -36,6 +37,8 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
         raise ValueError("Config must be a JSON object")
     result = copy.deepcopy(data)
     result.pop("pinConfigured", None)
+    if "mediaRoots" in result:
+        result["mediaRoots"] = validate_media_roots(result["mediaRoots"])
     tiles = result.get("tiles")
     if not isinstance(tiles, list):
         raise ValueError("tiles must be a list")
@@ -254,6 +257,8 @@ def validate_stored_config(data, existing_pin_hash="", allow_pin_hash=False):
         seen_ids.add(profile_id)
 
         candidate = copy.deepcopy(profile)
+        if "mediaRoots" in candidate:
+            raise ValueError("Media folders must be stored in global settings")
         candidate["configVersion"] = result["configVersion"]
         candidate.setdefault("tiles", [])
         candidate.setdefault("favorites", [])
@@ -293,4 +298,5 @@ def public_config(data):
     ):
         result["profiles"] = profile_summaries(data)
     result["pinConfigured"] = bool(result.pop("pinHash", ""))
+    result.pop("mediaRoots", None)
     return result

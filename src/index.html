@@ -321,6 +321,13 @@
             <div id="forms"></div>
             <div id="adminTileEmptyState" class="admin-empty-state" role="status" hidden></div>
             <div class="adminpagenav" id="adminPageNav"></div>
+            <section class="backup-panel media-roots-panel" aria-labelledby="mediaRootsLabel">
+              <label id="mediaRootsLabel" for="mediaRootsInput"></label>
+              <p id="mediaRootsHint" class="muted"></p>
+              <textarea id="mediaRootsInput" rows="3" maxlength="16391" dir="ltr" spellcheck="false" aria-describedby="mediaRootsHint" disabled></textarea>
+              <button id="mediaRootsSave" class="smallbtn" type="button" onclick="saveMediaRoots()" disabled></button>
+              <div id="mediaRootsStatus" role="status" aria-live="polite"></div>
+            </section>
             <div id="recommendations" style="margin-top:18px;"></div>
           </section>
 

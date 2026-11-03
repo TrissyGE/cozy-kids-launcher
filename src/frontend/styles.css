@@ -209,6 +209,11 @@
   .browser-primary { display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:8px; }
   .browser-allowlist { display:grid; gap:4px; font-size:.82rem; font-weight:700; }
   .browser-allowlist textarea { min-height:64px; resize:vertical; font:inherit; }
+  .media-roots-panel { display:grid; gap:8px; }
+  .media-roots-panel label { font-weight:700; }
+  .media-roots-panel p { margin:0; }
+  .media-roots-panel textarea { box-sizing:border-box; width:100%; resize:vertical; font:inherit; }
+  .media-roots-panel button { justify-self:start; }
   .browser-boundary-hint { margin:0; line-height:1.35; }
   .tileform.has-browser > .appSelect { display:none; }
   .tileform > .smallbtn { grid-column:7; }

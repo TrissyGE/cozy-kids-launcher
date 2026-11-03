@@ -73,10 +73,12 @@ from media_library import (
     catalog_item,
     find_media_player as detect_media_player,
     has_media as path_has_media,
+    managed_media_sources,
     media_locations as discover_media_locations,
     media_player_command,
     public_media_catalog,
     scan_media_catalog,
+    validate_media_roots,
 )
 from media_state import (
     media_state_payload,
@@ -368,9 +370,11 @@ def media_locations():
     )
 
 
-def media_catalog():
-    """Return a bounded catalog without changing the legacy playlist launch path."""
-    return scan_media_catalog((VIDEOS, MUSIC, ALT_MUSIC))
+def media_catalog(cfg):
+    """Return the bounded library and the availability snapshot used to build it."""
+    roots, sources = managed_media_sources(cfg.get("mediaRoots", []))
+    entries, truncated = scan_media_catalog((VIDEOS, MUSIC, ALT_MUSIC, *roots))
+    return entries, truncated, sources
 
 
 def configured_media_tile(cfg, tile_id):
@@ -849,9 +853,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(page)
             return
-        if request_url.path == "/api/media":
-            entries, truncated = media_catalog()
+        if request_url.path == "/api/media/roots":
             cfg = load_cfg()
+            if self.require_admin(cfg):
+                return self.json_response({"roots": cfg.get("mediaRoots", [])})
+            return
+        if request_url.path == "/api/media/sources":
+            _, sources = managed_media_sources(load_cfg().get("mediaRoots", []))
+            return self.json_response(sources)
+        if request_url.path == "/api/media":
+            cfg = load_cfg()
+            entries, truncated, sources = media_catalog(cfg)
             try:
                 state = media_state_payload(
                     MEDIA_STATE_FILE,
@@ -863,15 +875,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self.json_response({
                 "items": public_media_catalog(entries),
                 "truncated": truncated,
+                **sources,
                 **state,
             })
         if request_url.path == "/api/media/cover":
             query = parse_qs(request_url.query, keep_blank_values=True)
             media_ids = query.get("id", [])
-            if len(media_ids) != 1 or len(query) != 1:
+            cover_versions = query.get("v", ["0"])
+            if (
+                len(media_ids) != 1
+                or set(query) - {"id", "v"}
+                or len(cover_versions) != 1
+                or not re.fullmatch(r"[0-9]{1,16}", cover_versions[0])
+            ):
                 self.send_error(404)
                 return
-            entries, _ = media_catalog()
+            entries, _, _ = media_catalog(load_cfg())
             return self.media_cover_response(catalog_item(entries, media_ids[0]))
         if request_url.path == "/api/config":
             cfg = load_cfg()
@@ -1025,8 +1044,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         action = self.path.strip("/")
         if action.startswith("launch/") or action in {
-            "api/media/play", "api/profiles/create", "api/profiles/select", "api/profiles/delete",
+            "api/media/play", "api/media/roots", "api/profiles/create", "api/profiles/select", "api/profiles/delete",
             "api/save-config", "api/import-config", "api/backups/restore", "api/budget/session",
+            "api/verify-pin", "api/pin/set", "api/pin/remove",
             "api/budget/extend", "exit-kids",
         }:
             with _family_lock:
@@ -1034,6 +1054,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self.dispatch_post(action)
 
     def dispatch_post(self, action):
+        if action == "api/media/roots":
+            stored = load_stored_cfg()
+            if not self.require_admin(stored):
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            try:
+                roots = body.get("roots") if isinstance(body, dict) else None
+                stored["mediaRoots"] = validate_media_roots(roots)
+                stored = save_stored_cfg(stored)
+            except ValueError:
+                return self.json_response({"status": "invalid"}, 400)
+            except OSError:
+                return self.json_response({"status": "error"}, 503)
+            return self.json_response({"roots": stored["mediaRoots"]})
         if action in ("api/budget/session", "api/budget/extend"):
             body = self.read_json_body()
             if body is None:
@@ -1143,7 +1179,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     "reason": availability["reason"],
                 }, 403)
                 return
-            entries, _ = media_catalog()
+            entries, _, _ = media_catalog(cfg)
             item = catalog_item(entries, body.get("mediaId"))
             if not item:
                 self.send_response(404)
@@ -1184,7 +1220,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     "reason": availability["reason"],
                 }, 403)
                 return
-            entries, _ = media_catalog()
+            entries, _, _ = media_catalog(cfg)
             item = catalog_item(entries, body.get("mediaId"))
             if not item:
                 self.send_response(404)
