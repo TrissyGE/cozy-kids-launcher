@@ -185,7 +185,7 @@ their own evidence is complete. See the release standard at the end.
 - [x] Add terminal-free PackageKit/APT review, consent, system authorization, progress and add-tile flow (#60)
 - [x] Protect existing package routes with Parent/origin checks, catalog-controlled names and expiring single-use confirmation (#60)
 - [x] Add private restart journaling that reports uncertainty and never replays installation consent (#60)
-- [ ] Add explicit update/removal review and progress flows under the same Parent/provider boundaries
+- [x] Add explicit APT PackageKit update and removal review, consent and progress for a single selected app
 - [ ] Reattach supported system transactions after a launcher restart and recover full progress safely
 - [ ] Implement tested native DNF/Pacman/Zypper and managed Flatpak execution adapters
 - [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation

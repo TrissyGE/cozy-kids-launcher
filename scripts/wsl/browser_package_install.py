@@ -13,7 +13,7 @@ def run_catalog_install_scenarios(browser, artifacts):
         const stored=await fetch('/api/config');
         if(!stored.ok) throw new Error('Could not snapshot catalog fixture configuration');
         window.__pkgStoredConfig=await stored.json();
-        window.__pkgFetch=window.fetch.bind(window); window.__pkgInstallCalls=0;
+        window.__pkgFetch=window.fetch.bind(window); window.__pkgInstallCalls=0; window.__pkgConfirmCalls=0;
         window.__pkgRec={id:'e2e-catalog',package:'fixture',name_en:'Creative App',name_de:'Kreativ-App',
             label_en:'Creative App',label_de:'Kreativ-App',emoji:'🎨',category:'creative',cmd:['true','cozy-catalog-fixture'],installed:false};
         window.__pkgRecommendations=[...recommendations,window.__pkgRec]; recommendations=window.__pkgRecommendations;
@@ -25,6 +25,15 @@ def run_catalog_install_scenarios(browser, artifacts):
             const path=String(input);
             if(path==='/api/packages/prepare'){
                 if(window.__pkgMode==='deferred') return new Promise(resolve=>{window.__pkgResolve=resolve;});
+                if(window.__pkgMode==='maintenance'){
+                    const body=JSON.parse(options.body);
+                    if(body.appId!=='e2e-catalog'||!['update','remove'].includes(body.operation)){
+                        throw new Error('Unexpected maintenance request');
+                    }
+                    window.__pkgState={...window.__pkgReady,operation:body.operation,currentVersion:'1.0',
+                        packages:['fixture'],downloadBytes:body.operation==='update'?2097152:null};
+                    if(body.operation==='update') window.__pkgState.targetVersion='2.0';
+                }
                 return Promise.resolve(new Response(JSON.stringify(window.__pkgState)));
             }
             if(path==='/api/packages/status'){
@@ -37,8 +46,14 @@ def run_catalog_install_scenarios(browser, artifacts):
                 if(window.__pkgMode==='lost-reply') return Promise.reject(new TypeError('synthetic lost reply'));
                 return Promise.resolve(new Response(JSON.stringify(window.__pkgState)));
             }
+            if(path==='/api/packages/confirm'){
+                window.__pkgConfirmCalls++;
+                window.__pkgConfirmBody=JSON.parse(options.body);
+                window.__pkgState={...window.__pkgState,status:'installing',phase:'authorization'};
+                return Promise.resolve(new Response(JSON.stringify(window.__pkgState)));
+            }
             if(path==='/api/recommendations'){
-                window.__pkgRec.installed=window.__pkgState.status==='complete';
+                window.__pkgRec.installed=window.__pkgState.status==='complete'&&window.__pkgState.operation!=='remove';
                 return Promise.resolve(new Response(JSON.stringify(window.__pkgRecommendations)));
             }
             return window.__pkgFetch(input,options);
@@ -111,6 +126,48 @@ def run_catalog_install_scenarios(browser, artifacts):
         browser.evaluate("window.__pkgResolve(new Response(JSON.stringify(window.__pkgReady)))")
         browser.evaluate("new Promise(resolve=>setTimeout(resolve,100))", await_promise=True)
         check("!packageIsOpen() && window.__pkgInstallCalls===1", 'A late preparation reopened the dialog or installed')
+        browser.set_device_metrics(800, 600)
+        browser.evaluate("window.__pkgMode='maintenance'; window.__pkgRec.installed=true; renderRecommendations()")
+        browser.click('[data-catalog-id="e2e-catalog"] summary')
+        browser.click('[data-catalog-id="e2e-catalog"] [data-package-operation="update"]')
+        browser.wait_for("packageJob.status==='ready' && packageJob.operation==='update'")
+        check("""
+            window.__pkgConfirmCalls===0 &&
+            document.getElementById('packageMessage').textContent.includes(uiText.packageMaintenance.updateReview) &&
+            document.getElementById('packageSummary').textContent.includes('1.0 → 2.0') &&
+            document.getElementById('packageAction').textContent===uiText.packageMaintenance.updateNow
+        """, 'The update did not show a review and exact version change before consent')
+        browser.click('#packageAction')
+        browser.wait_for("packageJob.status==='installing' && window.__pkgConfirmCalls===1")
+        check("""
+            JSON.stringify(window.__pkgConfirmBody)===JSON.stringify({jobId:'fixture-job',confirmationToken:'fixture-consent'})
+        """, 'Maintenance execution included unreviewed client parameters')
+        browser.evaluate("window.__pkgState.status='complete'; refreshPackageStatus()", await_promise=True)
+        check("""
+            document.getElementById('packageMessage').textContent.includes(uiText.packageMaintenance.updated) &&
+            document.getElementById('packageAction').hidden && cfg.tiles.some(tile=>tile.id==='e2e-catalog')
+        """, 'Update completion offered a duplicate tile or lost the existing tile')
+        browser.click('#packageClose')
+        browser.click('[data-catalog-id="e2e-catalog"] summary')
+        browser.click('[data-catalog-id="e2e-catalog"] [data-package-operation="remove"]')
+        browser.wait_for("packageJob.status==='ready' && packageJob.operation==='remove'")
+        check("""
+            window.__pkgConfirmCalls===1 &&
+            document.getElementById('packageMessage').textContent.includes(uiText.packageMaintenance.removeReview) &&
+            !document.getElementById('packageSummary').textContent.includes('MB') &&
+            document.querySelector('.package-box').scrollWidth<=document.querySelector('.package-box').clientWidth+1 &&
+            document.getElementById('packageHint').textContent===uiText.packageMaintenance.removeConsent
+        """, 'Removal review lacked explicit consequences or showed a fake download')
+        browser.click('#packageAction')
+        browser.wait_for("packageJob.status==='installing' && window.__pkgConfirmCalls===2")
+        browser.evaluate("window.__pkgState.status='complete'; refreshPackageStatus()", await_promise=True)
+        browser.click('#packageClose')
+        check("""
+            cfg.tiles.some(tile=>tile.id==='e2e-catalog') &&
+            document.querySelector('[data-catalog-id="e2e-catalog"] .actions button').textContent===uiText.install &&
+            !document.querySelector('[data-catalog-id="e2e-catalog"] [data-package-operation="remove"]')
+        """, 'Removing a package lost its tile or prevented reinstalling from the catalog')
+        browser.set_device_metrics(1440, 900)
     finally:
         # Adding a tile deliberately exercises the real config endpoint. Restore
         # both server and client fixtures: earlier journeys can have unsaved UI
@@ -120,4 +177,4 @@ def run_catalog_install_scenarios(browser, artifacts):
             cfg=window.__pkgStoredConfig; await persistConfig();
             cfg=window.__pkgClientConfig; renderAll();
         })()""", await_promise=True)
-    print('  ✓ terminal-free review, consent, progress, errors, reconnect, and adding a tile', flush=True)
+    print('  ✓ terminal-free install, update and removal review, consent, progress, errors and tile preservation', flush=True)

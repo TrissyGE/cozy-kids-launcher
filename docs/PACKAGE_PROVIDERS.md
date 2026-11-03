@@ -32,6 +32,14 @@ root HTTP server, custom privileged helper, or package-source modification.
    `ONLY_TRUSTED` and interactive system authorization, then verify the target
    package is installed before reporting success.
 
+For an installed native app, maintenance uses `GetUpdates` and
+`UpdatePackages`, or `RemovePackages` with dependent removal and autoremove
+disabled. Simulation must report exactly the selected package and intended
+operation. A plan changing any other package is referred to the system
+software manager. An update must verify the reviewed version and architecture
+after completion. Removal must verify that the native package is absent.
+See the [PackageKit client contract](https://packagekit.freedesktop.org/doc/class.Client.html).
+
 Resolution and execution are separate PackageKit transactions, not an atomic
 reservation of the system package database. Another package manager can change
 system state between them. The system backend remains responsible for locking
@@ -40,7 +48,7 @@ and consistency; this layer does not offer a universal rollback guarantee.
 `package_install.py` owns one background job. Double clicks, concurrent requests,
 lost HTTP replies, stale tokens and unreviewed client-supplied package IDs cannot
 start a second job. A private atomic journal records only job ID, catalog app ID
-and status; it never stores passwords, confirmation tokens or executable plans.
+operation and status. It never stores passwords, confirmation tokens or executable plans.
 After a launcher restart it reports uncertainty and never replays an action.
 Before preparing another plan, the backend checks for existing transactions.
 Closing the dialog does not terminate the system package manager. In-place
@@ -49,9 +57,12 @@ reattachment across process restarts is future work.
 
 The existing local-origin and Parent-session guards protect all new routes:
 
-- `POST /api/packages/prepare` accepts only `{appId}` and returns a background job.
+- `POST /api/packages/prepare` accepts `{appId}` for installation, or
+  `{appId, operation}` with `install`, `update` or `remove`.
 - `GET /api/packages/status` returns only the current Parent-visible job.
-- `POST /api/packages/install` accepts only `{jobId, confirmationToken}`.
+- `POST /api/packages/confirm` accepts only `{jobId, confirmationToken}` and
+  runs the operation bound to that review. The compatible
+  `/api/packages/install` endpoint accepts the same body for installation jobs.
 
 PackageKit/Polkit owns system authentication. The Parent PIN is not the Linux
 password. Cozy Kids does not collect, store or send that password. No Polkit

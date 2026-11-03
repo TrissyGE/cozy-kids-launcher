@@ -595,7 +595,8 @@ class ServerApiTests(unittest.TestCase):
         self.httpd.package_installer = installer
         for path, method, body in (("/api/packages/status", "GET", None),
                                    ("/api/packages/prepare", "POST", {"appId": "tuxpaint"}),
-                                   ("/api/packages/install", "POST", {"jobId": "j", "confirmationToken": "t"})):
+                                   ("/api/packages/install", "POST", {"jobId": "j", "confirmationToken": "t"}),
+                                   ("/api/packages/confirm", "POST", {"jobId": "j", "confirmationToken": "t"})):
             status, _, _ = self.request(path, method=method, body=body, origin=self.base_url)
             self.assertEqual(status, 403)
         installer.prepare.assert_not_called()
@@ -618,7 +619,17 @@ class ServerApiTests(unittest.TestCase):
                                     body={'jobId': 'safe', 'confirmationToken': 'consent'},
                                     origin=self.base_url, cookie=cookie)
         self.assertEqual(status, 202)
-        installer.start.assert_called_once_with('safe', 'consent')
+        installer.start.assert_called_once_with('safe', 'consent', expected_operation='install')
+        status, _, _ = self.request('/api/packages/prepare', method='POST',
+                                    body={'appId': 'tuxpaint', 'operation': 'remove'},
+                                    origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        self.assertEqual(installer.prepare.call_args.args[2], 'remove')
+        status, _, _ = self.request('/api/packages/confirm', method='POST',
+                                    body={'jobId': 'safe', 'confirmationToken': 'consent'},
+                                    origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        installer.start.assert_called_with('safe', 'consent', expected_operation=None)
         installer.snapshot.return_value = {'status': 'complete'}
         status, data, _ = self.request('/api/packages/status', cookie=cookie)
         self.assertEqual(status, 200)

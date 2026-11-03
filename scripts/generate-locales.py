@@ -82,6 +82,11 @@ EXTRA_UI_KEYS = {
 }
 
 UI_GROUPS = {
+    "packageMaintenance": ("package_maintenance", (
+        "checkUpdate remove checking auth denied changes changed failed notInstalled noUpdate "
+        "interrupted unsupported updating removing keepOpen updateReview removeReview version versions "
+        "consent removeConsent removeNow updateNow removed updated"
+    ).split()),
     "themes": ("theme_name", (
         "rosa lila blau gruen regenbogen wald weltraum ocean dinosaurier "
         "baustelle prinzessin bauernhof katzen hunde custom"

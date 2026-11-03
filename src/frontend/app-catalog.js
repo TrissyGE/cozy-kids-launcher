@@ -78,9 +78,9 @@ function renderCatalogResults(){
     state.textContent=rec.category==='browser'?uiText.catalogWeb:rec.installed?uiText.installed:uiText.notInstalled;
     const actions=document.createElement('div'); actions.className='actions';
     const button=document.createElement('button'); button.className='smallbtn';
-    if(catalogAdded(rec)){button.disabled=true; setIconLabel(button,'save',uiText.added);}
-    else if(rec.installed){setIconLabel(button,'add',uiText.addTile); button.onclick=()=>addCatalogTile(rec,button);}
-    else {setIconLabel(button,'download',uiText.install); button.onclick=()=>triggerInstall(rec);}
+    if(!rec.installed){setIconLabel(button,'download',uiText.install); button.onclick=()=>triggerInstall(rec);}
+    else if(catalogAdded(rec)){button.disabled=true; setIconLabel(button,'save',uiText.added);}
+    else {setIconLabel(button,'add',uiText.addTile); button.onclick=()=>addCatalogTile(rec,button);}
     actions.appendChild(button);
     card.append(createTileVisual(rec.emoji,'emoji'),name,desc,state,actions,catalogDetails(rec));
     grid.appendChild(card);
@@ -126,6 +126,17 @@ function catalogDetails(rec){
     if(reference&&typeof reference==='object') addSource(reference.url,catalogText(reference,'label'));
   }
   if(sources.childElementCount) details.appendChild(sources);
+  const aptPackage=rec.packages?.apt??rec.package;
+  if(rec.installed&&typeof aptPackage==='string'&&aptPackage){
+    const maintenance=document.createElement('div'); maintenance.className='actions catalog-maintenance';
+    for(const [operation,label] of [['update',uiText.packageMaintenance.checkUpdate],['remove',uiText.packageMaintenance.remove]]){
+      const button=document.createElement('button');
+      button.type='button'; button.className='smallbtn'; button.dataset.packageOperation=operation;
+      button.textContent=label; button.onclick=()=>preparePackageOperation(rec,operation);
+      maintenance.appendChild(button);
+    }
+    details.appendChild(maintenance);
+  }
   return details;
 }
 
