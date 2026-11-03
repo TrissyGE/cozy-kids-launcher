@@ -118,6 +118,8 @@ label.chk {
 
 .pinbox, .timerbox, .confirm-box { max-width:420px; }
 .install-box { max-width:480px; }
+:root[dir='rtl'] .ui-icon-directional { transform:scaleX(-1); }
+
 .save { background:var(--btn); color:var(--btn-text); }
 
 button:focus-visible, input:focus-visible, select:focus-visible,

@@ -65,6 +65,7 @@ function createLocalIcon(name,className='ui-icon'){
   svg.setAttribute('aria-hidden','true');
   svg.setAttribute('focusable','false');
   svg.classList.add('ui-icon');
+  if(['back','nav-left','nav-right'].includes(name)) svg.classList.add('ui-icon-directional');
   svg.classList.add(...String(className||'ui-icon').split(/\s+/).filter(Boolean));
   for(const data of paths){
     const path=document.createElementNS(SVG_NAMESPACE,'path');

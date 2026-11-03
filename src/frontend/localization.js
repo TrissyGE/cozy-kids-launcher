@@ -5,6 +5,17 @@ function normalizedInterfaceLanguage(language){
     ?language:INTERFACE_LANGUAGE_REGISTRY.default;
 }
 
+function applyDocumentLanguage(language){
+  const code=normalizedInterfaceLanguage(language);
+  const entry=INTERFACE_LANGUAGE_REGISTRY.languages.find(item=>item.code===code);
+  document.documentElement.lang=code;
+  document.documentElement.dir=entry?.direction==='rtl'?'rtl':'ltr';
+}
+
+function inlineDirection(){
+  return document.documentElement.dir==='rtl'?-1:1;
+}
+
 function localizedCount(key,count,total){
   const language=interfaceLanguage();
   const category=new Intl.PluralRules(language).select(total??count);
@@ -28,7 +39,7 @@ async function fetchInterfaceLocale(normalized){
 
 function applyInterfaceLocale(language,locale){
   uiText=locale;
-  document.documentElement.lang=language;
+  applyDocumentLanguage(language);
 }
 
 async function loadInterfaceLanguage(language){

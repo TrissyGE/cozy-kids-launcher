@@ -74,4 +74,22 @@ use, available local voices, and 800×600 layouts. Use the required Linux
 [desktop sessions](DESKTOP_TESTING.md) for native helper acceptance. Record
 which sessions were actually exercised.
 
-Italian and right-to-left acceptance remain tracked in [ROADMAP.md](ROADMAP.md).
+## Right-to-left layouts
+
+Set `"direction": "rtl"` on the registry entry for a right-to-left language.
+The installer and browser wrapper set the document direction, and the
+launcher and media library update it when they load the saved locale.
+The direction defaults to left-to-right for registry entries without the
+field.
+
+Use CSS inline start and end for spacing and placement. Previous and next
+controls follow reading order, while arrow keys move in the physical
+direction shown on screen. Keep command arguments, URLs and PIN digits
+left-to-right. Let user-entered names and home titles determine their own
+direction.
+
+The browser suite exercises an in-memory RTL fixture at 800×600. Before
+enabling a real pack, a fluent reviewer still needs to check mixed-script
+text, labels, screen readers, touch input, and the native helper windows.
+Italian and real right-to-left language acceptance remain tracked in
+[ROADMAP.md](ROADMAP.md).

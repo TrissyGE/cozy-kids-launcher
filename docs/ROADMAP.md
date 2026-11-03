@@ -212,7 +212,8 @@ their own evidence is complete. See the release standard at the end.
 - [x] Document translation contributions, terminology and review ownership; report missing source keys for draft and enabled languages
 - [x] Exercise all four enabled languages in the 800×600 Parent layout with localized counts and keyboard focus recovery
 - [ ] Complete physical-device language acceptance for long labels, localized dates and available speech voices
-- [ ] Prepare direction-aware layout and RTL acceptance for later languages such as Arabic/Hebrew
+- [x] Add registry-driven RTL layout, mirrored navigation and synthetic browser coverage
+- [ ] Complete RTL language acceptance with a reviewed language pack such as Arabic or Hebrew
 
 The [translation guide](LOCALIZATION.md) describes the shared registry,
 contributor workflow, and coverage reports. German, English, Spanish and

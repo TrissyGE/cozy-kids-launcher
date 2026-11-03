@@ -1361,7 +1361,7 @@ class ServerApiTests(unittest.TestCase):
                 self.assertEqual(response.status, 200)
                 policy = response.headers["Content-Security-Policy"]
                 page = response.read().decode("utf-8")
-            self.assertIn(f'<html lang="{language}">', page)
+            self.assertIn(f'<html lang="{language}" dir="ltr">', page)
             self.assertIn(load_translations(language)["browser_boundary_title"], page)
             self.assertNotIn("{{", page)
         self.assertIn(

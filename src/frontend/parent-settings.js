@@ -162,8 +162,10 @@ function handleAdminNavKey(event){
   event.preventDefault();
   if(event.key==='Home') index=0;
   else if(event.key==='End') index=buttons.length-1;
-  else if(event.key==='ArrowUp'||event.key==='ArrowLeft') index=(index-1+buttons.length)%buttons.length;
-  else index=(index+1)%buttons.length;
+  else{
+    const step={ArrowUp:-1,ArrowDown:1,ArrowLeft:-inlineDirection(),ArrowRight:inlineDirection()}[event.key];
+    index=(index+step+buttons.length)%buttons.length;
+  }
   const button=buttons[index];
   activateAdminSection(button.dataset.adminSection);
   button.focus();
@@ -553,6 +555,7 @@ function renderAdmin(){
     const browserWrap=document.createElement('div');
     browserWrap.className='browserWrap';
     const urlInput=document.createElement('input');
+    urlInput.dir='ltr';
     urlInput.placeholder='https://...';
     const typeSelect=document.createElement('select');
     const optEmb=document.createElement('option');
@@ -571,6 +574,7 @@ function renderAdmin(){
     const allowlistTitle=document.createElement('span');
     allowlistTitle.textContent=uiText.browserAllowlistLabel;
     const allowlistInput=document.createElement('textarea');
+    allowlistInput.dir='ltr';
     allowlistInput.rows=2;
     allowlistInput.placeholder='https://media.example';
     allowlistInput.value=Array.isArray(tile.browserAllowedOrigins)

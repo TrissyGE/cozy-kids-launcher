@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import re
 
-from language_registry import DEFAULT_LANGUAGE, LANGUAGE_CODES
+from language_registry import DEFAULT_LANGUAGE, LANGUAGE_CODES, language_direction
 from translation_data import load_translations
 
 
@@ -38,7 +38,7 @@ _WRAPPER_TOKEN = re.compile(r"\{\{(html|js)_([a-z_]+)\}\}")
 
 def render_browser_wrapper(template, language):
     language, translations = runtime_locale(language)
-    values = {**translations, "language": language}
+    values = {**translations, "language": language, "direction": language_direction(language)}
 
     def replace(match):
         context, key = match.groups()

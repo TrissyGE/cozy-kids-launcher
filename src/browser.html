@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="{{html_language}}">
+<html lang="{{html_language}}" dir="{{html_direction}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -65,7 +65,7 @@
     <div class="emoji">⏰</div>
     <h2>{{html_timer_expired_title}}</h2>
     <p>{{html_timer_expired_body}}</p>
-    <input id="timerBlockPin" type="password" inputmode="numeric" maxlength="6" placeholder="{{html_pin_placeholder}}">
+    <input id="timerBlockPin" type="password" inputmode="numeric" dir="ltr" maxlength="6" placeholder="{{html_pin_placeholder}}">
     <div id="timerBlockErr" style="color:#c00; font-weight:600; min-height:24px;"></div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
       <button style="border:0; border-radius:18px; padding:10px 18px; font-size:1rem; font-weight:700; background:#e85a9c; color:#fff; cursor:pointer;" onclick="extendFromBlock(15)">+15</button>
