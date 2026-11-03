@@ -670,7 +670,8 @@ def budget_monitor(stop):
                 finish_budget_session()
                 should_stop = True
             if should_stop:
-                application_launcher().reset_active_tile()
+                # The overlay notices the stopped process and restores launcher focus.
+                stop_active_tile()
 
 
 def load_timer():
