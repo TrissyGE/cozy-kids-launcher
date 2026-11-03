@@ -1,9 +1,9 @@
 # Catalog guidance review
 
-The following guidance was reviewed on **2026-11-02** against the projects'
-own documentation. This is a documentation review, separate from package,
+The following guidance was reviewed on **2026-11-02 and 2026-11-03** against
+the projects’ and providers’ own documentation. This is a documentation review, separate from package,
 fullscreen and input acceptance. The catalog still contains all 31 existing
-recommendations; eleven have guidance and the others show unknown fields.
+recommendations. Twenty now have guidance and eleven still show unknown fields.
 
 | Recommendation | Source and scope |
 |---|---|
@@ -19,7 +19,16 @@ recommendations; eleven have guidance and the others show unknown fields.
 | KBlocks | [Project](https://apps.kde.org/kblocks/) and [handbook](https://docs.kde.org/stable_kf6/en/kblocks/kblocks/index.html): falling blocks with keyboard controls. The old description's claim of no time pressure was removed; readiness for timely input is parent guidance. |
 | KReversi | [Project](https://apps.kde.org/kreversi/) and [handbook](https://docs.kde.org/stable_kf6/en/kreversi/kreversi/index.html): local board-game play. Understanding rules and planning moves are parent guidance. |
 
-The eight KDE project pages identify GPL-2.0-or-later licensing. Offline
+| Netflix Kids | [Kids experience](https://help.netflix.com/en/node/114275) and [privacy statement](https://help.netflix.com/legal/privacy). The tile opens a category, while profile and maturity restrictions are configured in Netflix. |
+| Disney+ | [Junior Mode](https://help.disneyplus.com/en-GB/article/disneyplus-en-my-kids-profiles), [advertising guidance](https://help.disneyplus.com/article/disneyplus-ads?redirect=false) and [privacy centre](https://privacy.thewaltdisneycompany.com/en/). The ad guidance is specific to Junior Mode. |
+| Prime Kids | [Kids profiles](https://digprjsurvey.amazon.com/csad/help/node/GTYL2UYVAAPUD6WE) for profile PIN locks and possible promotional breaks. The catalog link opens the storefront. |
+| PBS Kids | [PBS KIDS privacy policy](https://pbskids.org/privacy) for website cookies and analytics. |
+| ZDFtivi | [Children’s programme](https://www.zdf.de/kinder) for programme age indicators and [privacy settings](https://www.zdf.de/datenschutz). |
+| KiKA | [Website privacy policy](https://www.kika.de/eltern/datenschutz/datenschutzerklaerung102.html) for audience measurement and embedded third-party services. |
+| Blinken | [Project](https://apps.kde.org/blinken/) and [handbook](https://docs.kde.org/trunk_kf6/en/blinken/blinken/playing-tips.html) for pattern recall and keyboard/mouse play. |
+| KWordQuiz | [Project](https://apps.kde.org/kwordquiz/) and [handbook](https://docs.kde.org/stable_kf6/en/kwordquiz/kwordquiz/kwordquiz.pdf) for locally authored flashcards. |
+| Parley | [Project](https://apps.kde.org/parley/) and [handbook](https://docs.kde.org/trunk_kf6/en/parley/parley/creating-new-files.html) for local word lists and optional downloaded collections. |
+The eleven KDE project pages identify GPL-2.0-or-later licensing. Offline
 availability describes the documented local core activities, not a guarantee
 about every version or optional feature. Network/privacy behavior remains
 **unknown** where the sources do not establish it; a review date does not
@@ -27,7 +36,7 @@ certify telemetry, advertising, accessibility, touch support or suitability
 for every child. KDE handbooks may describe a newer version than the package
 available on a particular distribution.
 
-When extending guidance, keep both enabled UI languages aligned, distinguish
+When extending guidance, keep all enabled UI languages aligned, distinguish
 project age statements from parent skill suggestions, record the ISO review
 date, and add relevant official sources to the record. Supporting references
 are bounded to four, have localized labels, and must be HTTPS URLs without
