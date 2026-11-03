@@ -245,6 +245,11 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 
 #### RetroGameCorner
 
+Use RetroArch as the default for each system with a qualified core that matches
+or exceeds the standalone emulator in game compatibility, performance, input
+and desktop integration. Evaluate standalone emulators first for newer systems
+that lack an equivalent core, including Wii U and PS3.
+
 - [x] Put emulator installation in a dedicated RetroGameCorner Parent section using the shared app-store flow
 - [x] Show one optional RetroGameCorner Home tile that opens the child's approved games in a cover library
 - [x] Support local cover images and opt-in automatic cover downloads from Libretro
@@ -253,19 +258,29 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
 - [x] Assign private mGBA save and save-state directories per child and game
 - [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
-- [ ] Make PlayStation 1 the next optional system in RetroGameCorner using Mednafen
-  - [ ] Validate Parent-supplied BIOS files against the expected regional checksums and report missing firmware before launch
-  - [ ] Import single-disc CUE/BIN games first. Keep the CUE and every referenced track inside the approved source and invalidate approval when a disc component changes
+- [ ] Make PlayStation 1 the next optional system in RetroGameCorner
+  - [x] Import Parent-supplied BIOS files locally, validate regional PS1 and supported PSP BIOS checksums and show readiness in Parent settings
+  - [x] Verify that Ubuntu RetroArch can launch the upstream Linux x86-64 PCSX ReARMed core with a CHD, the supported PSP BIOS and a private save directory
+  - [x] Offer the RetroArch package in the Parent installer and report whether the reviewed PCSX ReARMed core is available
+  - [ ] Add a maintained one-click delivery route for the reviewed PCSX ReARMed core, with artifact verification and explicit versioning. Evaluate Beetle PSX or DuckStation if needed for game compatibility
+  - [x] Discover single-disc CHDs, enforce per-child approval and verify the firmware, disc and pre-provisioned core before launch
+  - [ ] Add CUE/BIN support with every referenced track inside the approved source. Invalidate approval when a disc component changes
   - [ ] Keep memory cards private per child and game. Verify launch, controls and memory-card persistence on the desktop matrix and the physical Linux test laptop
-  - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card
+  - [ ] Add M3U sets for multi-disc games and verify disc switching with the same memory card. Support handheld playlists by resolving disc entries unambiguously inside the selected game source without following the original absolute paths
 - [ ] Add save backup and removal controls
-- [ ] Qualify PC Engine HuCards, Neo Geo Pocket / Color, WonderSwan / Color and Atari Lynx with Mednafen
-- [ ] Qualify Mega Drive, Nintendo 64 and Nintendo DS, including Parent-supplied BIOS configuration where required
-- [ ] Qualify Saturn after PS1, including BIOS, disc formats and device performance
-- [ ] Add a short local device check in Parent settings that recommends console systems using measured emulation performance and reviewed hardware requirements
-  - [ ] Show supported, untested and incompatible systems separately. Explain which measurement or hardware requirement informed each result
-  - [ ] Disable installation for a confirmed incompatible system in the Parent RetroGameCorner panel and explain the reason next to the install button
-  - [ ] Use locally generated test workloads so the device check can run before the family supplies any game files
+- [ ] Compare RetroArch cores for the existing cartridge systems. Switch a system only after verifying that existing game approvals and saves still work or have a tested migration.
+- [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
+  - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.
+  - [ ] Use bounded, locally generated test workloads that require no family game files. When the emulator is available, measure emulation speed and frame pacing with a representative workload and record the tested settings.
+  - [ ] Report recommended, limited, untested and incompatible separately. Explain the result beside the install button. Disable installation for a confirmed hardware incompatibility or unavailable install route, with a distinct explanation for each. Keep the install action available when performance is unknown and a reviewed install route exists.
+  - [ ] Scope results to the device, system, RetroArch core or standalone emulator version, and tested settings. Allow a rerun after a driver, core or emulator update. Keep per-game compatibility separate from the device result.
+- [ ] Qualify optional systems in groups after PS1
+  - [ ] Earlier cartridges and arcade games including Atari 2600/5200/7800, ColecoVision, Intellivision, SG-1000, Mega Drive, PC Engine, Neo Geo and selected arcade boards. Review disc add-ons such as Sega CD and PC Engine CD separately.
+  - [ ] Earlier handhelds including Atari Lynx, Neo Geo Pocket / Color, WonderSwan / Color, Nintendo DS and PSP. Evaluate Nintendo 3DS and PlayStation Vita as later handhelds in scope.
+  - [ ] Nintendo 64, Saturn and Dreamcast. Qualify firmware, disc formats, controls and save isolation for each system.
+  - [ ] PlayStation 2, GameCube, Wii and original Xbox. Test [PCSX2](https://pcsx2.net/docs/setup/requirements/) first for PS2 on the physical Linux laptop and compare performance, input and fullscreen before selection. Review [Dolphin](https://dolphin-emu.org/docs/faq/) and [xemu](https://xemu.app/) for the other systems, including Wii motion input and Xbox firmware setup.
+  - [ ] Wii U and PlayStation 3. Qualify [Cemu](https://cemu.info/faq.html) and [RPCS3](https://github.com/RPCS3/rpcs3), including firmware or game installation where required and per-game compatibility guidance. Evaluate [Xenia](https://github.com/xenia-project/xenia) for Xbox 360 in the same era once a Linux installation and launch path passes review.
+  - [ ] For each new system, qualify the Parent install flow, supported game formats, required user-supplied files, child approvals, private saves and desktop acceptance before offering it in RetroGameCorner.
 - [x] Support bounded single-ROM ZIP archives from handheld game libraries
 - [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
 

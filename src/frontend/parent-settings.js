@@ -453,7 +453,50 @@ function clearRetroGames(){
   document.getElementById('retroRoots').value='';
   document.getElementById('retroGame').replaceChildren();
   document.getElementById('retroStatus').textContent='';
-  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave']) document.getElementById(id).disabled=true;
+  document.getElementById('ps1BiosInput').value='';
+  document.getElementById('ps1BiosRegions').replaceChildren();
+  document.getElementById('ps1BiosStatus').textContent='';
+  document.getElementById('ps1RuntimeStatus').textContent='';
+  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave','ps1BiosInput']) document.getElementById(id).disabled=true;
+}
+
+function renderPs1Bios(regions){
+  const statuses={ready:uiText.ps1BiosReady,missing:uiText.ps1BiosMissing,invalid:uiText.ps1BiosInvalid};
+  const list=document.getElementById('ps1BiosRegions');
+  list.replaceChildren();
+  for(const [region,name] of [['jp','SCPH-5500 (JP)'],['na','SCPH-5501 (NA)'],['eu','SCPH-5502 (EU)'],['psp','PSXONPSP660 (PSP)']]){
+    const row=document.createElement('li');
+    row.textContent=`${name} · ${statuses[regions[region]]||statuses.missing}`;
+    list.appendChild(row);
+  }
+}
+
+async function importPs1Bios(){
+  const input=document.getElementById('ps1BiosInput');
+  const status=document.getElementById('ps1BiosStatus');
+  const file=input.files[0];
+  const signal=retroSession?.signal;
+  if(!file||!signal||signal.aborted) return;
+  input.value='';
+  status.textContent='';
+  if(file.size!==512*1024){status.textContent=uiText.ps1BiosRejected;return;}
+  input.disabled=true;
+  try{
+    const response=await fetch('/api/retro/ps1-bios',{
+      method:'POST',headers:{'Content-Type':'application/octet-stream'},body:file,signal
+    });
+    if(signal.aborted) return;
+    if(response.status===400){status.textContent=uiText.ps1BiosRejected;return;}
+    if(!response.ok) throw new Error('BIOS import failed');
+    const data=await response.json();
+    if(signal.aborted) return;
+    renderPs1Bios(data.ps1Bios);
+    status.textContent=uiText.ps1BiosImported;
+  }catch(e){
+    if(!signal.aborted) status.textContent=uiText.ps1BiosImportError;
+  }finally{
+    if(!signal.aborted) input.disabled=false;
+  }
 }
 
 async function loadRetroGames(){
@@ -466,6 +509,11 @@ async function loadRetroGames(){
     if(!response.ok) throw new Error('Retro library unavailable');
     const data=await response.json();
     if(signal.aborted) return;
+    renderPs1Bios(data.ps1Bios);
+    document.getElementById('ps1BiosInput').disabled=false;
+    document.getElementById('ps1RuntimeStatus').textContent=[
+      ['RetroArch',data.ps1Runtime.retroarch],['PCSX ReARMed',data.ps1Runtime.core]
+    ].map(([name,ready])=>`${name} · ${ready?uiText.ps1BiosReady:uiText.ps1BiosMissing}`).join(' / ');
     const roots=document.getElementById('retroRoots');
     roots.value=data.roots.join('\n');
     roots.disabled=false;
@@ -575,6 +623,9 @@ function renderAdmin(){
   document.getElementById('retroCoversLabel').textContent=uiText.retroCovers;
   document.getElementById('retroSettingsSave').textContent=uiText.save;
   document.getElementById('retroGuide').textContent=uiText.retroGuide;
+  document.getElementById('ps1BiosTitle').textContent=uiText.ps1BiosTitle;
+  document.getElementById('ps1BiosGuide').textContent=uiText.ps1BiosGuide;
+  document.getElementById('ps1BiosLabel').textContent=uiText.ps1BiosLabel;
   document.getElementById('retroRootsLabel').textContent=uiText.retroRoots;
   document.getElementById('retroSave').textContent=uiText.save;
   document.getElementById('retroRefresh').textContent=uiText.retroRefresh;

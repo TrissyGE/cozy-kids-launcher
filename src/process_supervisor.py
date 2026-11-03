@@ -82,8 +82,8 @@ def _handle_termination(signum, _frame):
     _termination_signal = signum
 
 
-def _signal_owned_processes(signum):
-    for pid in reversed(owned_processes()):
+def _signal_processes(pids, signum):
+    for pid in reversed(sorted(pids)):
         try:
             os.kill(pid, signum)
         except (ProcessLookupError, PermissionError):
@@ -103,14 +103,21 @@ def _reap_children():
 def terminate_owned_tree(grace_seconds=TERMINATION_GRACE_SECONDS):
     """Stop only descendants of this supervisor, escalating after a grace period."""
     deadline = time.monotonic() + max(0.0, grace_seconds)
-    while owned_processes() and time.monotonic() < deadline:
-        _signal_owned_processes(signal.SIGTERM)
+    notified = set()
+    while time.monotonic() < deadline:
+        owned = set(owned_processes())
+        if not owned:
+            break
+        # RetroArch exits immediately on a second signal, before it can save.
+        _signal_processes(owned - notified, signal.SIGTERM)
+        notified.update(owned)
         _reap_children()
         time.sleep(POLL_SECONDS)
     for _attempt in range(20):
-        if not owned_processes():
+        owned = owned_processes()
+        if not owned:
             break
-        _signal_owned_processes(signal.SIGKILL)
+        _signal_processes(owned, signal.SIGKILL)
         _reap_children()
         time.sleep(POLL_SECONDS)
     _reap_children()

@@ -409,13 +409,26 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     ))
     browser.evaluate("enterAdmin(); activateAdminSection('retro')")
     browser.wait_for("!document.getElementById('retroRoots').disabled")
+    browser.click("#ps1BiosTitle")
+    assert_js(browser, "document.querySelectorAll('#ps1BiosRegions li').length===4 && "
+              "Array.from(document.querySelectorAll('#ps1BiosRegions li')).every(row=>row.textContent.includes(uiText.ps1BiosMissing))",
+              "PS1 BIOS readiness was not shown in Parent settings")
+    browser.evaluate("""(() => {
+        const input=document.getElementById('ps1BiosInput');
+        const files=new DataTransfer();
+        files.items.add(new File([new Uint8Array(512*1024)],'invalid.bin'));
+        input.files=files.files;
+        input.dispatchEvent(new Event('change'));
+    })()""")
+    browser.wait_for("document.getElementById('ps1BiosStatus').textContent===uiText.ps1BiosRejected")
+    browser.click("#ps1BiosTitle")
     browser.set_value("#retroRoots", str(retro_root))
     browser.click("#retroSave")
     browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='Local Test'")
     browser.click("#retroApprove")
     browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
     browser.wait_for("!document.getElementById('retroEnabled').disabled")
-    assert_js(browser, "['mgba-qt','mednafen'].every(id=>"
+    assert_js(browser, "['mgba-qt','mednafen','retroarch'].every(id=>"
               "document.querySelector('[data-retro-emulator='+id+'] button') && "
               "!document.querySelector('[data-catalog-id='+id+']'))",
               "The emulator install action is outside RetroGameCorner")

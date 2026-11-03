@@ -205,6 +205,12 @@ fails closed and tears down the newly owned process tree.
 
 RetroGameCorner has a dedicated Parent section. Its emulator cards use the
 same package review, confirmation and authorization flow as the app store.
+RetroArch is the preferred runtime for systems with a qualified core and wins
+ties on compatibility, performance, input and desktop behavior. Newer systems
+with a stronger standalone option use their own emulator. Both routes use the
+same child cover library, game approvals and owned launch lifecycle. Device
+results are scoped to the system, core or emulator version, and tested settings.
+
 Add up to eight local game folders, then approve games
 individually for the active profile. mGBA handles `.gb`, `.gbc` and `.gba`.
 Mednafen handles NES (`.nes`), Super Nintendo (`.sfc`, `.smc`), Sega Master
@@ -245,6 +251,21 @@ The normal launcher configuration export contains settings and approvals.
 Use the state directory for a separate save backup.
 See the [mGBA command-line manual](https://manpages.debian.org/testing/mgba-qt/mgba-qt.6.en.html)
 and the [Mednafen documentation](https://mednafen.github.io/documentation/).
+
+Parents can prepare PS1 firmware from the RetroGameCorner panel. The launcher
+identifies the supported Japan, North America, Europe and PSP BIOS images by
+SHA-256 and stores verified files under
+`~/.local/state/cozy-kids-launcher/ps1-bios/`. Only Parent requests can import
+firmware or view its readiness. BIOS files are stored separately from config
+exports. The launcher discovers standalone version 5 CD CHDs and checks their
+file identity and headers again at launch. It refuses adjacent SBI or LSD
+files until the launcher can include them in approvals. The PS1 launch uses
+RetroArch with the reviewed Linux x86-64 PCSX ReARMed build, whose SHA-256 is
+checked before loading from `~/.local/state/cozy-kids-launcher/ps1-cores/`.
+RetroArch stores saves, states and screenshots in the child's private game
+directory. The Parent catalog installs RetroArch. One-click delivery of the
+core and support for disc sets are tracked separately.
+See the [PCSX ReARMed BIOS documentation](https://docs.libretro.com/library/pcsx_rearmed/#bios).
 
 Enable controller and remote navigation in Parent settings under System.
 On Home and in the media library, the D-pad or left stick moves focus in the
