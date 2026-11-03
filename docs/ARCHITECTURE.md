@@ -299,8 +299,8 @@ midnight charges its elapsed interval to the new day.
 The child-facing availability API reports remaining time and the next profile
 opening when one is known. With a PIN configured, the weekly rules and
 configured allowance are available through the Parent configuration endpoint.
-A fresh PIN grants 15 extra minutes for the current day, up to 60 extra minutes
-per child, while weekly and per-app schedules still apply.
+A parent chooses the extra minutes for the current day and confirms them with
+a fresh PIN. Weekly and per-app schedules still apply.
 
 Parents can review and confirm a copy of a named profile. The copy gets a new
 identity with its own daily consumption, activity history, favorites and media

@@ -13,8 +13,8 @@ from config_store import atomic_write_config
 
 CHECKPOINT_MS = 2_000
 HEARTBEAT_SECONDS = 15
-EXTENSION_MINUTES = 15
-MAX_DAILY_EXTENSION_MINUTES = 60
+# Keep the remaining seconds exactly representable in browser JSON.
+MAX_EXTRA_MINUTES = (2**53 - 1) // 60 - 1440
 
 
 @dataclass
@@ -51,7 +51,7 @@ class DailyBudget:
             day = entry.get("day", "")
             if not isinstance(day, str) or date.fromisoformat(day).isoformat() != day or day >= "9999-12-31":
                 raise ValueError("Invalid budget day")
-            for key, maximum in (("usedMs", 172_800_000), ("extra", MAX_DAILY_EXTENSION_MINUTES)):
+            for key, maximum in (("usedMs", 172_800_000), ("extra", MAX_EXTRA_MINUTES)):
                 if type(entry.get(key)) is not int or not 0 <= entry[key] <= maximum:
                     raise ValueError("Invalid budget value")
         return data
@@ -162,14 +162,14 @@ class DailyBudget:
             self._checkpoint(ending=False)
         return False
 
-    def extend(self, profile, minutes):
+    def extend(self, profile, minutes, extra_minutes):
         if not minutes:
             raise ValueError("This profile has no daily budget")
         data = self._read()
         entry = self._entry(data, profile)
-        if entry["extra"] + EXTENSION_MINUTES > MAX_DAILY_EXTENSION_MINUTES:
-            raise ValueError("Daily extension limit reached")
-        entry["extra"] += EXTENSION_MINUTES
+        if type(extra_minutes) is not int or not 1 <= extra_minutes <= MAX_EXTRA_MINUTES - entry["extra"]:
+            raise ValueError("Invalid extra time")
+        entry["extra"] += extra_minutes
         self._write(data)
         return self.status(profile, minutes)
 

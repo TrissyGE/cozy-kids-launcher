@@ -1024,7 +1024,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 except (OSError, ValueError):
                     valid = False
                 return self.json_response({"valid": valid})
-            if set(body) != {"pin"}:
+            if set(body) != {"pin", "minutes"}:
                 return self.json_response({"valid": False}, 400)
             pin_hash = cfg.get("pinHash", "")
             if not pin_hash:
@@ -1040,7 +1040,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if not state.get("enabled") or state.get("remainingSeconds") or state.get("unavailable"):
                 return self.json_response({"valid": False}, 409)
             try:
-                state = budget().extend(profile, cfg.get("dailyBudgetMinutes", 0))
+                state = budget().extend(profile, cfg.get("dailyBudgetMinutes", 0), body["minutes"])
             except ValueError:
                 return self.json_response({"valid": False}, 409)
             except OSError:

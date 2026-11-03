@@ -162,6 +162,9 @@
       <button id="budgetRequestBtn" class="smallbtn" type="button" onclick="requestBudgetExtension()" hidden></button>
     </div>
     <form id="budgetExtensionForm" class="availability-actions" onsubmit="extendDailyBudget(event)" hidden>
+      <label><span id="budgetExtraMinutesLabel"></span>
+        <input id="budgetExtraMinutes" type="number" min="1" step="1" inputmode="numeric" value="15" required>
+      </label>
       <label><span id="budgetPinLabel"></span>
         <input id="budgetPin" type="password" inputmode="numeric" maxlength="6" required>
       </label>

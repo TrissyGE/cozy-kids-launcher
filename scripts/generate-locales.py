@@ -83,7 +83,7 @@ EXTRA_UI_KEYS = {
 
 UI_GROUPS = {
     "budget": ("budget", (
-        "label hint remaining nextAllowed exhausted unavailable request extend extendError "
+        "label hint remaining nextAllowed exhausted unavailable request extraMinutes extend extendError "
         "newProfile copySource copy copyConfirm"
     ).split()),
     "packageMaintenance": ("package_maintenance", (

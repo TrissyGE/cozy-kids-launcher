@@ -39,10 +39,10 @@ def run_family_budget_scenario(browser):
                 })));
             }
             if(input==='/api/budget/extend'){
-                const pin=JSON.parse(options.body).pin;
-                window.__familyRequests.push(pin);
+                const {pin,minutes}=JSON.parse(options.body);
+                window.__familyRequests.push([pin,minutes]);
                 if(pin!=='1234') return Promise.resolve(new Response('{}',{status:403}));
-                window.__familyRemaining=900;
+                window.__familyRemaining=minutes*60;
                 return Promise.resolve(new Response('{}'));
             }
             return window.__familyOriginalFetch(input,options);
@@ -56,17 +56,17 @@ def run_family_budget_scenario(browser):
             !document.getElementById('budgetRequestBtn').hidden
         """, "The budget block did not show the next opening and the extra-time request")
         browser.click('#budgetRequestBtn')
-        assert_js(browser, "document.activeElement.id==='budgetPin'", "Extra-time PIN did not get focus")
-        browser.evaluate("document.getElementById('budgetPin').value='0000'")
+        assert_js(browser, "document.activeElement.id==='budgetExtraMinutes'", "Extra-time duration did not get focus")
+        browser.evaluate("document.getElementById('budgetExtraMinutes').value='90'; document.getElementById('budgetPin').value='0000'")
         browser.click('#budgetExtendBtn')
         browser.wait_for("document.getElementById('budgetExtensionMessage').textContent===uiText.pinWrong")
         browser.evaluate("document.getElementById('budgetPin').value='1234'")
         browser.click('#budgetExtendBtn')
         browser.wait_for("document.getElementById('availabilityBlock').classList.contains('hidden')")
         assert_js(browser, """
-            window.__familyRequests.join(',')==='0000,1234' &&
+            window.__familyRequests.join(',')==='0000,90,1234,90' &&
             document.getElementById('budgetPin').value==='' &&
-            document.getElementById('budgetRemaining').textContent.includes('15')
+            document.getElementById('budgetRemaining').textContent.includes('90')
         """, "Extra time did not unlock the child view and refresh the remaining time")
     finally:
         browser.evaluate("""

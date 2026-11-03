@@ -71,11 +71,18 @@ class DailyBudgetTests(unittest.TestCase):
         self.assertFalse(self.budget.tick("child", 1))
         self.assertIsNone(self.budget.session)
 
-    def test_extensions_are_bounded_and_invalid_storage_does_not_refill(self):
-        for count in range(1, 5):
-            self.assertEqual(self.budget.extend("child", 1)["remainingSeconds"], 60 + count * 900)
-        with self.assertRaisesRegex(ValueError, "limit"):
-            self.budget.extend("child", 1)
+    def test_custom_extensions_survive_restart_and_reset_on_next_day(self):
+        self.budget.extend("child", 1, 90)
+        self.budget.extend("child", 1, 120)
+        restarted = self.open_budget()
+        self.assertEqual(restarted.status("child", 1)["remainingSeconds"], 211 * 60)
+        for invalid in (0, -1, 1.5, True, "20"):
+            with self.assertRaisesRegex(ValueError, "Invalid extra time"):
+                restarted.extend("child", 1, invalid)
+        self.local_time += timedelta(days=1)
+        self.assertEqual(restarted.status("child", 1)["remainingSeconds"], 60)
+
+    def test_invalid_storage_does_not_refill(self):
         self.path.write_text("{broken", encoding="utf-8")
         self.assertEqual(self.budget.status("child", 1),
                          {"enabled": True, "remainingSeconds": 0, "unavailable": True})

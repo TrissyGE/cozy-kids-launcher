@@ -674,13 +674,13 @@ class ServerApiTests(unittest.TestCase):
             status, response, _ = self.request("/launch/paint", method="POST", origin=self.base_url)
             self.assertEqual((status, response["reason"]), (403, "daily_budget"))
             launch.assert_not_called()
-        for pin, expected in (("0000", 403), ("1234", 200), ("1234", 409)):
+        for pin, minutes, expected in (("0000", 90, 403), ("1234", 0, 409), ("1234", 90, 200), ("1234", 90, 409)):
             status, payload, headers = self.request("/api/budget/extend", method="POST",
-                                                    body={"pin": pin}, origin=self.base_url)
+                                                    body={"pin": pin, "minutes": minutes}, origin=self.base_url)
             self.assertEqual(status, expected)
             self.assertNotIn("Set-Cookie", headers)
             if expected == 200:
-                self.assertEqual(payload["budget"]["remainingSeconds"], 900)
+                self.assertEqual(payload["budget"]["remainingSeconds"], 5400)
 
     def test_copy_profile_requires_parent_and_copies_policy_without_consumed_time(self):
         self.enable_pin("1234")

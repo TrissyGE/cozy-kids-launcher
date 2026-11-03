@@ -200,11 +200,14 @@ function clearBudgetExtensionForm(){
   document.getElementById('budgetExtensionMessage').textContent='';
 }
 function requestBudgetExtension(){
+  const minutes=document.getElementById('budgetExtraMinutes');
+  minutes.value='15';
+  document.getElementById('budgetExtraMinutesLabel').textContent=uiText.budget.extraMinutes;
   document.getElementById('budgetPinLabel').textContent=uiText.pinTitle;
   document.getElementById('budgetExtendBtn').textContent=uiText.budget.extend;
   document.getElementById('budgetCancelBtn').textContent=uiText.confirmCancel;
   document.getElementById('budgetExtensionForm').hidden=false;
-  document.getElementById('budgetPin').focus();
+  minutes.focus();
 }
 function cancelBudgetExtension(){
   clearBudgetExtensionForm();
@@ -218,10 +221,11 @@ async function extendDailyBudget(event){
   if(button.disabled) return;
   button.disabled=true;
   const pin=field.value;
+  const minutes=document.getElementById('budgetExtraMinutes').valueAsNumber;
   field.value='';
   try{
     const response=await fetch('/api/budget/extend',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({pin})});
+      body:JSON.stringify({pin,minutes})});
     if(!response.ok){
       message.textContent=response.status===403?uiText.pinWrong:uiText.budget.extendError;
       field.focus();
@@ -261,7 +265,7 @@ async function pollAvailability(){
 }
 document.getElementById('availabilityBlock').addEventListener('keydown',event=>{
   if(event.key!=='Tab') return;
-  const buttons=Array.from(document.querySelectorAll('#availabilityBlock button:not([hidden]):not([disabled]),#budgetPin'))
+  const buttons=Array.from(document.querySelectorAll('#availabilityBlock button:not([hidden]):not([disabled]),#budgetExtraMinutes,#budgetPin'))
     .filter(control=>control.getClientRects().length);
   if(!buttons.length) return;
   const index=buttons.indexOf(document.activeElement);
