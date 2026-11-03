@@ -272,6 +272,8 @@ RetroArch with the reviewed Linux x86-64 PCSX ReARMed build, whose SHA-256 is
 checked before loading from `~/.local/state/cozy-kids-launcher/ps1-cores/`.
 RetroArch stores saves, states and screenshots in the child's private game
 directory. It uses a private generated M3U to give the set a single memory card.
+PS1 keeps RetroArch audio output enabled and uses nonblocking audio writes so
+a stalled PulseAudio sink cannot hold the emulation loop during shutdown.
 When the game requests the next disc, F9 opens the virtual tray, F10 selects
 the next disc and F9 closes the tray. Local PNG covers can sit beside the game
 file or in the adjacent Miyoo `Imgs/` folder. The child library offers console

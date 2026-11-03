@@ -652,6 +652,8 @@ def _ps1_command(executable, game, state_root, game_directory):
         'auto_remaps_enable = "false"\n'
         'video_driver = "gl"\n'
         'video_context_driver = "x"\n'
+        # A stalled PulseAudio sink must not block input or saving on close.
+        'audio_sync = "false"\n'
         'menu_driver = "rgui"\n'
         'input_menu_toggle = "nul"\n'
         'input_menu_toggle_gamepad_combo = "0"\n'

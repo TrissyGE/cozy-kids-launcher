@@ -1048,6 +1048,7 @@ class ServerApiTests(unittest.TestCase):
             config = (directory / "retroarch.cfg").read_text(encoding="utf-8")
             self.assertIn(f'savefile_directory = "{directory}"', config)
             self.assertIn(f'savestate_directory = "{directory}"', config)
+            self.assertIn('audio_sync = "false"', config)
             sidecar = disc.with_suffix(".sbi")
             sidecar.write_bytes(b"unapproved companion")
             self.assertEqual(self.request("/api/retro/play", "POST", play)[0], 503)
