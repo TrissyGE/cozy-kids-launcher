@@ -21,9 +21,12 @@ const configureLauncherController=createControllerNavigation(()=>{
 });
 
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
-function visibleTiles(){ return cfg.tiles.filter(t => t.visible); }
+function visibleTiles(){
+  const hasRetroHub=cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.cmd?.[0]==='special:retro-library');
+  return cfg.tiles.filter(tile=>tile.visible&&(!hasRetroHub||!tile.cmd?.[0]?.startsWith('special:retro:')));
+}
 function isMediaLibraryTile(tile){
-  return !!tile&&Array.isArray(tile.cmd)&&tile.cmd.length===1&&tile.cmd[0]==='special:filme-musik';
+  return !!tile&&Array.isArray(tile.cmd)&&tile.cmd.length===1&&['special:filme-musik','special:retro-library'].includes(tile.cmd[0]);
 }
 function pageCount(){ return Math.max(1, Math.ceil(visibleTiles().length / pageSize())); }
 function tilesForPage(page){ const all=visibleTiles(); const size=pageSize(); return all.slice(page*size, page*size + size); }

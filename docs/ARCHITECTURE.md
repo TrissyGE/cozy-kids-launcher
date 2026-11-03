@@ -203,19 +203,29 @@ fails closed and tears down the newly owned process tree.
 
 ### 4. Parent security boundary
 
-RetroGameCorner appears under Parent settings → Apps & Media. Install mGBA
-through the catalog, add up to eight local game folders, then approve games
+RetroGameCorner has a dedicated Parent section. Its emulator cards use the
+same package review, confirmation and authorization flow as the app store.
+Add up to eight local game folders, then approve games
 individually for the active profile. The launcher accepts individual
 `.gb`, `.gbc` and `.gba` files. Parents supply game files themselves and
 review content and controls before approving a game. The mGBA integration
 uses its built-in BIOS behavior.
 
-Approval creates a normal tile carrying an opaque game ID. The launch
-request checks the tile, family time rules, and current file fingerprint
+Enabling RetroGameCorner for a child creates one Home tile for that child's
+cover library. Game approvals retain their opaque IDs and per-game time rules.
+Existing pilot game tiles feed into the library when it is configured.
+The launch request checks the library, the game approval, family time rules and current file fingerprint
 before passing a local path to the owned emulator process. Replacing a
 file may require approval again. The child configuration contains the
 tile label and ID. The source paths are available in Parent settings
 and configuration exports. A copied profile needs its own game approvals.
+
+Place an optional same-name PNG next to a ROM for a local cover. The per-child
+automatic cover option starts disabled. Once enabled, the launcher looks up
+missing covers by console and game title in the
+[Libretro thumbnail collection](https://docs.libretro.com/guides/roms-playlists-thumbnails/).
+The child browser loads the cover through the local launcher.
+An unmatched title shows a placeholder.
 
 mGBA receives a private configuration, battery-save and state directory
 for each child and approved game under

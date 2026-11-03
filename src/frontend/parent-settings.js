@@ -121,6 +121,7 @@ const ADMIN_SECTIONS=[
   ['overview','adminOverview'],
   ['children','adminChildren'],
   ['apps','adminAppsMedia'],
+  ['retro','adminRetro'],
   ['screen-time','adminScreenTime'],
   ['appearance','adminAppearance'],
   ['system','adminSystem']
@@ -129,6 +130,7 @@ const ADMIN_SECTION_ICONS={
   overview:'overview',
   children:'child',
   apps:'apps',
+  retro:'apps',
   'screen-time':'timer',
   appearance:'appearance',
   system:'system'
@@ -149,7 +151,7 @@ function activateAdminSection(section,focusHeading=false){
   const activePanel=document.querySelector('[data-admin-panel="'+section+'"]');
   if(changed) playAdminPanelTransition(activePanel);
   if(changed&&section==='system') void loadUpdateTrack();
-  if(changed&&section==='apps') void loadRetroGames();
+  if(changed&&section==='retro') void loadRetroGames();
   if(focusHeading){
     const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
     if(heading) heading.focus({preventScroll:true});
@@ -451,7 +453,7 @@ function clearRetroGames(){
   document.getElementById('retroRoots').value='';
   document.getElementById('retroGame').replaceChildren();
   document.getElementById('retroStatus').textContent='';
-  for(const id of ['retroRoots','retroSave','retroGame','retroApprove']) document.getElementById(id).disabled=true;
+  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave']) document.getElementById(id).disabled=true;
 }
 
 async function loadRetroGames(){
@@ -468,9 +470,15 @@ async function loadRetroGames(){
     roots.value=data.roots.join('\n');
     roots.disabled=false;
     document.getElementById('retroSave').disabled=false;
+    for(const [id,value] of [['retroEnabled',data.enabled],['retroCovers',data.covers]]){
+      const field=document.getElementById(id);
+      field.checked=value;
+      field.disabled=false;
+    }
+    document.getElementById('retroSettingsSave').disabled=false;
     const select=document.getElementById('retroGame');
     for(const game of data.games){
-      if(cfg.tiles.some(tile=>tile.id==='retro-'+game.id)) continue;
+      if(data.approvedIds.includes(game.id)) continue;
       const option=new Option(game.title,game.id);
       option.title=game.path;
       select.appendChild(option);
@@ -499,8 +507,11 @@ async function updateRetroGames(endpoint,body,button){
     if(!response.ok) throw new Error('Retro settings could not be saved');
     const data=await response.json();
     if(signal.aborted) return;
-    if(data.tile&&!cfg.tiles.some(tile=>tile.id===data.tile.id)){
-      cfg.tiles.push(data.tile);
+    if(data.tile){
+      if(data.hub&&!cfg.tiles.some(tile=>tile.id===data.hub.id)) cfg.tiles.push(data.hub);
+      const existing=cfg.tiles.find(tile=>tile.id===data.tile.id);
+      if(existing) Object.assign(existing,data.tile);
+      else cfg.tiles.push(data.tile);
       renderAll();
     }
     await loadRetroGames();
@@ -522,7 +533,43 @@ function approveRetroGame(){
   return updateRetroGames('approve',{gameId,profileId:cfg.activeProfileId},document.getElementById('retroApprove'));
 }
 
+function saveRetroSettings(){
+  return updateRetroGames('settings',{
+    profileId:cfg.activeProfileId,
+    enabled:document.getElementById('retroEnabled').checked,
+    covers:document.getElementById('retroCovers').checked
+  },document.getElementById('retroSettingsSave'));
+}
+
+function renderRetroEmulators(){
+  const container=document.getElementById('retroEmulators');
+  container.replaceChildren();
+  if(recommendationState!=='ready'){
+    const message=recommendationState==='error'?uiText.recommendationsError:uiText.recommendationsLoading;
+    renderUiState(container,recommendationState,message,recommendationState==='error'?loadRecommendations:null);
+    return;
+  }
+  for(const emulator of recommendations.filter(item=>item.retroEmulator)){
+    const card=document.createElement('article');
+    card.className='rec-card';
+    card.dataset.retroEmulator=emulator.id;
+    const name=document.createElement('h4');
+    name.textContent=catalogName(emulator);
+    const button=document.createElement('button');
+    button.className='smallbtn';
+    button.type='button';
+    button.disabled=emulator.installed;
+    button.textContent=emulator.installed?uiText.installed:uiText.install;
+    button.onclick=()=>triggerInstall(emulator);
+    card.append(name,button,catalogDetails(emulator));
+    container.appendChild(card);
+  }
+}
+
 function renderAdmin(){
+  document.getElementById('retroEnabledLabel').textContent=uiText.retroEnabled;
+  document.getElementById('retroCoversLabel').textContent=uiText.retroCovers;
+  document.getElementById('retroSettingsSave').textContent=uiText.save;
   document.getElementById('retroGuide').textContent=uiText.retroGuide;
   document.getElementById('retroRootsLabel').textContent=uiText.retroRoots;
   document.getElementById('retroSave').textContent=uiText.save;

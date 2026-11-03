@@ -31,6 +31,10 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "adminRetro": "admin_retro",
+    "retroEnabled": "retro_enabled",
+    "retroCovers": "retro_covers",
+    "retroLibraryEmpty": "retro_library_empty",
     "retroGuide": "retro_guide",
     "retroRoots": "retro_roots",
     "retroRefresh": "retro_refresh",

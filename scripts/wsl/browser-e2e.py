@@ -400,23 +400,35 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     retro_root = test_home / "Game Fixtures"
     retro_root.mkdir()
     (retro_root / "Local Test.gba").write_bytes(b"scanner fixture")
-    browser.evaluate("enterAdmin(); activateAdminSection('apps')")
+    browser.evaluate("enterAdmin(); activateAdminSection('retro')")
     browser.wait_for("!document.getElementById('retroRoots').disabled")
     browser.set_value("#retroRoots", str(retro_root))
     browser.click("#retroSave")
     browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='Local Test'")
     browser.click("#retroApprove")
     browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
+    browser.wait_for("!document.getElementById('retroEnabled').disabled")
+    assert_js(browser, "document.querySelector('[data-retro-emulator=mgba-qt] button')!==null && "
+              "!document.querySelector('[data-catalog-id=mgba-qt]')",
+              "The emulator install action is outside RetroGameCorner")
+    browser.click("#retroEnabled")
+    browser.click("#retroSettingsSave")
+    browser.wait_for("cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.visible)")
     browser.evaluate("closeAdmin()")
+    assert_js(browser, "document.querySelectorAll('#grid .tile[data-tile-id^=retro-]').length===1",
+              "Approved games appeared as extra Home tiles")
+    browser.click('#grid .tile[data-tile-id="retro-corner"]')
+    browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
     (retro_root / "Local Test.gba").write_bytes(b"replacement")
-    browser.click('#grid .tile[data-tile-id^="retro-"]')
-    browser.wait_for("document.getElementById('availabilityBlock').dataset.reason==='retro_unavailable'")
+    browser.click(".media-card")
+    browser.wait_for("document.querySelector('#mediaState .ui-state-message')?.textContent===mediaText.retroUnavailable")
     assert_js(
         browser,
-        "!JSON.stringify(cfg).includes('Game Fixtures') && !document.getElementById('retroRoots').value",
+        "!JSON.stringify(mediaConfig).includes('Game Fixtures') && !document.body.textContent.includes('Game Fixtures')",
         "A local game path escaped the Parent settings",
     )
     browser.key_press("Escape")
+    browser.wait_for("location.pathname==='/index.html' && typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
     browser.evaluate("cfg.tiles=cfg.tiles.filter(tile=>!tile.id.startsWith('retro-')); persistConfig().then(renderAll)", await_promise=True)
     log_scenario("Parent-managed RetroGameCorner tiles are path-private and reject changed ROMs")
     browser.evaluate("enterAdmin(); activateAdminSection('apps')")
@@ -682,8 +694,8 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.click("#pin .save")
     browser.wait_for(
         "!document.getElementById('admin').classList.contains('hidden') && "
-        "document.querySelectorAll('[data-admin-section]').length===6 && "
-        "document.querySelectorAll('#adminNav .ui-icon').length===6 && "
+        "document.querySelectorAll('[data-admin-section]').length===7 && "
+        "document.querySelectorAll('#adminNav .ui-icon').length===7 && "
         "document.querySelector('[data-admin-section=\"overview\"]')"
         ".getAttribute('aria-current')==='page'"
     )
@@ -1642,7 +1654,7 @@ def run_accessibility_scenarios(browser, artifacts):
         "document.querySelector('#admin .wrap').scrollWidth<=document.querySelector('#admin .wrap').clientWidth+1 && "
         "getComputedStyle(document.querySelector('#admin .wrap')).overflowY==='auto' && "
         "document.getElementById('adminTitle').getBoundingClientRect().top>=64 && "
-        "document.querySelectorAll('[data-admin-section]').length===6 && "
+        "document.querySelectorAll('[data-admin-section]').length===7 && "
         "Array.from(document.querySelectorAll('[data-admin-section]')).every(button => "
         "button.getBoundingClientRect().height>=44) && "
         "document.querySelector('.cornerbar').classList.contains('hidden') && "

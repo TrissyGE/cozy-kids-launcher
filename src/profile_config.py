@@ -132,7 +132,9 @@ def add_profile(data, name, avatar="", profile_id=None, source_profile_id=None):
     profile["appLimits"] = {}
     profile["tiles"] = [
         tile for tile in profile.get("tiles", [])
-        if not any(isinstance(part, str) and part.startswith("special:retro:") for part in tile.get("cmd", []))
+        if not any(isinstance(part, str) and (
+            part.startswith("special:retro:") or part == "special:retro-library"
+        ) for part in tile.get("cmd", []))
     ]
     if source_profile_id is None:
         profile["weeklySchedule"] = {"enabled": False, "days": {}}

@@ -830,10 +830,28 @@ class ServerApiTests(unittest.TestCase):
         _, public, _ = self.request("/api/config")
         self.assertNotIn(str(root), json.dumps(public))
         self.assertEqual(sum(tile["id"] == tile_id for tile in public["tiles"]), 1)
+        self.assertEqual(self.request("/api/retro/library")[0], 404)
+        settings = {"profileId": "default", "enabled": True, "covers": False}
+        self.assertEqual(self.request("/api/retro/settings", "POST", settings)[0], 403)
+        self.assertEqual(self.request("/api/retro/settings", "POST", settings, cookie)[0], 200)
+        _, child_library, _ = self.request("/api/retro/library")
+        self.assertEqual([game["id"] for game in child_library["items"]], [identifier])
+        self.assertNotIn(str(root), json.dumps(child_library))
+        with mock.patch.object(server_module, "retro_cover", return_value=b"") as cover:
+            with self.assertRaises(urllib.error.HTTPError):
+                urllib.request.urlopen(self.base_url + child_library["items"][0]["coverUrl"], timeout=5)
+            self.assertFalse(cover.call_args.args[1])
+        settings["covers"] = True
+        self.assertEqual(self.request("/api/retro/settings", "POST", settings, cookie)[0], 200)
+        with mock.patch.object(server_module, "retro_cover", return_value=b"cover") as cover:
+            with urllib.request.urlopen(self.base_url + child_library["items"][0]["coverUrl"], timeout=5) as response:
+                self.assertEqual(response.read(), b"cover")
+            self.assertTrue(cover.call_args.args[1])
 
         with mock.patch.object(server_module.shutil, "which", return_value="/usr/bin/mgba-qt"), \
                 mock.patch.object(server_module, "launch_owned_tile") as launch:
-            self.assertEqual(self.request(launch_url, "POST")[0], 204)
+            self.assertEqual(self.request(launch_url, "POST")[0], 404)
+            self.assertEqual(self.request("/api/retro/play", "POST", {"gameId": identifier})[0], 204)
             argv = launch.call_args.args[0]
             save = Path(server_module.MEDIA_STATE_FILE).parent / "retro" / "default" / identifier
             self.assertIn(f"savegamePath={save}", argv)
@@ -843,7 +861,7 @@ class ServerApiTests(unittest.TestCase):
             self.assertEqual(argv[-1], str(rom))
             self.assertEqual(save.stat().st_mode & 0o777, 0o700)
             rom.write_bytes(b"changed fixture")
-            self.assertEqual(self.request(launch_url, "POST")[0], 503)
+            self.assertEqual(self.request("/api/retro/play", "POST", {"gameId": identifier})[0], 503)
             launch.assert_called_once()
 
     def test_media_play_launches_only_a_catalog_item_for_a_visible_media_tile(self):
@@ -2088,12 +2106,13 @@ class FrontendSafetyTests(unittest.TestCase):
             self.assertIn(control, source)
         self.assertIn(".pinbox, .install-box, .timerbox", source)
 
-    def test_parent_settings_are_split_into_six_keyboard_sections(self):
+    def test_parent_settings_are_split_into_keyboard_sections(self):
         source = frontend_source()
         for section in (
             "overview",
             "children",
             "apps",
+            "retro",
             "screen-time",
             "appearance",
             "system",

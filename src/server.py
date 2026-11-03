@@ -86,7 +86,10 @@ from media_state import (
     remove_profile_media_state,
     set_media_favorite,
 )
-from retro_games import emulator_command, scan_retro_games
+from retro_games import (
+    HUB_COMMAND, HUB_ID, approved_retro_ids, emulator_command, retro_cover,
+    retro_hub, scan_retro_games,
+)
 from media_resume import (
     prepare_profile_resume_directory,
     remove_profile_resume_directory,
@@ -870,6 +873,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "games": sorted(games.values(), key=lambda game: (game["title"].casefold(), game["path"])),
                 "unavailable": unavailable,
                 "truncated": truncated,
+                "enabled": bool(retro_hub(cfg)),
+                "covers": (retro_hub(cfg, require_visible=False) or {}).get("retroCovers", False),
+                "approvedIds": list(approved_retro_ids(cfg)),
+            })
+        if request_url.path in ("/api/retro/library", "/api/retro/cover"):
+            cfg = load_cfg()
+            hub = retro_hub(cfg)
+            if not hub:
+                return self.json_response({"status": "unavailable"}, 404)
+            games, unavailable, truncated = scan_retro_games(cfg.get("retroRoots", []))
+            approved = approved_retro_ids(cfg)
+            if request_url.path == "/api/retro/cover":
+                ids = parse_qs(request_url.query).get("id", [])
+                game = games.get(ids[0]) if len(ids) == 1 and ids[0] in approved else None
+                payload = retro_cover(game, hub.get("retroCovers", False)) if game else b""
+                if not payload:
+                    self.send_error(404)
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+                return
+            return self.json_response({
+                "items": [
+                    {"id": identifier, "title": approved[identifier]["label"],
+                     "coverUrl": f"/api/retro/cover?id={identifier}"}
+                    for identifier in sorted(games.keys() & approved.keys(),
+                                             key=lambda key: (approved[key]["label"].casefold(), key))
+                ],
+                "unavailableSources": unavailable,
+                "truncated": truncated,
             })
         if request_url.path == "/api/media/sources":
             _, sources = managed_media_sources(load_cfg().get("mediaRoots", []))
@@ -1058,6 +1094,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         action = self.path.strip("/")
         if action.startswith("launch/") or action in {
             "api/media/play", "api/media/roots", "api/retro/games", "api/retro/approve",
+            "api/retro/settings", "api/retro/play",
             "api/profiles/create", "api/profiles/select", "api/profiles/delete",
             "api/save-config", "api/import-config", "api/backups/restore", "api/budget/session",
             "api/verify-pin", "api/pin/set", "api/pin/remove",
@@ -1067,7 +1104,44 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self.dispatch_post(action)
         return self.dispatch_post(action)
 
-    def dispatch_post(self, action):
+    def dispatch_post(self, action, retro_from_hub=False):
+        if action == "api/retro/play":
+            body = self.read_json_body()
+            if body is None:
+                return
+            cfg = load_cfg()
+            if not retro_hub(cfg):
+                return self.json_response({"status": "unavailable"}, 404)
+            availability = family_tile_availability(cfg, HUB_ID)
+            if not availability["allowed"]:
+                return self.json_response({"status": "blocked", "reason": availability["reason"]}, 403)
+            identifier = body.get("gameId")
+            approved = approved_retro_ids(cfg)
+            if not isinstance(identifier, str) or identifier not in approved:
+                return self.json_response({"status": "unavailable"}, 404)
+            return self.dispatch_post("launch/" + approved[identifier]["id"], retro_from_hub=True)
+        if action == "api/retro/settings":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            if (body.get("profileId") != cfg["activeProfileId"]
+                    or type(body.get("enabled")) is not bool or type(body.get("covers")) is not bool):
+                return self.json_response({"status": "invalid"}, 400)
+            tile = retro_hub(cfg, require_visible=False)
+            if tile is None:
+                if any(item["id"] == HUB_ID for item in cfg["tiles"]):
+                    return self.json_response({"status": "conflict"}, 409)
+                tile = {"id": HUB_ID, "label": "RetroGameCorner", "emoji": "🎮", "cmd": [HUB_COMMAND]}
+                cfg["tiles"].append(tile)
+            tile.update(visible=body["enabled"], retroCovers=body["covers"])
+            try:
+                save_cfg(cfg)
+            except (OSError, ValueError):
+                return self.json_response({"status": "error"}, 400)
+            return self.json_response({"tile": tile})
         if action == "api/retro/approve":
             stored = load_stored_cfg()
             if not self.require_admin(stored):
@@ -1086,6 +1160,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             tile_id = f"retro-{identifier}"
             tile = next((tile for tile in cfg["tiles"] if tile["id"] == tile_id), None)
             if tile is None:
+                if not retro_hub(cfg, require_visible=False):
+                    if any(item["id"] == HUB_ID for item in cfg["tiles"]):
+                        return self.json_response({"status": "conflict"}, 409)
+                    cfg["tiles"].append({
+                        "id": HUB_ID, "label": "RetroGameCorner", "emoji": "🎮",
+                        "cmd": [HUB_COMMAND], "visible": False,
+                    })
                 tile = {
                     "id": tile_id, "label": game["title"], "emoji": "🎮",
                     "cmd": [f"special:retro:{identifier}"], "visible": True,
@@ -1097,7 +1178,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     return self.json_response({"status": "error"}, 400)
             elif tile["cmd"] != [f"special:retro:{identifier}"]:
                 return self.json_response({"status": "conflict"}, 409)
-            return self.json_response({"tile": tile})
+            elif not tile["visible"]:
+                tile["visible"] = True
+                try:
+                    save_cfg(cfg)
+                except (OSError, ValueError):
+                    return self.json_response({"status": "error"}, 400)
+            return self.json_response({"tile": tile, "hub": retro_hub(cfg, require_visible=False)})
         if action in ("api/media/roots", "api/retro/games"):
             stored = load_stored_cfg()
             if not self.require_admin(stored):
@@ -1888,6 +1975,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
             clean = launch.get("argv", [])
             if launch["type"] == "retro":
+                if retro_hub(cfg, require_visible=False) and not retro_from_hub:
+                    return self.json_response({"status": "unavailable"}, 404)
                 games, _, _ = scan_retro_games(cfg.get("retroRoots", []))
                 game = games.get(launch["id"])
                 emulator = shutil.which("mgba-qt")

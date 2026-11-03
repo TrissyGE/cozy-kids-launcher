@@ -738,7 +738,7 @@ from pathlib import Path
 import sys
 
 locale = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-print(json.dumps({key: value for key, value in locale.items() if key.startswith("mediaLibrary")}))
+print(json.dumps({key: value for key, value in locale.items() if key.startswith(("mediaLibrary", "retro"))}))
 PY
 )" || die "Could not prepare media translations for $ACTIVE_LANG"
 
