@@ -905,17 +905,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.json_response({"status": "error", "message": "Cross-site request rejected"}, 403)
             return
         action = self.path.strip("/")
-        if action in ("api/packages/prepare", "api/packages/install"):
+        if action in ("api/packages/prepare", "api/packages/install", "api/packages/confirm"):
             if not self.require_admin():
                 return
             body = self.read_json_body()
             if body is None:
                 return
             try:
-                if action.endswith("/prepare") and set(body) == {"appId"}:
-                    result = self.server.package_installer.prepare(body["appId"], load_recommendations())
-                elif action.endswith("/install") and set(body) == {"jobId", "confirmationToken"}:
-                    result = self.server.package_installer.start(body["jobId"], body["confirmationToken"])
+                if action.endswith("/prepare") and set(body) in ({"appId"}, {"appId", "operation"}):
+                    result = self.server.package_installer.prepare(
+                        body["appId"], load_recommendations(), body.get("operation", "install"),
+                    )
+                elif action in ("api/packages/install", "api/packages/confirm") and set(body) == {"jobId", "confirmationToken"}:
+                    result = self.server.package_installer.start(
+                        body["jobId"], body["confirmationToken"],
+                        expected_operation="install" if action.endswith("/install") else None,
+                    )
                 else:
                     raise ValueError("Invalid package action")
                 self.json_response(result, 202)

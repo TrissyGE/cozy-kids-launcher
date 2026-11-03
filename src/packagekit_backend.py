@@ -9,6 +9,17 @@ class InstallError(Exception):
         super().__init__(code)
 
 
+PACKAGE_OPERATIONS = {"install", "update", "remove"}
+
+
+def package_identity(package_id):
+    """Compare PackageKit name, version and architecture without repository metadata."""
+    parts = package_id.split(";")
+    if len(parts) != 4 or any(not value for value in parts[:3]):
+        raise InstallError("unsupported")
+    return tuple(parts[:3])
+
+
 def error_category(value):
     value = str(value).lower()
     if any(word in value for word in ("network", "download", "fetch")):
@@ -80,7 +91,9 @@ class PackageKitBackend:
         result = self._call(self.client.resolve, filters, [package])
         return [item for item in result.get_package_array() if item.get_name() == package]
 
-    def prepare(self, package):
+    def prepare(self, package, operation="install"):
+        if operation not in PACKAGE_OPERATIONS:
+            raise ValueError("Unknown package operation")
         # A previous launcher may have exited while the system daemon continued.
         # Never replay it or queue another installation behind an unknown action.
         try:
@@ -91,38 +104,95 @@ class PackageKitBackend:
         except Exception:
             raise InstallError("unavailable") from None
         packages = self._resolve(package)
-        if any(item.get_info() == self.pk.InfoEnum.INSTALLED for item in packages):
-            return {"installed": True}
-        candidates = {item.get_id() for item in packages if item.get_info() == self.pk.InfoEnum.AVAILABLE}
-        if not candidates:
-            raise InstallError("not_found")
+        installed = {item.get_id() for item in packages if item.get_info() == self.pk.InfoEnum.INSTALLED}
+        if operation == "install":
+            if installed:
+                return {"installed": True}
+            candidates = {item.get_id() for item in packages if item.get_info() == self.pk.InfoEnum.AVAILABLE}
+            if not candidates:
+                raise InstallError("not_found")
+        else:
+            if not installed:
+                raise InstallError("not_installed")
+            if len(installed) != 1:
+                raise InstallError("unsupported")
+            current = package_identity(next(iter(installed)))
+            candidates = installed if operation == "remove" else self._update_candidates(current)
         if len(candidates) != 1:
             raise InstallError("unsupported")
         package_ids = sorted(candidates)
-        flags = self._flags(self.pk.TransactionFlagEnum.SIMULATE, self.pk.TransactionFlagEnum.ONLY_TRUSTED)
-        simulation = self._call(self.client.install_packages, flags, package_ids)
+        simulation = self._transaction(operation, package_ids, simulate=True)
         changes = simulation.get_package_array()
         if not changes or len(changes) > 200:
             raise InstallError("changes_required")
-        # First release deliberately refuses removals, upgrades and downgrades.
-        if any(item.get_info() != self.pk.InfoEnum.INSTALLING for item in changes):
+        expected = {
+            "install": ("INSTALLING", "INSTALL"),
+            "update": ("UPDATING", "UPDATE"),
+            "remove": ("REMOVING", "REMOVE"),
+        }[operation]
+        allowed = {value for name in expected if (value := getattr(self.pk.InfoEnum, name, None)) is not None}
+        if any(item.get_info() not in allowed for item in changes):
             raise InstallError("changes_required")
-        details = self._call(self.client.get_details, [item.get_id() for item in changes]).get_details_array()
-        download_bytes = sum(item.get_size() for item in details) if len(details) == len(changes) else None
-        return {
-            "installed": False,
+        change_ids = sorted(item.get_id() for item in changes)
+        planned_identities = [package_identity(value) for value in change_ids]
+        target = package_identity(package_ids[0])
+        if target not in planned_identities or (operation != "install" and len(planned_identities) != 1):
+            raise InstallError("changes_required")
+        download_bytes = None
+        if operation != "remove":
+            details = self._call(self.client.get_details, change_ids).get_details_array()
+            if len(details) == len(changes):
+                download_bytes = sum(item.get_size() for item in details)
+        plan = {
             "packageIds": package_ids,
-            "changeIds": sorted(item.get_id() for item in changes),
+            "changeIds": change_ids,
             "packages": sorted({item.get_name() for item in changes}),
             "downloadBytes": download_bytes,
         }
+        if operation != "install":
+            plan["currentVersion"] = current[1]
+        if operation == "update":
+            plan["targetVersion"] = package_identity(package_ids[0])[1]
+        return plan
 
-    def install(self, plan, progress):
-        # PackageKit/Polkit request system authorization from the desktop agent.
-        # Do not use Pk.Task, which can silently answer additional questions.
+    def _update_candidates(self, current):
+        filters = self._flags(self.pk.FilterEnum.ARCH)
+        updates = self._call(self.client.get_updates, filters).get_package_array()
+        candidates = set()
+        for item in updates:
+            if item.get_name() != current[0] or item.get_info() == self.pk.InfoEnum.BLOCKED:
+                continue
+            identity = package_identity(item.get_id())
+            if identity[0] == current[0] and identity[1] != current[1] and identity[2] == current[2]:
+                candidates.add(item.get_id())
+        if not candidates:
+            raise InstallError("no_update")
+        return candidates
+
+    def _transaction(self, operation, package_ids, *, simulate=False, progress=None):
+        if operation not in PACKAGE_OPERATIONS:
+            raise ValueError("Unknown package operation")
+        flags = []
+        if simulate:
+            flags.append(self.pk.TransactionFlagEnum.SIMULATE)
+        if operation == "remove":
+            # No dependent removals and no autoremove, even at execution time.
+            return self._call(self.client.remove_packages, self._flags(*flags), package_ids,
+                              False, False, progress=progress)
+        flags.append(self.pk.TransactionFlagEnum.ONLY_TRUSTED)
+        method = self.client.update_packages if operation == "update" else self.client.install_packages
+        return self._call(method, self._flags(*flags), package_ids, progress=progress)
+
+    def perform(self, operation, plan, progress):
+        # Polkit owns the password dialog. Do not use Pk.Task to answer prompts.
         self.client.set_interactive(True)
-        flags = self._flags(self.pk.TransactionFlagEnum.ONLY_TRUSTED)
-        self._call(self.client.install_packages, flags, plan["packageIds"], progress=progress)
+        self._transaction(operation, plan["packageIds"], progress=progress)
 
-    def installed(self, package):
-        return any(item.get_info() == self.pk.InfoEnum.INSTALLED for item in self._resolve(package))
+    def verify(self, package, operation, plan):
+        installed = [item for item in self._resolve(package) if item.get_info() == self.pk.InfoEnum.INSTALLED]
+        if operation == "remove":
+            return not installed
+        if operation == "update":
+            expected = package_identity(plan["packageIds"][0])
+            return any(package_identity(item.get_id()) == expected for item in installed)
+        return bool(installed)

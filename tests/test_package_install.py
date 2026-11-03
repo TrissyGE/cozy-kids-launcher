@@ -24,20 +24,21 @@ class Backend:
         self.failure = None
         self.block = None
 
-    def prepare(self, package):
+    def prepare(self, package, operation="install"):
         if self.block:
             self.block.wait(5)
         if self.failure:
             raise self.failure
         return copy.deepcopy(self.plan)
 
-    def install(self, plan, progress):
+    def perform(self, operation, plan, progress):
         self.calls += 1
+        self.operation = operation
         progress('waiting-for-auth', 101)
         progress('download', 40)
         self.has_installed = True
 
-    def installed(self, package):
+    def verify(self, package, operation, plan):
         return self.has_installed
 
     def close(self):
@@ -52,8 +53,8 @@ class InstallTests(unittest.TestCase):
         self.path = Path(self.temp.name) / 'state' / 'package-install.json'
         self.manager = PackageInstaller(self.path, lambda: self.backend)
 
-    def prepare(self):
-        self.manager.prepare('paint', CATALOG)
+    def prepare(self, operation="install"):
+        self.manager.prepare('paint', CATALOG, operation)
         self.manager.worker.join(5)
         self.assertFalse(self.manager.worker.is_alive())
         return self.manager.snapshot()
@@ -104,10 +105,11 @@ class InstallTests(unittest.TestCase):
     def test_restart_never_replays_and_journal_excludes_plans_and_consent(self):
         ready = self.prepare()
         journal = json.loads(self.path.read_text())
-        self.assertEqual(set(journal), {'jobId', 'appId', 'status'})
+        self.assertEqual(set(journal), {'jobId', 'appId', 'operation', 'status'})
         self.assertNotIn(ready['confirmationToken'], self.path.read_text())
         recovered = PackageInstaller(self.path, lambda: self.backend)
         self.assertEqual(recovered.snapshot()['status'], 'interrupted')
+        self.assertEqual(recovered.snapshot()['operation'], 'install')
         self.assertIsNone(recovered.worker)
         with self.assertRaises(InstallError):
             recovered.start(ready['jobId'], ready['confirmationToken'])
@@ -128,7 +130,7 @@ class InstallTests(unittest.TestCase):
 
     def test_backend_success_is_verified_and_unknown_percent_is_not_101(self):
         ready = self.prepare()
-        self.backend.installed = lambda package: False
+        self.backend.verify = lambda package, operation, plan: False
         self.manager.start(ready['jobId'], ready['confirmationToken'])
         self.manager.worker.join(5)
         self.assertEqual(self.manager.snapshot()['status'], 'error')
@@ -158,3 +160,25 @@ class InstallTests(unittest.TestCase):
             self.assertIsNone(self.manager.token)
             self.assertEqual(self.manager.snapshot()['error'], 'storage')
             self.assertEqual(self.backend.calls, 0)
+
+    def test_maintenance_consent_is_bound_to_operation_and_version(self):
+        for operation in ("update", "remove"):
+            with self.subTest(operation=operation):
+                self.backend.plan = {**PLAN, "currentVersion": "1"}
+                ready = self.prepare(operation)
+                self.assertEqual(ready["operation"], operation)
+                self.assertEqual(ready["currentVersion"], "1")
+                with self.assertRaises(InstallError):
+                    self.manager.start(ready["jobId"], ready["confirmationToken"], expected_operation="install")
+                self.backend.plan["currentVersion"] = "2"
+                self.manager.start(ready["jobId"], ready["confirmationToken"])
+                self.manager.worker.join(5)
+                self.assertEqual(self.manager.snapshot()["error"], "plan_changed")
+                ready = self.prepare(operation)
+                self.manager.start(ready["jobId"], ready["confirmationToken"])
+                self.manager.worker.join(5)
+                self.assertEqual(self.backend.operation, operation)
+                self.assertEqual(self.manager.snapshot()["status"], "complete")
+        for operation in ("purge", None, [], {"command": "remove"}):
+            with self.assertRaises(ValueError):
+                self.manager.prepare("paint", CATALOG, operation)

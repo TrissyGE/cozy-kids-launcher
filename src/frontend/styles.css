@@ -246,6 +246,8 @@
   .catalog-details dd { margin:4px 0; line-height:1.4; }
   .catalog-details a { color:inherit; display:inline-flex; min-height:44px; align-items:center; }
   .catalog-sources { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+  .rec-card .catalog-maintenance { justify-content:flex-start; margin-top:8px; }
+  .catalog-maintenance button { min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
   .catalog-heading .smallbtn, .rec-card .smallbtn { min-height:44px; }
   @media(min-width:1000px) {
     .rec-card:only-child .catalog-details dl { display:grid; grid-template-columns:minmax(100px,180px) minmax(0,1fr); gap:10px 12px; align-items:baseline; }

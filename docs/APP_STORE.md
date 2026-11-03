@@ -30,6 +30,20 @@ runtime dependencies, provider limits and the separate real-desktop acceptance
 check. Unsupported systems receive guidance to the graphical software manager.
 The older manual-plan API remains available for compatibility.
 
+## Update or uninstall an installed app
+
+Open **App details** on an installed recommendation with a native package
+mapping. **Check for an app update** shows the current and proposed versions
+when the configured package sources provide an update. **Uninstall app…**
+shows the installed version and the package that would be removed.
+
+Both actions require a separate review and explicit confirmation. The direct
+flow accepts only changes to the selected package. Use the graphical software
+manager when an update or removal needs to change other packages. Uninstalling
+keeps existing launcher tiles and their settings. The catalog offers
+**Install** again when the app is missing, including when a saved tile exists.
+The package status panel reconnects to work in progress.
+
 For an already installed app, **Add** saves its tile immediately. A rejected
 save restores the previous tile list and displays an error. Removing a tile
 does not uninstall its system package. Search and filters are kept only in the
