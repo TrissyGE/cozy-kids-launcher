@@ -199,6 +199,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     for language, title in (
         ("es", "Te damos la bienvenida a Cozy Kids"),
         ("fr", "Bienvenue dans Cozy Kids"),
+        ("it", "Ti diamo il benvenuto in Cozy Kids"),
     ):
         browser.click(f'.first-run-choice[data-language="{language}"]')
         browser.wait_for(
@@ -284,6 +285,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
         ("de", "Eltern-Einstellungen", "Wald", "1 Paket", "2 Pakete"),
         ("es", "Ajustes parentales", "Bosque", "1 paquete", "2 paquetes"),
         ("fr", "Paramètres parentaux", "Forêt", "1 paquet", "2 paquets"),
+        ("it", "Impostazioni genitori", "Foresta", "1 pacchetto", "2 pacchetti"),
         ("en", "Parent settings", "Forest", "1 package", "2 packages"),
     ):
         browser.evaluate("enterAdmin(); activateAdminSection('system')")
@@ -301,9 +303,20 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
             f"localizedCount('packageCount',2).startsWith({json.dumps(plural)}) && "
             "document.getElementById('appearancePreviewHeading').textContent===uiText.previewTitle && "
             "document.getElementById('navRight').getAttribute('aria-label')===uiText.adminPageNext && "
-            "document.getElementById('title').textContent==='E2E Home' && cfg.name==='Kiddo'",
+            "document.getElementById('title').textContent==='E2E Home' && cfg.name==='Kiddo' && "
+            "document.documentElement.dir==='ltr'",
             f"{language} interface, plural rules or preserved profile labels are incorrect",
         )
+        if language == "it":
+            localized_app = browser.evaluate(
+                "fetch('/api/recommendations').then(response=>response.json()).then(apps=>{"
+                "const app=apps.find(item=>item.id==='tuxpaint');"
+                "return [catalogName(app),catalogText(app,'label'),catalogText(app.guidance.references[0],'label')];"
+                "})",
+                await_promise=True,
+            )
+            if localized_app != ["Tux Paint", "Disegna", "Informativa sulla privacy del progetto"]:
+                raise AssertionError(f"Italian catalog labels are incorrect: {localized_app!r}")
         persisted = browser.evaluate("fetch('/api/config').then(response=>response.json())", await_promise=True)
         if persisted.get("language") != language:
             raise AssertionError(f"Parent settings did not persist {language}")
@@ -321,7 +334,7 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
             message=f"{language} keyboard navigation did not restore home focus",
         )
     browser.set_device_metrics(1440, 900)
-    log_scenario("Spanish and French setup, Parent language changes and localized counts")
+    log_scenario("Italian, Spanish and French setup, Parent language changes and localized counts")
     assert_js(
         browser,
         "document.getElementById('title').textContent === 'E2E Home' && "

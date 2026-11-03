@@ -167,7 +167,7 @@ their own evidence is complete. See the release standard at the end.
 - [x] Add accessibility presets for larger text, contrast, reduced motion, and keyboard-only operation
 - [x] Add optional, non-manipulative celebration moments without engagement scoring
 
-## v0.8.0 — Platform
+## v0.8.0 — Platform & Living Room
 
 ### Cross-distribution app catalog
 
@@ -207,17 +207,18 @@ their own evidence is complete. See the release standard at the end.
 - [x] Translate French across the same surfaces
 - [x] Let existing families change the launcher language in Parent settings while preserving profile names and tile labels
 - [x] Apply the saved language to native helper windows and the embedded browser wrapper after an in-app language change
-- [ ] Translate and review Italian after Spanish/French
+- [x] Add Italian installer, launcher, native helper and catalog translations through the shared locale pipeline
+- [ ] Confirm Italian wording and tone with a fluent reviewer
 - [x] Make app descriptions, guidance and source labels use locale-key fallbacks so new packs can add translations through data
 - [x] Document translation contributions, terminology and review ownership; report missing source keys for draft and enabled languages
-- [x] Exercise all four enabled languages in the 800×600 Parent layout with localized counts and keyboard focus recovery
+- [x] Exercise all five enabled languages in the 800×600 Parent layout with localized counts and keyboard focus recovery
 - [ ] Complete physical-device language acceptance for long labels, localized dates and available speech voices
 - [x] Add registry-driven RTL layout, mirrored navigation and synthetic browser coverage
 - [ ] Complete RTL language acceptance with a reviewed language pack such as Arabic or Hebrew
 
 The [translation guide](LOCALIZATION.md) describes the shared registry,
-contributor workflow, and coverage reports. German, English, Spanish and
-French are enabled.
+contributor workflow, and coverage reports. German, English, Spanish, French
+and Italian are enabled.
 
 ### Lifecycle and reach
 
@@ -240,9 +241,9 @@ French are enabled.
 
 See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-profile-copying) for runtime behavior.
 
-## v0.9.0 — Living Room
+### Living Room
 
-### RetroGameCorner
+#### RetroGameCorner
 
 - [ ] Add an optional, Parent-enabled RetroGameCorner with a curated choice of emulators installed through the app store's direct installation flow
 - [ ] Write German/English Parent guidance explaining emulators, ROMs, optional BIOS files, controls, age/content choices and save data
@@ -251,7 +252,7 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 - [ ] Keep save files and supported save states separate for each child, with understandable backup and removal controls
 - [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
 
-### Living-room foundations
+#### Living-room foundations
 
 - [ ] Add optional gamepad and simple remote-control navigation with the same focus and modal boundaries as keyboard input
 - [ ] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API

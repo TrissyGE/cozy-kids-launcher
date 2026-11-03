@@ -41,10 +41,11 @@ class TranslationDataTests(unittest.TestCase):
 
     def test_runtime_locale_tracks_saved_language_and_uses_default_on_invalid_config(self):
         from runtime_locale import saved_locale
+        from language_registry import LANGUAGE_CODES
 
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "config.json"
-            for language in ("de", "es", "fr", "en"):
+            for language in LANGUAGE_CODES:
                 config.write_text(json.dumps({"language": language}), encoding="utf-8")
                 self.assertEqual(saved_locale(config)["timer_minutes"],
                                  translation_data.load_translations(language)["timer_minutes"])
