@@ -4,7 +4,7 @@ import os
 import re
 import time
 
-from package_provider import detect_native_provider, read_os_release
+from package_provider import apt_packagekit_supported, detect_native_provider, read_os_release
 
 
 class InstallError(Exception):
@@ -42,7 +42,7 @@ def error_category(value):
 class PackageKitBackend:
     def __init__(self):
         release = read_os_release()
-        if release.get("ID") not in ("ubuntu", "linuxmint", "zorin") or detect_native_provider(release) != "apt":
+        if not apt_packagekit_supported(release, detect_native_provider(release)):
             raise InstallError("unsupported")
         try:
             import gi

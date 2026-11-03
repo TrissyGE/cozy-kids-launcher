@@ -80,15 +80,37 @@ function renderCatalogResults(){
     state.textContent=rec.category==='browser'?uiText.catalogWeb:rec.installed?uiText.installed:uiText.notInstalled;
     const actions=document.createElement('div'); actions.className='actions';
     const button=document.createElement('button'); button.className='smallbtn';
-    if(!rec.installed){setIconLabel(button,'download',uiText.install); button.onclick=()=>triggerInstall(rec);}
+    if(!rec.installed){
+      setIconLabel(button,'download',uiText.install);
+      button.disabled=!catalogCanInstall(rec);
+      button.onclick=()=>triggerInstall(rec);
+    }
     else if(rec.installOnly){button.hidden=true;}
     else if(catalogAdded(rec)){button.disabled=true; setIconLabel(button,'save',uiText.added);}
     else {setIconLabel(button,'add',uiText.addTile); button.onclick=()=>addCatalogTile(rec,button);}
     actions.appendChild(button);
-    card.append(createTileVisual(rec.emoji,'emoji'),name,desc,state,actions,catalogDetails(rec));
+    card.append(createTileVisual(rec.emoji,'emoji'),name,desc,state,actions);
+    if(!rec.installed&&!catalogCanInstall(rec)) card.append(catalogPackageHint(rec));
+    card.append(catalogDetails(rec));
     grid.appendChild(card);
   }
   results.appendChild(grid);
+}
+
+function catalogCanInstall(rec){
+  return !rec.packageRoute||rec.packageRoute.mode==='direct';
+}
+
+function catalogPackageHint(rec){
+  const hint=document.createElement('p');
+  hint.className='muted';
+  hint.textContent=uiText.packageUnsupported;
+  if(rec.packageRoute?.package){
+    const name=document.createElement('code');
+    name.textContent=rec.packageRoute.package;
+    hint.append(' ',name);
+  }
+  return hint;
 }
 
 function catalogReviewDate(value){
@@ -130,7 +152,7 @@ function catalogDetails(rec){
   }
   if(sources.childElementCount) details.appendChild(sources);
   const aptPackage=rec.packages?.apt??rec.package;
-  if(rec.installed&&typeof aptPackage==='string'&&aptPackage){
+  if(rec.installed&&catalogCanInstall(rec)&&typeof aptPackage==='string'&&aptPackage){
     const maintenance=document.createElement('div'); maintenance.className='actions catalog-maintenance';
     for(const [operation,label] of [['update',uiText.packageMaintenance.checkUpdate],['remove',uiText.packageMaintenance.remove]]){
       const button=document.createElement('button');

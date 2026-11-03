@@ -21,6 +21,7 @@ OS_PROVIDERS = {
 }
 IMMUTABLE_VARIANTS = {"silverblue", "kinoite", "sericea", "onyx", "coreos", "aeon", "kalpa", "microos"}
 PACKAGE_NAME = re.compile(r"[a-z0-9](?:[a-z0-9+.-]{0,126}[a-z0-9])?")
+APT_PACKAGEKIT_SYSTEMS = {"ubuntu", "linuxmint", "zorin"}
 
 
 def read_os_release(paths=("/etc/os-release", "/usr/lib/os-release")):
@@ -67,6 +68,33 @@ def detect_native_provider(os_release=None, which=None, immutable=None):
     return None
 
 
+def apt_packagekit_supported(release, provider):
+    return release.get("ID") in APT_PACKAGEKIT_SYSTEMS and provider == "apt"
+
+
+def mapped_package(recommendation, provider):
+    if provider not in PROVIDERS:
+        return None
+    packages = recommendation.get("packages", {})
+    if not isinstance(packages, dict):
+        raise ValueError("Invalid package mapping")
+    package = packages.get(provider, recommendation.get("package") if provider == "apt" else None)
+    if package is not None and (not isinstance(package, str) or not PACKAGE_NAME.fullmatch(package)):
+        raise ValueError("Invalid package mapping")
+    return package
+
+
+def catalog_package_route(recommendation, release, provider):
+    try:
+        package = mapped_package(recommendation, provider)
+    except ValueError:
+        package = None
+    if not package:
+        return {"mode": "unavailable"}
+    return {"mode": "direct" if apt_packagekit_supported(release, provider) else "software-manager",
+            "package": package}
+
+
 def prepare_install(package, recommendations, *, provider=None):
     if not isinstance(package, str) or not PACKAGE_NAME.fullmatch(package):
         raise ValueError("Invalid package")
@@ -78,15 +106,9 @@ def prepare_install(package, recommendations, *, provider=None):
     provider = detect_native_provider() if provider is None else provider
     if provider not in PROVIDERS:
         return {"status": "unsupported", "reason": "provider_unavailable"}
-    # The legacy catalog's package field contains Debian names only.
-    packages = recommendation.get("packages", {})
-    if not isinstance(packages, dict):
-        raise ValueError("Invalid package mapping")
-    native_package = packages.get(provider, package if provider == "apt" else None)
+    native_package = mapped_package(recommendation, provider)
     if native_package is None:
         return {"status": "unsupported", "provider": provider, "reason": "package_unmapped"}
-    if not isinstance(native_package, str) or not PACKAGE_NAME.fullmatch(native_package):
-        raise ValueError("Invalid package mapping")
     argv = ["sudo", *PROVIDERS[provider], native_package]
     return {
         "status": "manual", "provider": provider,

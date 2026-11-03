@@ -192,6 +192,7 @@ their own evidence is complete. See the release standard at the end.
 - [x] Reattach known APT PackageKit jobs after a launcher restart, with read-only progress and no replay of consent
 - [x] Reconcile jobs that finish while the launcher is offline using exact daemon history and a fresh package lookup
 - [ ] Implement tested native DNF/Pacman/Zypper and managed Flatpak execution adapters
+  - [x] Show source-checked native package names for five apps across Fedora, Arch and openSUSE and distinguish graphical software-manager guidance from direct installation
 - [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
 

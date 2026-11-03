@@ -778,10 +778,11 @@ function renderRetroEmulators(){
     const button=document.createElement('button');
     button.className='smallbtn';
     button.type='button';
-    button.disabled=emulator.installed||device?.status==='incompatible'||device?.route==='unavailable';
+    button.disabled=emulator.installed||!catalogCanInstall(emulator)||device?.status==='incompatible'||device?.route==='unavailable';
     button.textContent=emulator.installed?uiText.installed:uiText.install;
     button.onclick=()=>triggerInstall(emulator);
     card.append(name,description,button);
+    if(!emulator.installed&&!catalogCanInstall(emulator)) card.appendChild(catalogPackageHint(emulator));
     if(device){
       const note=document.createElement('p');
       note.className='muted';

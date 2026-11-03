@@ -92,14 +92,28 @@ This is a conservative heuristic, not a complete immutable-distribution detector
 | Native provider | Manual command shape | Bundled mapping scope |
 | --- | --- | --- |
 | APT | `sudo apt install --no-remove <package>` | Legacy catalog Debian names preserved; availability still depends on release/repositories |
-| DNF | `sudo dnf install <package>` | Tux Paint and KTurtle |
-| Pacman | `sudo pacman -S <package>` | KTurtle; not Tux Paint, which is in the AUR |
-| Zypper | `sudo zypper install <package>` | Detection/plan builder tested; no bundled mappings enabled yet |
+| DNF | `sudo dnf install <package>` | Five mapped catalog apps plus Tux Paint |
+| Pacman | `sudo pacman -S <package>` | Five mapped catalog apps from Extra |
+| Zypper | `sudo zypper install <package>` | Five mapped catalog apps checked in openSUSE Factory |
 | Flatpak | Not implemented | Remote choice, trust, permissions, and app IDs still require review |
 
 No plan includes automatic yes, repository changes, or a system upgrade.
 Parents must keep their distribution maintained; the launcher does not repair
 stale package databases or promise that every legacy APT entry is available.
+
+The Parent catalog disables the direct Install action when the current host
+has no supported PackageKit route. If there is a mapped native name, it shows
+that name alongside the guidance to use the graphical software manager.
+Package names are hints from the following repositories. Availability in a
+particular release or enabled repository still needs verification.
+
+| App | Fedora | Arch Extra | openSUSE Factory |
+| --- | --- | --- | --- |
+| GCompris | [gcompris-qt](https://packages.fedoraproject.org/pkgs/gcompris-qt/) | [gcompris-qt](https://archlinux.org/packages/extra/x86_64/gcompris-qt/) | [gcompris-qt](https://api.opensuse.org/public/source/openSUSE:Factory/gcompris-qt) |
+| KTurtle | [kturtle](https://packages.fedoraproject.org/pkgs/kturtle/) | [kturtle](https://archlinux.org/packages/extra/x86_64/kturtle/) | [kturtle](https://api.opensuse.org/public/source/openSUSE:Factory/kturtle) |
+| KGeography | [kgeography](https://packages.fedoraproject.org/pkgs/kgeography/) | [kgeography](https://archlinux.org/packages/extra/x86_64/kgeography/) | [kgeography](https://api.opensuse.org/public/source/openSUSE:Factory/kgeography) |
+| KolourPaint | [kolourpaint](https://packages.fedoraproject.org/pkgs/kolourpaint/) | [kolourpaint](https://archlinux.org/packages/extra/x86_64/kolourpaint/) | [kolourpaint](https://api.opensuse.org/public/source/openSUSE:Factory/kolourpaint) |
+| SuperTuxKart | [supertuxkart](https://packages.fedoraproject.org/pkgs/supertuxkart/) | [supertuxkart](https://archlinux.org/packages/extra/x86_64/supertuxkart/) | [supertuxkart](https://api.opensuse.org/public/source/openSUSE:Factory/supertuxkart) |
 
 ## API and safety contract
 

@@ -70,6 +70,11 @@
     "cmd": ["gcompris"],
     "alt_cmds": ["gcompris-qt"],
     "package": "gcompris-qt",
+    "packages": {
+      "dnf": "gcompris-qt",
+      "pacman": "gcompris-qt",
+      "zypper": "gcompris-qt"
+    },
     "category": "learning",
     "guidance": {
       "offline": "partial",
@@ -193,7 +198,8 @@
     "packages": {
       "apt": "kturtle",
       "dnf": "kturtle",
-      "pacman": "kturtle"
+      "pacman": "kturtle",
+      "zypper": "kturtle"
     },
     "category": "learning",
     "guidance": {
@@ -392,6 +398,11 @@
     "desc_it": "Corse di kart con Tux e i suoi amici su piste stravaganti.",
     "cmd": ["supertuxkart","--fullscreen"],
     "package": "supertuxkart",
+    "packages": {
+      "dnf": "supertuxkart",
+      "pacman": "supertuxkart",
+      "zypper": "supertuxkart"
+    },
     "category": "game",
     "guidance": {
       "source": "https://supertuxkart.net/Discover",
@@ -1323,6 +1334,11 @@
       "kolourpaint"
     ],
     "package": "kolourpaint",
+    "packages": {
+      "dnf": "kolourpaint",
+      "pacman": "kolourpaint",
+      "zypper": "kolourpaint"
+    },
     "category": "creative",
     "guidance": {
       "age_de": "Für Kinder, die mit dem Mauszeiger Linien und Formen zeichnen möchten (Elternorientierung).",
@@ -1362,6 +1378,11 @@
       "kgeography"
     ],
     "package": "kgeography",
+    "packages": {
+      "dnf": "kgeography",
+      "pacman": "kgeography",
+      "zypper": "kgeography"
+    },
     "category": "learning",
     "guidance": {
       "age_de": "Für Kinder, die Kartennamen lesen und Regionen auf einer Karte finden möchten (Elternorientierung).",

@@ -99,3 +99,25 @@ class PackageProviderTests(unittest.TestCase):
             self.assertEqual(package_provider.prepare_install("kturtle", catalog, provider=provider)["argv"][-1], "kturtle")
         # Tux Paint is in the AUR, not in Arch's supported binary repositories.
         self.assertEqual(package_provider.prepare_install("tuxpaint", catalog, provider="pacman")["status"], "unsupported")
+
+    def test_catalog_routes_distinguish_direct_and_graphical_installation(self):
+        import json
+        catalog = json.loads((Path(__file__).resolve().parents[1] / "src" / "recommendations.json").read_text(encoding="utf-8"))
+        apps = {item["id"]: item for item in catalog}
+        for system in ("ubuntu", "linuxmint", "zorin"):
+            self.assertEqual(package_provider.catalog_package_route(apps["gcompris"], {"ID": system}, "apt"),
+                             {"mode": "direct", "package": "gcompris-qt"})
+        for system, provider in (("fedora", "dnf"), ("arch", "pacman"), ("opensuse-tumbleweed", "zypper")):
+            for identifier in ("gcompris", "kturtle", "kgeography", "kolourpaint", "supertuxkart"):
+                app = apps[identifier]
+                with self.subTest(system=system, app=identifier):
+                    self.assertEqual(package_provider.catalog_package_route(app, {"ID": system}, provider),
+                                     {"mode": "software-manager", "package": app["package"]})
+                    self.assertEqual(package_provider.prepare_install(app["package"], catalog, provider=provider)["argv"][-1],
+                                     app["package"])
+        self.assertEqual(package_provider.catalog_package_route(apps["tuxpaint"], {"ID": "arch"}, "pacman"),
+                         {"mode": "unavailable"})
+        self.assertEqual(package_provider.catalog_package_route(apps["gcompris"], {"ID": "debian"}, "apt"),
+                         {"mode": "software-manager", "package": "gcompris-qt"})
+        self.assertEqual(package_provider.catalog_package_route(apps["gcompris"], {"ID": "fedora"}, None),
+                         {"mode": "unavailable"})
