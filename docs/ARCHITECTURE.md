@@ -278,18 +278,6 @@ focus recovery are documented in [DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md).
 - diagnostics never include PIN data, titles, tile labels, commands, URLs, usernames, home paths, or browser-profile data
 - logs and diagnostics remain local unless a parent deliberately shares the downloaded file
 
-## Why not do everything in Plasma directly?
-
-Because desktop-shell configuration becomes brittle fast:
-
-- folder views cache strangely
-- screen mappings drift
-- widget layouts are fragile
-- switching modes by rewriting Plasma config is unreliable
-
-The browser-overlay approach is much more robust.
-
-
 ### Daily allowance and profile copying
 
 Each profile can have an optional daily allowance from 1 to 1,440 minutes.
@@ -318,3 +306,14 @@ Parents can review and confirm a copy of a named profile. The copy gets a new
 identity with its own daily consumption, activity history, favorites and media
 resume state. The source's tiles, appearance, weekly rules and configured
 allowance carry over.
+
+## Why not do everything in Plasma directly?
+
+Because desktop-shell configuration becomes brittle fast:
+
+- folder views cache strangely
+- screen mappings drift
+- widget layouts are fragile
+- switching modes by rewriting Plasma config is unreliable
+
+The browser-overlay approach is much more robust.

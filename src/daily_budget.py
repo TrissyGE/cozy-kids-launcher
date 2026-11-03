@@ -173,6 +173,12 @@ class DailyBudget:
         self._write(data)
         return self.status(profile, minutes)
 
+    def retain_profiles(self, profile_ids):
+        data = self._read()
+        retained = {profile: entry for profile, entry in data.items() if profile in profile_ids}
+        if len(retained) != len(data):
+            self._write(retained)
+
     def forget(self, profile):
         data = self._read()
         if profile in data:

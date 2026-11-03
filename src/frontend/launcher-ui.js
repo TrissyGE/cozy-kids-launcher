@@ -317,16 +317,21 @@ function handleParentClick(){ if(document.getElementById('admin').classList.cont
 function requestPin(callback){ pinCallback=callback; showPin(); }
 function openAdmin(){
   if(cfg.pinConfigured){
-    requestPin(async()=>{
-      try{
-        await loadConfig(true);
-        hideAvailabilityBlock(true);
-        enterAdmin();
-      }catch(e){ showLauncherStartupState('error'); }
-    });
+    requestPin(loadParentSettings);
     return;
   }
   enterAdmin();
+}
+async function loadParentSettings(){
+  try{
+    await loadConfig(true);
+    hideAvailabilityBlock(true);
+    enterAdmin();
+  }catch(e){
+    hideAvailabilityBlock(true);
+    requestPin(loadParentSettings);
+    document.getElementById('pinErr').textContent=uiText.startupError;
+  }
 }
 function showPin(){ pinReturnFocus=document.activeElement; document.getElementById('pin').classList.remove('hidden'); document.getElementById('pinInput').value=''; document.getElementById('pinErr').textContent=''; document.getElementById('pinInput').focus(); }
 function hidePin(){ document.getElementById('pin').classList.add('hidden'); }

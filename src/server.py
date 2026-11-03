@@ -640,6 +640,13 @@ def finish_budget_session():
         log_runtime_event("budget.storage.unavailable", level="warning")
 
 
+def retain_profile_budgets(stored):
+    try:
+        budget().retain_profiles({profile["id"] for profile in stored["profiles"]})
+    except (OSError, ValueError):
+        log_runtime_event("budget.storage.unavailable", level="warning")
+
+
 def budget_status(cfg):
     return budget().status(cfg.get("activeProfileId", ""), cfg.get("dailyBudgetMinutes", 0))
 
@@ -1446,6 +1453,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 )
                 imported = save_stored_cfg(imported)
                 reset_active_tile()
+                retain_profile_budgets(imported)
                 write_browser_override(active_config(imported))
             except (OSError, ValueError) as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
@@ -1476,6 +1484,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             try:
                 restored, safety_backup = restore_config_backup(backup_id)
                 reset_active_tile()
+                retain_profile_budgets(restored)
             except FileNotFoundError as exc:
                 self.json_response(
                     {"status": "error", "message": str(exc)},

@@ -23,8 +23,63 @@ def assert_js(browser, expression, message):
         raise AssertionError(message)
 
 
+def run_family_budget_scenario(browser):
+    browser.evaluate("""
+        window.__familyOriginalFetch=window.fetch;
+        window.__familyOriginalPin=cfg.pinConfigured;
+        window.__familyRemaining=0;
+        window.__familyRequests=[];
+        cfg.pinConfigured=true;
+        window.fetch=(input,options)=>{
+            if(input==='/api/availability/status'){
+                const remaining=window.__familyRemaining;
+                return Promise.resolve(new Response(JSON.stringify({
+                    profileAllowed:remaining>0, blockedTileIds:[], reason:remaining?'':'daily_budget',
+                    budget:{enabled:true,remainingSeconds:remaining},nextAllowedAt:1893456000
+                })));
+            }
+            if(input==='/api/budget/extend'){
+                const pin=JSON.parse(options.body).pin;
+                window.__familyRequests.push(pin);
+                if(pin!=='1234') return Promise.resolve(new Response('{}',{status:403}));
+                window.__familyRemaining=900;
+                return Promise.resolve(new Response('{}'));
+            }
+            return window.__familyOriginalFetch(input,options);
+        };
+    """)
+    try:
+        browser.evaluate("pollAvailability()", await_promise=True)
+        assert_js(browser, """
+            !document.getElementById('availabilityBlock').classList.contains('hidden') &&
+            !document.getElementById('availabilityNextAllowed').hidden &&
+            !document.getElementById('budgetRequestBtn').hidden
+        """, "The budget block did not show the next opening and the extra-time request")
+        browser.click('#budgetRequestBtn')
+        assert_js(browser, "document.activeElement.id==='budgetPin'", "Extra-time PIN did not get focus")
+        browser.evaluate("document.getElementById('budgetPin').value='0000'")
+        browser.click('#budgetExtendBtn')
+        browser.wait_for("document.getElementById('budgetExtensionMessage').textContent===uiText.pinWrong")
+        browser.evaluate("document.getElementById('budgetPin').value='1234'")
+        browser.click('#budgetExtendBtn')
+        browser.wait_for("document.getElementById('availabilityBlock').classList.contains('hidden')")
+        assert_js(browser, """
+            window.__familyRequests.join(',')==='0000,1234' &&
+            document.getElementById('budgetPin').value==='' &&
+            document.getElementById('budgetRemaining').textContent.includes('15')
+        """, "Extra time did not unlock the child view and refresh the remaining time")
+    finally:
+        browser.evaluate("""
+            window.fetch=window.__familyOriginalFetch;
+            cfg.pinConfigured=window.__familyOriginalPin;
+            pollAvailability();
+        """, await_promise=True)
+    print('  ✓ budget block, next opening, fresh PIN and remaining time', flush=True)
+
+
 def run_regression_scenarios(browser, artifacts, base_url):
     browser.wait_for("typeof cfg!=='undefined' && cfg!==null && bootstrapPromise===null")
+    run_family_budget_scenario(browser)
     browser.evaluate("""
         window.__regressionOriginalConfig=JSON.parse(JSON.stringify(cfg));
         cfg.theme='custom'; cfg.accessibilityHighContrast=false;
