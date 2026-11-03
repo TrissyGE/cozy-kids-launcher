@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import http.client
 import io
 import json
 import os
@@ -2182,6 +2183,28 @@ class ServerApiTests(unittest.TestCase):
         upgraded = server_module.load_cfg()["pinHash"]
         self.assertTrue(upgraded.startswith("pbkdf2_sha256$"))
         self.assertTrue(server_module.verify_pin(upgraded, "1234"))
+
+    def test_loopback_host_is_checked_before_all_http_methods(self):
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        cases = (
+            ("GET", "/api/config", [f"LOCALHOST:{self.port}"], 200),
+            ("GET", "/api/config", [f"rebound.invalid:{self.port}"], 400),
+            ("HEAD", "/index.html", [], 400),
+            ("POST", "/api/save-config", [f"127.0.0.1:{self.port}", f"localhost:{self.port}"], 400),
+            ("GET", "/api/config", ["127.0.0.1:1"], 400),
+        )
+        try:
+            for method, path, hosts, expected in cases:
+                with self.subTest(method=method, hosts=hosts):
+                    connection.putrequest(method, path, skip_host=True)
+                    for host in hosts:
+                        connection.putheader("Host", host)
+                    connection.endheaders()
+                    with connection.getresponse() as response:
+                        self.assertEqual(response.status, expected)
+                        response.read()
+        finally:
+            connection.close()
 
     def test_cross_site_posts_are_rejected_even_without_pin(self):
         status, data, _ = self.request(

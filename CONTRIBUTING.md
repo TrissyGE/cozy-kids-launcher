@@ -47,4 +47,20 @@ The script supports Linux and WSL and does not alter the current user's launcher
 - Relevant documentation and screenshots are updated.
 - Updater changes preserve the compatibility rules in [docs/RELEASING.md](docs/RELEASING.md).
 
+## Maintain a change
+
+- For translations, follow the [language-pack workflow](docs/LOCALIZATION.md).
+  Test long strings and keyboard focus on the supported compact layout, and
+  ask a fluent speaker to review new or substantially changed translations.
+- For accessibility, describe the input methods and settings you exercised.
+  Use the [desktop checklist](docs/DESKTOP_TESTING.md) to separate automated
+  focus tests from physical and screen-reader observations.
+- For a suspected vulnerability, use GitHub's private vulnerability reporting
+  option when available. Otherwise contact a maintainer privately before
+  sharing reproduction details. Remove PINs, paths and family data from reports.
+- For downstream packaging, document the distribution and package versions,
+  update owner, and migration and rollback evidence. Apply the
+  [compatibility policy](docs/COMPATIBILITY.md) and
+  [package-provider boundaries](docs/PACKAGE_PROVIDERS.md).
+
 By contributing, you agree that your work is provided under the repository's [MIT License](LICENSE).

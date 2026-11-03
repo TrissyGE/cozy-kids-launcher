@@ -720,6 +720,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=APP_ROOT, **kwargs)
 
+    def parse_request(self):
+        if not super().parse_request():
+            return False
+        port = self.server.server_address[1]
+        local_hosts = ("localhost", "127.0.0.1", "[::1]")
+        allowed = {f"{host}:{port}" for host in local_hosts}
+        if port == 80:
+            allowed.update(local_hosts)
+        hosts = self.headers.get_all("Host", [])
+        if len(hosts) != 1 or hosts[0].lower() not in allowed:
+            self.close_connection = True
+            self.send_error(400, "Invalid loopback Host")
+            return False
+        return True
+
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")

@@ -326,12 +326,13 @@ stable-`main` updater contract.
 
 ### Stability contract
 
-- [ ] Publish a compatibility policy for configuration schemas, the loopback API, package migrations, and update channels
+- [x] Document the compatibility policy for configuration schemas, the loopback API, package migrations, and update channels
 - [ ] Complete a documented threat model and security review of Parent authentication, local HTTP boundaries, imports, updates, and process launching
+  - [x] Document the local trust boundaries and reject foreign, missing, or ambiguous HTTP Host headers before serving routes
 - [ ] Verify clean install, script-to-package migration, upgrade, rollback, backup restore, and uninstall paths on every supported distribution
 - [ ] Complete manual screen-reader coverage alongside keyboard, touch, reduced-motion, high-contrast, and low-resolution testing
 - [ ] Make release artifacts and repository metadata reproducible, signed where applicable, and independently verifiable
-- [ ] Document a sustainable translation, accessibility, security-reporting, and downstream-packaging contribution workflow
+- [x] Document the translation, accessibility, security-reporting, and downstream-packaging contribution workflow
 
 ## Release standard
 
