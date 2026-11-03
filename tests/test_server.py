@@ -1418,6 +1418,24 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(data, expected)
 
+    def test_update_channel_requires_parent_and_same_origin(self):
+        self.enable_pin()
+        path = "/api/update/channel"
+        cookie = self.authenticate()
+        status, data, _ = self.request(path, cookie=cookie)
+        self.assertEqual((status, data["channel"]), (200, "stable"))
+        for kwargs in ({"origin": self.base_url}, {"origin": "https://foreign.example", "cookie": cookie}):
+            status, _, _ = self.request(path, method="POST", body={"channel": "preview"}, **kwargs)
+            self.assertEqual(status, 403)
+        for channel, expected in (("develop", 400), ("preview", 200), ("stable", 200)):
+            status, _, _ = self.request(path, method="POST", body={"channel": channel},
+                                        origin=self.base_url, cookie=cookie)
+            self.assertEqual(status, expected)
+            if expected == 200:
+                self.assertEqual(server_module.read_update_track(Path(server_module.CFG).with_name("update-track")),
+                                 channel)
+        self.assertFalse((Path(server_module.APP_ROOT) / "update-trigger.sh").exists())
+
     def test_update_request_only_writes_a_single_launcher_trigger(self):
         update_script = Path(server_module.UPDATE_SCRIPT)
         update_script.write_text("#!/usr/bin/env bash\n", encoding="utf-8")

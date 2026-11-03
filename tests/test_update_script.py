@@ -71,6 +71,7 @@ class UpdateFixture:
         self.legacy_version = legacy_version
         self.release_enabled = True
         self.valid_checksum = True
+        self.immutable = True
         self.release_archive = make_release_archive(release_version)
         self.legacy_archive = make_legacy_archive(legacy_version)
         self.server = None
@@ -92,15 +93,20 @@ class UpdateFixture:
 
             def do_GET(self):
                 base_url = f"http://127.0.0.1:{self.server.server_address[1]}"
-                if self.path == "/releases/latest":
+                if self.path in ("/releases/latest", "/releases?per_page=100"):
                     if not fixture.release_enabled:
                         self.send_payload(404, b"not found", "text/plain")
                         return
                     version = fixture.release_version
+                    preview = "-rc." in version
+                    if preview and self.path == "/releases/latest":
+                        self.send_payload(404, b"not found", "text/plain")
+                        return
                     body = {
                         "tag_name": f"v{version}",
                         "draft": False,
-                        "prerelease": False,
+                        "prerelease": preview,
+                        "immutable": fixture.immutable,
                         "assets": [
                             {
                                 "name": f"cozy-kids-launcher-{version}.tar.gz",
@@ -112,7 +118,8 @@ class UpdateFixture:
                             },
                         ],
                     }
-                    self.send_payload(200, json.dumps(body).encode(), "application/json")
+                    payload = [body] if self.path != "/releases/latest" else body
+                    self.send_payload(200, json.dumps(payload).encode(), "application/json")
                     return
                 if self.path == "/release.tar.gz":
                     self.send_payload(200, fixture.release_archive)
@@ -192,6 +199,39 @@ class UpdateScriptIntegrationTests(unittest.TestCase):
         self.assertEqual(self.installed_version(), "0.4.0")
         self.assertEqual(self.config_file.read_text(encoding="utf-8"), self.original_config)
         self.assertEqual((self.app_root / "update-channel").read_text().strip(), "release")
+
+    def test_preview_opt_in_install_and_return_to_stable_without_downgrading(self):
+        self.fixture.release_version = "0.8.0-rc.10"
+        self.fixture.release_archive = make_release_archive("0.8.0-rc.10")
+        check = self.run_updater("--check-only")
+        self.assertNotIn("0.8.0-rc.10", check.stdout)
+        self.assertEqual(self.run_updater("--set-channel", "preview").returncode, 0)
+        install = self.run_updater()
+        self.assertEqual(install.returncode, 0, install.stdout)
+        self.assertEqual(self.installed_version(), "0.8.0-rc.10")
+        self.assertEqual(self.config_file.read_text(encoding="utf-8"), self.original_config)
+        self.assertEqual(self.run_updater("--set-channel", "stable").returncode, 0)
+        self.fixture.release_version = "0.7.0"
+        refused = self.run_updater("--force")
+        self.assertEqual(refused.returncode, 0, refused.stdout)
+        self.assertIn("refusing to downgrade", refused.stdout)
+        self.assertEqual(self.installed_version(), "0.8.0-rc.10")
+        self.fixture.release_version = "0.8.0"
+        self.fixture.release_archive = make_release_archive("0.8.0")
+        stable = self.run_updater()
+        self.assertEqual(stable.returncode, 0, stable.stdout)
+        self.assertEqual(self.installed_version(), "0.8.0")
+
+    def test_preview_refuses_mutable_release_and_legacy_fallback(self):
+        self.assertEqual(self.run_updater("--set-channel", "preview").returncode, 0)
+        self.fixture.immutable = False
+        self.assertNotEqual(self.run_updater().returncode, 0)
+        self.fixture.release_enabled = False
+        result = self.run_updater()
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertNotIn("fallback", result.stdout)
+        self.assertNotEqual(self.run_updater("--legacy-main").returncode, 0)
+        self.assertEqual(self.installed_version(), "0.3.4")
 
     def test_checksum_mismatch_cannot_replace_the_installation(self):
         self.fixture.valid_checksum = False

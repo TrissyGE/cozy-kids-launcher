@@ -56,6 +56,25 @@ Only after the release is published does the workflow fast-forward `main` to the
 
 After a release branch has been used, merge any release-only fixes back into `develop` and delete the branch.
 
+## Publish a release candidate
+
+Prepare the candidate from `develop` or the release branch. Set `VERSION`
+and a dated changelog heading to the full candidate version, for example
+`0.8.0-rc.1`, then run the same release gate. When publication is intended,
+tag that exact tested commit with `v0.8.0-rc.1`.
+
+The workflow tests and attests the same versioned archives and checksum
+manifest as for a stable release. It publishes the candidate as a GitHub
+prerelease and verifies that GitHub reports it as immutable. Stable-main
+promotion and its deploy credential are gated on a stable version. A later
+candidate uses a new number, and the final `v0.8.0` is a separate release.
+
+An opted-in updater selects the highest eligible version among the most
+recent 100 published release entries. Candidate numbers compare numerically
+and the final release sorts after every candidate of the same version. A
+preview discovery failure stops the update. Switching back to Stable resumes
+stable discovery and preserves downgrade protection.
+
 ## Verify the result
 
 The published release must contain exactly these updater-facing assets:

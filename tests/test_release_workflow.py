@@ -32,6 +32,14 @@ class StableMainReleaseContractTests(unittest.TestCase):
         self.assertIn("secrets.RELEASE_DEPLOY_KEY", workflow)
         self.assertIn('git ls-remote "git@github.com:$GITHUB_REPOSITORY.git"', workflow)
 
+    def test_preview_is_immutable_and_cannot_use_stable_promotion(self):
+        workflow = (REPOSITORY_ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+        stable_gate = "if: steps.version.outputs.channel == 'stable'"
+        for step in ("Configure stable-main deploy key", "Promote the published release commit to stable main"):
+            self.assertIn(f"- name: {step}\n        {stable_gate}", workflow)
+        self.assertIn("release_options=(--prerelease --latest=false)", workflow)
+        self.assertIn("--jq .immutable", workflow)
+
     def test_stable_main_check_compares_commit_with_latest_release_tag(self):
         workflow = (
             REPOSITORY_ROOT / ".github" / "workflows" / "stable-main.yml"

@@ -301,6 +301,12 @@
   "themeMotion": "Sanfte Hintergrundbewegung",
   "themeTimeOfDay": "An lokale Tageszeit anpassen",
   "worldThemeHint": "Nur für illustrierte Welten. Die Einstellung für reduzierte Bewegung des Geräts hat immer Vorrang.",
+  "updateTrack": {
+    "label": "Update-Kanal",
+    "stable": "Stabil",
+    "preview": "Vorschau",
+    "hint": "Die Vorschau enthält Vorabversionen. Beim Wechsel zurück wird auf eine neuere stabile Version gewartet."
+  },
   "budget": {
     "label": "Tägliches App-Budget in Minuten",
     "hint": "0 schaltet das Budget aus. Zeit in gestarteten Apps zählt für dieses Kind über mehrere Sitzungen hinweg.",

@@ -470,6 +470,14 @@
               <span class="muted" id="versionDisplay"></span>
               <button class="smallbtn" id="checkUpdateBtn" onclick="checkUpdate()">{{UPDATE_CHECK}}</button>
             </div>
+            <div class="field">
+              <label for="updateTrack" id="updateTrackLabel"></label>
+              <select id="updateTrack" onchange="saveUpdateTrack()" aria-describedby="updateTrackHint" disabled>
+                <option id="updateTrackStable" value="stable"></option>
+                <option id="updateTrackPreview" value="preview"></option>
+              </select>
+              <p id="updateTrackHint" class="muted"></p>
+            </div>
             <div id="updateMsg" class="ui-state" aria-live="polite" hidden></div>
             <div class="row2" id="updateRow" style="grid-template-columns:1fr 1fr; margin-top:8px; display:none;">
               <span class="muted"></span>

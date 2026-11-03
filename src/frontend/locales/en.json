@@ -301,6 +301,12 @@
   "themeMotion": "Gentle background motion",
   "themeTimeOfDay": "Match the local time of day",
   "worldThemeHint": "Available for illustrated worlds. The device reduced-motion preference always takes priority.",
+  "updateTrack": {
+    "label": "Update channel",
+    "stable": "Stable",
+    "preview": "Preview",
+    "hint": "Preview includes release candidates. Switching back waits for a newer stable version."
+  },
   "budget": {
     "label": "Daily app budget in minutes",
     "hint": "Set 0 to turn it off. Time in launched apps counts across sessions for this child.",

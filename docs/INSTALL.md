@@ -116,7 +116,21 @@ bash ~/.local/share/cozy-kids-launcher/update.sh --check-only
 
 The updater prefers a versioned GitHub Release and verifies its SHA-256 checksum before installing it. If this installation predates the first compatible release, it automatically retains the original `main/VERSION` update path. After a verified release has been installed, it will not silently fall back to mutable `main` if GitHub's release endpoint is unavailable.
 
-For an explicit emergency fallback, run:
+Stable is selected by default. To receive release candidates, choose
+**Parent → System → Update channel → Preview** or run:
+
+```bash
+bash ~/.local/share/cozy-kids-launcher/update.sh --set-channel preview
+```
+
+Changing the channel saves a preference. Use **Check for updates** to see
+what is available, then confirm the install separately. Preview includes
+immutable GitHub release candidates and stable releases. To return to the
+stable channel, select **Stable** or pass `--set-channel stable`. A device
+running a release candidate waits for a stable version that is newer than the
+installed version, such as the corresponding final release.
+
+For an explicit emergency fallback on the stable channel, run:
 
 ```bash
 bash ~/.local/share/cozy-kids-launcher/update.sh --legacy-main

@@ -1182,6 +1182,13 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts):
     release_fixture.latest_version = installed_version
     release_fixture.mode = "ok"
     browser.click("[data-admin-section='system']")
+    browser.wait_for("!document.getElementById('updateTrack').disabled")
+    for channel in ("preview", "stable"):
+        browser.set_value("#updateTrack", channel)
+        browser.wait_for(
+            f"!document.getElementById('updateTrack').disabled && savedUpdateTrack==={json.dumps(channel)}",
+            message=f"The update channel did not switch to {channel}",
+        )
     browser.click("#checkUpdateBtn")
     browser.wait_for(
         "document.getElementById('checkUpdateBtn').disabled === false && "

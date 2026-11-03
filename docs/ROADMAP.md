@@ -217,7 +217,11 @@ French are enabled.
 ### Lifecycle and reach
 
 - [x] Add an opt-in systemd user service with status, recovery, stop and disable commands ([lifecycle guide](LIFECYCLE.md))
-- [ ] Add stable and opt-in preview update channels without weakening immutable releases
+- [x] Keep stable updates as the default and expose an explicit Preview choice in Parent settings and the CLI
+- [x] Select immutable release candidates with numeric ordering and return from a candidate to the matching stable release
+- [x] Verify preview archives with the existing checksum and rollback path and fail closed when preview discovery is unavailable
+- [x] Build and attest preview releases through a workflow path that excludes stable-main promotion
+- [ ] Verify the first published release candidate on an opted-in disposable installation
 - [ ] Expand the automated and manual compatibility matrix across supported distributions
 
 ### Family time and profiles
