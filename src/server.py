@@ -86,6 +86,7 @@ from media_state import (
     remove_profile_media_state,
     set_media_favorite,
 )
+from retro_games import emulator_command, scan_retro_games
 from media_resume import (
     prepare_profile_resume_directory,
     remove_profile_resume_directory,
@@ -858,6 +859,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if self.require_admin(cfg):
                 return self.json_response({"roots": cfg.get("mediaRoots", [])})
             return
+        if request_url.path == "/api/retro/games":
+            cfg = load_cfg()
+            if not self.require_admin(cfg):
+                return
+            roots = cfg.get("retroRoots", [])
+            games, unavailable, truncated = scan_retro_games(roots)
+            return self.json_response({
+                "roots": roots,
+                "games": sorted(games.values(), key=lambda game: (game["title"].casefold(), game["path"])),
+                "unavailable": unavailable,
+                "truncated": truncated,
+            })
         if request_url.path == "/api/media/sources":
             _, sources = managed_media_sources(load_cfg().get("mediaRoots", []))
             return self.json_response(sources)
@@ -1044,7 +1057,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         action = self.path.strip("/")
         if action.startswith("launch/") or action in {
-            "api/media/play", "api/media/roots", "api/profiles/create", "api/profiles/select", "api/profiles/delete",
+            "api/media/play", "api/media/roots", "api/retro/games", "api/retro/approve",
+            "api/profiles/create", "api/profiles/select", "api/profiles/delete",
             "api/save-config", "api/import-config", "api/backups/restore", "api/budget/session",
             "api/verify-pin", "api/pin/set", "api/pin/remove",
             "api/budget/extend", "exit-kids",
@@ -1054,7 +1068,33 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self.dispatch_post(action)
 
     def dispatch_post(self, action):
-        if action == "api/media/roots":
+        if action == "api/retro/approve":
+            stored = load_stored_cfg()
+            if not self.require_admin(stored):
+                return
+            body = self.read_json_body()
+            if not isinstance(body, dict):
+                return
+            cfg = active_config(stored)
+            identifier = body.get("gameId")
+            if not isinstance(identifier, str) or body.get("profileId") != cfg["activeProfileId"]:
+                return self.json_response({"status": "invalid"}, 400)
+            games, _, _ = scan_retro_games(stored.get("retroRoots", []))
+            game = games.get(identifier)
+            if not game:
+                return self.json_response({"status": "unavailable"}, 404)
+            tile_id = f"retro-{identifier}"
+            if not any(tile["id"] == tile_id for tile in cfg["tiles"]):
+                cfg["tiles"].append({
+                    "id": tile_id, "label": game["title"], "emoji": "🎮",
+                    "cmd": [f"special:retro:{identifier}"], "visible": True,
+                })
+                try:
+                    cfg = save_cfg(cfg)
+                except (OSError, ValueError):
+                    return self.json_response({"status": "error"}, 400)
+            return self.json_response({"config": public_config(cfg)})
+        if action in ("api/media/roots", "api/retro/games"):
             stored = load_stored_cfg()
             if not self.require_admin(stored):
                 return
@@ -1063,13 +1103,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             try:
                 roots = body.get("roots") if isinstance(body, dict) else None
-                stored["mediaRoots"] = validate_media_roots(roots)
+                field = "retroRoots" if action == "api/retro/games" else "mediaRoots"
+                stored[field] = validate_media_roots(roots)
                 stored = save_stored_cfg(stored)
             except ValueError:
                 return self.json_response({"status": "invalid"}, 400)
             except OSError:
                 return self.json_response({"status": "error"}, 503)
-            return self.json_response({"roots": stored["mediaRoots"]})
+            return self.json_response({"roots": stored[field]})
         if action in ("api/budget/session", "api/budget/extend"):
             body = self.read_json_body()
             if body is None:
@@ -1842,6 +1883,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
 
             clean = launch.get("argv", [])
+            if launch["type"] == "retro":
+                games, _, _ = scan_retro_games(cfg.get("retroRoots", []))
+                game = games.get(launch["id"])
+                emulator = shutil.which("mgba-qt")
+                if not game or not emulator:
+                    return self.json_response({"status": "unavailable"}, 503)
+                try:
+                    clean = emulator_command(
+                        emulator, game,
+                        os.path.join(os.path.dirname(MEDIA_STATE_FILE), "retro"),
+                        cfg["activeProfileId"],
+                    )
+                except (OSError, ValueError):
+                    return self.json_response({"status": "unavailable"}, 503)
             if cfg.get("dailyBudgetMinutes") and clean and os.path.basename(clean[0]) in {"xdg-open", "gio"}:
                 self.json_response({"status": "error", "message": "This opener cannot be supervised"}, 503)
                 return

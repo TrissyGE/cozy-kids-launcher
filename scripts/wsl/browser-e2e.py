@@ -397,6 +397,28 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
         "Home title or tiles are incorrect",
     )
     managed_root = test_home / "External Media"
+    retro_root = test_home / "Game Fixtures"
+    retro_root.mkdir()
+    (retro_root / "Local Test.gba").write_bytes(b"scanner fixture")
+    browser.evaluate("enterAdmin(); activateAdminSection('apps')")
+    browser.wait_for("!document.getElementById('retroRoots').disabled")
+    browser.set_value("#retroRoots", str(retro_root))
+    browser.click("#retroSave")
+    browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='Local Test'")
+    browser.click("#retroApprove")
+    browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
+    browser.evaluate("closeAdmin()")
+    (retro_root / "Local Test.gba").write_bytes(b"replacement")
+    browser.click('#grid .tile[data-tile-id^="retro-"]')
+    browser.wait_for("document.getElementById('availabilityBlock').dataset.reason==='retro_unavailable'")
+    assert_js(
+        browser,
+        "!JSON.stringify(cfg).includes('Game Fixtures') && !document.getElementById('retroRoots').value",
+        "A local game path escaped the Parent settings",
+    )
+    browser.key_press("Escape")
+    browser.evaluate("cfg.tiles=cfg.tiles.filter(tile=>!tile.id.startsWith('retro-')); persistConfig().then(renderAll)", await_promise=True)
+    log_scenario("Parent-managed RetroGameCorner tiles are path-private and reject changed ROMs")
     browser.evaluate("enterAdmin(); activateAdminSection('apps')")
     browser.wait_for("!document.getElementById('mediaRootsInput').disabled")
     browser.set_value("#mediaRootsInput", str(managed_root))

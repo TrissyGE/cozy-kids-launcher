@@ -165,7 +165,8 @@ function showAvailabilityBlock(reason='profile_schedule'){
   document.getElementById('availabilityBlockTitle').textContent=uiText.scheduleBlockedTitle;
   document.getElementById('availabilityBlockBody').textContent=({
     app_schedule:uiText.scheduleAppBlocked,daily_budget:uiText.budget.exhausted,
-    budget_unavailable:uiText.budget.unavailable
+    budget_unavailable:uiText.budget.unavailable,
+    retro_unavailable:uiText.retroUnavailable
   })[reason]||uiText.scheduleProfileBlocked;
   const next=document.getElementById('availabilityNextAllowed');
   const timestamp=reason==='app_schedule'?null:availabilityStatus.nextAllowedAt;

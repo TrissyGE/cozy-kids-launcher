@@ -1391,5 +1391,30 @@
         }
       ]
     }
+  },
+  {
+    "id": "mgba-qt",
+    "emoji": "🎮",
+    "label_de": "mGBA",
+    "label_en": "mGBA",
+    "label_es": "mGBA",
+    "label_fr": "mGBA",
+    "label_it": "mGBA",
+    "name_en": "mGBA",
+    "desc_de": "Emulator für die lokalen Game-Boy-Spiele im RetroGameCorner.",
+    "desc_en": "Emulator for local Game Boy games in RetroGameCorner.",
+    "desc_es": "Emulador para juegos locales de Game Boy en RetroGameCorner.",
+    "desc_fr": "Émulateur pour les jeux Game Boy locaux dans RetroGameCorner.",
+    "desc_it": "Emulatore per i giochi Game Boy locali in RetroGameCorner.",
+    "cmd": ["mgba-qt"],
+    "package": "mgba-qt",
+    "category": "games",
+    "installOnly": true,
+    "guidance": {
+      "offline": "yes",
+      "input": ["keyboard"],
+      "source": "https://mgba.io/",
+      "reviewed": "2026-11-03"
+    }
   }
 ]

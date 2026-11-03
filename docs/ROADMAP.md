@@ -245,11 +245,13 @@ See [daily allowance and profile copying](ARCHITECTURE.md#daily-allowance-and-pr
 
 #### RetroGameCorner
 
-- [ ] Add an optional, Parent-enabled RetroGameCorner with a curated choice of emulators installed through the app store's direct installation flow
-- [ ] Write German/English Parent guidance explaining emulators, ROMs, optional BIOS files, controls, age/content choices and save data
-- [ ] Let parents supply their own ROMs and any required BIOS files with the necessary usage rights; do not bundle game ROMs/BIOS files or provide ROM-download/search services
-- [ ] Add bounded Parent-managed local game folders and per-child approved game lists; handle missing or disconnected storage clearly
-- [ ] Keep save files and supported save states separate for each child, with understandable backup and removal controls
+- [x] Add an optional RetroGameCorner with Parent-approved game tiles and an mGBA entry using the existing direct-install flow
+- [x] Explain local ROMs, BIOS files, controls, age/content choices and save data in Parent settings
+- [x] Accept Parent-supplied Game Boy, Game Boy Color and Game Boy Advance ROMs from bounded local folders
+- [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
+- [x] Assign private mGBA save and save-state directories per child and game
+- [ ] Add save backup and removal controls
+- [ ] Qualify additional emulators and add Parent-supplied BIOS configuration where required
 - [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
 
 #### Living-room foundations

@@ -213,6 +213,7 @@
   .media-roots-panel label { font-weight:700; }
   .media-roots-panel p { margin:0; }
   .media-roots-panel textarea { box-sizing:border-box; width:100%; resize:vertical; font:inherit; }
+  .media-roots-panel select { min-width:0; width:100%; }
   .media-roots-panel button { justify-self:start; }
   .browser-boundary-hint { margin:0; line-height:1.35; }
   .tileform.has-browser > .appSelect { display:none; }

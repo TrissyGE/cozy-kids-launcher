@@ -203,6 +203,28 @@ fails closed and tears down the newly owned process tree.
 
 ### 4. Parent security boundary
 
+RetroGameCorner appears under Parent settings → Apps & Media. Install mGBA
+through the catalog, add up to eight local game folders, then approve games
+individually for the active profile. The launcher accepts individual
+`.gb`, `.gbc` and `.gba` files. Parents supply game files themselves and
+review content and controls before approving a game. The mGBA integration
+uses its built-in BIOS behavior.
+
+Approval creates a normal tile carrying an opaque game ID. The launch
+request checks the tile, family time rules, and current file fingerprint
+before passing a local path to the owned emulator process. Replacing a
+file may require approval again. The child configuration contains the
+tile label and ID. The source paths are available in Parent settings
+and configuration exports. A copied profile needs its own game approvals.
+
+mGBA receives a private configuration, battery-save and state directory
+for each child and approved game under
+`~/.local/state/cozy-kids-launcher/retro/`. The emulator remains a native
+application with its own controls and file dialogs.
+The normal launcher configuration export contains settings and approvals.
+Use the state directory for a separate save backup.
+See the [mGBA command-line manual](https://manpages.debian.org/testing/mgba-qt/mgba-qt.6.en.html).
+
 Enable controller and remote navigation in Parent settings under System.
 On Home and in the media library, the D-pad or left stick moves focus in the
 direction shown on screen. The lower face button selects, and the right face

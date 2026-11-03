@@ -805,6 +805,47 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(error.exception.code, 404)
 
+    @unittest.skipUnless(sys.platform.startswith("linux"), "managed folders use Linux paths")
+    def test_retro_game_requires_parent_approval_and_uses_private_saves(self):
+        root = Path(self.temp_dir.name).resolve() / "Family Games"
+        root.mkdir()
+        rom = root / "Test Game.gba"
+        rom.write_bytes(b"fixture")
+        (root / "Unapproved.gb").symlink_to(rom)
+        self.enable_pin()
+        endpoint = "/api/retro/games"
+        self.assertEqual(self.request(endpoint)[0], 403)
+        cookie = self.authenticate()
+        self.assertEqual(self.request(endpoint, "POST", {"roots": [str(root)]}, cookie)[0], 200)
+        _, library, _ = self.request(endpoint, cookie=cookie)
+        self.assertEqual([game["title"] for game in library["games"]], ["Test Game"])
+        identifier = library["games"][0]["id"]
+        tile_id = f"retro-{identifier}"
+        launch_url = f"/launch/{tile_id}"
+        self.assertEqual(self.request(launch_url, "POST")[0], 404)
+        approval = {"gameId": identifier, "profileId": "default"}
+        self.assertEqual(self.request("/api/retro/approve", "POST", approval)[0], 403)
+        self.assertEqual(self.request("/api/retro/approve", "POST", approval, cookie)[0], 200)
+        self.assertEqual(self.request("/api/retro/approve", "POST", approval, cookie)[0], 200)
+        _, public, _ = self.request("/api/config")
+        self.assertNotIn(str(root), json.dumps(public))
+        self.assertEqual(sum(tile["id"] == tile_id for tile in public["tiles"]), 1)
+
+        with mock.patch.object(server_module.shutil, "which", return_value="/usr/bin/mgba-qt"), \
+                mock.patch.object(server_module, "launch_owned_tile") as launch:
+            self.assertEqual(self.request(launch_url, "POST")[0], 204)
+            argv = launch.call_args.args[0]
+            save = Path(server_module.MEDIA_STATE_FILE).parent / "retro" / "default" / identifier
+            self.assertIn(f"savegamePath={save}", argv)
+            self.assertIn(f"savestatePath={save}", argv)
+            self.assertIn(f"XDG_CONFIG_HOME={save / 'config'}", argv)
+            self.assertIn("--fullscreen", argv)
+            self.assertEqual(argv[-1], str(rom))
+            self.assertEqual(save.stat().st_mode & 0o777, 0o700)
+            rom.write_bytes(b"changed fixture")
+            self.assertEqual(self.request(launch_url, "POST")[0], 503)
+            launch.assert_called_once()
+
     def test_media_play_launches_only_a_catalog_item_for_a_visible_media_tile(self):
         media_file = Path(server_module.VIDEOS) / "Film.mp4"
         media_file.write_bytes(b"video")

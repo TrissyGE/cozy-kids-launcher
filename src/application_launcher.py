@@ -10,6 +10,7 @@ import time
 from app_detection import browser_family
 from browser_policy import is_safe_web_url
 from process_state import owned_process, owned_process_alive, terminate_owned_process
+from retro_games import RETRO_PREFIX, retro_id
 
 
 def resolve_tile_action(tile):
@@ -21,6 +22,11 @@ def resolve_tile_action(tile):
     if clean == ["special:filme-musik"]:
         return {"type": "media"}
     if len(clean) == 1:
+        if clean[0].startswith(RETRO_PREFIX):
+            identifier = retro_id(clean)
+            if not identifier:
+                raise ValueError("Invalid retro game identifier")
+            return {"type": "retro", "id": identifier}
         for prefix, mode in (
             ("special:browser:", "embedded"),
             ("special:external-browser:", "external"),
