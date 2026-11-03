@@ -59,3 +59,21 @@ No catalog entry, package mapping or new emulator is added by this work.
 The implementation follows the
 [EWMH fullscreen and window-identity contract](https://specifications.freedesktop.org/wm/latest/ar01s05.html)
 and Qt's documented [platform selection](https://doc.qt.io/qt-5/qguiapplication.html#QGuiApplication).
+
+## KolourPaint and KGeography
+
+The catalog uses the same owned fullscreen path for KolourPaint and
+KGeography. Ubuntu 24.04 supplies both packages. Repeat the desktop smoke
+commands above with `--catalog-app kolourpaint` or `--catalog-app kgeography`
+and the primary browser and mode in [DESKTOP_TESTING.md](DESKTOP_TESTING.md).
+
+In KolourPaint, draw a line on a new canvas and undo it. In KGeography, select
+a map if the first-run chooser opens, then use **Open Map** to load another
+map and verify that the displayed regions change. Use the launcher’s Home
+overlay to close each app and return to the child view. KGeography can open
+Wikipedia in the default browser through its information buttons.
+
+KStars and Stellarium remain candidates. The Ubuntu packages were available.
+The probe observed launcher start failures on KDE Wayland and inconsistent
+launch or input on GNOME Wayland. The astronomy candidates need separate
+qualification.

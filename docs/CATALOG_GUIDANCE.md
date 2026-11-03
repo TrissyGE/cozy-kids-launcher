@@ -2,8 +2,7 @@
 
 The following guidance was reviewed on **2026-11-02 and 2026-11-03** against
 the projects’ and providers’ own documentation. This is a documentation review, separate from package,
-fullscreen and input acceptance. The catalog still contains all 31 existing
-recommendations. All 31 now have a source and a review date. Individual fields
+fullscreen and input acceptance. The catalog contains 33 recommendations, each with a source and a review date. Individual fields
 remain unknown where the sources do not establish the answer.
 
 | Recommendation | Source and scope |
@@ -40,6 +39,9 @@ remain unknown where the sources do not establish the answer.
 | Childsplay | [Project overview](https://childsplay.sourceforge.net/) for memory and mouse/keyboard exercises. |
 | PySyCache | [Project manual](https://pysycache.org/user-manual/en/index.html) for its suggested age range and mouse exercises. |
 | Potato Guy | Legacy entry. [KTuberling](https://apps.kde.org/ktuberling/) documents the corresponding kind of play and [Ubuntu lists KTuberling](https://packages.ubuntu.com/ktuberling) under its own package name. The legacy entry’s offline and input fields remain unknown. |
+
+| KolourPaint | [Project overview](https://apps.kde.org/kolourpaint/) for local raster drawing with a pointer and basic shape tools. |
+| KGeography | [Project overview](https://apps.kde.org/kgeography/) and [quick start](https://docs.kde.org/stable_kf6/en/kgeography/kgeography/quick-start.html) for the local map chooser and geography exercises. |
 
 A read-only APT cache check on Ubuntu 24.04 under WSL found candidates for
 TuxMath, Tux Typing, SuperTux, SuperTuxKart, Frozen Bubble, Minetest, Extreme

@@ -1169,5 +1169,90 @@
         }
       ]
     }
+  },
+  {
+    "id": "kolourpaint",
+    "emoji": "🖌️",
+    "label_de": "Zeichnen",
+    "label_en": "Drawing",
+    "label_es": "Dibujo",
+    "label_fr": "Dessin",
+    "name_de": "KolourPaint",
+    "name_en": "KolourPaint",
+    "desc_de": "Zeichne mit Stift, Farben und Formen.",
+    "desc_en": "Draw with a pencil, colours and shapes.",
+    "desc_es": "Dibuja con lápiz, colores y formas.",
+    "desc_fr": "Dessine avec un crayon, des couleurs et des formes.",
+    "cmd": [
+      "kstart",
+      "--fullscreen",
+      "kolourpaint"
+    ],
+    "alt_cmds": [
+      "kolourpaint"
+    ],
+    "package": "kolourpaint",
+    "category": "creative",
+    "guidance": {
+      "age_de": "Für Kinder, die mit dem Mauszeiger Linien und Formen zeichnen möchten (Elternorientierung).",
+      "age_en": "For children ready to draw lines and shapes with a pointer (parent guidance).",
+      "age_es": "Para quienes quieren dibujar líneas y formas con el puntero (orientación para familias).",
+      "age_fr": "Pour les enfants qui souhaitent dessiner des lignes et des formes au pointeur (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "mouse"
+      ],
+      "source": "https://apps.kde.org/kolourpaint/",
+      "reviewed": "2026-11-03"
+    }
+  },
+  {
+    "id": "kgeography",
+    "emoji": "🗺️",
+    "label_de": "Karten entdecken",
+    "label_en": "Explore maps",
+    "label_es": "Explorar mapas",
+    "label_fr": "Explorer les cartes",
+    "name_de": "KGeography",
+    "name_en": "KGeography",
+    "desc_de": "Entdecke Regionen, Hauptstädte und Flaggen auf Karten.",
+    "desc_en": "Explore regions, capitals and flags on maps.",
+    "desc_es": "Explora regiones, capitales y banderas en mapas.",
+    "desc_fr": "Explore les régions, les capitales et les drapeaux sur des cartes.",
+    "cmd": [
+      "kstart",
+      "--fullscreen",
+      "kgeography"
+    ],
+    "alt_cmds": [
+      "kgeography"
+    ],
+    "package": "kgeography",
+    "category": "learning",
+    "guidance": {
+      "age_de": "Für Kinder, die Kartennamen lesen und Regionen auf einer Karte finden möchten (Elternorientierung).",
+      "age_en": "For children ready to read map names and locate regions (parent guidance).",
+      "age_es": "Para quienes pueden leer nombres en un mapa y localizar regiones (orientación para familias).",
+      "age_fr": "Pour les enfants qui savent lire des noms sur une carte et souhaitent repérer des régions (conseil aux parents).",
+      "offline": "yes",
+      "input": [
+        "mouse"
+      ],
+      "source": "https://apps.kde.org/kgeography/",
+      "reviewed": "2026-11-03",
+      "network_de": "Die Kartenübungen funktionieren offline. Infotasten können Wikipedia im Standardbrowser öffnen.",
+      "network_en": "Map exercises work offline. Information buttons can open Wikipedia in the default browser.",
+      "network_es": "Los ejercicios con mapas funcionan sin conexión. Los botones de información pueden abrir Wikipedia en el navegador predeterminado.",
+      "network_fr": "Les exercices sur les cartes fonctionnent hors ligne. Les boutons d’information peuvent ouvrir Wikipédia dans le navigateur par défaut.",
+      "references": [
+        {
+          "label_de": "Kurzanleitung",
+          "label_en": "Quick start",
+          "label_es": "Guía de inicio",
+          "label_fr": "Guide de démarrage",
+          "url": "https://docs.kde.org/stable_kf6/en/kgeography/kgeography/quick-start.html"
+        }
+      ]
+    }
   }
 ]
