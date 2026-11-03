@@ -73,6 +73,19 @@ EXTRA_UI_KEYS = {
     "worldThemeHint": "world_theme_hint",
 }
 
+UI_GROUPS = {
+    "firstRun": ("first_run", (
+        "progress languageTitle languageBody childTitle childBody childName childAvatar "
+        "homeTitle appsTitle appsBody timeTitle timeBody appearanceTitle appearanceBody "
+        "skip back next finish saving error nameRequired noApps large small languageError"
+    ).split()),
+    "profiles": ("profile", (
+        "manageHint listTitle editorTitle name avatar launcherTitle createTitle create "
+        "select active remove removeConfirm pickerTitle pickerHint close error "
+        "nameRequired namePlaceholder avatarPlaceholder"
+    ).split()),
+}
+
 
 def locale_payloads():
     installer = INSTALLER.read_text(encoding="utf-8")
@@ -92,6 +105,15 @@ def locale_payloads():
     payloads = {}
     required_keys = set(re.findall(r'\$\(text ([a-z0-9_]+)\)', installer))
     required_keys.update(ui_to_text.values())
+    group_keys = {
+        group: {
+            field: prefix + "_" + re.sub(r"[A-Z]", lambda match: "_" + match[0].lower(), field)
+            for field in fields
+        }
+        for group, (prefix, fields) in UI_GROUPS.items()
+    }
+    for fields in group_keys.values():
+        required_keys.update(fields.values())
     for language in LANGUAGE_CODES:
         translations = load_translations(language)
         missing = sorted(required_keys - translations.keys())
@@ -101,6 +123,10 @@ def locale_payloads():
             ui_key: translations[text_key]
             for ui_key, text_key in ui_to_text.items()
         }
+        payloads[language].update({
+            group: {field: translations[key] for field, key in fields.items()}
+            for group, fields in group_keys.items()
+        })
     return payloads
 
 
