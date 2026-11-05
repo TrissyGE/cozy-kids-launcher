@@ -1,0 +1,14 @@
+{
+  "revision": "2026-11-05.1",
+  "reviewed": "2026-11-05",
+  "systems": [
+    {"name": "Game Boy / Game Boy Color / Game Boy Advance", "emulator": "mGBA", "catalog": "mgba-qt", "sources": [{"name": "mGBA", "url": "https://mgba.io/"}]},
+    {"name": "NES / Super Nintendo / Master System / Game Gear", "emulator": "Mednafen", "catalog": "mednafen", "sources": [{"name": "Mednafen", "url": "https://mednafen.github.io/documentation/"}]},
+    {"name": "PlayStation", "emulator": "RetroArch / PCSX ReARMed", "catalog": "retroarch", "architectures": ["x86_64"], "sources": [{"name": "PCSX ReARMed", "url": "https://docs.libretro.com/library/pcsx_rearmed/"}]},
+    {"name": "PlayStation 2", "emulator": "PCSX2", "architectures": ["x86_64"], "memory": 8, "opengl": [3, 3], "vulkan": [1, 1], "x86_flag": "sse4_1", "extensions": ["GL_ARB_shading_language_420pack", "GL_ARB_copy_image", "GL_ARB_clip_control"], "sources": [{"name": "PCSX2", "url": "https://pcsx2.net/docs/setup/requirements/"}]},
+    {"name": "GameCube / Wii", "emulator": "Dolphin", "minimum_bits": 64, "memory": 2, "opengl": [4, 4], "vulkan": [1, 0], "sources": [{"name": "Dolphin", "url": "https://dolphin-emu.org/docs/faq/"}, {"name": "Dolphin Vulkan", "url": "https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoBackends/Vulkan/VulkanContext.cpp"}]},
+    {"name": "Xbox", "emulator": "xemu", "opengl": [4, 0], "sources": [{"name": "xemu", "url": "https://xemu.app/docs/about/"}]},
+    {"name": "Wii U", "emulator": "Cemu", "minimum_bits": 64, "memory": 4, "opengl": [4, 5], "vulkan": [1, 2], "sources": [{"name": "Cemu", "url": "https://cemu.info/"}, {"name": "Cemu Linux", "url": "https://github.com/cemu-project/Cemu"}]},
+    {"name": "PlayStation 3", "emulator": "RPCS3", "sources": [{"name": "RPCS3", "url": "https://rpcs3.net/quickstart"}, {"name": "RPCS3 Linux ARM64", "url": "https://github.com/RPCS3/rpcs3-binaries-linux-arm64"}]}
+  ]
+}

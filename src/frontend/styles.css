@@ -531,3 +531,14 @@
     }
     .tileform > .smallbtn .icon-label { display:none; }
   }
+.folder-navigation{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-block:8px 18px;font-size:1.25rem}
+.folder-navigation[hidden]{display:none}
+#folderTitle{max-width:40ch;overflow-wrap:anywhere}
+.folder-settings{margin-block:20px}
+.folder-editor-row{display:grid;grid-template-columns:5rem minmax(0,1fr) auto;gap:8px;margin-block:8px;align-items:center}
+.folder-editor-row input{min-width:0;width:100%;box-sizing:border-box}
+.folder-assignment{grid-column:2 / -1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.folder-assignment select{max-width:100%;min-width:0}
+#retroDeviceResults{padding-inline-start:1.25rem;overflow-wrap:anywhere}
+#retroDeviceResults details{margin-block:.5rem 1rem}
+#retroDeviceResults details li{margin-block:.5rem}

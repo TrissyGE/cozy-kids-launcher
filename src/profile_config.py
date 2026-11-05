@@ -30,6 +30,7 @@ PROFILE_FIELDS = (
     "timerWarningMinutes",
     "dailyBudgetMinutes",
     "tiles",
+    "folders",
     "favorites",
     "appLimits",
     "weeklySchedule",

@@ -27,13 +27,7 @@ CACHE_DIR = os.path.join(HOME, ".cache", APP_ID)
 BROWSER_PIDFILE = os.path.join(CACHE_DIR, "browser.pid")
 TILE_PROCESS_PIDFILE = os.path.join(CACHE_DIR, "tile-process.pid")
 OVERLAY_PIDFILE = os.path.join(CACHE_DIR, "overlay.pid")
-TILE_PROCESS_MARKER = os.path.join(
-    HOME,
-    ".local",
-    "share",
-    APP_ID,
-    "process_supervisor.py",
-)
+TILE_PROCESS_MARKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "process_supervisor.py")
 OVERLAY_MARKER = os.path.abspath(__file__)
 
 THEME = {

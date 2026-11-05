@@ -19,6 +19,7 @@ from schedule_rules import validate_app_availability, validate_schedule
 
 
 MAX_TILES = 200
+MAX_FOLDERS = 20
 
 
 def _bounded_string(value, field, maximum, allow_empty=True):
@@ -46,6 +47,26 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
     if len(tiles) > MAX_TILES:
         raise ValueError(f"A maximum of {MAX_TILES} tiles is supported")
 
+    folders = result.get("folders", [])
+    if not isinstance(folders, list) or len(folders) > MAX_FOLDERS:
+        raise ValueError("folders must be a list of at most 20 folders")
+    folder_ids = set()
+    clean_folders = []
+    for folder in folders:
+        if not isinstance(folder, dict):
+            raise ValueError("Each folder must be an object")
+        folder_id = _bounded_string(folder.get("id"), "folder.id", 80, False)
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", folder_id) or folder_id in folder_ids:
+            raise ValueError("Invalid or duplicate folder id")
+        folder_ids.add(folder_id)
+        label = _bounded_string(folder.get("label"), "folder.label", 80, False)
+        if not label.strip():
+            raise ValueError("folder.label must not be blank")
+        emoji = _bounded_string(folder.get("emoji", "📁"), "folder.emoji", 32)
+        clean_folders.append({"id": folder_id, "label": label, "emoji": emoji})
+    if "folders" in result:
+        result["folders"] = clean_folders
+
     validated_tiles = []
     seen_ids = set()
     for index, tile in enumerate(tiles):
@@ -72,6 +93,9 @@ def _validate_flat_config(data, existing_pin_hash="", allow_pin_hash=False):
             raise ValueError(f"tiles[{index}].visible must be a boolean")
         if "retroCovers" in tile and type(tile["retroCovers"]) is not bool:
             raise ValueError("retroCovers must be a boolean")
+        if "folderId" in tile and (not isinstance(tile["folderId"], str) or
+                                   (tile["folderId"] and tile["folderId"] not in folder_ids)):
+            raise ValueError("tile.folderId must refer to a folder in this profile")
         validated_tile = {
             **tile,
             "id": tile_id,

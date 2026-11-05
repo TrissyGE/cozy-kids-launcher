@@ -17,6 +17,10 @@
 <div id="kids" class="screen">
   <div class="wrap">
     <div class="titlewrap"><h1 id="title" dir="auto"></h1></div>
+    <div id="folderNavigation" class="folder-navigation" hidden>
+      <button id="folderBack" class="smallbtn" type="button" onclick="closeChildFolder()"></button>
+      <span id="folderTitle" dir="auto" role="status"></span>
+    </div>
     <p id="budgetRemaining" class="budget-remaining" hidden></p>
     <div id="grid" class="grid {{DEFAULT_LAYOUT}}">
       <section id="startupState" class="ui-state ui-state-loading launcher-state" role="status" aria-live="polite" aria-busy="true">
@@ -320,6 +324,12 @@
             <div id="browserCatalogState" class="ui-state" aria-live="polite" hidden></div>
             <div id="appCatalogState" class="ui-state" aria-live="polite" hidden></div>
             <div id="forms"></div>
+            <section class="folder-settings" aria-labelledby="folderSettingsTitle">
+              <h3 id="folderSettingsTitle"></h3>
+              <p id="folderSettingsHint" class="muted"></p>
+              <div id="folderEditor"></div>
+              <button id="addFolderBtn" type="button" class="smallbtn" onclick="addChildFolder()"></button>
+            </section>
             <div id="adminTileEmptyState" class="admin-empty-state" role="status" hidden></div>
             <div class="adminpagenav" id="adminPageNav"></div>
             <section class="backup-panel media-roots-panel" aria-labelledby="mediaRootsLabel">

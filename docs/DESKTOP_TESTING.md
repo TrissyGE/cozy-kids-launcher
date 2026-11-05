@@ -145,6 +145,79 @@ sink reproduced a black screen and blocked shutdown before this change.
 Actual gameplay controls, audible output, and an in-game request for another
 disc still require separate validation.
 
+## System package lifecycle and desktop pilot, 2026-11-05
+
+The package candidate uses the same Ubuntu 24.04.4 disposable guest as the
+RetroGameCorner matrix. The package runtime is read-only to the family user.
+The final native probes used the runtime from `fc2949f`, packaged as
+`0.6.0+package4-1`. The `.deb` SHA-256 was
+`bcdf0a1c1d7b1f1e880f65d8c3540137c7b46c9e3c5b7b6512ed645de57ada27`.
+The lifecycle rows below refer to that package candidate. The later
+RetroGameCorner preflight increment has separate evidence below.
+Actual dpkg install, upgrade and downgrade between two candidate package
+revisions passed. A real script installation was migrated with its exact
+configuration retained. The installed server restored a configuration
+through the Parent backup API. Purge retained the profile and a private
+save fixture; reinstall resumed that state. Reverse migration restored the
+original local launcher and update ownership. These checks exercise the
+current schema; they do not establish rollback across a future schema change.
+
+The installed-package probe is `scripts/linux/system_package_smoke.py`.
+It initializes a disposable home, uses the package's actual server and browser
+launcher, checks package update ownership, starts KTurtle from the catalog,
+observes its owned fullscreen window, clicks the overlay and checks cleanup.
+The package's installed-runtime API probe also runs without a display in CI.
+
+| Session and browser | Automated installed-package checks |
+| --- | --- |
+| Plasma 5.27.12 Wayland, Chrome 152 fullscreen | Passed |
+| GNOME 46 Wayland, Firefox Snap 154 kiosk | Complete probe passed in a fresh user session; earlier probes after desktop switches intermittently returned HTTP 503 during KTurtle fullscreen startup |
+| XFCE 4.18.3 X11, Chrome 152 kiosk | Passed with LightDM |
+
+These reports retain `automation-passed-manual-pending`. The GNOME failure
+recurred after desktop switches while sessions from the previous desktop
+were still present. Restoring the clean snapshot and starting a fresh GNOME
+user session passed. A diagnostic supervisor also passed; its timing changed,
+so it does not establish the cause of the failure. Keep this startup issue
+open until it is explained. The XFCE probe now waits for the owned Tk overlay
+record and its first window placement before clicking; the settled probe
+passed. Meaningful physical input, visible native Wayland focus and
+stacking, fresh-login autostart, Linux Mint and Zorin lifecycle acceptance
+remain open. [Package building and migration](PACKAGING.md) describe the
+commands and update/uninstall boundaries.
+
+The package's opt-in systemd user service was also exercised in the actual
+unused GNOME account. Enable, graphical start with an owned kiosk browser,
+live status, manual stop, owned-process cleanup and disable passed. The
+`--user-service` flag requires an unused disposable account because systemd
+uses that account's actual home. It is separate from the temporary-home
+standalone probe. Fresh-login autostart remains a manual gate.
+
+Child folder browser checks cover real save/reload, hidden tiles, folder
+deletion without deleting apps, keyboard back/focus recovery, a synthetic
+standard gamepad, media-return state, and the five enabled languages at
+800×600. The physical gamepad gate below still applies.
+
+### Sourced RetroGameCorner preflight, 2026-11-05
+
+The `f7c6879` runtime, packaged as `0.6.0+package5-1`, produced complete
+eight-system capability reports in Plasma Wayland, a fresh GNOME Wayland
+user session, and XFCE X11 with LightDM. The `.deb` SHA-256 was
+`7b95a58680e3b19f3f9cba173cb87c213bf2c52b956cbaac05f17e3c5edee6c2`.
+The guest reported x86-64 and 5.8 GiB of usable RAM. Accelerated graphics
+capabilities stayed unknown; the report did not turn software rendering
+into a hardware-performance pass. PS2 was limited by memory guidance and
+unqualified candidate installation routes stayed unavailable.
+
+The real installed-package API probe also checked the requirements resource
+and all eight report rows. Browser tests exercised each enabled language at
+800×600, source/detail expansion, a fresh check before emulator installation,
+confirmed incompatibility, unknown performance with a reviewed route, and
+discarding a late result after Parent settings closed. Requirement/parser
+tests cover alternative renderers, missing extensions, package/core/rule
+version changes and unknown probe results. These are preflight checks and
+do not measure gameplay, frame pacing or candidate driver correctness.
+
 ## Physical Linux test laptop
 
 Run the exact release candidate on the test laptop before publishing v0.8.

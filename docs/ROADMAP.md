@@ -278,9 +278,14 @@ that lack an equivalent core, including Wii U and PS3.
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
   - [x] Show an on-demand local hardware preflight and separate catalog-route status for the current emulators and later candidates through Wii U and PS3. Keep unknown performance explicit and block an incompatible reviewed PS1 core.
   - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.
+    - [x] Move reviewed prerequisites and primary source links into a dated data registry; show per-check unknowns, OpenGL extensions and alternative API observations in Parent settings
+    - [x] Refresh the preflight before a Parent emulator install and reuse the shared catalog-route policy, keeping hardware and installation availability distinct
+    - [ ] Complete current RPCS3 requirements and candidate-specific driver/feature qualification; retain unknowns until those reviews pass
   - [ ] Use bounded, locally generated test workloads that require no family game files. When the emulator is available, measure emulation speed and frame pacing with a representative workload and record the tested settings.
   - [ ] Report recommended, limited, untested and incompatible separately. Explain the result beside the install button. Disable installation for a confirmed hardware incompatibility or unavailable install route, with a distinct explanation for each. Keep the install action available when performance is unknown and a reviewed install route exists.
   - [ ] Scope results to the device, system, RetroArch core or standalone emulator version, and tested settings. Allow a rerun after a driver, core or emulator update. Keep per-game compatibility separate from the device result.
+    - [x] Scope preflight observations to a local device fingerprint, registry revision, native package version and reviewed PS1 core; allow reruns without persisting or uploading hardware reports ([scope](RETRO_DEVICE.md))
+    - [ ] Add measured emulator workload/settings to the result scope after the workload harness is qualified
 - [ ] Qualify optional systems in groups after PS1
   - [ ] Earlier cartridges and arcade games including Atari 2600/5200/7800, ColecoVision, Intellivision, SG-1000, Mega Drive, PC Engine, Neo Geo and selected arcade boards. Review disc add-ons such as Sega CD and PC Engine CD separately.
   - [ ] Earlier handhelds including Atari Lynx, Neo Geo Pocket / Color, WonderSwan / Color, Nintendo DS and PSP. Evaluate Nintendo 3DS and PlayStation Vita as later handhelds in scope.
@@ -299,7 +304,10 @@ that lack an equivalent core, including Wii U and PS3.
 - [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
 - [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix
 - [x] Group approved RetroGameCorner games by console with optional library filters
-- [ ] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
+- [x] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
+  - [x] Keep bounded folder definitions and tile assignments private to each child profile, with validated references and safe profile copying
+  - [x] Add the Parent editor, child folder tiles, keyboard/gamepad back navigation and media return to the containing folder
+  - [x] Exercise persistence, hidden apps, safe folder deletion and all five languages in the small Parent layout
 - [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
   - [x] Add first-launch timings and proportional idle memory to the opt-in desktop smoke report
@@ -311,7 +319,13 @@ that lack an equivalent core, including Wii U and PS3.
 
 - [ ] Produce a first-party Debian package for Ubuntu, Linux Mint, and Zorin OS
   - [x] Add a package-managed update mode for the current runtime layout
-  - [ ] Integrate the package-managed mode into the system-wide package layout and script-install migration
+  - [x] Build a rootless, reproducible Debian artifact with system-owned code, private per-user first start and a system application entry
+  - [x] Integrate the package-managed mode into the system-wide package layout and reversible script-install migration
+  - [x] Verify clean initialization, migration, package upgrade and downgrade, Parent configuration restore, purge and reinstall on Ubuntu 24.04
+  - [x] Check installed-package startup, owned KTurtle fullscreen, overlay close and process cleanup on GNOME Wayland, KDE Wayland and XFCE X11; retain manual acceptance and the first GNOME launch failure separately
+  - [x] Exercise the installed package's optional systemd user service with a real graphical browser, status, manual stop, cleanup and disable in the GNOME VM
+  - [x] Add CI gates for repeat package builds, real installation, installed-runtime API checks and a rebuild on an installed build host
+  - [ ] Complete Linux Mint and Zorin package lifecycle and desktop acceptance, and diagnose the first GNOME KTurtle launch failure
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
 - [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
 - [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable
@@ -335,6 +349,7 @@ stable-`main` updater contract.
 - [ ] Complete a documented threat model and security review of Parent authentication, local HTTP boundaries, imports, updates, and process launching
   - [x] Document the local trust boundaries and reject foreign, missing, or ambiguous HTTP Host headers before serving routes
 - [ ] Verify clean install, script-to-package migration, upgrade, rollback, backup restore, and uninstall paths on every supported distribution
+  - [x] Record the first actual Debian-package lifecycle on the Ubuntu disposable VM ([package scope](PACKAGING.md))
 - [ ] Complete manual screen-reader coverage alongside keyboard, touch, reduced-motion, high-contrast, and low-resolution testing
 - [ ] Make release artifacts and repository metadata reproducible, signed where applicable, and independently verifiable
 - [x] Document the translation, accessibility, security-reporting, and downstream-packaging contribution workflow

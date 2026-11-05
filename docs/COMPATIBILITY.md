@@ -31,7 +31,7 @@ authentication, origin checks, and malformed input.
 
 ## Packages and migration
 
-A future distribution package must identify its update owner and include
+A distribution package must identify its update owner and include
 tested transitions from the script installation. A migration must preserve
 private state, keep a single active launcher, migrate desktop entries and
 autostart, and expose a clear uninstall path. Exercise clean install,
@@ -44,9 +44,12 @@ first start. In that mode the launcher shows the installed version and
 delegates updates to the system package manager. The release updater,
 update-channel changes and stale launcher update triggers are disabled.
 The script installer also refuses to overwrite a marked installation.
-This marker is a runtime contract for packaging. A system-wide package
-layout and migration from existing script installations still require
-their own implementation and acceptance tests.
+The [Debian package builder](PACKAGING.md) uses the same contract in a
+system-wide, read-only runtime. Its explicit per-user migration backs up and
+redirects the old entry points while retaining family data. It supports
+restoring the script entry points before returning to script-managed updates.
+Ubuntu VM lifecycle evidence and remaining distribution gates are recorded
+in the [desktop test guide](DESKTOP_TESTING.md).
 
 ## Stable and Preview updates
 

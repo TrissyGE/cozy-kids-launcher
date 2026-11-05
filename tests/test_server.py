@@ -2509,7 +2509,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn('role="dialog"', source)
         self.assertIn('aria-modal="true"', source)
         self.assertNotIn("window.confirm(", source)
-        self.assertEqual(source.count("requestConfirmation("), 9)
+        self.assertEqual(source.count("requestConfirmation("), 10)
+        self.assertIn("requestConfirmation(uiText.folderRemoveConfirm,uiText.delete)", source)
         self.assertIn("requestConfirmation(message,uiText.retroSaveRemove)", source)
         self.assertIn("return new Promise(resolve=>", dialogs)
         self.assertIn("confirmationReturnFocus=document.activeElement", dialogs)
@@ -2855,7 +2856,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertNotIn("fetch(", runtime)
         self.assertIn("sessionStorage.setItem(COZY_RETURN_MARKER", runtime)
         self.assertIn("/^[A-Za-z0-9_-]{1,80}$/", runtime)
-        self.assertIn("raw.length>200", runtime)
+        self.assertIn("raw.length>400", runtime)
         self.assertIn("sessionStorage.removeItem(COZY_RETURN_MARKER)", runtime)
         self.assertIn("function armLauncherFocusReturn(tileId)", runtime)
         self.assertIn("renderAll();\n  playLauncherPageTransition(dir)", source)
@@ -2935,7 +2936,7 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("const el=document.createElement('button')", source)
         self.assertIn("el.setAttribute('aria-pressed'", source)
         self.assertIn(
-            "btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); scheduleTileSpeech(tile.id); }",
+            "btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); if(!tile.folder) scheduleTileSpeech(tile.id); }",
             source,
         )
         self.assertIn("btn.focus({preventScroll:true})", source)

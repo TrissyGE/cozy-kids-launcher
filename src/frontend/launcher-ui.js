@@ -17,13 +17,50 @@ const configureLauncherController=createControllerNavigation(()=>{
   const profiles=document.querySelector('#profileOverlay:not(.hidden)');
   if(profiles) return {modal:profiles,buttons:'#profileOverlay button',back:closeProfilePicker};
   if(!cfg||document.getElementById('kids').classList.contains('hidden')) return null;
-  return {buttons:'#grid .tile:not(.placeholder),#navLeft,#navRight,#profileBtn,#parentBtn'};
+  return {buttons:'#grid .tile:not(.placeholder),#folderBack,#navLeft,#navRight,#profileBtn,#parentBtn',back:()=>{if(selectedFolderId) closeChildFolder();}};
 });
 
+let selectedFolderId='', folderHomePage=0, selectedFolderProfile='';
 function pageSize(){ return cfg.layoutMode === 'klein' ? 9 : 4; }
-function visibleTiles(){
+function childAppTiles(){
   const hasRetroHub=cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.cmd?.[0]==='special:retro-library');
   return cfg.tiles.filter(tile=>tile.visible&&(!hasRetroHub||!tile.cmd?.[0]?.startsWith('special:retro:')));
+}
+function visibleTiles(){
+  const tiles=childAppTiles(), folders=cfg.folders||[];
+  if(selectedFolderProfile!==cfg.activeProfileId||!folders.some(folder=>folder.id===selectedFolderId)) selectedFolderId='';
+  selectedFolderProfile=cfg.activeProfileId;
+  if(selectedFolderId) return tiles.filter(tile=>tile.folderId===selectedFolderId);
+  return childHomeTiles();
+}
+function childHomeTiles(){
+  const tiles=childAppTiles(), folders=cfg.folders||[];
+  const ids=new Set(folders.map(folder=>folder.id));
+  const home=tiles.filter(tile=>!ids.has(tile.folderId));
+  for(const folder of folders){
+    if(tiles.some(tile=>tile.folderId===folder.id)) home.push({...folder,id:'folder:'+folder.id,folder:true,folderId:folder.id});
+  }
+  return home;
+}
+function openChildFolder(folderId){
+  if(!(cfg.folders||[]).some(folder=>folder.id===folderId)) return;
+  folderHomePage=cfg.currentPage;
+  selectedFolderId=folderId;
+  selectedFolderProfile=cfg.activeProfileId;
+  cfg.currentPage=0;
+  focusedTileIndex=0;
+  renderAll();
+  document.querySelector('#grid .tile:not(.placeholder)')?.focus();
+  playFeedbackSound('navigate');
+}
+function closeChildFolder(){
+  const previous=selectedFolderId;
+  selectedFolderId='';
+  cfg.currentPage=folderHomePage;
+  focusedTileIndex=0;
+  renderAll();
+  [...document.querySelectorAll('#grid .tile')].find(button=>button.dataset.tileId==='folder:'+previous)?.focus();
+  playFeedbackSound('navigate');
 }
 function isMediaLibraryTile(tile){
   return !!tile&&Array.isArray(tile.cmd)&&tile.cmd.length===1&&['special:filme-musik','special:retro-library'].includes(tile.cmd[0]);
@@ -205,6 +242,10 @@ function renderKids(){
   const grid=document.getElementById('grid');
   grid.innerHTML='';
   const tiles=tilesForPage(cfg.currentPage);
+  const folder=(cfg.folders||[]).find(item=>item.id===selectedFolderId);
+  document.getElementById('folderNavigation').hidden=!folder;
+  document.getElementById('folderTitle').textContent=folder?.label||'';
+  setIconLabel(document.getElementById('folderBack'),'back',uiText.folderHome||uiText.back);
   const size=pageSize();
   let lastLaunched='';
   const blocked=blockedTileIds();
@@ -227,6 +268,7 @@ function renderKids(){
       const btn=document.createElement('button');
       btn.className='tile'+(tile.id===lastLaunched?' last-launched':'');
       btn.dataset.tileId=tile.id;
+      if(tile.folder) btn.setAttribute('aria-label',(uiText.folderOpen||'{folder}').replace('{folder}',()=>tile.label));
       if(blocked.has(tile.id)){
         btn.classList.add('unavailable');
         btn.setAttribute('aria-disabled','true');
@@ -234,7 +276,9 @@ function renderKids(){
       btn.style.position='relative';
       btn.onclick=event=>{
         if(tileClickSuppressed(event)) return;
-        if(blocked.has(tile.id)){
+        if(tile.folder){
+          openChildFolder(tile.folderId);
+        }else if(blocked.has(tile.id)){
           playFeedbackSound('blocked');
           showAvailabilityBlock(
             availabilityStatus.profileAllowed?'app_schedule':(availabilityStatus.reason||'profile_schedule')
@@ -243,7 +287,7 @@ function renderKids(){
           launchTile(tile.id);
         }
       };
-      btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); scheduleTileSpeech(tile.id); };
+      btn.onfocus=()=>{ focusedTileIndex=i; updateTileFocus(false); if(!tile.folder) scheduleTileSpeech(tile.id); };
       const tileEmoji=createTileVisual(tile.emoji,'emoji');
       const tileLabel=document.createElement('div');
       tileLabel.textContent=tile.label||'';
@@ -310,7 +354,7 @@ async function launchTile(id){
   playFeedbackSound('launch');
   if(isMediaLibraryTile(tile)){
     try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
-    rememberLauncherPageReturn(cfg.activeProfileId||'default',id);
+    rememberLauncherPageReturn(cfg.activeProfileId||'default',id,selectedFolderId);
     window.location='/media.html?tile='+encodeURIComponent(id);
     return;
   }
@@ -337,7 +381,7 @@ async function launchTile(id){
     try{ localStorage.setItem(profileStorageKey(),id); }catch(e){}
     if(response.redirected){
       cancelLauncherFocusReturn();
-      rememberLauncherPageReturn(cfg.activeProfileId||'default',id);
+      rememberLauncherPageReturn(cfg.activeProfileId||'default',id,selectedFolderId);
       window.location=response.url;
       return;
     }

@@ -55,7 +55,8 @@ def session_environment(environment):
 class UserService:
     def __init__(self, home, environment):
         self.environment = environment
-        self.app_root = home / ".local/share/cozy-kids-launcher"
+        source = Path(__file__).resolve().parent
+        self.app_root = source if (source / "package-managed").is_file() else home / ".local/share/cozy-kids-launcher"
         self.marker = home / ".config/cozy-kids-launcher/user-service"
         self.cache = home / ".cache/cozy-kids-launcher"
         config_home = Path(environment.get("XDG_CONFIG_HOME") or home / ".config")

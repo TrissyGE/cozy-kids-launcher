@@ -540,6 +540,14 @@ APP_ROOT="$TARGET_HOME/.local/share/$APP_DIR_NAME"
 if [[ -e "$APP_ROOT/package-managed" || -L "$APP_ROOT/package-managed" ]]; then
   die "This installation is managed by the system package manager"
 fi
+if [[ -e "/usr/share/$APP_ID/package-managed" || -L "/usr/share/$APP_ID/package-managed" ]]; then
+  # The package builder uses a fresh disposable home. It must also work on a
+  # build host with Cozy Kids installed, without permitting a family overwrite.
+  if [[ "${COZY_KIDS_PACKAGE_STAGE:-0}" != "1" || -e "$APP_ROOT" ||
+        -e "$TARGET_HOME/.config/$APP_ID/config.json" || -L "$TARGET_HOME/.config/$APP_ID/config.json" ]]; then
+    die "This installation is managed by the system package manager"
+  fi
+fi
 FRONTEND_DIR="$APP_ROOT/frontend"
 BIN_DIR="$TARGET_HOME/.local/bin"
 CFG_DIR="$TARGET_HOME/.config/$APP_DIR_NAME"
@@ -732,7 +740,7 @@ keys = (
     "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
     "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget", "updateTrack",
 )
-print(json.dumps({key: locale[key] for key in keys}, ensure_ascii=True))
+print(json.dumps({key: value for key, value in locale.items() if key in keys or key.startswith("folder")}, ensure_ascii=True))
 PY
 )" || die "Could not prepare setup and profile translations for $ACTIVE_LANG"
 JSON_MEDIA_LOCALE="$(python3 - "$SRC_DIR/frontend/locales/$ACTIVE_LANG.json" <<'PY'
@@ -1351,6 +1359,7 @@ install -m 0644 "$SRC_DIR/media_state.py" "$APP_ROOT/media_state.py"
 install -m 0644 "$SRC_DIR/media_resume.py" "$APP_ROOT/media_resume.py"
 install -m 0644 "$SRC_DIR/retro_games.py" "$APP_ROOT/retro_games.py"
 install -m 0644 "$SRC_DIR/retro_device.py" "$APP_ROOT/retro_device.py"
+install -m 0644 "$SRC_DIR/retro_requirements.json" "$APP_ROOT/retro_requirements.json"
 install -m 0644 "$SRC_DIR/retro_saves.py" "$APP_ROOT/retro_saves.py"
 install -m 0644 "$SRC_DIR/media_session.py" "$APP_ROOT/media_session.py"
 install -m 0644 "$SRC_DIR/parent_auth.py" "$APP_ROOT/parent_auth.py"
