@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 
 ### Living Room
 
+- Add an opt-in Parent PS1 short test using an original generated workload and the checksum-pinned core, without family ROMs or BIOS; validate execution before reporting throughput and computation percentiles.
+- Add bounded worker isolation, cancellation, restart recovery and a removable private result; scope measurements to current device/core/settings and label changed configurations stale without claiming game compatibility.
+- Keep measured device identities stable across free-VRAM and display-ID changes while detecting CPU, microcode, kernel and driver changes; extend package and five-language browser checks for the new Parent controls.
+
 - Make the RetroGameCorner preflight data-driven with dated primary sources, individual requirement results, OpenGL extension checks, native package/core versions and a device-scoped result key; refresh it before Parent emulator installation and retain unknown performance explicitly.
 
 - Recognize single-ROM ZIP archives in RetroGameCorner, check them at launch and match covers by the ROM inside.

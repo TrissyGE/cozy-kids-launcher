@@ -41,15 +41,21 @@ route keeps the action available. Leaving Parent settings cancels a pending
 preflight's ability to open the installation flow.
 
 Reports carry a check time, registry revision, local device fingerprint and
-per-system result key. The fingerprint uses observed CPU flags, usable RAM
-and graphics-probe output; it contains no hostname, account name, family path,
+per-system result key. The fingerprint uses CPU model/microcode/count, kernel,
+instruction flags, usable RAM and stable graphics identity/capabilities. It
+excludes clocks, free VRAM, display IDs and driver UUIDs and contains no
+hostname, account name, family path,
 ROM name or machine serial. Package versions are queried through the detected
 native package tool and accepted only in a bounded version syntax. For PS1,
 the result also includes the reviewed core version and checksum. The result
 key changes with device/driver observations, requirements or package/core
-versions. Reports are freshly computed on each request and are not persisted.
+versions. Preflight reports are freshly computed on each request and are not
+persisted. An explicitly requested [PS1 short test](RETRO_BENCHMARK.md) stores
+one private aggregate result and attaches it only to the matching preflight.
 
 The UI explains its scope and supports rerunning after updates. It does not
 attach these observations to a game's approval or replace per-game
-compatibility. Representative generated workloads, frame pacing, complete
-driver-feature qualification, and physical gameplay acceptance remain open.
+compatibility. The generated PS1 primitive workload now measures core call
+times with fixed settings, separately from desktop display pacing. Broader
+representative workloads, complete driver-feature qualification and physical
+gameplay acceptance remain open.

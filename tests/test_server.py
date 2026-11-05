@@ -920,6 +920,49 @@ class ServerApiTests(unittest.TestCase):
             self.assertEqual(self.request(endpoint, cookie=cookie)[1], {"systems": []})
             report.assert_called_once()
 
+    def test_retro_benchmark_actions_require_parent_and_local_origin_before_execution(self):
+        self.enable_pin()
+        cookie = self.authenticate()
+        manager = self.httpd.retro_benchmark
+        with mock.patch.object(manager, "start") as start, mock.patch.object(manager, "cancel") as cancel:
+            self.assertEqual(self.request("/api/retro/benchmark")[0], 403)
+            for endpoint, body in (("/api/retro/benchmark", {"system": "ps1"}),
+                                   ("/api/retro/benchmark/cancel", {"jobId": "a" * 16}),
+                                   ("/api/retro/benchmark/clear", {"jobId": "a" * 16})):
+                self.assertEqual(self.request(endpoint, "POST", body)[0], 403)
+                self.assertEqual(self.request(endpoint, "POST", body, cookie=cookie, origin="https://foreign.example")[0], 403)
+            start.assert_not_called()
+            cancel.assert_not_called()
+        self.assertEqual(self.request("/api/retro/benchmark", cookie=cookie)[1], {"status": "idle"})
+
+    def test_retro_benchmark_accepts_only_the_fixed_ps1_workload_and_rejects_busy_activity(self):
+        manager = self.httpd.retro_benchmark
+        report = {"systems": [{"catalog": "retroarch", "status": "untested", "resultKey": "a" * 24}]}
+        job = {"status": "running", "jobId": "b" * 16, "scopeKey": "a" * 24}
+        with mock.patch.object(server_module, "retro_device_report", return_value=report), \
+                mock.patch.object(server_module.Handler, "retro_save_busy", return_value=False) as busy, \
+                mock.patch.object(manager, "start", return_value=job) as start:
+            for body in ({"system": "ps2"}, {"system": "ps1", "frames": 999999},
+                         {"system": "ps1", "corePath": "/tmp/unreviewed.so"}, []):
+                self.assertEqual(self.request("/api/retro/benchmark", "POST", body)[0], 400)
+            start.assert_not_called()
+            busy.return_value = True
+            self.assertEqual(self.request("/api/retro/benchmark", "POST", {"system": "ps1"})[0], 409)
+            start.assert_not_called()
+            busy.return_value = False
+            self.assertEqual(self.request("/api/retro/benchmark", "POST", {"system": "ps1"})[:2], (202, job))
+            start.assert_called_once_with(str(Path(server_module.MEDIA_STATE_FILE).parent), "a" * 24)
+
+    def test_retro_benchmark_missing_core_and_stale_job_actions_do_not_execute(self):
+        report = {"systems": [{"catalog": "retroarch", "status": "untested", "resultKey": "a" * 24}]}
+        with mock.patch.object(server_module, "retro_device_report", return_value=report):
+            self.assertEqual(self.request("/api/retro/benchmark", "POST", {"system": "ps1"})[:2], (409, {"status": "unavailable"}))
+        self.assertEqual(self.httpd.retro_benchmark.snapshot(), {"status": "idle"})
+        for action in ("cancel", "clear"):
+            endpoint = "/api/retro/benchmark/" + action
+            self.assertEqual(self.request(endpoint, "POST", {"jobId": "a" * 16})[:2], (409, {"status": "stale"}))
+            self.assertEqual(self.request(endpoint, "POST", {"jobId": "a" * 16, "all": True})[0], 400)
+
     def test_ps1_core_download_and_import_require_parent_and_exact_build(self):
         self.enable_pin()
         cookie = self.authenticate()

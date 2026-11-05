@@ -1359,6 +1359,7 @@ install -m 0644 "$SRC_DIR/media_state.py" "$APP_ROOT/media_state.py"
 install -m 0644 "$SRC_DIR/media_resume.py" "$APP_ROOT/media_resume.py"
 install -m 0644 "$SRC_DIR/retro_games.py" "$APP_ROOT/retro_games.py"
 install -m 0644 "$SRC_DIR/retro_device.py" "$APP_ROOT/retro_device.py"
+install -m 0644 "$SRC_DIR/retro_benchmark.py" "$SRC_DIR/retro_benchmark_worker.py" "$SRC_DIR/retro_workload.py" "$APP_ROOT/"
 install -m 0644 "$SRC_DIR/retro_requirements.json" "$APP_ROOT/retro_requirements.json"
 install -m 0644 "$SRC_DIR/retro_saves.py" "$APP_ROOT/retro_saves.py"
 install -m 0644 "$SRC_DIR/media_session.py" "$APP_ROOT/media_session.py"
@@ -1393,6 +1394,7 @@ render_template "$SRC_DIR/frontend/activity-dashboard.js" "$FRONTEND_ACTIVITY_FI
 install -m 0644 "$SRC_DIR/frontend/media-library.css" "$FRONTEND_MEDIA_LIBRARY_STYLES_FILE"
 render_template "$SRC_DIR/frontend/media-library.js" "$FRONTEND_MEDIA_LIBRARY_FILE" 0644
 render_template "$SRC_DIR/frontend/parent-settings.js" "$FRONTEND_SETTINGS_FILE" 0644
+install -m 0644 "$SRC_DIR/frontend/retro-benchmark.js" "$FRONTEND_DIR/retro-benchmark.js"
 install -m 0644 "$SRC_DIR/frontend/app-catalog.js" "$FRONTEND_APP_CATALOG_FILE"
 install -m 0644 "$SRC_DIR/frontend/package-catalog.js" "$FRONTEND_DIR/package-catalog.js"
 render_template "$SRC_DIR/frontend/first-run.js" "$FRONTEND_FIRST_RUN_FILE" 0644

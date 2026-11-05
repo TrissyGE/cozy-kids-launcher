@@ -10,6 +10,7 @@ import sys
 import tempfile
 import time
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 
 def main():
@@ -56,6 +57,16 @@ def main():
                     assert b"Cozy" in response.read()
                 with urlopen(base + "/frontend/locales/it.json", timeout=10) as response:
                     assert json.load(response)["adminTitle"]
+                with urlopen(base + "/frontend/retro-benchmark.js", timeout=10) as response:
+                    assert b"startRetroBenchmark" in response.read()
+                for name in ("retro_benchmark.py", "retro_benchmark_worker.py", "retro_workload.py"):
+                    assert (root / name).is_file()
+                assert api("/api/retro/benchmark") == {"status": "idle"}
+                try:
+                    api("/api/retro/benchmark", {"system": "ps1"})
+                    raise AssertionError("A missing reviewed core was accepted")
+                except HTTPError as error:
+                    assert error.code == 409 and json.load(error)["status"] == "unavailable"
                 device = api("/api/retro/device")
                 assert len(device["systems"]) == 8 and device["rulesRevision"]
                 assert all(row["sources"] and row["checks"] and row["performanceMeasured"] is False for row in device["systems"])

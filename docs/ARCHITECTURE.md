@@ -460,3 +460,12 @@ Keyboard Escape and an opted-in controller's Back action leave the folder;
 focus returns to its Home tile. The existing one-use media return marker
 also restores the containing folder after checking the active profile and
 the returning tile's current membership. Folder labels use plain text nodes.
+
+## RetroGameCorner short test
+
+The Parent benchmark uses a separate native-core process and the launcher's
+own generated PS1 program. The server controls job ownership and cancellation;
+the worker validates execution before its timings can become a private local
+result. [RETRO_BENCHMARK.md](RETRO_BENCHMARK.md) defines workload/settings,
+resource limits, HTTP boundaries, result invalidation and the distinction
+between core computation and actual gameplay/desktop pacing.

@@ -352,6 +352,17 @@
               <p id="retroDeviceStatus" role="status" aria-live="polite"></p>
               <ul id="retroDeviceResults"></ul>
             </details>
+            <section class="backup-panel media-roots-panel" aria-labelledby="retroBenchmarkTitle">
+              <h4 id="retroBenchmarkTitle"></h4>
+              <p id="retroBenchmarkGuide" class="muted"></p>
+              <div class="actions">
+                <button id="retroBenchmarkRun" class="smallbtn" type="button" onclick="startRetroBenchmark()" disabled></button>
+                <button id="retroBenchmarkCancel" class="smallbtn" type="button" onclick="changeRetroBenchmark('cancel')" hidden></button>
+                <button id="retroBenchmarkClear" class="smallbtn" type="button" onclick="changeRetroBenchmark('clear')" hidden></button>
+              </div>
+              <p id="retroBenchmarkStatus" role="status" aria-live="polite"></p>
+              <div id="retroBenchmarkResult"></div>
+            </section>
             <div class="backup-panel media-roots-panel">
               <label class="chk"><input id="retroEnabled" type="checkbox"><span id="retroEnabledLabel"></span></label>
               <label class="chk"><input id="retroCovers" type="checkbox"><span id="retroCoversLabel"></span></label>
@@ -603,6 +614,7 @@
 <script defer src="/frontend/schedule-controls.js"></script>
 <script defer src="/frontend/activity-dashboard.js"></script>
 <script defer src="/frontend/parent-settings.js"></script>
+<script defer src="/frontend/retro-benchmark.js"></script>
 <script defer src="/frontend/app-catalog.js"></script>
 <script defer src="/frontend/package-catalog.js"></script>
 <script defer src="/frontend/first-run.js"></script>

@@ -54,6 +54,18 @@ def _memory_gib():
         return None
 
 
+def _cpu_identity():
+    """Use model/microcode and CPU count; exclude clocks and machine identifiers."""
+    try:
+        with Path("/proc/cpuinfo").open(encoding="ascii", errors="replace") as handle:
+            text = handle.read(256 * 1024)
+    except OSError:
+        text = ""
+    fields = re.findall(r"^(vendor_id|model name|cpu family|model|stepping|microcode|CPU implementer|CPU architecture|CPU variant|CPU part|CPU revision)\s*:\s*(.+)$",
+                        text, re.MULTILINE)
+    return {"models": sorted(set(fields)), "cpus": os.cpu_count(), "kernel": platform.release()}
+
+
 def _graphics_output(command):
     executable = shutil.which(command[0])
     if executable is None:
@@ -165,6 +177,15 @@ def _key(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:24]
 
 
+def _graphics_identity(opengl_output, vulkan_output):
+    """Fingerprint capabilities, not changing free VRAM, X display IDs or UUIDs."""
+    gl = re.findall(r"^\s*(?:OpenGL (?:core profile )?(?:vendor|renderer|version) string|Accelerated):\s*(.+)$",
+                    opengl_output, re.MULTILINE)
+    vk = re.findall(r"^\s*(apiVersion|vendorID|deviceID|deviceType|deviceName|driverName|driverInfo)\s*=\s*(.+)$",
+                    vulkan_output, re.MULTILINE)
+    return {"gl": gl, "vk": vk}
+
+
 def retro_device_report(recommendations, core_ready):
     machine = platform.machine().lower()
     architecture = {"amd64": "x86_64", "arm64": "aarch64"}.get(machine, machine)
@@ -177,8 +198,8 @@ def retro_device_report(recommendations, core_ready):
     extensions = _extensions(_graphics_output(("glxinfo",))) if opengl else None
     release = read_os_release()
     provider = detect_native_provider(release)
-    device_key = _key({"architecture": architecture, "flags": sorted(flags) if flags is not None else None,
-                       "memory": memory, "gl": gl_summary, "vk": vk_summary,
+    device_key = _key({"architecture": architecture, "cpu": _cpu_identity(), "flags": sorted(flags) if flags is not None else None,
+                       "memory": memory, "graphics": _graphics_identity(gl_summary, vk_summary),
                        "extensions": sorted(extensions) if extensions is not None else None})
     catalog = {item["id"]: item for item in recommendations if item.get("retroEmulator")}
     rows = []

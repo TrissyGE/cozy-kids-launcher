@@ -65,6 +65,9 @@ class RetroDeviceTests(unittest.TestCase):
         self.assertEqual(first["systems"][0]["resultKey"], same["systems"][0]["resultKey"])
         self.assertNotEqual(first["systems"][0]["resultKey"], changed["systems"][0]["resultKey"])
         self.assertEqual(first["systems"][0]["version"], "1.0")
+        with patch.object(retro_device, "_cpu_identity", return_value={"models": [("model name", "another CPU")], "cpus": 8, "kernel": "new"}):
+            cpu = self.report(catalog=catalog)
+        self.assertNotEqual(first["deviceKey"], cpu["deviceKey"])
         graphics = self.report(gl="OpenGL core profile version string: 4.6 Mesa\n")
         self.assertNotEqual(first["deviceKey"], graphics["deviceKey"])
         self.assertNotIn(str(Path.home()), json.dumps(first))

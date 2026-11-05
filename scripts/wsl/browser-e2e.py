@@ -20,6 +20,7 @@ from pathlib import Path
 
 from browser_driver import BrowserSession, find_browser, stop_process
 from browser_regressions import run_regression_scenarios, wait_for_values
+from browser_retro_benchmark import run_benchmark_scenarios
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -207,6 +208,7 @@ def run_controller_home_scenario(browser):
 
 def run_retro_scenario(browser, test_home):
     browser.wait_for("typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+    run_benchmark_scenarios(browser)
     retro_root = test_home / "Game Fixtures"
     retro_root.mkdir()
     archive = retro_root / "Game Bundle.zip"
