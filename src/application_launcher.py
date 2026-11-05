@@ -9,8 +9,10 @@ import time
 
 from app_detection import browser_family
 from browser_policy import is_safe_web_url
+from launch_status import StartupError, failure_reason
 from process_state import owned_process, owned_process_alive, terminate_owned_process
 from retro_games import RETRO_PREFIX, retro_id
+from runtime_diagnostics import log_runtime_event
 
 
 def resolve_tile_action(tile):
@@ -157,6 +159,11 @@ class ApplicationLauncher:
         except (OSError, subprocess.TimeoutExpired):
             pass
 
+    @staticmethod
+    def _startup_failed(reason):
+        log_runtime_event("launch.startup.failed", level="warning", reason=reason)
+        return StartupError(reason)
+
     def start_overlay(self, mode, url="", tile_id=""):
         if not os.path.isfile(self.overlay_script):
             return False
@@ -184,6 +191,7 @@ class ApplicationLauncher:
             self.overlay_script,
             process,
             timeout=5,
+            require_ready=True,
         ):
             return True
         self._terminate_started_process(process)
@@ -244,9 +252,10 @@ class ApplicationLauncher:
                 timeout=30 if managed_fullscreen else 1.5,
                 require_ready=managed_fullscreen,
             ):
+                reason = failure_reason(process.poll())
                 self._terminate_started_process(process)
-                raise OSError("Tile process ownership could not be established")
+                raise self._startup_failed(reason)
             if not self.start_overlay(mode, url=url, tile_id=tile_id):
                 self.stop_active_tile()
-                raise OSError("Tile overlay could not be started")
+                raise self._startup_failed("overlay-unavailable")
             return process

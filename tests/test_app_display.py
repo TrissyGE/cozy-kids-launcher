@@ -1,4 +1,5 @@
 import ctypes
+import itertools
 import os
 import sys
 import tempfile
@@ -80,7 +81,7 @@ class FullscreenWindowTests(unittest.TestCase):
     def setUp(self):
         self.display = object.__new__(app_display.X11Fullscreen)
         self.display.root = 1
-        self.display.requested = set()
+        self.display.requested = {}
         self.display.atom = lambda value: value
         self.properties = {(1, "_NET_CLIENT_LIST"): [10, 20, 30, 40],
                            (10, "_NET_WM_PID"): [999],
@@ -107,6 +108,20 @@ class FullscreenWindowTests(unittest.TestCase):
         self.assertFalse(self.display.confirm([123]))
         self.display.request.assert_not_called()
 
+    def test_lost_fullscreen_is_requested_again_without_restarting_or_focusing(self):
+        with mock.patch.object(app_display.time, "monotonic", return_value=10):
+            self.assertFalse(self.display.confirm([123]))
+            self.assertFalse(self.display.confirm([123]))
+        self.assertEqual(self.display.request.call_count, 1)
+        with mock.patch.object(app_display.time, "monotonic", return_value=11):
+            self.assertFalse(self.display.confirm([123]))
+        self.assertEqual(self.display.request.call_count, 2)
+        self.properties[40, "_NET_WM_STATE"] = ["_NET_WM_STATE_FULLSCREEN"]
+        self.assertTrue(self.display.confirm([123]))
+        del self.properties[40, "_NET_WM_STATE"]
+        self.assertFalse(self.display.confirm([123]))
+        self.assertEqual(self.display.request.call_count, 3)
+
     def test_request_uses_ewmh_add_not_toggle_and_only_target_xid(self):
         display = object.__new__(app_display.X11Fullscreen)
         display.display, display.root = 1234, 1
@@ -121,6 +136,27 @@ class FullscreenWindowTests(unittest.TestCase):
         display.library.XSendEvent.side_effect = send
         self.assertTrue(display.request(40))
         display.library.XSync.assert_called_once_with(1234, 0)
+
+    def test_startup_activation_is_scoped_to_confirmed_owned_main_window(self):
+        self.display.activate = mock.Mock()
+        self.properties[10, "_NET_WM_STATE"] = ["_NET_WM_STATE_FULLSCREEN"]
+        self.properties[40, "_NET_WM_STATE"] = ["_NET_WM_STATE_FULLSCREEN"]
+        self.assertTrue(self.display.confirm([123], activate=True))
+        self.display.activate.assert_called_once_with(40)
+        self.assertTrue(self.display.confirm([123]))
+        self.assertEqual(self.display.activate.call_count, 1)  # recovery never activates
+
+    def test_activation_requests_application_policy_without_pager_privilege(self):
+        display = object.__new__(app_display.X11Fullscreen)
+        display.display, display.root = 1234, 1
+        display.atom = lambda name: 19 if name == "_NET_ACTIVE_WINDOW" else 0
+        display.library = mock.Mock()
+        def send(_connection, root, _propagate, _mask, pointer):
+            event = ctypes.cast(pointer, ctypes.POINTER(app_display.XEvent)).contents.client
+            self.assertEqual((root, event.window, event.message_type), (1, 40, 19))
+            self.assertEqual(list(event.data), [1, 0, 0, 0, 0])
+        display.library.XSendEvent.side_effect = send
+        display.activate(40)
 
     def test_close_releases_connection_and_restores_error_handler_once(self):
         display = object.__new__(app_display.X11Fullscreen)
@@ -206,7 +242,7 @@ class FullscreenStartupTests(unittest.TestCase):
                 mock.patch.object(process_supervisor, "owned_processes", return_value=[]), \
                 mock.patch.object(process_supervisor, "write_process_record") as write, \
                 mock.patch.object(process_supervisor, "remove_process_record"):
-            def confirm(_display):
+            def confirm(_display, **_options):
                 self.assertEqual(write.call_count, 1)
                 self.assertIs(write.call_args.kwargs["ready"], False)
             wait.side_effect = confirm
@@ -221,7 +257,7 @@ class FullscreenStartupTests(unittest.TestCase):
                 mock.patch.object(process_supervisor, "owned_processes", return_value=[123]), \
                 mock.patch.object(process_supervisor.time, "sleep"):
             process_supervisor.wait_for_fullscreen(display)
-        self.assertEqual(display.confirm.call_args_list, [mock.call([123]), mock.call([123])])
+        self.assertEqual(display.confirm.call_args_list, [mock.call([123], activate=True), mock.call([123], activate=True)])
 
     def test_timeout_exit_and_shutdown_never_claim_success(self):
         display = mock.Mock()
@@ -257,6 +293,61 @@ class FullscreenStartupTests(unittest.TestCase):
             terminate.assert_called_once()
             remove.assert_called_once()
         self.assertEqual(original, ["tuxmath", "--fullscreen", "--nosound"])
+
+    def test_fresh_window_manager_is_waited_for_before_the_app_starts(self):
+        display = mock.Mock()
+        display.supports_fullscreen.side_effect = [False, False, True]
+        with mock.patch.object(process_supervisor, "_termination_signal", None), \
+                mock.patch.object(process_supervisor.time, "sleep") as sleep:
+            process_supervisor.wait_for_window_manager(display)
+        self.assertEqual(sleep.call_count, 2)
+        self.assertEqual(display.supports_fullscreen.call_count, 3)
+
+    def test_window_manager_timeout_and_cancellation_do_not_start_an_app(self):
+        from launch_status import StartupError
+        display = mock.Mock()
+        with self.assertRaises(StartupError) as error:
+            process_supervisor.wait_for_window_manager(display, timeout=0)
+        self.assertEqual(error.exception.reason, "wm-unavailable")
+        with mock.patch.object(process_supervisor, "_termination_signal", 15):
+            with self.assertRaises(StartupError) as error:
+                process_supervisor.wait_for_window_manager(display)
+        self.assertEqual(error.exception.reason, "cancelled")
+        display.supports_fullscreen.assert_not_called()
+
+    def test_failed_wm_wait_publishes_cancellable_ownership_and_cleans_it(self):
+        from launch_status import StartupError
+        with mock.patch.object(process_supervisor, "_enable_child_subreaper"), \
+                mock.patch.object(process_supervisor.signal, "signal"), \
+                mock.patch.object(app_display, "X11Fullscreen") as factory, \
+                mock.patch.object(process_supervisor, "wait_for_window_manager", side_effect=StartupError("wm-unavailable")), \
+                mock.patch.object(process_supervisor.subprocess, "Popen") as popen, \
+                mock.patch.object(process_supervisor, "owned_processes", return_value=[]), \
+                mock.patch.object(process_supervisor, "write_process_record") as write, \
+                mock.patch.object(process_supervisor, "remove_process_record") as remove:
+            code = process_supervisor.main(["--record", "record", "--marker", "marker", "--managed-fullscreen", "--", "kstart", "--fullscreen", "kturtle"])
+        self.assertEqual(code, StartupError("wm-unavailable").exit_code)
+        popen.assert_not_called()
+        self.assertIs(write.call_args.kwargs["ready"], False)
+        factory.return_value.close.assert_called_once()
+        self.assertTrue(remove.called)
+
+    def test_supervisor_keeps_display_checks_after_initial_readiness(self):
+        with mock.patch.object(process_supervisor, "_enable_child_subreaper"), \
+                mock.patch.object(process_supervisor.signal, "signal"), \
+                mock.patch.object(app_display, "X11Fullscreen") as factory, \
+                mock.patch.object(process_supervisor, "wait_for_window_manager"), \
+                mock.patch.object(process_supervisor, "wait_for_fullscreen"), \
+                mock.patch.object(process_supervisor.subprocess, "Popen"), \
+                mock.patch.object(process_supervisor, "_reap_children"), \
+                mock.patch.object(process_supervisor, "owned_processes", side_effect=[[123], [], []]), \
+                mock.patch.object(process_supervisor, "write_process_record"), \
+                mock.patch.object(process_supervisor, "remove_process_record"), \
+                mock.patch.object(process_supervisor.time, "monotonic", side_effect=itertools.count(step=2)), \
+                mock.patch.object(process_supervisor.time, "sleep"):
+            process_supervisor.supervise(["tuxmath", "--fullscreen"], "record", "marker", managed_fullscreen=True)
+        factory.return_value.confirm.assert_called_once_with([123])
+        factory.return_value.close.assert_called_once()
 
 
 if __name__ == "__main__":

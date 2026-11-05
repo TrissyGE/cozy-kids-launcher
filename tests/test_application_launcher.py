@@ -182,7 +182,8 @@ class ApplicationLauncherTests(unittest.TestCase):
         ), mock.patch.object(
             application_launcher,
             "owned_process_alive",
-            side_effect=[True, True],
+            return_value=True,
+        ), mock.patch.object(application_launcher, "owned_process", return_value={"ready": True}
         ), mock.patch.object(
             application_launcher.subprocess,
             "Popen",
@@ -255,6 +256,19 @@ class ApplicationLauncherTests(unittest.TestCase):
         self.assertTrue(process.terminated)
         self.assertEqual(process.wait_timeouts, [1])
 
+    def test_supervisor_exit_reason_is_reported_without_app_output(self):
+        from launch_status import StartupError
+        process = FakeProcess(poll_result=StartupError("wm-unavailable").exit_code)
+        with mock.patch.object(self.launcher, "stop_existing_overlay"), \
+                mock.patch.object(self.launcher, "stop_active_tile"), \
+                mock.patch.object(self.launcher, "_wait_for_owned_process", return_value=False), \
+                mock.patch.object(application_launcher.subprocess, "Popen", return_value=process), \
+                mock.patch.object(application_launcher, "log_runtime_event") as log:
+            with self.assertRaises(StartupError) as error:
+                self.launcher.launch_owned_tile(["private-app", "private-game"], "local")
+        self.assertEqual(error.exception.reason, "wm-unavailable")
+        log.assert_called_once_with("launch.startup.failed", level="warning", reason="wm-unavailable")
+
     def test_opt_in_activity_is_passed_to_the_owned_supervisor(self):
         supervisor_process = FakeProcess()
         overlay_process = FakeProcess()
@@ -264,7 +278,8 @@ class ApplicationLauncherTests(unittest.TestCase):
         ), mock.patch.object(
             application_launcher,
             "owned_process_alive",
-            side_effect=[True, True],
+            return_value=True,
+        ), mock.patch.object(application_launcher, "owned_process", return_value={"ready": True}
         ), mock.patch.object(
             application_launcher.subprocess,
             "Popen",
@@ -317,7 +332,7 @@ class ApplicationLauncherTests(unittest.TestCase):
             f"sys.path.insert(0, {str(source_root)!r})\n"
             "from process_state import write_process_record\n"
             f"write_process_record({str(self.overlay_record)!r}, os.getpid(), "
-            "'overlay', marker=os.path.abspath(__file__))\n"
+            "'overlay', marker=os.path.abspath(__file__), ready=True)\n"
             "time.sleep(30)\n",
             encoding="utf-8",
         )

@@ -51,13 +51,36 @@ manual and desktop-shortcut launches remain immediate.
 X11 allows the smoke harness and overlay to use standard window-management
 interfaces:
 
-- `wmctrl` checks ordinary EWMH windows and raises the launcher by its title;
+- `wmctrl` enumerates ordinary EWMH windows; overlay return activates only a
+  window whose PID matches the verified browser ownership record;
 - `xdotool` detects override-redirect windows such as the small Tk overlay;
 - the overlay uses the `dock` window type plus the topmost hint;
+- mapping the overlay does not force keyboard focus away from the app;
 - the harness clicks the overlay's fixed close control, verifies that the owned
   tile process ends, and verifies that focus returns to a known launcher window;
 - the fallback activation path is scoped to the browser PID from the verified
   ownership record. It never searches for or terminates a browser by name.
+
+Managed X11/XWayland apps publish cancellable ownership before waiting up to
+eight seconds for the window manager's live `_NET_SUPPORTED` property. The WM
+phase and actual fullscreen confirmation share a 25-second startup budget;
+the HTTP-side supervisor wait remains 30 seconds. Once fullscreen is confirmed,
+the supervisor sends one application-source EWMH activation request for that
+owned main window; the compositor decides whether to accept it. Missing support, app exit,
+timeout and cancellation produce fixed diagnostic reasons without app output,
+commands, game names or paths. There is no windowed-success fallback.
+
+After startup, the supervisor checks only its owned normal main windows once
+per second and reasserts lost fullscreen using EWMH ADD, without activation.
+The overlay publishes `ready: true` only when its close button is mapped.
+Availability/timer transport runs in one daemon worker so a slow local server
+does not freeze the control. Tk updates and close handling remain on the UI
+thread. Every half second the control checks active RandR 1.5 monitors and
+repairs its geometry inside the primary monitor (or first active monitor),
+including external displacement. Older/missing RandR falls back to Tk's screen
+size. This is recovery within a live X server, not recovery from X-server loss.
+The message/property contracts follow the
+[EWMH specification](https://specifications.freedesktop.org/wm/latest-single/).
 
 The automated focus assertion is enabled only for a real X11 session. XFCE/X11
 is the primary release-matrix target for this contract.

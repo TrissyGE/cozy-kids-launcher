@@ -10,6 +10,7 @@ import threading
 from datetime import datetime, timezone
 
 from lifecycle_state import STATE_REASONS
+from launch_status import STARTUP_FAILURES
 
 
 DEFAULT_MAX_BYTES = 512 * 1024
@@ -29,6 +30,7 @@ _SAFE_EVENT_FIELDS = {
     "launcher.recovered": {"attempt"},
     "launch.failed": {"actionType", "result"},
     "launch.started": {"actionType"},
+    "launch.startup.failed": {"reason"},
     "pin.changed": set(),
     "pin.removed": set(),
     "profile.created": set(),
@@ -100,6 +102,8 @@ def _safe_timestamp(value):
 
 
 def _safe_detail(name, value):
+    if name == "reason" and isinstance(value, str) and value in STARTUP_FAILURES:
+        return value
     if name == "actionType" and value in _SAFE_ACTION_TYPES:
         return value
     if name == "attempt" and not isinstance(value, bool):

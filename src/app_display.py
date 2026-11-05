@@ -5,6 +5,9 @@ keyboard/mouse grabs, global shortcuts, title matching or wmctrl dependency.
 """
 
 import ctypes as c
+import time
+
+from launch_status import StartupError
 
 
 class ClientMessage(c.Structure):
@@ -28,7 +31,7 @@ class X11Fullscreen:
         self.previous_handler = None
         self.handler_installed = False
         self.atoms = {}
-        self.requested = set()
+        self.requested = {}
         self.library = lib = c.CDLL("libX11.so.6")
         signatures = {
             "XOpenDisplay": ([c.c_char_p], c.c_void_p),
@@ -52,7 +55,7 @@ class X11Fullscreen:
         try:
             self.display = lib.XOpenDisplay(None)
             if not self.display:
-                raise OSError("Cannot connect to the X11 display for fullscreen")
+                raise StartupError("display-unavailable")
             # A window can disappear between enumeration and a property read.
             # This supervisor owns its only X connection; ignore such X errors
             # and let bounded confirmation fail, not Xlib's fatal default.
@@ -60,12 +63,14 @@ class X11Fullscreen:
             self.previous_handler = lib.XSetErrorHandler(self.error_handler)
             self.handler_installed = True
             self.root = lib.XDefaultRootWindow(self.display)
-            supported = self.values(self.root, "_NET_SUPPORTED", "ATOM")
-            if self.atom("_NET_WM_STATE_FULLSCREEN") not in supported:
-                raise OSError("The window manager does not advertise fullscreen")
         except Exception:
             self.close()
             raise
+
+    def supports_fullscreen(self):
+        # Session processes can precede the WM's EWMH initialization. Query the
+        # live root property; absence during login is not a permanent verdict.
+        return self.atom("_NET_WM_STATE_FULLSCREEN") in self.values(self.root, "_NET_SUPPORTED", "ATOM")
 
     def atom(self, name):
         if name not in self.atoms:
@@ -110,7 +115,21 @@ class X11Fullscreen:
         self.library.XSync(self.display, 0)
         return bool(sent)
 
-    def confirm(self, owned_pids):
+    def activate(self, window):
+        """One startup activation request; the compositor keeps final policy."""
+        event = XEvent()
+        event.client.type = 33
+        event.client.send_event = 1
+        event.client.display = self.display
+        event.client.window = window
+        event.client.message_type = self.atom("_NET_ACTIVE_WINDOW")
+        event.client.format = 32
+        event.client.data[0] = 1  # application source, never pretend to be a pager
+        event.client.data[1] = 0  # CurrentTime; no invented user-input timestamp
+        self.library.XSendEvent(self.display, self.root, 0, (1 << 19) | (1 << 20), c.byref(event))
+        self.library.XSync(self.display, 0)
+
+    def confirm(self, owned_pids, activate=False):
         """True only after the WM reports fullscreen on an owned main window."""
         owned_pids = set(owned_pids)
         for window in self.values(self.root, "_NET_CLIENT_LIST", "WINDOW"):
@@ -124,9 +143,16 @@ class X11Fullscreen:
                 continue
             states = self.values(window, "_NET_WM_STATE", "ATOM")
             if self.atom("_NET_WM_STATE_FULLSCREEN") in states:
+                self.requested.pop(window, None)
+                if activate:
+                    self.activate(window)
                 return True
-            if window not in self.requested and self.request(window):
-                self.requested.add(window)
+            now = time.monotonic()
+            if now - self.requested.get(window, float("-inf")) >= 1 and self.request(window):
+                self.requested[window] = now
+        # Disappeared XIDs must not accumulate during a long application run.
+        live = set(self.values(self.root, "_NET_CLIENT_LIST", "WINDOW"))
+        self.requested = {window: when for window, when in self.requested.items() if window in live}
         return False
 
     def close(self):
