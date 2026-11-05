@@ -104,11 +104,14 @@
 <div id="packageOverlay" class="install-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="packageTitle">
   <div class="install-box package-box">
     <h2 id="packageTitle"></h2>
+    <div class="package-scroll">
     <div id="packageMessage" aria-live="polite"></div>
     <progress id="packageProgress" max="100" hidden></progress>
     <p id="packageSummary" hidden></p>
+    <p id="packageFlatpakPermissions" class="package-permissions" hidden></p>
     <details id="packageDetails" hidden><summary id="packageDetailsLabel"></summary><ul id="packageList"></ul></details>
     <p id="packageHint" class="muted"></p>
+    </div>
     <div class="package-actions">
       <button id="packageAction" class="smallbtn save" type="button" hidden></button>
       <button id="packageClose" class="smallbtn" type="button" onclick="closePackageOverlay()"></button>

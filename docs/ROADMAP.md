@@ -197,7 +197,10 @@ their own evidence is complete. See the release standard at the end.
   - [x] Keep Arch app updates outside the per-app flow and refuse installation while coordinated system updates are pending
   - [x] Exercise trusted installation, provider-specific maintenance policy, daemon-history reconciliation and ordinary-user authorization refusal in disposable Fedora, Arch and Tumbleweed containers; retain image/runtime evidence in focused CI
   - [ ] Qualify RPM maintenance with reliable execution-time removal restrictions, real version-to-version update transitions and target-distribution graphical acceptance
-  - [ ] Add managed Flatpak installation with reviewed remote, ref and permissions
+  - [x] Add user-scoped Flatpak installation with an explicitly selected, signed Flathub source, exact app/runtime commit review, permission ceilings, single-use consent and verified installation; validate the initial Tux Paint mapping through the shared Parent installation flow
+  - [x] Add five-language source selection, visible sandbox permissions and explicit tile-source switching with rollback, preserving existing labels, visibility and approvals
+  - [x] Exercise the installed Flatpak runtime, sandbox/process ownership and real overlay close on GNOME Wayland, KDE Wayland and XFCE X11; retain physical input and final visual/focus acceptance separately
+  - [ ] Qualify additional Flatpak app mappings and system-wide installations; add app update/removal only after their own review and execution checks
 - [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
 
@@ -214,7 +217,6 @@ their own evidence is complete. See the release standard at the end.
 - [x] Let existing families change the launcher language in Parent settings while preserving profile names and tile labels
 - [x] Apply the saved language to native helper windows and the embedded browser wrapper after an in-app language change
 - [x] Add Italian installer, launcher, native helper and catalog translations through the shared locale pipeline
-- [ ] Confirm Italian wording and tone with a fluent reviewer
 - [x] Make app descriptions, guidance and source labels use locale-key fallbacks so new packs can add translations through data
 - [x] Document translation contributions, terminology and review ownership; report missing source keys for draft and enabled languages
 - [x] Exercise all five enabled languages in the 800×600 Parent layout with localized counts and keyboard focus recovery

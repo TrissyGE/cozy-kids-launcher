@@ -1,0 +1,14 @@
+{
+  "tuxpaint": {
+    "id": "org.tuxpaint.Tuxpaint",
+    "branch": "stable",
+    "args": ["--fullscreen=yes"],
+    "reviewed": "2026-11-05",
+    "manifest": "https://github.com/flathub/org.tuxpaint.Tuxpaint/blob/29732e65760427e75e84396b405f236138a5958e/org.tuxpaint.Tuxpaint.json",
+    "permissions": [
+      "Context.shared=ipc", "Context.sockets=x11", "Context.sockets=fallback-x11",
+      "Context.sockets=wayland", "Context.sockets=pulseaudio", "Context.devices=dri",
+      "Context.filesystems=xdg-pictures/TuxPaint:create", "Context.persistent=.tuxpaint"
+    ]
+  }
+}

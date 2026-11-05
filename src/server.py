@@ -551,6 +551,8 @@ def load_recommendations():
         return []
     release = read_os_release()
     provider = detect_native_provider(release)
+    from flatpak_catalog import catalog_routes
+    flatpaks = catalog_routes()
     result = []
     for rec in recs:
         all_cmds = []
@@ -575,6 +577,8 @@ def load_recommendations():
         entry = {**rec, "installed": installed}
         if "package" in rec or "packages" in rec:
             entry["packageRoute"] = catalog_package_route(rec, release, provider)
+        if rec.get("id") in flatpaks:
+            entry["flatpakRoute"] = flatpaks[rec["id"]]
         result.append(entry)
     return result
 
@@ -1440,10 +1444,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if body is None:
                 return
             try:
-                if action.endswith("/prepare") and set(body) in ({"appId"}, {"appId", "operation"}):
-                    result = self.server.package_installer.prepare(
-                        body["appId"], load_recommendations(), body.get("operation", "install"),
-                    )
+                if action.endswith("/prepare") and "appId" in body and set(body) <= {"appId", "operation", "source"}:
+                    args = (body["appId"], load_recommendations(), body.get("operation", "install"))
+                    result = self.server.package_installer.prepare(*args, **({"source": body["source"]} if "source" in body else {}))
                 elif action in ("api/packages/install", "api/packages/confirm") and set(body) == {"jobId", "confirmationToken"}:
                     result = self.server.package_installer.start(
                         body["jobId"], body["confirmationToken"],

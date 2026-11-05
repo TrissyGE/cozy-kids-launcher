@@ -32,6 +32,9 @@ async function packageRequest(path,body){
   }finally{ clearTimeout(timeout); }
 }
 function packageErrorText(code,operation='install'){
+  const flatpak={flatpak_setup:uiText.flatpakSetup,flatpak_overrides:uiText.flatpakOverrides,
+    flatpak_permissions:uiText.flatpakChanged,flatpak_origin:uiText.flatpakOrigin}[code];
+  if(flatpak) return flatpak;
   if(code==='system_update_required') return uiText.packageSystemUpdate;
   if(code==='system_maintenance_required') return uiText.packageSystemMaintenance;
   const maintenance=uiText.packageMaintenance;
@@ -54,7 +57,8 @@ function packageAction(label,callback){
 function renderPackageJob(){
   document.getElementById('packageClose').textContent=uiText.close;
   const job=packageJob;
-  const rec=recommendations.find(item=>item.id===job.appId);
+  const original=recommendations.find(item=>item.id===job.appId);
+  const rec=original?catalogRecipe(original,job.source||'native'):null;
   const operation=job.operation||'install';
   const maintenance=uiText.packageMaintenance;
   const isRemoval=operation==='remove';
@@ -65,6 +69,8 @@ function renderPackageJob(){
   const summary=document.getElementById('packageSummary');
   const details=document.getElementById('packageDetails');
   const hint=document.getElementById('packageHint');
+  const permissions=document.getElementById('packageFlatpakPermissions');
+  permissions.hidden=true; permissions.textContent='';
   document.getElementById('packageAction').hidden=true;
   progress.hidden=true; summary.hidden=true; details.hidden=true; hint.textContent='';
   if(job.status==='checking'||job.status==='installing'){
@@ -76,16 +82,16 @@ function renderPackageJob(){
     renderUiState(message,'loading',text);
     progress.hidden=false; progress.setAttribute('aria-label',text);
     if(Number.isFinite(job.percent)) progress.value=job.percent; else progress.removeAttribute('value');
-    hint.textContent=operation==='install'?uiText.packageKeepOpen:maintenance.keepOpen;
+    hint.textContent=job.source==='flatpak'?uiText.flatpakKeepOpen:operation==='install'?uiText.packageKeepOpen:maintenance.keepOpen;
   }else if(job.status==='ready'){
     renderUiState(message,'success',isRemoval?maintenance.removeReview:isUpdate?maintenance.updateReview:uiText.packageReview);
     const packages=Array.isArray(job.packages)?job.packages:[];
     const size=Number.isFinite(job.downloadBytes)?
       new Intl.NumberFormat(cfg.language,{maximumFractionDigits:1}).format(job.downloadBytes/1048576)+' MB':uiText.packageUnknownSize;
     const facts=[localizedCount('packageCount',packages.length)];
-    const source=({apt:'APT',dnf:'DNF',pacman:'Pacman',zypper:'Zypper'})[job.provider];
+    const source=({apt:'APT',dnf:'DNF',pacman:'Pacman',zypper:'Zypper',flatpak:'Flatpak · Flathub'})[job.provider];
     if(source) facts.push(uiText.packageSource+': '+source);
-    if(!isRemoval) facts.unshift(uiText.packageDownload.replace('{size}',size));
+    if(!isRemoval) facts.unshift((job.flatpak?uiText.flatpakDownload:uiText.packageDownload).replace('{size}',size));
     if(job.currentVersion) facts.push(job.targetVersion?
       maintenance.versions.replace('{current}',()=>job.currentVersion).replace('{target}',()=>job.targetVersion):
       maintenance.version.replace('{current}',()=>job.currentVersion));
@@ -95,10 +101,24 @@ function renderPackageJob(){
     const list=document.getElementById('packageList'); list.replaceChildren();
     for(const name of packages.slice(0,200)){ const item=document.createElement('li'); item.textContent=name; list.appendChild(item); }
     hint.textContent=isRemoval?maintenance.removeConsent:isUpdate?maintenance.consent:uiText.packageConsent;
+    if(job.flatpak){
+      facts.push(uiText.flatpakUserScope);
+      summary.textContent=facts.join(' · ');
+      hint.textContent=uiText.flatpakConsent;
+      const labels=new Set((job.flatpak.permissions||[]).map(flatpakPermissionLabel));
+      permissions.hidden=false;
+      const heading=document.createElement('strong'); heading.textContent=uiText.flatpakPermissions+': ';
+      permissions.append(heading,document.createTextNode(Array.from(labels).join(' · ')));
+      for(const ref of job.flatpak.runtimeUpdates||[]){
+        const item=document.createElement('li'); item.textContent=uiText.flatpakRuntimeUpdate+': '+ref; list.prepend(item);
+      }
+    }
     packageAction(isRemoval?maintenance.removeNow:isUpdate?maintenance.updateNow:uiText.packageConfirm,confirmPackageOperation);
   }else if(job.status==='complete'){
     renderUiState(message,'success',isRemoval?maintenance.removed:isUpdate?maintenance.updated:uiText.packageComplete);
-    if(operation==='install'&&rec&&!rec.installOnly&&!catalogAdded(rec)){
+    if(operation==='install'&&rec&&catalogSourceMismatch(rec)){
+      packageAction(uiText.catalogUseSource,()=>switchCatalogTileSource(rec,document.getElementById('packageAction')));
+    }else if(operation==='install'&&rec&&!rec.installOnly&&!catalogAdded(rec)){
       packageAction(uiText.packageAdd,()=>addInstalledPackageTile(rec));
     }
   }else if(job.status==='idle'){
@@ -113,7 +133,7 @@ function renderPackageConnectionError(error){
   const message=document.getElementById('packageMessage');
   document.getElementById('packageAction').hidden=true;
   document.getElementById('packageProgress').hidden=true;
-  for(const id of ['packageSummary','packageDetails']) document.getElementById(id).hidden=true;
+  for(const id of ['packageSummary','packageDetails','packageFlatpakPermissions']) document.getElementById(id).hidden=true;
   document.getElementById('packageHint').textContent='';
   renderUiState(message,'error',packageErrorText(error.code||'interrupted',packageJob.operation),()=>refreshPackageStatus());
 }
@@ -136,14 +156,27 @@ function triggerInstall(rec){ return preparePackageOperation(rec,'install'); }
 async function preparePackageOperation(rec,operation){
   clearTimeout(packagePoll);
   const view=++packageView;
-  showPackageOverlay(); packageJob={status:'checking',appId:rec.id,operation}; renderPackageJob();
+  const source=rec.packageSource||'native';
+  showPackageOverlay(); packageJob={status:'checking',appId:rec.id,operation,source}; renderPackageJob();
   try{
     const body=operation==='install'?{appId:rec.id}:{appId:rec.id,operation};
+    if(source==='flatpak') body.source='flatpak';
     const job=await packageRequest('/api/packages/prepare',body);
     if(view!==packageView||!packageIsOpen()) return;
     packageJob=job; renderPackageJob();
     await pollPackageStatus(view);
   }catch(error){ if(view===packageView&&packageIsOpen()) renderPackageConnectionError(error); }
+}
+
+function flatpakPermissionLabel(permission){
+  if(permission==='Context.shared=network') return uiText.flatpakNetwork;
+  if(permission==='Context.shared=ipc') return uiText.flatpakSharedMemory;
+  if(permission==='Context.devices=dri') return uiText.flatpakGraphics;
+  if(permission==='Context.sockets=pulseaudio') return uiText.flatpakAudio;
+  if(/^Context\.sockets=(x11|fallback-x11|wayland)$/.test(permission)) return uiText.flatpakDisplay;
+  if(permission==='Context.filesystems=xdg-pictures/TuxPaint:create') return uiText.flatpakPictures;
+  if(permission==='Context.persistent=.tuxpaint') return uiText.flatpakStorage;
+  return permission;
 }
 async function confirmPackageOperation(){
   if(packageJob.status!=='ready') return;
@@ -151,7 +184,7 @@ async function confirmPackageOperation(){
   const path=packageJob.operation&&packageJob.operation!=='install'?'/api/packages/confirm':'/api/packages/install';
   const view=++packageView;
   // Disable synchronously; double clicks and lost replies must never resubmit consent.
-  packageJob={...packageJob,status:'installing',phase:'authorization',percent:null}; renderPackageJob();
+  packageJob={...packageJob,status:'installing',phase:packageJob.source==='flatpak'?'checking':'authorization',percent:null}; renderPackageJob();
   try{
     const job=await packageRequest(path,body);
     if(view!==packageView||!packageIsOpen()) return;

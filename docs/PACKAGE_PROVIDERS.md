@@ -123,7 +123,7 @@ This is a conservative heuristic, not a complete immutable-distribution detector
 | DNF | `sudo dnf install <package>` | Five mapped catalog apps plus Tux Paint |
 | Pacman | `sudo pacman -S <package>` | Five mapped catalog apps from Extra |
 | Zypper | `sudo zypper install <package>` | Five mapped catalog apps checked in openSUSE Factory |
-| Flatpak | Not implemented | Remote choice, trust, permissions, and app IDs still require review |
+| Flatpak | User-scoped direct installation through libflatpak | Reviewed Tux Paint recipe; requires an enabled, GPG-verified user Flathub remote at the reviewed HTTPS URL |
 
 No plan includes automatic yes, repository changes, or a system upgrade.
 Parents must keep their distribution maintained; the launcher does not repair
@@ -144,6 +144,41 @@ particular release or enabled repository still needs verification.
 | SuperTuxKart | [supertuxkart](https://packages.fedoraproject.org/pkgs/supertuxkart/) | [supertuxkart](https://archlinux.org/packages/extra/x86_64/supertuxkart/) | [supertuxkart](https://api.opensuse.org/public/source/openSUSE:Factory/supertuxkart) |
 
 ## API and safety contract
+
+### Managed Flatpak source
+
+The Parent catalog offers a separate source choice for reviewed Flatpak apps.
+The initial mapping is Tux Paint (`org.tuxpaint.Tuxpaint`, stable), with the
+package manifest and permission ceiling in `flatpak_catalog.json`. The native
+catalog remains available. Existing tile commands change only through an
+explicit Parent source-change action; labels, visibility, IDs and time rules
+are preserved, and a rejected save restores the previous command.
+
+Flatpak uses the same Parent/origin protection, serialized installer, expiring
+single-use token and progress dialog. Prepare accepts the optional
+`source: "flatpak"`; confirm still accepts only the job ID and token. No remote,
+app ID, ref, commit, command or permission override comes from the request.
+The product requires an already configured user Flathub remote at
+`https://dl.flathub.org/repo/` with GPG verification enabled. It never adds a
+remote, disables verification or opens a terminal. Missing setup points parents
+to their software manager. Debian packaging recommends the optional bindings.
+
+libflatpak resolves the app and runtime operations to immutable commits. The
+preview aborts at `ready` before installation. Confirmation resolves again and
+compares the complete plan, including runtime update starting commits,
+metadata, download upper bounds and permissions. Execution performs its own
+ready-time comparison and verifies installed commits and origins afterward.
+New remotes, unrelated apps, automatic rebases, external extra-data payloads
+and unreviewed sandbox permissions are rejected. Existing user permission
+overrides are left untouched and make this managed route unavailable.
+
+Flatpak transactions run in the launcher process. Closing the status dialog
+does not stop them; exiting Cozy Kids can interrupt them. Restart restores an
+uncertain status and requires a new review, never replaying consent. App
+update/removal and system-wide Flatpak management remain delegated to the
+software manager. This installs catalog apps; publishing Cozy Kids itself on
+Flathub remains a separate packaging roadmap item. See
+[the repeatable probes and qualification scope](FLATPAK_TESTING.md).
 
 The existing request field `package` remains a catalog lookup key. Explicit
 native names belong in the recommendation's `packages` object. Only legacy APT

@@ -18,16 +18,18 @@ from packagekit_backend import (
 ACTIVE_STATES = {"checking", "installing"}
 ERRORS = {"network", "authorization", "busy", "not_found", "unsupported", "unavailable",
           "changes_required", "plan_changed", "failed", "interrupted", "storage",
-          "not_installed", "no_update", "system_update_required", "system_maintenance_required"}
+          "not_installed", "no_update", "system_update_required", "system_maintenance_required",
+          "flatpak_setup", "flatpak_overrides", "flatpak_permissions", "flatpak_origin"}
 PHASES = {"waiting-for-auth": "authorization", "download": "downloading", "install": "installing",
           "update": "updating", "remove": "removing", "wait": "waiting",
           "waiting-for-lock": "waiting", "setup": "checking"}
 
 
 class PackageInstaller:
-    def __init__(self, journal, backend_factory=PackageKitBackend, clock=time.monotonic):
+    def __init__(self, journal, backend_factory=PackageKitBackend, clock=time.monotonic, flatpak_factory=None):
         self.journal = Path(journal)
         self.backend_factory = backend_factory
+        self.flatpak_factory = flatpak_factory
         self.clock = clock
         self.lock = threading.RLock()
         self.job = {"status": "idle"}
@@ -48,6 +50,12 @@ class PackageInstaller:
             pass
 
     def _resume(self, previous):
+        if previous.get("source") == "flatpak":
+            # libflatpak runs in this process, not a reattachable daemon job.
+            # Retain identity for an explicit new review; never replay consent.
+            if isinstance(previous.get("appId"), str) and 1 <= len(previous["appId"]) <= 100:
+                self.job.update(source="flatpak", provider="flatpak", appId=previous["appId"])
+            return
         if previous.get("status") != "installing":
             return
         transaction = previous.get("transactionId")
@@ -96,7 +104,7 @@ class PackageInstaller:
     def _persist(self):
         self.journal.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         record = {key: self.job[key] for key in
-                  ("jobId", "appId", "operation", "status", "provider") if key in self.job}
+                  ("jobId", "appId", "operation", "status", "provider", "source") if key in self.job}
         if self.job["status"] == "installing" and self.recovery:
             record.update(self.recovery)
         atomic_write_config(str(self.journal), record)
@@ -113,11 +121,13 @@ class PackageInstaller:
             self.job.update(values)
             self._persist()
 
-    def prepare(self, app_id, recommendations, operation="install"):
+    def prepare(self, app_id, recommendations, operation="install", source="native"):
         if not isinstance(app_id, str) or len(app_id) > 100:
             raise ValueError("Invalid app identifier")
         if not isinstance(operation, str) or operation not in PACKAGE_OPERATIONS:
             raise ValueError("Invalid package operation")
+        if not isinstance(source, str) or source not in {"native", "flatpak"}:
+            raise ValueError("Invalid package source")
         rec = next((item for item in recommendations if item.get("id") == app_id), None)
         if rec is None:
             raise ValueError("Unknown catalog app")
@@ -125,13 +135,19 @@ class PackageInstaller:
         if not isinstance(mappings, dict):
             raise ValueError("Invalid native package mapping")
         packages = [mapped_package(rec, provider) for provider in PROVIDERS]
-        if not any(packages):
+        if source == "flatpak":
+            from flatpak_catalog import recipe
+            if recipe(app_id) is None:
+                raise ValueError("App has no reviewed Flatpak recipe")
+        elif not any(packages):
             raise ValueError("App has no native package")
         with self.lock:
             if self.job["status"] in ACTIVE_STATES:
                 raise InstallError("busy")
             self.job = {"jobId": secrets.token_hex(16), "appId": app_id, "operation": operation,
                         "status": "checking", "phase": "checking", "percent": None}
+            if source == "flatpak":
+                self.job["source"] = "flatpak"
             self.plan = None
             self.token = None
             self.recovery = None
@@ -140,7 +156,7 @@ class PackageInstaller:
             except OSError:
                 self.job = {"status": "error", "error": "storage"}
                 raise InstallError("storage") from None
-            self.recipe = copy.deepcopy({key: rec[key] for key in ("package", "packages") if key in rec})
+            self.recipe = copy.deepcopy({key: rec[key] for key in ("id", "package", "packages") if key in rec})
             self.worker = threading.Thread(target=self._run, args=(False,), daemon=True)
             self.worker.start()
             return self.snapshot()
@@ -195,7 +211,11 @@ class PackageInstaller:
         backend = None
         operation = self.job["operation"]
         try:
-            backend = self.backend_factory()
+            if self.job.get("source") == "flatpak":
+                from flatpak_backend import FlatpakBackend
+                backend = (self.flatpak_factory or FlatpakBackend)()
+            else:
+                backend = self.backend_factory()
             self.package = backend.catalog_package(self.recipe)
             if confirmed and backend.provider != self.job.get("provider"):
                 raise InstallError("plan_changed")
@@ -203,14 +223,19 @@ class PackageInstaller:
                 self._update(provider=backend.provider)
             plan = backend.prepare(self.package, operation)
             if plan.get("installed"):
+                if confirmed and self.job.get("source") == "flatpak" and not backend.verify(self.package, operation, self.plan):
+                    raise InstallError("plan_changed")
                 self._update(status="complete", phase="complete", percent=100)
                 return
             if confirmed:
                 if plan != self.plan:
                     raise InstallError("plan_changed")
-                target = package_identity(plan["packageIds"][0])
-                backend.perform(operation, plan, self._progress,
-                                transaction=lambda value: self._record_transaction(value, target))
+                if self.job.get("source") == "flatpak":
+                    backend.perform(operation, plan, self._progress)
+                else:
+                    target = package_identity(plan["packageIds"][0])
+                    backend.perform(operation, plan, self._progress,
+                                    transaction=lambda value: self._record_transaction(value, target))
                 if not backend.verify(self.package, operation, plan):
                     raise InstallError("failed")
                 self._update(status="complete", phase="complete", percent=100)
@@ -221,7 +246,7 @@ class PackageInstaller:
                     self.expires = self.clock() + 600
                     self._update(status="ready", packages=plan["packages"],
                                  downloadBytes=plan["downloadBytes"], percent=None,
-                                 **{key: plan[key] for key in ("currentVersion", "targetVersion") if key in plan})
+                                 **{key: plan[key] for key in ("currentVersion", "targetVersion", "flatpak") if key in plan})
         except Exception as error:
             code = error.code if isinstance(error, InstallError) and error.code in ERRORS else "failed"
             if isinstance(error, OSError):

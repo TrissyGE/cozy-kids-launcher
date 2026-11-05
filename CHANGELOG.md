@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Managed Flatpak app source
+
+- Add explicit Native/Flatpak source selection and an initial reviewed Tux Paint Flatpak recipe, retaining the complete native catalog.
+- Bind user-scoped installation to a signed, configured Flathub remote, exact app/runtime commits and a reviewed permission ceiling, with single-use Parent confirmation and installed-ref verification.
+- Show sandbox permissions, including microphone access, before confirmation; keep modal actions reachable in all five languages at 800×600.
+- Offer explicit tile-source changes with save rollback while preserving family labels, visibility, IDs and rules. Restart never replays Flatpak consent.
+- Add real installed-runtime Flatpak desktop probes and focused browser/CI coverage; keep additional mappings, system-wide management and physical input acceptance separate.
+- Remove the Italian-only fluent-review gate and apply the same translation/UI checks across enabled languages.
+
 ### Desktop startup and recovery
 
 - Wait for a fresh session's EWMH fullscreen support before launching a managed app, fixing the reproduced early-XFCE KTurtle failure; retain cancellation and a bounded startup deadline.

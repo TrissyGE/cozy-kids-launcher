@@ -89,7 +89,7 @@ Maintainer: TrissyGE <noreply@github.com>
 Homepage: https://github.com/TrissyGE/cozy-kids-launcher
 Installed-Size: {(installed_size + 1023) // 1024}
 Depends: bash, python3 (>= 3.9), python3-tk, util-linux
-Recommends: firefox | chromium | chromium-browser, packagekit, python3-dbus, xdotool, wmctrl, zenity
+Recommends: firefox | chromium | chromium-browser, packagekit, python3-dbus, python3-gi, flatpak, gir1.2-flatpak-1.0, xdotool, wmctrl, zenity
 Description: Local family launcher with Parent controls
  A browser-based Linux launcher for family profiles, approved applications,
  local media and optional emulators. Configuration stays in the user's home.

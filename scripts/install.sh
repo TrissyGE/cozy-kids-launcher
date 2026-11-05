@@ -740,7 +740,7 @@ keys = (
     "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
     "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget", "updateTrack",
 )
-print(json.dumps({key: value for key, value in locale.items() if key in keys or key.startswith("folder")}, ensure_ascii=True))
+print(json.dumps({key: value for key, value in locale.items() if key in keys or key.startswith(("folder", "flatpak", "package")) or key == "catalogUseSource"}, ensure_ascii=True))
 PY
 )" || die "Could not prepare setup and profile translations for $ACTIVE_LANG"
 JSON_MEDIA_LOCALE="$(python3 - "$SRC_DIR/frontend/locales/$ACTIVE_LANG.json" <<'PY'
@@ -1335,6 +1335,9 @@ render_template "$SRC_DIR/server.py" "$SERVER_FILE" 0644
 install -m 0644 "$SRC_DIR/app_detection.py" "$APP_ROOT/app_detection.py"
 install -m 0644 "$SRC_DIR/package_provider.py" "$APP_ROOT/package_provider.py"
 install -m 0644 "$SRC_DIR/package_install.py" "$APP_ROOT/package_install.py"
+install -m 0644 "$SRC_DIR/flatpak_backend.py" "$APP_ROOT/flatpak_backend.py"
+install -m 0644 "$SRC_DIR/flatpak_catalog.py" "$APP_ROOT/flatpak_catalog.py"
+install -m 0644 "$SRC_DIR/flatpak_catalog.json" "$APP_ROOT/flatpak_catalog.json"
 install -m 0644 "$SRC_DIR/packagekit_backend.py" "$APP_ROOT/packagekit_backend.py"
 install -m 0644 "$SRC_DIR/application_launcher.py" "$APP_ROOT/application_launcher.py"
 install -m 0644 "$SRC_DIR/app_display.py" "$APP_ROOT/app_display.py"
