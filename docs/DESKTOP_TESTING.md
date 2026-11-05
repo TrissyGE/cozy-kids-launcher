@@ -149,6 +149,10 @@ disc still require separate validation.
 
 The package candidate uses the same Ubuntu 24.04.4 disposable guest as the
 RetroGameCorner matrix. The package runtime is read-only to the family user.
+The final native probes used the runtime from `fc2949f`, packaged as
+`0.6.0+package4-1`. The `.deb` SHA-256 was
+`bcdf0a1c1d7b1f1e880f65d8c3540137c7b46c9e3c5b7b6512ed645de57ada27`.
+Subsequent commits change test orchestration and evidence only.
 Actual dpkg install, upgrade and downgrade between two candidate package
 revisions passed. A real script installation was migrated with its exact
 configuration retained. The installed server restored a configuration
@@ -166,15 +170,27 @@ The package's installed-runtime API probe also runs without a display in CI.
 | Session and browser | Automated installed-package checks |
 | --- | --- |
 | Plasma 5.27.12 Wayland, Chrome 152 fullscreen | Passed |
-| GNOME 46 Wayland, Firefox Snap 154 kiosk | First KTurtle start returned HTTP 503 after fullscreen confirmation timed out; a direct supervised diagnostic and the subsequent complete probe passed |
+| GNOME 46 Wayland, Firefox Snap 154 kiosk | Complete probe passed in a fresh user session; earlier probes after desktop switches intermittently returned HTTP 503 during KTurtle fullscreen startup |
 | XFCE 4.18.3 X11, Chrome 152 kiosk | Passed with LightDM |
 
-These reports retain `automation-passed-manual-pending`. The first GNOME
-failure needs diagnosis and a repeat from a clean session before release
-acceptance. Meaningful physical input, visible native Wayland focus and
+These reports retain `automation-passed-manual-pending`. The GNOME failure
+recurred after desktop switches while sessions from the previous desktop
+were still present. Restoring the clean snapshot and starting a fresh GNOME
+user session passed. A diagnostic supervisor also passed; its timing changed,
+so it does not establish the cause of the failure. Keep this startup issue
+open until it is explained. The XFCE probe now waits for the owned Tk overlay
+record and its first window placement before clicking; the settled probe
+passed. Meaningful physical input, visible native Wayland focus and
 stacking, fresh-login autostart, Linux Mint and Zorin lifecycle acceptance
 remain open. [Package building and migration](PACKAGING.md) describe the
 commands and update/uninstall boundaries.
+
+The package's opt-in systemd user service was also exercised in the actual
+unused GNOME account. Enable, graphical start with an owned kiosk browser,
+live status, manual stop, owned-process cleanup and disable passed. The
+`--user-service` flag requires an unused disposable account because systemd
+uses that account's actual home. It is separate from the temporary-home
+standalone probe. Fresh-login autostart remains a manual gate.
 
 Child folder browser checks cover real save/reload, hidden tiles, folder
 deletion without deleting apps, keyboard back/focus recovery, a synthetic

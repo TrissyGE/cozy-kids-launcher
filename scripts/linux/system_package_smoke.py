@@ -16,6 +16,44 @@ import urllib.request
 import desktop_smoke as smoke
 
 
+def check_user_service():
+    """This optional probe requires an unused account in the disposable VM."""
+    home = Path.home()
+    config = home / ".config/cozy-kids-launcher/config.json"
+    unit = home / ".config/systemd/user/cozy-kids-launcher.service"
+    if config.exists() or unit.exists():
+        raise RuntimeError("The service probe requires an unused disposable desktop account")
+    command = ["/usr/bin/cozy-kids-launcher", "--service"]
+    enabled = False
+    try:
+        subprocess.run([*command, "enable"], check=True)
+        enabled = True
+        subprocess.run([*command, "start"], check=True)
+        def ready():
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:38431/api/update/status", timeout=2) as response:
+                    return json.load(response).get("source") == "package-manager"
+            except OSError:
+                return False
+        smoke.wait_until(ready, timeout=45)
+        cache = home / ".cache/cozy-kids-launcher"
+        browser = smoke.wait_until(lambda: smoke.live_process_record(cache / "browser.pid", "browser"), timeout=45)
+        smoke.wait_until(lambda: "--kiosk" in smoke.browser_command_tokens(smoke.process_command(browser["pid"]) or []), timeout=30)
+        status = json.loads(subprocess.check_output([*command, "status"], text=True))
+        assert status["mode"] == "systemd" and status["unitState"] == "active"
+        subprocess.run([*command, "stop"], check=True)
+        status = json.loads(subprocess.check_output([*command, "status"], text=True))
+        assert status["unitState"] == "inactive"
+        assert status["lastLifecycle"]["reason"] == "manual-stop"
+        for name, role in (("server", "server"), ("browser", "browser"), ("watchdog", "watchdog")):
+            assert not smoke.live_process_record(cache / (name + ".pid"), role)
+    finally:
+        if enabled:
+            subprocess.run([*command, "disable"], check=True)
+    assert not unit.exists()
+    return "system package user-service enable, graphical start, status, stop, cleanup and disable"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--desktop", choices=("gnome", "kde", "xfce"), required=True)
@@ -23,6 +61,7 @@ def main():
     parser.add_argument("--browser", required=True)
     parser.add_argument("--launch-mode", choices=("kiosk", "fullscreen"), required=True)
     parser.add_argument("--artifacts", type=Path, required=True)
+    parser.add_argument("--user-service", action="store_true", help="Also test the service in this unused disposable account's actual home")
     args = parser.parse_args()
     errors = smoke.environment_errors(args.desktop, args.session)
     if errors:
@@ -92,6 +131,14 @@ def main():
                 launcher.terminate()
                 launcher.wait(timeout=30)
             smoke.copy_runtime_artifacts(home, args.artifacts)
+            (args.artifacts / "report.json").write_text(json.dumps(report, indent=2) + "\n")
+    if args.user_service:
+        try:
+            report["checks"].append(check_user_service())
+        except Exception:
+            report["outcome"] = "failed"
+            raise
+        finally:
             (args.artifacts / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 

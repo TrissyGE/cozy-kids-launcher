@@ -318,6 +318,7 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Integrate the package-managed mode into the system-wide package layout and reversible script-install migration
   - [x] Verify clean initialization, migration, package upgrade and downgrade, Parent configuration restore, purge and reinstall on Ubuntu 24.04
   - [x] Check installed-package startup, owned KTurtle fullscreen, overlay close and process cleanup on GNOME Wayland, KDE Wayland and XFCE X11; retain manual acceptance and the first GNOME launch failure separately
+  - [x] Exercise the installed package's optional systemd user service with a real graphical browser, status, manual stop, cleanup and disable in the GNOME VM
   - [x] Add CI gates for repeat package builds, real installation, installed-runtime API checks and a rebuild on an installed build host
   - [ ] Complete Linux Mint and Zorin package lifecycle and desktop acceptance, and diagnose the first GNOME KTurtle launch failure
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA

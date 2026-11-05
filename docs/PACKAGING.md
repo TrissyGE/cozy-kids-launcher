@@ -80,5 +80,11 @@ distribution. Ubuntu VM evidence does not certify Mint or Zorin. Signed APT
 repository/PPA publication and downstream repository adoption remain separate
 roadmap work. No release, tag or repository is published by this builder.
 
+For installed-package desktop checks, use
+`scripts/linux/system_package_smoke.py` with the matrix's desktop, session,
+browser and mode. `--user-service` additionally tests the actual systemd user
+unit in an unused disposable account. It refuses to replace an existing
+configuration or user unit. The regular probe uses a temporary home.
+
 The layout and lifecycle follow Debian's [file policy](https://www.debian.org/doc/debian-policy/ch-files.html)
 and [package installation procedure](https://www.debian.org/doc/debian-policy/ch-maintainerscripts.html).
