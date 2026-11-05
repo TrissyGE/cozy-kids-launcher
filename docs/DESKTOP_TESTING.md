@@ -145,6 +145,42 @@ sink reproduced a black screen and blocked shutdown before this change.
 Actual gameplay controls, audible output, and an in-game request for another
 disc still require separate validation.
 
+## System package lifecycle and desktop pilot, 2026-11-05
+
+The package candidate uses the same Ubuntu 24.04.4 disposable guest as the
+RetroGameCorner matrix. The package runtime is read-only to the family user.
+Actual dpkg install, upgrade and downgrade between two candidate package
+revisions passed. A real script installation was migrated with its exact
+configuration retained. The installed server restored a configuration
+through the Parent backup API. Purge retained the profile and a private
+save fixture; reinstall resumed that state. Reverse migration restored the
+original local launcher and update ownership. These checks exercise the
+current schema; they do not establish rollback across a future schema change.
+
+The installed-package probe is `scripts/linux/system_package_smoke.py`.
+It initializes a disposable home, uses the package's actual server and browser
+launcher, checks package update ownership, starts KTurtle from the catalog,
+observes its owned fullscreen window, clicks the overlay and checks cleanup.
+The package's installed-runtime API probe also runs without a display in CI.
+
+| Session and browser | Automated installed-package checks |
+| --- | --- |
+| Plasma 5.27.12 Wayland, Chrome 152 fullscreen | Passed |
+| GNOME 46 Wayland, Firefox Snap 154 kiosk | First KTurtle start returned HTTP 503 after fullscreen confirmation timed out; a direct supervised diagnostic and the subsequent complete probe passed |
+| XFCE 4.18.3 X11, Chrome 152 kiosk | Passed with LightDM |
+
+These reports retain `automation-passed-manual-pending`. The first GNOME
+failure needs diagnosis and a repeat from a clean session before release
+acceptance. Meaningful physical input, visible native Wayland focus and
+stacking, fresh-login autostart, Linux Mint and Zorin lifecycle acceptance
+remain open. [Package building and migration](PACKAGING.md) describe the
+commands and update/uninstall boundaries.
+
+Child folder browser checks cover real save/reload, hidden tiles, folder
+deletion without deleting apps, keyboard back/focus recovery, a synthetic
+standard gamepad, media-return state, and the five enabled languages at
+800×600. The physical gamepad gate below still applies.
+
 ## Physical Linux test laptop
 
 Run the exact release candidate on the test laptop before publishing v0.8.

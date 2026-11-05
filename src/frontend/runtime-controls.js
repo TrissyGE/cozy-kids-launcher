@@ -450,7 +450,7 @@ document.addEventListener('keydown',function(e){
   }
   else if(tileFocused&&e.key==='ArrowDown') focusTileByDir('down');
   else if(tileFocused&&e.key==='ArrowUp') focusTileByDir('up');
-  else if(e.key==='Escape') exitKids();
+  else if(e.key==='Escape'){ if(selectedFolderId) closeChildFolder(); else exitKids(); }
 });
 
 bootstrapLauncher();

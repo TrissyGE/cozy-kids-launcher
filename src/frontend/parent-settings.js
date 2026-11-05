@@ -207,7 +207,7 @@ function renderAdminSections(){
     heading.textContent=label;
   }
   document.getElementById('overviewAppsLabel').textContent=uiText.adminAppsMedia;
-  document.getElementById('overviewAppsValue').textContent=visibleTiles().length+' / '+cfg.tiles.length;
+  document.getElementById('overviewAppsValue').textContent=childAppTiles().length+' / '+cfg.tiles.length;
   document.getElementById('overviewTimerLabel').textContent=uiText.adminScreenTime;
   document.getElementById('overviewTimerValue').textContent=(cfg.timerMinutes||0)>0
     ? String(cfg.timerMinutes)+' '+uiText.timerMinutes
@@ -266,7 +266,7 @@ function renderAppearancePreview(){
   previewGrid.className='preview-launcher-grid '+layout;
   previewGrid.replaceChildren();
   const previewSize=layout==='klein'?9:4;
-  const tiles=cfg.tiles.filter(tile=>tile.visible).slice(0,previewSize);
+  const tiles=childHomeTiles().slice(0,previewSize);
   if(!tiles.length){
     const empty=document.createElement('div');
     empty.className='preview-empty-state';
@@ -359,6 +359,57 @@ function setSelectedTilesVisible(visible){
 }
 function createAdminTile(){
   return {id:'tile-'+Date.now(),label:uiText.newTile,emoji:'✨',cmd:[''],visible:true};
+}
+function addChildFolder(){
+  cfg.folders=cfg.folders||[];
+  if(cfg.folders.length>=20) return;
+  cfg.folders.push({id:'folder-'+crypto.randomUUID(),label:uiText.folderNew,emoji:'📁'});
+  renderAdmin();
+  document.querySelector('#folderEditor .folder-editor-row:last-child input.folder-name')?.focus();
+}
+async function removeChildFolder(id){
+  if(!(await requestConfirmation(uiText.folderRemoveConfirm,uiText.delete))) return;
+  for(const tile of cfg.tiles){ if(tile.folderId===id) delete tile.folderId; }
+  cfg.folders=(cfg.folders||[]).filter(folder=>folder.id!==id);
+  renderAdmin();
+  document.getElementById('addFolderBtn').focus();
+}
+function renderAdminFolders(){
+  document.getElementById('folderSettingsTitle').textContent=uiText.folderSettingsTitle;
+  document.getElementById('folderSettingsHint').textContent=uiText.folderSettingsHint;
+  const add=document.getElementById('addFolderBtn');
+  add.textContent=uiText.folderAdd;
+  add.disabled=(cfg.folders||[]).length>=20;
+  const editor=document.getElementById('folderEditor');
+  editor.replaceChildren();
+  for(const folder of cfg.folders||[]){
+    const row=document.createElement('div');
+    row.className='folder-editor-row';
+    const emoji=document.createElement('input');
+    emoji.value=folder.emoji||'📁';
+    emoji.maxLength=32;
+    emoji.setAttribute('aria-label',uiText.folderIcon);
+    emoji.onchange=()=>{folder.emoji=emoji.value;};
+    const name=document.createElement('input');
+    name.className='folder-name';
+    name.value=folder.label;
+    name.maxLength=80;
+    name.required=true;
+    name.setAttribute('aria-label',uiText.folderName);
+    name.onchange=()=>{
+      if(!name.value.trim()){name.value=folder.label;return;}
+      folder.label=name.value.trim();
+      renderAdmin();
+    };
+    const remove=document.createElement('button');
+    remove.type='button';
+    remove.className='smallbtn';
+    setIconLabel(remove,'delete',uiText.delete);
+    remove.setAttribute('aria-label',uiText.delete+' '+folder.label);
+    remove.onclick=()=>removeChildFolder(folder.id);
+    row.append(emoji,name,remove);
+    editor.appendChild(row);
+  }
 }
 async function deleteSelectedTiles(){
   const count=adminSelectedTileIds.size;
@@ -1167,7 +1218,25 @@ function renderAdmin(){
       reorderTile(from,to);
     });
 
-    row.append(leading,emoji,label,visibleWrap,select,browserWrap,del);
+    const folderWrap=document.createElement('label');
+    folderWrap.className='folder-assignment';
+    const folderLabel=document.createElement('span');
+    folderLabel.textContent=uiText.folderAssign;
+    const folderSelect=document.createElement('select');
+    const homeOption=document.createElement('option');
+    homeOption.value='';
+    homeOption.textContent=uiText.folderHome;
+    folderSelect.appendChild(homeOption);
+    for(const folder of cfg.folders||[]){
+      const option=document.createElement('option');
+      option.value=folder.id;
+      option.textContent=folder.label;
+      folderSelect.appendChild(option);
+    }
+    folderSelect.value=tile.folderId||'';
+    folderSelect.onchange=()=>{if(folderSelect.value) tile.folderId=folderSelect.value; else delete tile.folderId;};
+    folderWrap.append(folderLabel,folderSelect);
+    row.append(leading,emoji,label,visibleWrap,select,browserWrap,del,folderWrap);
     forms.appendChild(row);
   });
   renderAdminBulkActions(filteredTileIndexes);
@@ -1178,6 +1247,7 @@ function renderAdmin(){
   renderActivityDashboard();
   renderAdminSections();
   renderAppearancePreview();
+  renderAdminFolders();
 }
 function reorderTile(from,to){
   if(from===to||from<0||to<0||from>=cfg.tiles.length||to>=cfg.tiles.length) return;

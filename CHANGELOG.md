@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### System package and child folders
+
+- Build a reproducible Debian package with system-owned code, private localized first start, package-managed updates and an application-menu entry.
+- Add explicit, reversible migration of the script launcher's command, desktop, autostart and standard user-service entries without moving family configuration or saves.
+- Gate package builds with byte comparisons and real installed-runtime API checks in CI; document Ubuntu lifecycle and desktop evidence separately from remaining distribution and physical-device acceptance.
+- Let parents create up to 20 named folders per child, assign tiles and remove folders while retaining apps and their time rules.
+- Add child folder tiles, keyboard and optional controller back navigation, return from media to the containing folder, five-language controls and profile-safe persistence.
+
 ### Living Room
 
 - Recognize single-ROM ZIP archives in RetroGameCorner, check them at launch and match covers by the ROM inside.

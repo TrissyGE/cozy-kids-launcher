@@ -1485,6 +1485,68 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     log_scenario("Package-managed installation delegates updates to the system")
 
 
+def run_folder_scenarios(browser, artifacts):
+    browser.wait_for("typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+    browser.evaluate("""
+      if(!document.getElementById('admin').classList.contains('hidden')) closeAdmin();
+      cfg.setupCompleted=true; cfg.currentPage=0; selectedFolderId='';
+      cfg.folders=[{id:'creative',label:'Creative',emoji:'🎨'},{id:'empty',label:'Empty',emoji:'📁'}];
+      cfg.tiles=[
+        {id:'paint-folder',label:'Paint',cmd:['tuxpaint'],visible:true,folderId:'creative'},
+        {id:'hidden-folder',label:'Hidden',cmd:['kturtle'],visible:false,folderId:'creative'},
+        {id:'plain-home',label:'Music',cmd:['special:filme-musik'],visible:true}
+      ]; renderAll();
+    """)
+    browser.evaluate("persistConfig()", await_promise=True)
+    assert_js(browser, "visibleTiles().length===2 && visibleTiles().some(tile=>tile.id==='folder:creative') && "
+              "!visibleTiles().some(tile=>tile.id==='folder:empty')", "Home did not group the visible apps and omit the empty folder")
+    browser.click('[data-tile-id="folder:creative"]')
+    assert_js(browser, "selectedFolderId==='creative' && visibleTiles().length===1 && "
+              "document.activeElement.dataset.tileId==='paint-folder' && !document.getElementById('folderNavigation').hidden",
+              "Folder open did not preserve visibility or keyboard focus")
+    browser.screenshot(artifacts / "child-folder-open.png")
+    browser.key_press("Escape")
+    assert_js(browser, "selectedFolderId==='' && document.activeElement.dataset.tileId==='folder:creative'",
+              "Folder back did not restore focus to its Home tile")
+    install_gamepad_fixture(browser)
+    browser.evaluate("cfg.controllerNavigationEnabled=true; renderAll(); document.querySelector('[data-tile-id=\"folder:creative\"]').focus()")
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,200))", await_promise=True)
+    browser.evaluate("padButton(0)", await_promise=True)
+    assert_js(browser, "selectedFolderId==='creative'", "Controller activation did not open the folder")
+    browser.evaluate("padButton(1)", await_promise=True)
+    assert_js(browser, "selectedFolderId===''", "Controller back did not close the folder")
+    browser.evaluate("rememberLauncherPageReturn(cfg.activeProfileId,'paint-folder','creative'); playStoredLauncherReturn(cfg.activeProfileId)")
+    assert_js(browser, "selectedFolderId==='creative' && !sessionStorage.getItem(COZY_RETURN_MARKER)", "Returning from media did not restore the containing folder once")
+    browser.evaluate("closeChildFolder(); cfg.controllerNavigationEnabled=false")
+    browser.evaluate("enterAdmin(); activateAdminSection('apps')")
+    browser.click('#addFolderBtn')
+    assert_js(browser, "cfg.folders.length===3 && document.activeElement.matches('.folder-name')", "Parent folder creation did not focus its name")
+    browser.set_value('#folderEditor .folder-editor-row:last-child .folder-name', 'More games')
+    browser.evaluate("document.activeElement.dispatchEvent(new Event('change',{bubbles:true}))")
+    browser.evaluate("persistConfig()", await_promise=True)
+    browser.evaluate("loadConfig()", await_promise=True)
+    assert_js(browser, "cfg.folders.length===3 && cfg.folders[2].label==='More games' && cfg.tiles[0].folderId==='creative'", "Folder settings did not survive save and reload")
+    browser.evaluate("removeChildFolder('creative')")
+    browser.wait_for("!document.getElementById('confirmOverlay').classList.contains('hidden')")
+    browser.click('#confirmActionBtn')
+    browser.wait_for("!cfg.folders.some(folder=>folder.id==='creative')")
+    assert_js(browser, "cfg.tiles.length===3 && !cfg.tiles[0].folderId && !cfg.tiles[1].visible", "Deleting a folder lost apps or changed their visibility")
+    browser.evaluate("persistConfig()", await_promise=True)
+    browser.evaluate("closeAdmin()")
+    browser.set_device_metrics(800, 600)
+    for language in ("de", "en", "es", "fr", "it"):
+        browser.evaluate(f"loadInterfaceLanguage({json.dumps(language)})", await_promise=True)
+        browser.evaluate("renderAll(); enterAdmin(); activateAdminSection('apps')")
+        assert_js(browser, "document.getElementById('folderSettingsTitle').textContent===uiText.folderSettingsTitle && "
+                  "document.documentElement.scrollWidth<=innerWidth+2", "Localized folder controls overflow the small layout")
+        browser.evaluate("closeAdmin()")
+    browser.screenshot(artifacts / "child-folders.png")
+    browser.set_device_metrics(1440, 900)
+    browser.evaluate("loadInterfaceLanguage('en')", await_promise=True)
+    browser.evaluate("renderAll()")
+    log_scenario("Child folders retain approval, visibility, persistence, back focus and five-language small layouts")
+
+
 def run_rtl_layout_scenario(browser, artifacts):
     browser.set_device_metrics(800, 600)
     browser.evaluate("""
@@ -1804,7 +1866,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
-    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro"), default="all")
+    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -1885,7 +1947,7 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro"))
+            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders"))
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = installed_version
 
@@ -1935,6 +1997,8 @@ def main():
                         run_retro_scenario(browser, test_home)
                     if args.suite in ("all", "regressions"):
                         run_regression_scenarios(browser, args.artifacts, base_url)
+                    if args.suite in ("all", "folders"):
+                        run_folder_scenarios(browser, args.artifacts)
                     browser.screenshot(args.artifacts / "final-state.png")
                 except Exception:
                     browser.screenshot(args.artifacts / "failure.png")

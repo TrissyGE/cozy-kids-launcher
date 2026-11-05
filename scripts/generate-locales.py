@@ -31,6 +31,16 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "folderSettingsTitle": "folder_settings_title",
+    "folderSettingsHint": "folder_settings_hint",
+    "folderNew": "folder_new",
+    "folderAdd": "folder_add",
+    "folderName": "folder_name",
+    "folderIcon": "folder_icon",
+    "folderAssign": "folder_assign",
+    "folderHome": "folder_home",
+    "folderOpen": "folder_open",
+    "folderRemoveConfirm": "folder_remove_confirm",
     "updatePackageManaged": "update_package_managed",
     "adminRetro": "admin_retro",
     "retroEnabled": "retro_enabled",

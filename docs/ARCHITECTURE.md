@@ -442,3 +442,21 @@ Because desktop-shell configuration becomes brittle fast:
 - switching modes by rewriting Plasma config is unreliable
 
 The browser-overlay approach is much more robust.
+## Child folders
+
+Each profile may contain a `folders` array of at most 20 `{id, label, emoji}`
+objects. A tile may refer to one folder through `folderId`. Validation rejects
+duplicate IDs, blank or oversized labels and references outside the owning
+profile. The additive optional fields retain schema version 2. Legacy
+profiles without folders keep their existing behavior, and profile copies
+deep-copy folder definitions along with their tile assignments.
+
+Folders change presentation. They do not change tile IDs, commands, child
+approvals, visibility, time rules, usage or saves. Home shows nonempty folder
+tiles and ungrouped apps. Folder navigation stays in the local UI, while
+app launches continue to use the original server-side tile checks. Removing
+a folder returns its tiles to Home. Empty folders stay in Parent settings.
+Keyboard Escape and an opted-in controller's Back action leave the folder;
+focus returns to its Home tile. The existing one-use media return marker
+also restores the containing folder after checking the active profile and
+the returning tile's current membership. Folder labels use plain text nodes.

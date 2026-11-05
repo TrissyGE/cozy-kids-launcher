@@ -153,7 +153,7 @@ from update_manager import (
 )
 
 HOME = os.path.expanduser("~")
-APP_ROOT = os.path.join(HOME, ".local", "share", "{{APP_ID}}")
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 VERSION_FILE = os.path.join(APP_ROOT, "version")
 UPDATE_SCRIPT = os.path.join(APP_ROOT, "update.sh")
 UPDATE_CHANNEL_FILE = os.path.join(APP_ROOT, "update-channel")

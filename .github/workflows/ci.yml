@@ -13,6 +13,37 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  debian-package:
+    name: Debian package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the package twice and compare bytes
+        run: |
+          python3 scripts/build-deb.py .test-artifacts/deb/first
+          python3 scripts/build-deb.py .test-artifacts/deb/second
+          diff -qr .test-artifacts/deb/first .test-artifacts/deb/second
+      - name: Inspect and install the package
+        run: |
+          dpkg-deb --info .test-artifacts/deb/first/*.deb
+          dpkg-deb --contents .test-artifacts/deb/first/*.deb
+          sudo apt-get install -y --no-install-recommends ./.test-artifacts/deb/first/*.deb
+      - name: Exercise the installed runtime as an ordinary user
+        run: python3 scripts/linux/package_runtime_smoke.py
+      - name: Rebuild on a host with the package installed
+        run: |
+          python3 scripts/build-deb.py .test-artifacts/deb/installed-host
+          diff -qr .test-artifacts/deb/first .test-artifacts/deb/installed-host
+      - name: Remove the installed package
+        if: always()
+        run: sudo dpkg --purge cozy-kids-launcher
+      - name: Save the reviewable package and checksum
+        uses: actions/upload-artifact@v7
+        with:
+          name: debian-package
+          path: .test-artifacts/deb/first/
+
   test:
     name: Python ${{ matrix.python-version }}
     # Python 3.9 has published builds for 24.04, not the new 26.04 runner.

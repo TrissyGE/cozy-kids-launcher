@@ -64,10 +64,10 @@ function playLauncherReturn(tileId){
   playFeedbackSound('return');
 }
 
-function rememberLauncherPageReturn(profileId,tileId){
+function rememberLauncherPageReturn(profileId,tileId,folderId=''){
   if(!cozyMotionId(profileId)||!cozyMotionId(tileId)) return;
   try{
-    sessionStorage.setItem(COZY_RETURN_MARKER,JSON.stringify({profileId,tileId}));
+    sessionStorage.setItem(COZY_RETURN_MARKER,JSON.stringify({profileId,tileId,folderId}));
   }catch(e){}
 }
 
@@ -77,10 +77,12 @@ function playStoredLauncherReturn(profileId){
     raw=sessionStorage.getItem(COZY_RETURN_MARKER)||'';
     sessionStorage.removeItem(COZY_RETURN_MARKER);
   }catch(e){ return; }
-  if(!raw||raw.length>200) return;
+  if(!raw||raw.length>400) return;
   try{
     const marker=JSON.parse(raw);
     if(marker&&marker.profileId===profileId&&cozyMotionId(marker.tileId)){
+      const tile=cfg.tiles.find(item=>item.id===marker.tileId&&item.visible);
+      if(tile&&cozyMotionId(marker.folderId)&&tile.folderId===marker.folderId) openChildFolder(marker.folderId);
       playLauncherReturn(marker.tileId);
     }
   }catch(e){}
