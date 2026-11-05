@@ -278,9 +278,14 @@ that lack an equivalent core, including Wii U and PS3.
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
   - [x] Show an on-demand local hardware preflight and separate catalog-route status for the current emulators and later candidates through Wii U and PS3. Keep unknown performance explicit and block an incompatible reviewed PS1 core.
   - [ ] Before installation, check each candidate emulator's documented requirements for CPU architecture and instruction sets, memory, graphics API and driver capabilities. Detect whether the launcher can install the emulator on the current Linux distribution separately.
+    - [x] Move reviewed prerequisites and primary source links into a dated data registry; show per-check unknowns, OpenGL extensions and alternative API observations in Parent settings
+    - [x] Refresh the preflight before a Parent emulator install and reuse the shared catalog-route policy, keeping hardware and installation availability distinct
+    - [ ] Complete current RPCS3 requirements and candidate-specific driver/feature qualification; retain unknowns until those reviews pass
   - [ ] Use bounded, locally generated test workloads that require no family game files. When the emulator is available, measure emulation speed and frame pacing with a representative workload and record the tested settings.
   - [ ] Report recommended, limited, untested and incompatible separately. Explain the result beside the install button. Disable installation for a confirmed hardware incompatibility or unavailable install route, with a distinct explanation for each. Keep the install action available when performance is unknown and a reviewed install route exists.
   - [ ] Scope results to the device, system, RetroArch core or standalone emulator version, and tested settings. Allow a rerun after a driver, core or emulator update. Keep per-game compatibility separate from the device result.
+    - [x] Scope preflight observations to a local device fingerprint, registry revision, native package version and reviewed PS1 core; allow reruns without persisting or uploading hardware reports ([scope](RETRO_DEVICE.md))
+    - [ ] Add measured emulator workload/settings to the result scope after the workload harness is qualified
 - [ ] Qualify optional systems in groups after PS1
   - [ ] Earlier cartridges and arcade games including Atari 2600/5200/7800, ColecoVision, Intellivision, SG-1000, Mega Drive, PC Engine, Neo Geo and selected arcade boards. Review disc add-ons such as Sega CD and PC Engine CD separately.
   - [ ] Earlier handhelds including Atari Lynx, Neo Geo Pocket / Color, WonderSwan / Color, Nintendo DS and PSP. Evaluate Nintendo 3DS and PlayStation Vita as later handhelds in scope.

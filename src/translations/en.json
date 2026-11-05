@@ -1,4 +1,13 @@
 {
+  "retro_device_architecture": "CPU architecture",
+  "retro_device_details": "Requirements and sources",
+  "retro_device_meets": "Observed requirement met",
+  "retro_device_unknown": "Not established",
+  "retro_device_below": "Requirement not met",
+  "retro_device_minimum": "Upstream guidance",
+  "retro_device_observed": "Detected on this device",
+  "retro_device_version": "Installed package version",
+  "retro_device_scope": "This checks observable requirements, without running a game. Unknown values stay untested. Meeting a requirement does not establish playable speed, driver correctness or compatibility with a particular game. Rerun after driver or emulator updates.",
   "folder_settings_title": "Folders for this child",
   "folder_settings_hint": "Group apps in up to 20 folders. Empty folders stay off the child's Home. Save your changes when finished.",
   "folder_new": "New folder",

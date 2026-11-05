@@ -31,6 +31,15 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "retroDeviceArchitecture": "retro_device_architecture",
+    "retroDeviceDetails": "retro_device_details",
+    "retroDeviceMeets": "retro_device_meets",
+    "retroDeviceUnknown": "retro_device_unknown",
+    "retroDeviceBelow": "retro_device_below",
+    "retroDeviceMinimum": "retro_device_minimum",
+    "retroDeviceObserved": "retro_device_observed",
+    "retroDeviceVersion": "retro_device_version",
+    "retroDeviceScope": "retro_device_scope",
     "folderSettingsTitle": "folder_settings_title",
     "folderSettingsHint": "folder_settings_hint",
     "folderNew": "folder_new",

@@ -789,7 +789,7 @@ function saveRetroSettings(){
 function retroDeviceLabels(row){
   const statuses={untested:uiText.retroDeviceUntested,limited:uiText.retroDeviceLimited,
     incompatible:uiText.retroDeviceIncompatible};
-  const reasons={architecture:uiText.ps1CoreUnsupported,cpu:uiText.retroDeviceCpu,
+  const reasons={architecture:uiText.retroDeviceArchitecture,cpu:uiText.retroDeviceCpu,
     memory:uiText.retroDeviceMemory,graphics:uiText.retroDeviceGraphics};
   const routes={available:uiText.retroDeviceRouteAvailable,unavailable:uiText.retroDeviceRouteUnavailable,
     installed:uiText.installed};
@@ -816,7 +816,42 @@ async function runRetroDeviceCheck(){
     status.textContent=`${data.architecture||missing} · RAM ${memory} · OpenGL ${data.opengl||missing} · Vulkan ${data.vulkan||missing}`;
     for(const row of data.systems){
       const item=document.createElement('li');
-      item.textContent=[row.system,row.emulator,...retroDeviceLabels(row)].join(' · ');
+      const heading=document.createElement('p');
+      heading.textContent=[row.system,row.emulator,...retroDeviceLabels(row)].join(' · ');
+      const details=document.createElement('details');
+      const summary=document.createElement('summary');
+      summary.textContent=uiText.retroDeviceDetails;
+      const scope=document.createElement('p');
+      scope.textContent=uiText.retroDeviceScope;
+      const version=document.createElement('p');
+      version.textContent=uiText.retroDeviceVersion+': '+(row.version||uiText.retroDeviceUnknown)+
+        (row.core?.version?' · '+row.core.version:'');
+      const reviewed=document.createElement('p');
+      reviewed.textContent=uiText.catalogReviewed+': '+new Intl.DateTimeFormat(interfaceLanguage()).format(new Date(row.reviewed+'T12:00:00Z'));
+      const list=document.createElement('ul');
+      const labels={architecture:uiText.retroDeviceArchitecture,cpu:'CPU',memory:'RAM',opengl:'OpenGL',vulkan:'Vulkan',extensions:'OpenGL'};
+      const states={pass:uiText.retroDeviceMeets,fail:uiText.retroDeviceBelow,unknown:uiText.retroDeviceUnknown};
+      for(const check of row.checks||[]){
+        const line=document.createElement('li');
+        line.textContent=[labels[check.kind]||check.kind,states[check.status]||uiText.retroDeviceUnknown,
+          uiText.retroDeviceMinimum+': '+(check.required||uiText.retroDeviceUnknown),
+          uiText.retroDeviceObserved+': '+(check.observed||uiText.retroDeviceUnknown)].join(' · ');
+        list.appendChild(line);
+      }
+      details.append(summary,scope,version,reviewed,list);
+      for(const source of row.sources||[]){
+        const url=new URL(source.url);
+        if(url.protocol!=='https:') continue;
+        const link=document.createElement('a');
+        link.href=url.href;
+        link.target='_blank';
+        link.rel='noopener noreferrer';
+        link.textContent=uiText.catalogSource+': '+source.name;
+        const paragraph=document.createElement('p');
+        paragraph.appendChild(link);
+        details.appendChild(paragraph);
+      }
+      item.append(heading,details);
       results.appendChild(item);
     }
     renderRetroEmulators();
@@ -855,7 +890,14 @@ function renderRetroEmulators(){
     button.type='button';
     button.disabled=emulator.installed||!catalogCanInstall(emulator)||device?.status==='incompatible'||device?.route==='unavailable';
     button.textContent=emulator.installed?uiText.installed:uiText.install;
-    button.onclick=()=>triggerInstall(emulator);
+    button.onclick=async()=>{
+      const signal=retroSession?.signal;
+      await runRetroDeviceCheck();
+      if(!signal||signal.aborted||!retroDevice) return;
+      const checked=retroDevice.systems.find(row=>row.catalog===emulator.id);
+      if(!checked||checked.status==='incompatible'||checked.route==='unavailable') return;
+      triggerInstall(emulator);
+    };
     card.append(name,description,button);
     if(!emulator.installed&&!catalogCanInstall(emulator)) card.appendChild(catalogPackageHint(emulator));
     if(device){

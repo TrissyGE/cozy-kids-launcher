@@ -1,4 +1,13 @@
 {
+  "retro_device_architecture": "Arquitectura de CPU",
+  "retro_device_details": "Requisitos y fuentes",
+  "retro_device_meets": "Requisito detectado cumplido",
+  "retro_device_unknown": "Sin determinar",
+  "retro_device_below": "Requisito no cumplido",
+  "retro_device_minimum": "Indicación del proyecto",
+  "retro_device_observed": "Detectado en este dispositivo",
+  "retro_device_version": "Versión del paquete instalado",
+  "retro_device_scope": "Se comprueban los requisitos observables sin ejecutar un juego. Los valores desconocidos siguen sin probarse. Cumplir un requisito no demuestra una velocidad jugable, controladores correctos ni la compatibilidad de un juego concreto. Repite la prueba tras actualizar los controladores o el emulador.",
   "folder_settings_title": "Carpetas para este perfil infantil",
   "folder_settings_hint": "Agrupa las aplicaciones en un máximo de 20 carpetas. Las carpetas vacías no aparecen en el inicio infantil. Guarda los cambios al terminar.",
   "folder_new": "Nueva carpeta",

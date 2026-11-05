@@ -84,6 +84,8 @@ jobs:
 
       - name: Exercise core browser journeys
         run: python scripts/check.py --only browser
+      - name: Exercise RetroGameCorner and hardware explanations
+        run: python scripts/wsl/browser-e2e.py --suite retro --artifacts .test-artifacts/browser-e2e/retro
 
       - name: Upload browser diagnostics
         if: always()

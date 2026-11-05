@@ -221,6 +221,63 @@ def run_retro_scenario(browser, test_home):
     browser.click("#retroDeviceTitle")
     browser.click("#retroDeviceRun")
     browser.wait_for("Array.from(document.querySelectorAll('#retroDeviceResults li')).some(row=>row.textContent.includes('Wii U'))")
+    assert_js(browser, "retroDevice.systems.length===8 && retroDevice.rulesRevision && "
+              "retroDevice.systems.every(row=>row.performanceMeasured===false && row.resultKey && row.checks.length && row.sources.length)",
+              "Device results lost their requirements, provenance or unmeasured performance scope")
+    browser.click('#retroDeviceResults li details summary')
+    assert_js(browser, "document.querySelector('#retroDeviceResults details[open]') && "
+              "document.querySelector('#retroDeviceResults details').textContent.includes(uiText.retroDeviceScope) && "
+              "Array.from(document.querySelectorAll('#retroDeviceResults a')).every(link=>link.protocol==='https:' && link.rel.includes('noopener'))",
+              "Parent hardware explanations or source links were missing")
+    browser.set_device_metrics(800, 600)
+    for language in ('de','en','es','fr','it'):
+        browser.evaluate(f"loadInterfaceLanguage({json.dumps(language)})", await_promise=True)
+        browser.evaluate("renderAll(); runRetroDeviceCheck()", await_promise=True)
+        assert_js(browser, "document.documentElement.scrollWidth<=innerWidth+2 && "
+                  "document.querySelector('#retroDeviceResults summary').textContent===uiText.retroDeviceDetails",
+                  "Hardware requirements overflowed the localized compact Parent layout")
+    browser.click('#retroDeviceResults > li:nth-child(4) details summary')
+    browser.screenshot(Path(browser.log_path).parent / 'retro-device-details.png')
+    browser.set_device_metrics(1440, 900)
+    browser.evaluate("loadInterfaceLanguage('en')", await_promise=True)
+    browser.evaluate("renderAll()")
+    browser.evaluate("""
+      window.__realDeviceFetch=window.fetch; window.__realRetroInstall=triggerInstall;
+      window.__savedRetroRecommendations=recommendations;
+      window.__deviceFixture=structuredClone(retroDevice); window.__deviceRequests=0; window.__installRequested='';
+      recommendations=recommendations.map(item=>item.id==='mgba-qt'?{...item,installed:false,packageRoute:{mode:'direct',package:'mgba-qt'}}:item);
+      window.fetch=(resource,options)=>{
+        if(String(resource)==='/api/retro/device'){
+          __deviceRequests++;
+          return Promise.resolve(new Response(JSON.stringify(__deviceFixture),{status:200,headers:{'Content-Type':'application/json'}}));
+        }
+        return __realDeviceFetch(resource,options);
+      };
+      triggerInstall=recipe=>{__installRequested=recipe.id;};
+      retroDevice=null; renderRetroEmulators();
+      __deviceFixture.systems.find(row=>row.catalog==='mgba-qt').status='incompatible';
+    """)
+    browser.click('[data-retro-emulator="mgba-qt"] button')
+    browser.wait_for("__deviceRequests===1 && !document.getElementById('retroDeviceRun').disabled")
+    assert_js(browser, "!__installRequested && document.querySelector('[data-retro-emulator=\"mgba-qt\"] button').disabled",
+              "A fresh incompatible preflight reached emulator installation")
+    browser.evaluate("__deviceFixture.systems.find(row=>row.catalog==='mgba-qt').status='untested'; retroDevice=null; renderRetroEmulators()")
+    browser.click('[data-retro-emulator="mgba-qt"] button')
+    browser.wait_for("__installRequested==='mgba-qt'")
+    assert_js(browser, "__deviceRequests===2", "Unknown performance bypassed a fresh check or blocked the reviewed route")
+    browser.evaluate("""
+      __installRequested=''; retroDevice=null; renderRetroEmulators();
+      window.fetch=(resource,options)=>String(resource)==='/api/retro/device'
+        ?new Promise(resolve=>{window.__pendingDevice=resolve;}):__realDeviceFetch(resource,options);
+    """)
+    browser.click('[data-retro-emulator="mgba-qt"] button')
+    browser.wait_for("typeof __pendingDevice==='function'")
+    browser.evaluate("closeAdmin(); __pendingDevice(new Response(JSON.stringify(__deviceFixture),{status:200}))")
+    browser.evaluate("new Promise(resolve=>setTimeout(resolve,100))", await_promise=True)
+    assert_js(browser, "!__installRequested", "A late preflight opened installation after Parent settings closed")
+    browser.evaluate("window.fetch=__realDeviceFetch; triggerInstall=__realRetroInstall; recommendations=__savedRetroRecommendations; enterAdmin(); activateAdminSection('retro')")
+    browser.wait_for("!document.getElementById('retroRoots').disabled")
+    log_scenario('Hardware preflight refreshes before install, blocks incompatibility and cancels late results')
     browser.click("#retroDeviceTitle")
     browser.click("#ps1BiosTitle")
     assert_js(browser, "document.querySelectorAll('#ps1BiosRegions li').length===4 && "

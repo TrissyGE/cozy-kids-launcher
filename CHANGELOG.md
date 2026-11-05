@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Living Room
 
+- Make the RetroGameCorner preflight data-driven with dated primary sources, individual requirement results, OpenGL extension checks, native package/core versions and a device-scoped result key; refresh it before Parent emulator installation and retain unknown performance explicitly.
+
 - Recognize single-ROM ZIP archives in RetroGameCorner, check them at launch and match covers by the ROM inside.
 - Add NES, Super Nintendo, Sega Master System and Game Gear to RetroGameCorner through the Parent Mednafen installer.
 

@@ -56,6 +56,9 @@ def main():
                     assert b"Cozy" in response.read()
                 with urlopen(base + "/frontend/locales/it.json", timeout=10) as response:
                     assert json.load(response)["adminTitle"]
+                device = api("/api/retro/device")
+                assert len(device["systems"]) == 8 and device["rulesRevision"]
+                assert all(row["sources"] and row["checks"] and row["performanceMeasured"] is False for row in device["systems"])
                 sys.path.insert(0, str(root))
                 from backup_store import create_pre_restore_backup
                 backup = create_pre_restore_backup(str(home / ".local/share/cozy-kids-launcher-backups"), json.loads(config.read_text()))

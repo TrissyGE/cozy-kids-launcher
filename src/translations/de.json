@@ -1,4 +1,13 @@
 {
+  "retro_device_architecture": "CPU-Architektur",
+  "retro_device_details": "Anforderungen und Quellen",
+  "retro_device_meets": "Erkannte Anforderung erfüllt",
+  "retro_device_unknown": "Nicht ermittelt",
+  "retro_device_below": "Anforderung nicht erfüllt",
+  "retro_device_minimum": "Herstellerangabe",
+  "retro_device_observed": "Auf diesem Gerät erkannt",
+  "retro_device_version": "Installierte Paketversion",
+  "retro_device_scope": "Hier werden erkennbare Anforderungen geprüft, ohne ein Spiel zu starten. Unbekannte Werte bleiben ungetestet. Erfüllte Anforderungen belegen weder flüssiges Spielen noch fehlerfreie Treiber oder die Kompatibilität eines bestimmten Spiels. Nach Treiber- oder Emulator-Updates erneut prüfen.",
   "folder_settings_title": "Ordner für dieses Kind",
   "folder_settings_hint": "Gruppiere Apps in bis zu 20 Ordnern. Leere Ordner erscheinen nicht auf der Kinderstartseite. Speichere anschließend deine Änderungen.",
   "folder_new": "Neuer Ordner",
