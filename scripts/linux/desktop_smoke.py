@@ -20,6 +20,7 @@ from pathlib import Path
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+RUNTIME_SOURCE_ROOT = REPOSITORY_ROOT / "src"
 DESKTOP_ALIASES = {
     "gnome": ("gnome", "ubuntu:gnome", "ubuntu"),
     "kde": ("kde", "plasma", "kde:plasma"),
@@ -303,7 +304,7 @@ def kde_catalog_entry(app_id):
 
 
 def runtime_processes(*roots):
-    source_root = str(REPOSITORY_ROOT / "src")
+    source_root = str(RUNTIME_SOURCE_ROOT)
     if source_root not in sys.path:
         sys.path.insert(0, source_root)
     from process_supervisor import owned_processes
@@ -783,9 +784,9 @@ def run_smoke(args, browser_path, report):
                 message="owned tile supervisor did not start",
             )
             wait_until(
-                lambda: live_process_record(cache / "overlay.pid", "overlay"),
+                lambda: value if (value := live_process_record(cache / "overlay.pid", "overlay")) and value.get("ready") is True else None,
                 timeout=15,
-                message="app overlay did not start",
+                message="app overlay did not become ready",
             )
             report.pass_check("owned child process and overlay")
             if entry:

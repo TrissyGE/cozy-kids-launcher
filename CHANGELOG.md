@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Desktop startup and recovery
+
+- Wait for a fresh session's EWMH fullscreen support before launching a managed app, fixing the reproduced early-XFCE KTurtle failure; retain cancellation and a bounded startup deadline.
+- Reassert fullscreen on owned main windows after lost WM state without relaunching apps or activating unrelated windows.
+- Require a mapped close button before acknowledging overlay startup, and keep slow timer/availability requests outside the Tk UI thread.
+- Reposition the close control inside active RandR monitors after layout changes or external displacement, with a screen-size fallback on older desktops.
+- Preserve app focus when mapping the overlay and scope launcher return to the verified browser PID instead of window titles.
+- Record only fixed startup failure reasons in private diagnostics, and add opt-in installed-runtime desktop fault injection with separate physical-device release gates.
+
 ### Native app-store adapters
 
 - Extend terminal-free catalog installation to matching Fedora DNF, openSUSE Tumbleweed ZYpp and Arch ALPM PackageKit backends, using explicit native names and advertised daemon roles.

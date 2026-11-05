@@ -11,6 +11,7 @@ import time
 
 from activity_store import record_activity
 from application_launcher import direct_app_command
+from launch_status import StartupError
 from process_state import remove_process_record, write_process_record
 
 
@@ -143,6 +144,7 @@ def supervise(
     display = None
     try:
         environment = dict(os.environ)
+        startup_deadline = time.monotonic() + 25
         if managed_fullscreen:
             from app_display import X11Fullscreen
             direct = direct_app_command(command)
@@ -159,29 +161,33 @@ def supervise(
                     elif argument.startswith("-platform="):
                         platforms.append(argument.partition("=")[2])
                 if any(value.split(":", 1)[0] != "xcb" for value in platforms):
-                    raise OSError("Managed KDE fullscreen requires the X11 xcb platform")
+                    raise StartupError("display-mode")
                 environment.setdefault("QT_QPA_PLATFORM", "xcb")
                 command = direct
             elif tuxmath and (legacy_request or ("--fullscreen" in command and "--windowed" not in command)):
                 if environment.get("SDL_VIDEODRIVER", "x11") != "x11":
-                    raise OSError("Managed legacy TuxMath fullscreen requires X11")
+                    raise StartupError("display-mode")
                 # SDL stays ungrabbed so the independent Home overlay can click.
                 command = ["--windowed" if part == "--fullscreen" else part for part in direct]
                 if "--windowed" not in command:
                     command.append("--windowed")
                 environment["SDL_VIDEODRIVER"] = "x11"
             else:
-                raise ValueError("Managed fullscreen requires a supported fullscreen request")
+                raise StartupError("display-mode")
+            # Cancellation must work while waiting for a fresh session's WM,
+            # before any family application has been started.
+            write_process_record(record_path, os.getpid(), "tile-process", marker=marker, ready=False)
             display = X11Fullscreen()
-        child = subprocess.Popen(command, env=environment)
+            wait_for_window_manager(display, timeout=min(8, max(0, startup_deadline - time.monotonic())))
+        if _termination_signal is not None:
+            raise StartupError("cancelled")
+        try:
+            child = subprocess.Popen(command, env=environment)
+        except OSError:
+            raise StartupError("app-unavailable") from None
         started_at = int(time.time())
         if display:
-            # Publish ownership immediately so shutdown can cancel a slow
-            # startup. Readiness is separate and requires a confirmed WM state.
-            write_process_record(record_path, os.getpid(), "tile-process", marker=marker, ready=False)
-            wait_for_fullscreen(display)
-            display.close()
-            display = None
+            wait_for_fullscreen(display, timeout=max(0, startup_deadline - time.monotonic()))
         write_process_record(
             record_path,
             os.getpid(),
@@ -189,14 +195,21 @@ def supervise(
             marker=marker,
             ready=True if managed_fullscreen else None,
         )
+        next_display_check = time.monotonic() + 1
         while True:
             child.poll()
             _reap_children()
             if _termination_signal is not None:
                 terminate_owned_tree()
                 return 0
-            if not owned_processes():
+            pids = owned_processes()
+            if not pids:
                 return 0
+            if display and time.monotonic() >= next_display_check:
+                # A resolution change or WM restart can clear the state. Keep
+                # addressing only owned main windows, without stealing focus.
+                display.confirm(pids)
+                next_display_check = time.monotonic() + 1
             time.sleep(POLL_SECONDS)
     finally:
         if display:
@@ -221,19 +234,30 @@ def supervise(
                 pass
 
 
+def wait_for_window_manager(display, timeout=8):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if _termination_signal is not None:
+            raise StartupError("cancelled")
+        if display.supports_fullscreen():
+            return
+        time.sleep(0.1)
+    raise StartupError("wm-unavailable")
+
+
 def wait_for_fullscreen(display, timeout=20):
     """Do not announce readiness or leave a windowed app after a failed request."""
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if _termination_signal is not None:
-            raise OSError("Fullscreen startup was cancelled")
+            raise StartupError("cancelled")
         pids = owned_processes()
         if not pids:
-            raise OSError("App exited before fullscreen was confirmed")
-        if display.confirm(pids):
+            raise StartupError("app-exited")
+        if display.confirm(pids, activate=True):
             return
         time.sleep(0.1)
-    raise OSError("The app did not enter fullscreen")
+    raise StartupError("fullscreen-timeout")
 
 
 def _parser():
@@ -265,6 +289,9 @@ def main(argv=None):
             activity_tile=args.activity_tile,
             managed_fullscreen=args.managed_fullscreen,
         )
+    except StartupError as error:
+        remove_process_record(args.record, expected_pid=os.getpid())
+        return error.exit_code
     except (OSError, ValueError):
         remove_process_record(args.record, expected_pid=os.getpid())
         return 127

@@ -263,9 +263,97 @@ failure as an unresolved cold-session release investigation; the passing later
 run does not establish its cause or fix. No fullscreen runtime code changed in
 the native adapter increment.
 
+The desktop-recovery increment below subsequently reproduces and diagnoses the
+XFCE failure. The older GNOME observation had no supervisor-stage trace, so its
+cause remains unproven even after passing fresh-session regression runs.
+
 The [native adapter probes](NATIVE_PACKAGE_TESTING.md) separately exercise real
 distribution daemons in disposable containers. Container transaction success
 does not replace the corresponding target-distribution graphical checks.
+
+## Native app startup and recovery — 2026-11-05
+
+The installed `0.6.0+recovery5` test artifact is based on `develop` `0b8380b`
+plus this runtime increment. Its SHA-256 is
+`2b3fab11d20ebcd8e4365a1b7e68fa3e46bf68f7121f94348bffe13df8851152`.
+This is a local test-package version, not an application release or tag.
+
+Before the fix, a fresh XFCE session reproduced the KTurtle HTTP 503 twice.
+A temporary trace applied only to the isolated KTurtle fixture captured
+`X11Fullscreen.__init__: The window manager does not advertise fullscreen`.
+The original runtime aborted before starting KTurtle. The corrected runtime
+publishes cancellable ownership and waits for the live EWMH capability before
+app creation, then separately confirms the owned main window's fullscreen
+state. Fresh XFCE and GNOME sessions passed after that change. A subsequent
+X11 focus assertion found that fullscreen alone did not activate KTurtle;
+the final increment requests activation of the confirmed owned window once at
+startup and removes the overlay's forced focus. Recovery does not activate.
+
+The VM uses Ubuntu 24.04.4, kernel 6.8.0-139-generic, one vCPU and 5907 MiB,
+with GNOME 46, Plasma 5.27.12, XFCE 4.18.3, Chrome 152.0.7977.64 and Firefox
+Snap 154.0.1. Each desktop switch terminates the old user session and starts
+the matching display manager; desktop environment variables come from the new
+live session. Product code runs from the read-only installed package as the
+ordinary `cozytest` user with a temporary launcher/browser home.
+
+Run the opt-in fault probes from the matching graphical session:
+
+```bash
+python3 scripts/linux/system_package_smoke.py --desktop gnome --session wayland \
+  --browser firefox --launch-mode kiosk --recovery --artifacts /var/tmp/cozy-recovery-gnome
+python3 scripts/linux/system_package_smoke.py --desktop kde --session wayland \
+  --browser google-chrome --launch-mode fullscreen --recovery --artifacts /var/tmp/cozy-recovery-kde
+python3 scripts/linux/system_package_smoke.py --desktop xfce --session x11 \
+  --browser google-chrome --launch-mode kiosk --recovery --resize-x11 --artifacts /var/tmp/cozy-recovery-xfce
+```
+
+`--recovery` is for a disposable VM. It temporarily pauses only the verified
+tile supervisor so that removing fullscreen remains observable, resumes it in
+`finally`, and checks that the same app window regains fullscreen. It then
+replaces the fixture overlay with the installed Tk implementation using only
+a test transport that stalls for 15 seconds. The close button must map while
+that worker is blocked, and a real X11/XWayland pointer click must terminate
+the owned app before the stalled request could finish. Logs from this
+test-only overlay stay in the fixture artifacts; production still discards
+app stdout/stderr and records only fixed reason codes.
+
+`--resize-x11` additionally requires exactly one active XFCE virtual output.
+It records its layout, observes an externally displaced close control,
+shrinks the output to 800x600, checks that the control returns inside the
+active display, and restores the previous layout in `finally`. VirtualBox's
+single-output driver normalized requested offsets to zero, so live offset
+multi-monitor hotplug is not claimed; offset/primary monitor selection is
+covered by focused unit tests. The harness uses installed runtime helpers,
+including the monitor query, rather than importing a second source checkout.
+
+All three primary rows passed the final installed-runtime probe, including
+fresh-session startup, observed fullscreen loss/recovery, close with stalled
+status and final owned-process cleanup:
+
+| Desktop/session | Browser mode | Close while status stalls | Additional automated evidence |
+| --- | --- | --- | --- |
+| GNOME Wayland | Firefox Snap kiosk | 0.473 s | Fresh-session native app/overlay startup |
+| Plasma Wayland | Chrome fullscreen | 1.620 s | Fresh-session native app/overlay startup |
+| XFCE X11 | Chrome kiosk | 0.267 s | App keeps focus after overlay mapping; close restores launcher focus; displaced control recovers after 800x600 resize |
+
+The first KDE replacement-fixture run exceeded its initial five-second
+fixture-start wait. This wait now allows 15 seconds before checking readiness
+during the injected stall; the final fresh-session run measured 6.361 seconds
+to start the replacement fixture. Product startup limits were not relaxed.
+The local shared check passed 455 unit/API tests before the two focused startup
+activation tests and two probe-cleanup tests were added and passed separately.
+The WSL browser suite twice exceeded its default 25-second DevTools response
+budget during the two-language setup reload; copying to native WSL storage did
+not remove that timeout. Retain those failures with the longer local run;
+the unchanged default-timeout CI browser gate remains required.
+
+Keep `report.json`, `runtime.jsonl`, `lifecycle.json`, `display-recovery.json`
+where applicable and `stalled-overlay.log` with the candidate evidence.
+These automated probes retain `automation-passed-manual-pending`. Physical
+input, final Wayland focus/visual acceptance, real suspend/resume, monitor
+unplug/replug, X-server loss and audio-device removal/reconnection are not
+qualified by these tests. Repeat those cases on the Linux laptop before
+closing the complete recovery roadmap item.
 
 ## Physical Linux test laptop
 
@@ -306,6 +394,7 @@ comparison point for the physical device.
 - For each supported emulator, confirm visible fullscreen, gameplay input from the keyboard and controller, save persistence, the close overlay and return to the launcher.
 - Repeat the local PS1 short test with other programs closed; retain the device/core/settings scope and compare only repeated runs under comparable power and thermal conditions. Confirm real game performance separately.
 - Reconnect the gamepad and removable game storage and check that the launcher recovers without restarting.
+- Suspend and resume with a child app running; reconnect an external monitor and the audio device, then confirm app input, audible output, reachable close and launcher return. Repeat across the required desktop sessions and record any app-specific audio restart requirement.
 
 ## Release evidence
 

@@ -8,7 +8,6 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import time
 import traceback
 import urllib.error
 import urllib.request
@@ -62,7 +61,11 @@ def main():
     parser.add_argument("--launch-mode", choices=("kiosk", "fullscreen"), required=True)
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--user-service", action="store_true", help="Also test the service in this unused disposable account's actual home")
+    parser.add_argument("--recovery", action="store_true", help="Inject fullscreen loss and stalled overlay status in a disposable VM")
+    parser.add_argument("--resize-x11", action="store_true", help="Also displace the control and resize the only output in a disposable XFCE X11 VM")
     args = parser.parse_args()
+    if args.resize_x11 and (not args.recovery or args.desktop != "xfce" or args.session != "x11"):
+        parser.error("--resize-x11 requires --recovery and a disposable XFCE X11 session")
     errors = smoke.environment_errors(args.desktop, args.session)
     if errors:
         raise RuntimeError(errors)
@@ -71,6 +74,7 @@ def main():
               "mode": args.launch_mode, "version": subprocess.check_output(["dpkg-query", "-W", "cozy-kids-launcher"], text=True).strip(),
               "checks": [], "manualPending": ["Physical gameplay input", "Native Wayland focus and visual stacking"]}
     root = Path("/usr/share/cozy-kids-launcher")
+    smoke.RUNTIME_SOURCE_ROOT = root
     sys.path.insert(0, str(root))
     assert (root / "package-managed").is_file()
     assert not os.access(root, os.W_OK), "System runtime must be read-only to the family user"
@@ -107,15 +111,28 @@ def main():
             report["checks"].append("package update owner and release updater refusal")
             assert smoke.request(base + "/launch/desktop-smoke", method="POST", timeout=45)[0] == 204
             tile = smoke.wait_until(lambda: smoke.live_process_record(cache / "tile-process.pid", "tile-process"), timeout=15)
-            smoke.wait_until(lambda: smoke.owned_fullscreen_window(tile["pid"]), timeout=15)
-            smoke.wait_until(lambda: smoke.live_process_record(cache / "overlay.pid", "overlay"), timeout=15)
+            app_window = smoke.wait_until(lambda: smoke.owned_fullscreen_window(tile["pid"]), timeout=15)
+            smoke.wait_until(lambda: value if (value := smoke.live_process_record(cache / "overlay.pid", "overlay")) and value.get("ready") is True else None, timeout=15)
             overlay = smoke.wait_until(lambda: smoke.x11_window_ids("App Overlay"), timeout=15)
-            # A Tk title can become observable before the first map/raise and
-            # widget layout finish. Click after that initial placement settles.
-            time.sleep(1)
-            smoke.x11_click_overlay_close(overlay[-1])
+            if args.session == "x11":
+                smoke.wait_until(lambda: smoke.x11_active_window_id() == app_window, timeout=8,
+                                 message="Overlay took focus from the launched app")
+                report["checks"].append("mapped overlay leaves keyboard focus on the owned app (X11)")
+            if args.recovery:
+                import desktop_recovery
+                report["checks"].append(desktop_recovery.recover_fullscreen(tile["pid"]))
+                if args.resize_x11:
+                    report["checks"].append(desktop_recovery.resize_x11(overlay[-1], args.artifacts))
+                report["stalledStatus"] = desktop_recovery.close_with_stalled_status(cache, root, args.artifacts)
+                report["checks"].append(report["stalledStatus"]["check"])
+            else:
+                smoke.x11_click_overlay_close(overlay[-1])
             smoke.wait_until(lambda: not smoke.live_process_record(cache / "tile-process.pid", "tile-process"), timeout=20)
             report["checks"].append("owned KTurtle fullscreen and overlay close from system code")
+            if args.session == "x11":
+                smoke.wait_until(lambda: smoke.x11_window_is_active("Cozy Kids Launcher"), timeout=8,
+                                 message="Overlay close did not restore launcher focus")
+                report["checks"].append("overlay close restores the owned launcher browser focus (X11)")
             assert smoke.request(base + "/exit-kids", method="POST")[0] == 204
             launcher.wait(timeout=25)
             assert launcher.returncode == 0

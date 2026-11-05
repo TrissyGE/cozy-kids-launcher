@@ -318,6 +318,11 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Add the Parent editor, child folder tiles, keyboard/gamepad back navigation and media return to the containing folder
   - [x] Exercise persistence, hidden apps, safe folder deletion and all five languages in the small Parent layout
 - [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
+  - [x] Wait for a fresh session's window manager before starting managed fullscreen apps, with bounded startup, cancellable ownership and private fixed-code failure diagnostics
+  - [x] Reassert lost fullscreen state on owned main windows without restarting the application or taking focus from another app
+  - [x] Acknowledge the close overlay only after its button is mapped; keep status HTTP requests off the Tk thread and restore only the verified launcher browser
+  - [x] Reposition a displaced close overlay inside an active RandR monitor; verify an XFCE virtual-output resize and cover offset/primary layouts with focused tests
+  - [ ] Complete real suspend/resume, physical multi-monitor hotplug and audio-device removal/reconnection on the Linux test laptop and required desktop sessions
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
   - [x] Add first-launch timings and proportional idle memory to the opt-in desktop smoke report
   - [ ] Establish a repeatable baseline and confirm the provisional budgets on the low-powered physical test device
@@ -334,7 +339,8 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Check installed-package startup, owned KTurtle fullscreen, overlay close and process cleanup on GNOME Wayland, KDE Wayland and XFCE X11; retain manual acceptance and the first GNOME launch failure separately
   - [x] Exercise the installed package's optional systemd user service with a real graphical browser, status, manual stop, cleanup and disable in the GNOME VM
   - [x] Add CI gates for repeat package builds, real installation, installed-runtime API checks and a rebuild on an installed build host
-  - [ ] Complete Linux Mint and Zorin package lifecycle and desktop acceptance, and diagnose the first-launch KTurtle failures observed after fresh GNOME/XFCE sessions
+  - [x] Reproduce the fresh-XFCE KTurtle 503 as missing early EWMH fullscreen support, add a bounded WM-ready phase and repeat the corrected installed runtime across the three desktop rows
+  - [ ] Complete Linux Mint and Zorin package lifecycle and desktop acceptance; retain the earlier uninstrumented GNOME failure for cold-session regression coverage
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
 - [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
 - [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable

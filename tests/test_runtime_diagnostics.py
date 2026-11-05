@@ -17,6 +17,15 @@ import runtime_diagnostics
 
 
 class RuntimeDiagnosticsTests(unittest.TestCase):
+    def test_startup_diagnostics_accept_only_fixed_reasons(self):
+        from launch_status import STARTUP_FAILURES
+        for reason in STARTUP_FAILURES:
+            self.assertEqual(runtime_diagnostics.sanitize_event(
+                "launch.startup.failed", details={"reason": reason})["details"], {"reason": reason})
+        for details in ({"reason": "/private/family/app"}, {"reason": "wm-unavailable", "stderr": "private"}):
+            with self.assertRaises(ValueError):
+                runtime_diagnostics.sanitize_event("launch.startup.failed", details=details)
+
     def test_structured_events_rotate_and_keep_private_permissions(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "state" / "runtime.jsonl"

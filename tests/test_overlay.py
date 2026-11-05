@@ -1,5 +1,7 @@
 import importlib.util
+import queue
 import sys
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -132,40 +134,35 @@ class OverlayWindowHintTests(unittest.TestCase):
 
 
 class LauncherFocusTests(unittest.TestCase):
-    def test_ewmh_launcher_window_is_raised_and_activated(self):
+    def test_ewmh_activates_only_the_owned_browser_pid_not_a_matching_title(self):
         listing = mock.Mock(
             returncode=0,
-            stdout="0x03 host Cozy Kids Launcher\n",
+            stdout="0x02 0 999 host Cozy Kids Launcher\n0x03 0 1234 host Launcher\n",
         )
-        raised = mock.Mock(returncode=0)
         activated = mock.Mock(returncode=0)
         with mock.patch.object(
             overlay.subprocess,
             "run",
-            side_effect=(listing, raised, activated),
-        ) as run, mock.patch.object(overlay, "owned_process") as owned:
+            side_effect=(listing, activated),
+        ) as run, mock.patch.object(overlay, "owned_process", return_value={"pid": 1234}):
             overlay.focus_launcher()
 
         self.assertEqual(
             run.call_args_list,
             [
                 mock.call(
-                    ["wmctrl", "-l"],
+                    ["wmctrl", "-lp"],
                     capture_output=True,
                     text=True,
                     timeout=3,
                 ),
                 mock.call(
-                    ["wmctrl", "-i", "-r", "0x03", "-b", "add,above"],
-                    check=False,
-                ),
-                mock.call(
                     ["wmctrl", "-i", "-a", "0x03"],
+                    timeout=3,
                     check=False,
                 ),
             ],
         )
-        owned.assert_not_called()
 
     def test_pid_scoped_xdotool_is_the_x11_fallback(self):
         listing = mock.Mock(returncode=1, stdout="")
@@ -196,6 +193,111 @@ class LauncherFocusTests(unittest.TestCase):
                 check=False,
             ),
         )
+
+    def test_missing_or_changed_owner_never_activates_a_window(self):
+        listing = mock.Mock(returncode=0, stdout="0x03 0 1234 host Cozy Kids Launcher\n")
+        for ownership in ([None], [{"pid": 1234}, None]):
+            with self.subTest(ownership=ownership), \
+                    mock.patch.object(overlay, "owned_process", side_effect=ownership), \
+                    mock.patch.object(overlay.subprocess, "run", return_value=listing) as run:
+                overlay.focus_launcher()
+            self.assertLessEqual(run.call_count, 1)
+
+
+class OverlayResilienceTests(unittest.TestCase):
+    def test_randr_results_are_bounded_and_freed(self):
+        import ctypes
+        reader = object.__new__(overlay.X11WindowRaiser)
+        reader.display, reader.library, reader.randr = 123, mock.Mock(), mock.Mock()
+        items = (overlay.MonitorInfo * 1)()
+        items[0].x, items[0].y = 800, 200
+        items[0].width, items[0].height, items[0].primary = 800, 600, 1
+        def monitors(_display, _root, active, count):
+            self.assertEqual(active, 1)
+            ctypes.cast(count, ctypes.POINTER(ctypes.c_int))[0] = 1
+            return items
+        reader.randr.XRRGetMonitors.side_effect = monitors
+        self.assertEqual(reader.monitors(), [(800, 200, 800, 600, True)])
+        reader.randr.XRRFreeMonitors.assert_called_once_with(items)
+        reader.randr = None
+        self.assertEqual(reader.monitors(), [])
+
+    def test_geometry_follows_active_primary_monitor_and_clamps_small_screens(self):
+        self.assertEqual(overlay.overlay_geometry(
+            [(0, 0, 1920, 1080, False), (1920, 300, 1280, 720, True)], (3200, 1080), True),
+            (220, 70, 1944, 324))
+        self.assertEqual(overlay.overlay_geometry(
+            [(800, 200, 800, 600, True)], (1600, 800), False), (60, 60, 824, 224))
+        self.assertEqual(overlay.overlay_geometry([], (100, 80), True), (100, 70, 0, 10))
+        self.assertEqual(overlay.overlay_geometry([(0, 0, 0, 0, True)], (800, 600), False), (60, 60, 24, 24))
+
+    def test_display_change_repositions_existing_control_without_recreating_it(self):
+        control = object.__new__(overlay.AppOverlay)
+        control.root = mock.Mock()
+        control.root.winfo_screenwidth.return_value = 1600
+        control.root.winfo_screenheight.return_value = 900
+        control.root.winfo_rootx.return_value = 24
+        control.root.winfo_rooty.return_value = 24
+        control.x11_raiser = mock.Mock()
+        control.x11_raiser.monitors.side_effect = [
+            [(800, 0, 800, 900, True)], [(0, 0, 800, 600, True)], [(0, 0, 800, 600, True)]]
+        control.expanded, control.geometry = False, None
+        for _ in range(3):
+            control.place_control()
+        self.assertEqual(control.root.geometry.call_args_list,
+                         [mock.call("60x60+824+24"), mock.call("60x60+24+24")])
+
+    def test_readiness_waits_for_visible_close_button(self):
+        control = object.__new__(overlay.AppOverlay)
+        control.root, control.close_btn = mock.Mock(), mock.Mock()
+        control.root.winfo_viewable.return_value = True
+        control.close_btn.winfo_viewable.side_effect = [False, True]
+        control.close_btn.winfo_width.return_value = 45
+        with mock.patch.object(overlay, "write_process_record") as write:
+            control.report_ready()
+            write.assert_not_called()
+            control.root.after.assert_called_once_with(50, control.report_ready)
+            control.report_ready()
+        self.assertIs(write.call_args.kwargs["ready"], True)
+
+    def test_displaced_control_is_repaired_even_when_monitor_geometry_is_unchanged(self):
+        control = object.__new__(overlay.AppOverlay)
+        control.root, control.x11_raiser = mock.Mock(), mock.Mock()
+        control.root.winfo_screenwidth.return_value = 800
+        control.root.winfo_screenheight.return_value = 600
+        control.root.winfo_rootx.return_value = 1100
+        control.root.winfo_rooty.return_value = 700
+        control.x11_raiser.monitors.return_value = [(0, 0, 800, 600, True)]
+        control.expanded, control.geometry = False, (60, 60, 24, 24)
+        control.place_control()
+        control.root.geometry.assert_called_once_with("60x60+24+24")
+
+    def test_slow_status_requests_leave_tk_responsive_and_never_spawn_extra_workers(self):
+        control = object.__new__(overlay.AppOverlay)
+        control.root = mock.Mock()
+        control.timer_results = queue.Queue(maxsize=1)
+        control.timer_polling, control.next_timer_poll = False, 0
+        entered, release = threading.Event(), threading.Event()
+        caller = threading.get_ident()
+        workers = []
+        def slow_api(_path):
+            workers.append(threading.get_ident())
+            entered.set()
+            release.wait(timeout=3)
+            return {}
+        try:
+            with mock.patch.object(overlay, "api", side_effect=slow_api):
+                control.poll_timer()
+                self.assertTrue(entered.wait(timeout=1))
+                for _ in range(10):
+                    control.poll_timer()
+                self.assertEqual(len(workers), 1)
+                self.assertNotEqual(workers[0], caller)
+                self.assertEqual(control.root.after.call_count, 11)
+                release.set()
+                self.assertEqual(control.timer_results.get(timeout=2), ({}, {}))
+        finally:
+            release.set()
 
 
 if __name__ == "__main__":

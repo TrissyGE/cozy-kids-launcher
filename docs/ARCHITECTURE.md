@@ -469,3 +469,22 @@ the worker validates execution before its timings can become a private local
 result. [RETRO_BENCHMARK.md](RETRO_BENCHMARK.md) defines workload/settings,
 resource limits, HTTP boundaries, result invalidation and the distinction
 between core computation and actual gameplay/desktop pacing.
+
+## Native app startup and desktop recovery
+
+The tile supervisor separates cancellable ownership from confirmed fullscreen
+readiness. Fresh-session EWMH support is checked before app creation, then the
+owned main window must confirm fullscreen within a shared startup budget.
+`launch_status.py` defines fixed supervisor exit codes; the server-side
+launcher converts them into allowlisted `launch.startup.failed` events without
+capturing family app output. Failed startup still cleans up the owned tree.
+
+For managed apps the supervisor keeps its X11 connection and periodically
+reasserts lost fullscreen state without focus changes or app restarts. The Tk
+overlay separately confirms a mapped close button, queries active RandR
+monitors, repairs its placement and raises only its own window. Timer and
+availability HTTP calls run in a single daemon worker and publish results to
+the UI thread through a bounded queue. Launcher return revalidates the browser
+ownership record before PID-scoped activation. See
+[DISPLAY_BEHAVIOR.md](DISPLAY_BEHAVIOR.md) and the opt-in failure probes in
+[DESKTOP_TESTING.md](DESKTOP_TESTING.md) for the verification limits.
