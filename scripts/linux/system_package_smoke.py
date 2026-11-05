@@ -8,6 +8,8 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
+import traceback
 import urllib.error
 import urllib.request
 
@@ -67,7 +69,11 @@ def main():
             assert smoke.request(base + "/launch/desktop-smoke", method="POST", timeout=45)[0] == 204
             tile = smoke.wait_until(lambda: smoke.live_process_record(cache / "tile-process.pid", "tile-process"), timeout=15)
             smoke.wait_until(lambda: smoke.owned_fullscreen_window(tile["pid"]), timeout=15)
+            smoke.wait_until(lambda: smoke.live_process_record(cache / "overlay.pid", "overlay"), timeout=15)
             overlay = smoke.wait_until(lambda: smoke.x11_window_ids("App Overlay"), timeout=15)
+            # A Tk title can become observable before the first map/raise and
+            # widget layout finish. Click after that initial placement settles.
+            time.sleep(1)
             smoke.x11_click_overlay_close(overlay[-1])
             smoke.wait_until(lambda: not smoke.live_process_record(cache / "tile-process.pid", "tile-process"), timeout=20)
             report["checks"].append("owned KTurtle fullscreen and overlay close from system code")
@@ -78,6 +84,9 @@ def main():
                 assert not smoke.live_process_record(cache / (name + ".pid"), role)
             report["checks"].append("Parent exit and owned-process cleanup")
             report["outcome"] = "automation-passed-manual-pending"
+        except Exception:
+            report["outcome"] = "failed"
+            raise
         finally:
             if launcher and launcher.poll() is None:
                 launcher.terminate()
@@ -88,4 +97,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        traceback.print_exc()
+        sys.exit(1)

@@ -1998,6 +1998,8 @@ def main():
                     if args.suite in ("all", "regressions"):
                         run_regression_scenarios(browser, args.artifacts, base_url)
                     if args.suite in ("all", "folders"):
+                        if args.suite == "all":
+                            browser.devtools.call("Page.navigate", {"url": base_url + "/index.html"})
                         run_folder_scenarios(browser, args.artifacts)
                     browser.screenshot(args.artifacts / "final-state.png")
                 except Exception:
