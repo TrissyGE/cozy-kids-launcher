@@ -525,6 +525,7 @@ let ps1Runtime=null;
 let retroDevice=null;
 
 function clearRetroGames(){
+  clearRetroBenchmarkView();
   retroSession?.abort();
   retroSession=null;
   ps1Runtime=null;
@@ -559,6 +560,7 @@ function renderPs1Runtime(){
   const disabled=!ps1Runtime.coreSupported||ps1Runtime.core;
   document.getElementById('ps1CoreDownload').disabled=disabled;
   document.getElementById('ps1CoreInput').disabled=disabled;
+  renderRetroBenchmark();
 }
 
 async function installPs1Core(file=null){
@@ -634,6 +636,7 @@ async function loadRetroGames(){
   retroSession=new AbortController();
   const {signal}=retroSession;
   document.getElementById('retroDeviceRun').disabled=false;
+  void loadRetroBenchmark(signal);
   void loadRetroSaves(signal);
   const status=document.getElementById('retroStatus');
   try{
@@ -787,7 +790,7 @@ function saveRetroSettings(){
 }
 
 function retroDeviceLabels(row){
-  const statuses={untested:uiText.retroDeviceUntested,limited:uiText.retroDeviceLimited,
+  const statuses={untested:uiText.retroDeviceUntested,limited:uiText.retroDeviceLimited,measured:uiText.retroBenchmarkMeasured,
     incompatible:uiText.retroDeviceIncompatible};
   const reasons={architecture:uiText.retroDeviceArchitecture,cpu:uiText.retroDeviceCpu,
     memory:uiText.retroDeviceMemory,graphics:uiText.retroDeviceGraphics};
@@ -811,6 +814,7 @@ async function runRetroDeviceCheck(){
     const data=await response.json();
     if(signal.aborted) return;
     retroDevice=data;
+    renderRetroBenchmark();
     const missing='—';
     const memory=data.memoryGiB===null?missing:`${data.memoryGiB} GiB`;
     status.textContent=`${data.architecture||missing} · RAM ${memory} · OpenGL ${data.opengl||missing} · Vulkan ${data.vulkan||missing}`;
@@ -839,6 +843,13 @@ async function runRetroDeviceCheck(){
         list.appendChild(line);
       }
       details.append(summary,scope,version,reviewed,list);
+      if(row.performanceMeasured&&row.performance){
+        const measured=document.createElement('p');
+        const numbers=new Intl.NumberFormat(interfaceLanguage(),{maximumFractionDigits:2});
+        measured.textContent=uiText.retroBenchmarkMeasured+' · '+numbers.format(row.performance.throughputFps)+' FPS · '+
+          uiText.retroBenchmarkLatency+': '+numbers.format(row.performance.p95FrameMs)+' ms';
+        details.appendChild(measured);
+      }
       for(const source of row.sources||[]){
         const url=new URL(source.url);
         if(url.protocol!=='https:') continue;
@@ -858,6 +869,7 @@ async function runRetroDeviceCheck(){
   }catch(e){
     if(!signal.aborted){
       retroDevice=null;
+      renderRetroBenchmark();
       renderRetroEmulators();
       status.textContent=uiText.retroDeviceFailed;
     }
@@ -1290,6 +1302,7 @@ function renderAdmin(){
   renderAdminSections();
   renderAppearancePreview();
   renderAdminFolders();
+  renderRetroBenchmark();
 }
 function reorderTile(from,to){
   if(from===to||from<0||to<0||from>=cfg.tiles.length||to>=cfg.tiles.length) return;

@@ -556,7 +556,7 @@ def download_ps1_core(state_root):
     import_ps1_core(state_root, payload)
 
 
-def ps1_core_path(state_root):
+def load_ps1_core_payload(state_root):
     if not ps1_core_supported():
         return None
     path = os.path.join(state_root, "ps1-cores", PS1_CORE_FILENAME)
@@ -568,7 +568,13 @@ def ps1_core_path(state_root):
             payload = handle.read(PS1_CORE_BYTES + 1)
     except OSError:
         return None
-    return path if _reviewed_ps1_core(payload) else None
+    return payload if _reviewed_ps1_core(payload) else None
+
+
+def ps1_core_path(state_root):
+    if load_ps1_core_payload(state_root) is None:
+        return None
+    return os.path.join(state_root, "ps1-cores", PS1_CORE_FILENAME)
 
 
 def _write_private_text(path, contents):

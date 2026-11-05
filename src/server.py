@@ -89,6 +89,7 @@ from media_state import (
     set_media_favorite,
 )
 from retro_device import retro_device_report
+from retro_benchmark import BenchmarkError, RetroBenchmark, attach_benchmark
 from retro_games import (
     HUB_COMMAND, HUB_ID, PS1_BIOS_BYTES, PS1_CORE_UPLOAD_BYTES, PS1_CORE_VERSION, ROM_SYSTEMS,
     approved_retro_ids, download_ps1_core, emulator_binary, emulator_command, import_ps1_bios,
@@ -901,7 +902,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if request_url.path == "/api/retro/device":
             if self.require_admin():
                 core_ready = bool(ps1_core_path(os.path.dirname(MEDIA_STATE_FILE)))
-                return self.json_response(retro_device_report(load_recommendations(), core_ready))
+                report = retro_device_report(load_recommendations(), core_ready)
+                return self.json_response(attach_benchmark(report, self.server.retro_benchmark.snapshot()))
+            return
+        if request_url.path == "/api/retro/benchmark":
+            if self.require_admin():
+                return self.json_response(self.server.retro_benchmark.snapshot())
             return
         if request_url.path == "/api/retro/games":
             cfg = load_cfg()
@@ -1204,6 +1210,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self.dispatch_post(action)
 
     def dispatch_post(self, action, retro_from_hub=False):
+        if action in {"api/retro/benchmark", "api/retro/benchmark/cancel", "api/retro/benchmark/clear"}:
+            if not self.require_admin():
+                return
+            body = self.read_json_body()
+            if body is None:
+                return
+            manager = self.server.retro_benchmark
+            try:
+                if action == "api/retro/benchmark":
+                    if body != {"system": "ps1"}:
+                        return self.json_response({"status": "invalid"}, 400)
+                    root = os.path.dirname(MEDIA_STATE_FILE)
+                    report = retro_device_report(load_recommendations(), bool(ps1_core_path(root)))
+                    row = next(row for row in report["systems"] if row["catalog"] == "retroarch")
+                    with _family_lock:
+                        if self.retro_save_busy() or self.server.package_installer.snapshot()["status"] in {"checking", "installing"}:
+                            return self.json_response({"status": "busy"}, 409)
+                        if row["status"] == "incompatible":
+                            return self.json_response({"status": "unavailable"}, 409)
+                        return self.json_response(manager.start(root, row["resultKey"]), 202)
+                if set(body) != {"jobId"} or not isinstance(body["jobId"], str):
+                    return self.json_response({"status": "invalid"}, 400)
+                result = manager.cancel(body["jobId"]) if action.endswith("/cancel") else manager.clear(body["jobId"])
+                return self.json_response(result)
+            except BenchmarkError as error:
+                return self.json_response({"status": error.code}, 409)
+            except (OSError, ValueError):
+                return self.json_response({"status": "unavailable"}, 503)
         if action == "api/retro/saves":
             cfg = load_cfg()
             if not self.require_admin(cfg):
@@ -1521,6 +1555,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             player = find_media_player(INDIVIDUAL_MEDIA_PLAYER_CANDIDATES)
             if player:
+                self.server.retro_benchmark.cancel()
                 resume_directory = None
                 profile_id = cfg.get("activeProfileId", "")
                 if player in ("mpv", "vlc"):
@@ -2028,6 +2063,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             except ValueError as exc:
                 self.json_response({"status": "error", "message": str(exc)}, 400)
                 return
+            self.server.retro_benchmark.cancel()
             log_runtime_event("launch.started", actionType=launch["type"])
 
             if launch["type"] == "media":
@@ -2193,9 +2229,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
 
+class LauncherHTTPServer(http.server.ThreadingHTTPServer):
+    def server_close(self):
+        if hasattr(self, "retro_benchmark"):
+            self.retro_benchmark.close()
+        super().server_close()
+
+
 def create_server(host="127.0.0.1", port=PORT):
-    server = http.server.ThreadingHTTPServer((host, port), Handler)
+    server = LauncherHTTPServer((host, port), Handler)
     server.package_installer = PackageInstaller(os.path.join(os.path.dirname(LOG_FILE), "package-install.json"))
+    server.retro_benchmark = RetroBenchmark(os.path.join(os.path.dirname(LOG_FILE), "retro-benchmark.json"))
     return server
 
 

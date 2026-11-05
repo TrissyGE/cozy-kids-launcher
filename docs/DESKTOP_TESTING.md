@@ -218,6 +218,34 @@ tests cover alternative renderers, missing extensions, package/core/rule
 version changes and unknown probe results. These are preflight checks and
 do not measure gameplay, frame pacing or candidate driver correctness.
 
+## Generated PS1 workload pilot — 2026-11-05
+
+The installed `0.6.0+benchmark2` test package (based on `develop` `4163cc2`
+plus the local benchmark increment) has SHA-256
+`2d5c1d69304491695ea31528636fae87328748bd7dadaae3da677855868a066e`.
+On the disposable Ubuntu 24.04.4 VM with one vCPU and 5907 MiB RAM,
+`retro_benchmark_smoke.py` passed in each actual desktop session. Reports
+record runtime file hashes, workload/core hashes and exact settings.
+
+| Session | Real HTTP/core/lifecycle probe | Unpaced workload FPS | 95th-percentile call time | Workload result |
+| --- | --- | ---: | ---: | --- |
+| GNOME Wayland | Passed | 294.90 | 6.4315 ms | Within provisional budget |
+| KDE Plasma Wayland | Passed | 138.97 | 22.1226 ms | Limited by call-time percentile |
+| XFCE X11 | Passed | 252.82 | 7.1712 ms | Within provisional budget |
+
+All three validated 240 frames after warmup, RAM progress and changing images,
+then checked private scope attachment, restart, removal and real-worker cancel.
+No game or BIOS was supplied. The package's ordinary-user runtime/API smoke
+also passed, including the missing-core refusal and new static assets.
+These single observations were collected with varying host load and must not
+be used to rank desktops or predict games. A successful probe can correctly
+produce a `limited` workload result, as the KDE sample shows.
+
+The Parent browser fixture separately covers lost replies, cancel, removal,
+stale scope, late acknowledgements and five languages at 800×600. This pilot
+does not test visible desktop pacing, audio or physical input. See
+[RETRO_BENCHMARK.md](RETRO_BENCHMARK.md) for the complete measurement boundary.
+
 ## Physical Linux test laptop
 
 Run the exact release candidate on the test laptop before publishing v0.8.
@@ -255,6 +283,7 @@ comparison point for the physical device.
 - Run a Parent-authorized app installation and exercise the updater with the candidate release channel.
 - With a physical gamepad, navigate Home and the RetroGameCorner library. Confirm that Parent controls stay behind the PIN.
 - For each supported emulator, confirm visible fullscreen, gameplay input from the keyboard and controller, save persistence, the close overlay and return to the launcher.
+- Repeat the local PS1 short test with other programs closed; retain the device/core/settings scope and compare only repeated runs under comparable power and thermal conditions. Confirm real game performance separately.
 - Reconnect the gamepad and removable game storage and check that the launcher recovers without restarting.
 
 ## Release evidence
