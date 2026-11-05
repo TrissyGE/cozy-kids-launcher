@@ -246,6 +246,27 @@ stale scope, late acknowledgements and five languages at 800×600. This pilot
 does not test visible desktop pacing, audio or physical input. See
 [RETRO_BENCHMARK.md](RETRO_BENCHMARK.md) for the complete measurement boundary.
 
+## Native catalog increment — 2026-11-05
+
+The `0.6.0+native1` Debian test artifact has SHA-256
+`5af297275b4ce9a7f478eb07dd541febce8173379a6029120967437129cf6512`.
+Its installed runtime passed startup, update-owner refusal, owned KTurtle
+fullscreen, overlay close, Parent exit and process cleanup on Ubuntu 24.04.4:
+GNOME Wayland with Firefox Snap kiosk, KDE Plasma Wayland with Chrome fullscreen,
+and XFCE X11 with Chrome kiosk. Manual input/Wayland stacking remain pending.
+
+The first XFCE attempt returned HTTP 503 about two seconds after app launch.
+Direct KTurtle startup with the actual XFCE environment subsequently stayed
+alive, `wmctrl` identified Xfwm4, and the settled-session installed-runtime
+probe passed. Keep this first-launch failure alongside the earlier GNOME
+failure as an unresolved cold-session release investigation; the passing later
+run does not establish its cause or fix. No fullscreen runtime code changed in
+the native adapter increment.
+
+The [native adapter probes](NATIVE_PACKAGE_TESTING.md) separately exercise real
+distribution daemons in disposable containers. Container transaction success
+does not replace the corresponding target-distribution graphical checks.
+
 ## Physical Linux test laptop
 
 Run the exact release candidate on the test laptop before publishing v0.8.

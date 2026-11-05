@@ -1,4 +1,7 @@
 {
+  "package_system_maintenance": "Nutze für Updates und das Entfernen von Apps die Softwareverwaltung deines Systems. Die direkte Installation ist hier weiterhin verfügbar.",
+  "package_source": "Paketverwaltung",
+  "package_system_update": "Aktualisiere Arch Linux über die vollständige Systemaktualisierung deiner Paketverwaltung. Einzelne App-Updates werden hier nicht angeboten.",
   "retro_benchmark_scope_current": "Passt zur aktuell geprüften Geräte- und Core-Konfiguration.",
   "retro_benchmark_scope_unknown": "Die aktuelle Gerätekonfiguration wurde noch nicht abgeglichen.",
   "retro_benchmark_scope_stale": "Dieses Ergebnis gehört zu einer anderen Geräte-, Treiber- oder Core-Konfiguration. Test erneut starten.",
@@ -354,7 +357,7 @@
   "package_status": "Paketstatus anzeigen",
   "package_storage": "Der Installationsstatus konnte nicht sicher gespeichert werden. Prüfe den freien Speicherplatz und die Zugriffsrechte.",
   "package_unknown_size": "Größe noch nicht verfügbar",
-  "package_unsupported": "Direktes Installieren ist hier noch nicht verfügbar. Unterstützt wird zunächst PackageKit auf Ubuntu, Linux Mint und Zorin. Nutze bis dahin die grafische Softwareverwaltung deines Systems.",
+  "package_unsupported": "Die direkte Installation ist mit dieser Systemkonfiguration nicht verfügbar. Nutze die grafische Softwareverwaltung deiner Distribution.",
   "package_waiting": "Warten auf die Softwareverwaltung …",
   "palette_bg_end": "Hintergrundende",
   "palette_bg_start": "Hintergrundanfang",

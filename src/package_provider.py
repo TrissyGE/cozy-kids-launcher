@@ -22,6 +22,17 @@ OS_PROVIDERS = {
 IMMUTABLE_VARIANTS = {"silverblue", "kinoite", "sericea", "onyx", "coreos", "aeon", "kalpa", "microos"}
 PACKAGE_NAME = re.compile(r"[a-z0-9](?:[a-z0-9+.-]{0,126}[a-z0-9])?")
 APT_PACKAGEKIT_SYSTEMS = {"ubuntu", "linuxmint", "zorin"}
+NATIVE_PACKAGEKIT_PROFILES = {
+    "apt": {"systems": APT_PACKAGEKIT_SYSTEMS, "backends": {"apt"},
+            "operations": ("install", "update", "remove")},
+    "dnf": {"systems": {"fedora"}, "backends": {"dnf", "dnf5"},
+            "operations": ("install",)},
+    "zypper": {"systems": {"opensuse-tumbleweed"}, "backends": {"zypp"},
+               "operations": ("install",)},
+    # Arch requires coordinated system updates. Never offer a partial app update.
+    "pacman": {"systems": {"arch"}, "backends": {"alpm"},
+               "operations": ("install", "remove")},
+}
 
 
 def read_os_release(paths=("/etc/os-release", "/usr/lib/os-release")):
@@ -72,6 +83,14 @@ def apt_packagekit_supported(release, provider):
     return release.get("ID") in APT_PACKAGEKIT_SYSTEMS and provider == "apt"
 
 
+def native_packagekit_profile(release, provider):
+    profile = NATIVE_PACKAGEKIT_PROFILES.get(provider)
+    if (profile is None or release.get("ID") not in profile["systems"]
+            or release.get("VARIANT_ID", "").lower() in IMMUTABLE_VARIANTS):
+        return None
+    return profile
+
+
 def mapped_package(recommendation, provider):
     if provider not in PROVIDERS:
         return None
@@ -91,8 +110,11 @@ def catalog_package_route(recommendation, release, provider):
         package = None
     if not package:
         return {"mode": "unavailable"}
-    return {"mode": "direct" if apt_packagekit_supported(release, provider) else "software-manager",
-            "package": package}
+    profile = native_packagekit_profile(release, provider)
+    if profile is not None:
+        return {"mode": "direct", "package": package, "provider": provider,
+                "operations": list(profile["operations"])}
+    return {"mode": "software-manager", "package": package}
 
 
 def prepare_install(package, recommendations, *, provider=None):

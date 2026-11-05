@@ -1,9 +1,11 @@
 # Package-provider foundation
 
-The default catalog flow implements **terminal-free** installation for the initial
-Ubuntu, Linux Mint and Zorin targets with the APT PackageKit backend. Full desktop
-acceptance is still a release gate; implementation is not certification of all
-three distributions. Parents review the app's
+The default catalog flow implements **terminal-free** native installation through
+reviewed PackageKit adapters: APT on Ubuntu/Mint/Zorin, DNF5 on Fedora, ZYpp on
+openSUSE Tumbleweed and ALPM on Arch Linux. Only explicit catalog mappings are
+used. Other derivatives keep graphical software-manager guidance; immutable
+hosts never receive native transactions. Full target-distribution desktop
+acceptance remains a release gate. Parents review the app's
 required packages and download size, explicitly confirm, approve the system
 password dialog if requested, and follow progress. On success they can add a
 tile to the current child's screen. Nothing is installed merely by opening an
@@ -13,8 +15,9 @@ compatible, but is no longer the catalog's primary Install action.
 ## Terminal-free runtime and boundaries
 
 The core launcher remains usable with only its existing dependencies. Direct
-installation additionally needs the distribution's `packagekit`, `python3-gi`,
-`gir1.2-packagekitglib-1.0`, a working system D-Bus, and a graphical Polkit agent
+installation additionally needs PackageKit with the distribution's matching
+backend, Python GObject bindings, the PackageKitGlib 1.0 typelib, a working
+system D-Bus, and a graphical Polkit agent
 in a complete desktop session. These are system packages, not pip dependencies.
 Missing services or unsupported systems get a localized explanation directing
 parents to the graphical system software manager. There is no automatic sudo,
@@ -24,13 +27,15 @@ root HTTP server, custom privileged helper, or package-source modification.
 
 1. Resolve an exact catalog-controlled native name for the native architecture.
 2. Simulate a trusted installation; reject ambiguous results, more than 200
-   packages, or a plan involving removals/upgrades/downgrades. On the APT
-   backend, details provide the sum of archive download sizes (not disk usage).
+   packages, or a plan involving removals/upgrades/downgrades. Sum the explicit
+   `download-size` fields only when all are available and positive. A zero or
+   missing field stays unknown; `Details.size` is never substituted as download
+   size. See the [PackageKit details properties](https://packagekit.freedesktop.org/doc/class.Details.html).
 3. Keep a ten-minute plan and random single-use confirmation token in memory.
 4. After confirmation, simulate again and compare exact IDs, dependencies and
-   size. A changed plan requires a fresh review. Run `InstallPackages` with
+   size, provider and daemon backend. A changed plan requires a fresh review. Run `InstallPackages` with
    `ONLY_TRUSTED` and interactive system authorization, then verify the target
-   package is installed before reporting success.
+   package's exact version and architecture before reporting success.
 
 For an installed native app, maintenance uses `GetUpdates` and
 `UpdatePackages`, or `RemovePackages` with dependent removal and autoremove
@@ -40,6 +45,24 @@ software manager. An update must verify the reviewed version and architecture
 after completion. Removal must verify that the native package is absent.
 See the [PackageKit client contract](https://packagekit.freedesktop.org/doc/class.Client.html).
 
+This maintenance flow remains qualified for APT; Arch offers only its checked
+single-target removal. Fedora and Tumbleweed expose installation and direct
+maintenance to the system software manager. Their reviewed backends do not
+fully enforce the requested removal restrictions; see the [source review and
+operation boundaries](NATIVE_PACKAGE_TESTING.md#rpm-maintenance-boundary).
+
+Arch does not offer individual app updates. Before reviewing **and executing**
+an installation, the adapter also checks for pending system updates and refuses
+the installation if any exist. Parents are directed to a coordinated system
+update in their software manager, following the [Arch maintenance policy](https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported).
+Removal remains a separate, single-target action. No AUR helper, repository
+refresh command or system upgrade is silently executed by the launcher.
+
+Each adapter verifies the daemon's backend name and advertised operation roles
+before resolving or executing a package. A matching command on PATH alone does
+not qualify a foreign backend. Fedora's [DNF5 transition](https://fedoraproject.org/wiki/Changes/PackageKit-DNF5)
+and the distro's actual daemon are checked separately from package-name mappings.
+
 Resolution and execution are separate PackageKit transactions, not an atomic
 reservation of the system package database. Another package manager can change
 system state between them. The system backend remains responsible for locking
@@ -47,13 +70,14 @@ and consistency; this layer does not offer a universal rollback guarantee.
 
 `package_install.py` owns one background job. Double clicks, concurrent requests,
 lost HTTP replies, stale tokens and unreviewed client-supplied package IDs cannot
-start a second job. A private atomic journal records the job and operation. Once the confirmed
+start a second job. A private atomic journal records the job, native provider
+and operation. Once the confirmed
 PackageKit call reports its transaction ID, the journal also records that ID
 and the reviewed target name, version and architecture. It stores no passwords,
 confirmation tokens or executable plans.
 
 After a restart the worker checks the recorded transaction on the system bus.
-It matches the exact daemon ID, user and operation, then observes the existing
+It matches the native provider, exact daemon ID, user and operation, then observes the existing
 job through read-only PackageKit D-Bus properties. If the transaction already ended, the
 worker checks recent daemon history for the same ID, user and operation.
 Success requires a successful daemon result and a fresh package lookup matching
@@ -81,6 +105,10 @@ password. Cozy Kids does not collect, store or send that password. No Polkit
 policy is weakened or installed by this feature.
 
 ## Compatible manual-plan API
+
+See [NATIVE_PACKAGE_TESTING.md](NATIVE_PACKAGE_TESTING.md) for adapter requirements,
+repeatable container probes and the distinction between package transactions
+and target-distribution graphical acceptance.
 
 `src/package_provider.py` parses `/etc/os-release`, falling back to
 `/usr/lib/os-release` only when necessary. Values are data, never sourced into a
@@ -137,8 +165,9 @@ the human-readable command; no shell or subprocess is executed by the module.
 Unit tests cover native selection, immutable-host exclusions, data-only parsing,
 all four plan builders, missing mappings, and hostile input. HTTP tests exercise
 the Parent boundary. Browser tests exercise acknowledgement, errors, retry,
-loading, and stale responses through local fixtures. These are **not** real
-Fedora/Arch/openSUSE installation tests or a full distribution support promise.
+loading, and stale responses through local fixtures. Those initial checks were
+not native distribution transactions. The later [native probe increment](NATIVE_PACKAGE_TESTING.md)
+records actual daemon tests separately from full graphical acceptance.
 
 Additional unit/API tests cover preparation without execution, native simulation
 flags, dependency changes, one-use/expired consent, concurrent jobs, restart
@@ -156,7 +185,9 @@ On September 9, 2026, the user successfully installed **TuxMath** through the
 catalog in the Ubuntu 24.04.4 KDE/Wayland VM as its non-admin desktop user.
 The launcher returned `complete` with 100%; the APT history independently records
 PackageKit installing TuxMath `2.0.3-9build2` and nine dependencies. The plan
-reported 13,423,526 download bytes. The deployed installer engine, PackageKit
+reported 13,423,526 bytes as download size. That historical field came from
+`Details.size` and is not valid download-size evidence; the current adapter
+uses `download-size` and keeps unavailable values unknown. The deployed installer engine, PackageKit
 bridge and catalog UI file hashes match code commit `94811db`. This verifies
 a real desktop installation, not just a simulated transaction.
 

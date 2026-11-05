@@ -1,4 +1,7 @@
 {
+  "package_system_maintenance": "Usa el gestor de software del sistema para actualizar o eliminar aplicaciones. La instalación directa sigue disponible aquí.",
+  "package_source": "Gestor de paquetes",
+  "package_system_update": "En Arch Linux, utiliza la actualización completa del sistema de tu gestor de paquetes. Aquí no se ofrecen actualizaciones de aplicaciones individuales.",
   "retro_benchmark_scope_current": "Coincide con la configuración del dispositivo y del núcleo comprobada actualmente.",
   "retro_benchmark_scope_unknown": "La configuración actual del dispositivo aún no se ha comparado.",
   "retro_benchmark_scope_stale": "Este resultado corresponde a otra configuración del dispositivo, del controlador o del núcleo. Repite la prueba.",
@@ -354,7 +357,7 @@
   "package_status": "Consultar el estado del paquete",
   "package_storage": "No se pudo guardar de forma segura el estado de instalación. Comprueba el espacio libre y los permisos de acceso.",
   "package_unknown_size": "Tamaño aún no disponible",
-  "package_unsupported": "La instalación directa aún no está disponible aquí. La compatibilidad inicial requiere PackageKit en Ubuntu, Linux Mint o Zorin. Por ahora, usa el gestor gráfico de software del sistema.",
+  "package_unsupported": "La instalación directa no está disponible con esta configuración del sistema. Usa el gestor gráfico de software de tu distribución.",
   "package_waiting": "Esperando al gestor de software…",
   "palette_bg_end": "Final del fondo",
   "palette_bg_start": "Inicio del fondo",

@@ -39,6 +39,9 @@ class PackageProviderTests(unittest.TestCase):
         self.assertIsNone(package_provider.detect_native_provider(
             {"ID": "fedora"}, which=lambda name: name, immutable=True
         ))
+        for system, provider in (("manjaro", "pacman"), ("rhel", "dnf"), ("opensuse-leap", "zypper")):
+            self.assertIsNone(package_provider.native_packagekit_profile({"ID": system}, provider))
+        self.assertIsNone(package_provider.native_packagekit_profile({"ID": "fedora", "VARIANT_ID": "silverblue"}, "dnf"))
 
     def test_os_release_is_parsed_as_data_and_supports_missing_etc_file(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -106,13 +109,14 @@ class PackageProviderTests(unittest.TestCase):
         apps = {item["id"]: item for item in catalog}
         for system in ("ubuntu", "linuxmint", "zorin"):
             self.assertEqual(package_provider.catalog_package_route(apps["gcompris"], {"ID": system}, "apt"),
-                             {"mode": "direct", "package": "gcompris-qt"})
+                             {"mode": "direct", "package": "gcompris-qt", "provider": "apt", "operations": ["install", "update", "remove"]})
         for system, provider in (("fedora", "dnf"), ("arch", "pacman"), ("opensuse-tumbleweed", "zypper")):
             for identifier in ("gcompris", "kturtle", "kgeography", "kolourpaint", "supertuxkart"):
                 app = apps[identifier]
                 with self.subTest(system=system, app=identifier):
                     self.assertEqual(package_provider.catalog_package_route(app, {"ID": system}, provider),
-                                     {"mode": "software-manager", "package": app["package"]})
+                                     {"mode": "direct", "package": app["package"], "provider": provider,
+                                      "operations": ["install", "remove"] if provider == "pacman" else ["install"]})
                     self.assertEqual(package_provider.prepare_install(app["package"], catalog, provider=provider)["argv"][-1],
                                      app["package"])
         self.assertEqual(package_provider.catalog_package_route(apps["tuxpaint"], {"ID": "arch"}, "pacman"),

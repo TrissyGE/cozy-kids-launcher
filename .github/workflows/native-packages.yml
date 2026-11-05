@@ -1,0 +1,44 @@
+name: Native package adapters
+
+on:
+  pull_request:
+    paths:
+      - 'src/package*.py'
+      - 'src/recommendations.json'
+      - 'scripts/linux/native_package*.py'
+      - '.github/workflows/native-packages.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'src/package*.py'
+      - 'src/recommendations.json'
+      - 'scripts/linux/native_package*.py'
+      - '.github/workflows/native-packages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-packages-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  native-package:
+    name: Native ${{ matrix.family }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [fedora, arch, opensuse]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Exercise the real package daemon in a disposable upstream container
+        run: python3 scripts/linux/native_package_containers.py --family ${{ matrix.family }} --execute --artifacts .test-artifacts/native/${{ matrix.family }}
+      - name: Save native evidence and daemon logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-package-${{ matrix.family }}
+          path: .test-artifacts/native/${{ matrix.family }}/

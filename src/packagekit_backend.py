@@ -4,7 +4,7 @@ import os
 import re
 import time
 
-from package_provider import apt_packagekit_supported, detect_native_provider, read_os_release
+from package_provider import detect_native_provider, mapped_package, native_packagekit_profile, read_os_release
 
 
 class InstallError(Exception):
@@ -42,7 +42,9 @@ def error_category(value):
 class PackageKitBackend:
     def __init__(self):
         release = read_os_release()
-        if not apt_packagekit_supported(release, detect_native_provider(release)):
+        self.provider = detect_native_provider(release)
+        self.profile = native_packagekit_profile(release, self.provider)
+        if self.profile is None:
             raise InstallError("unsupported")
         try:
             import gi
@@ -55,7 +57,7 @@ class PackageKitBackend:
             self.context.push_thread_default()
             self.control = self.pk.Control()
             self.control.get_properties(None)
-            if self.control.props.backend_name != "apt":
+            if self.control.props.backend_name not in self.profile["backends"]:
                 raise InstallError("unsupported")
             self.client = self.pk.Client()
             self.client.set_interactive(False)
@@ -76,6 +78,34 @@ class PackageKitBackend:
 
     def _flags(self, *values):
         return sum(1 << int(value) for value in values)
+
+    def catalog_package(self, recommendation):
+        package = mapped_package(recommendation, self.provider)
+        if package is None:
+            raise InstallError("unsupported")
+        return package
+
+    def _require_operation(self, operation):
+        if operation not in self.profile["operations"]:
+            if self.provider in {"dnf", "zypper"}:
+                # Reviewed RPM backends do not fully enforce the no-dependent-
+                # removal contract. Keep maintenance in the system manager.
+                raise InstallError("system_maintenance_required")
+            raise InstallError("system_update_required" if self.provider == "pacman" and operation == "update" else "unsupported")
+        required = ("RESOLVE", "GET_DETAILS", PACKAGE_ROLES[operation])
+        if operation == "update" or (self.provider == "pacman" and operation == "install"):
+            required += ("GET_UPDATES",)
+        roles = int(self.control.props.roles)
+        if any(not roles & self._flags(getattr(self.pk.RoleEnum, role)) for role in required):
+            raise InstallError("unsupported")
+
+    def _require_current_arch(self, operation):
+        if self.provider == "pacman" and operation == "install":
+            # A newly synchronized repository must not lead to a partial upgrade
+            # through installing one app. Require a coordinated system update.
+            updates = self._call(self.client.get_updates, self._flags(self.pk.FilterEnum.ARCH))
+            if updates.get_package_array():
+                raise InstallError("system_update_required")
 
     def _call(self, method, *arguments, progress=None, transaction=None):
         def report(value, kind, unused):
@@ -103,6 +133,7 @@ class PackageKitBackend:
     def prepare(self, package, operation="install"):
         if operation not in PACKAGE_OPERATIONS:
             raise ValueError("Unknown package operation")
+        self._require_operation(operation)
         # A previous launcher may have exited while the system daemon continued.
         # Never replay it or queue another installation behind an unknown action.
         try:
@@ -112,6 +143,7 @@ class PackageKitBackend:
             raise
         except Exception:
             raise InstallError("unavailable") from None
+        self._require_current_arch(operation)
         packages = self._resolve(package)
         installed = {item.get_id() for item in packages if item.get_info() == self.pk.InfoEnum.INSTALLED}
         if operation == "install":
@@ -151,12 +183,18 @@ class PackageKitBackend:
         if operation != "remove":
             details = self._call(self.client.get_details, change_ids).get_details_array()
             if len(details) == len(changes):
-                download_bytes = sum(item.get_size() for item in details)
+                # Details.size is installed size, not download size. Older or
+                # incomplete backends leave download-size at zero: keep unknown.
+                sizes = [getattr(getattr(item, "props", None), "download_size", None) for item in details]
+                if all(type(size) is int and 0 < size <= 1024 ** 4 for size in sizes):
+                    download_bytes = sum(sizes)
         plan = {
             "packageIds": package_ids,
             "changeIds": change_ids,
             "packages": sorted({item.get_name() for item in changes}),
             "downloadBytes": download_bytes,
+            "provider": self.provider,
+            "backend": self.control.props.backend_name,
         }
         if operation != "install":
             plan["currentVersion"] = current[1]
@@ -193,6 +231,8 @@ class PackageKitBackend:
         return self._call(method, self._flags(*flags), package_ids, progress=progress, transaction=transaction)
 
     def perform(self, operation, plan, progress, transaction=None):
+        self._require_operation(operation)
+        self._require_current_arch(operation)
         # Polkit owns the password dialog. Do not use Pk.Task to answer prompts.
         self.client.set_interactive(True)
         self._transaction(operation, plan["packageIds"], progress=progress, transaction=transaction)
@@ -201,10 +241,8 @@ class PackageKitBackend:
         installed = [item for item in self._resolve(package) if item.get_info() == self.pk.InfoEnum.INSTALLED]
         if operation == "remove":
             return not installed
-        if operation == "update":
-            expected = package_identity(plan["packageIds"][0])
-            return any(package_identity(item.get_id()) == expected for item in installed)
-        return bool(installed)
+        expected = package_identity(plan["packageIds"][0])
+        return any(package_identity(item.get_id()) == expected for item in installed)
 
 
     def recover(self, transaction_id, operation, target, progress):

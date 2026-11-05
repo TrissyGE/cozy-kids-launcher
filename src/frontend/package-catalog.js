@@ -32,6 +32,8 @@ async function packageRequest(path,body){
   }finally{ clearTimeout(timeout); }
 }
 function packageErrorText(code,operation='install'){
+  if(code==='system_update_required') return uiText.packageSystemUpdate;
+  if(code==='system_maintenance_required') return uiText.packageSystemMaintenance;
   const maintenance=uiText.packageMaintenance;
   if(operation!=='install'){
     const text={authorization:maintenance.denied,changes_required:maintenance.changes,
@@ -50,6 +52,7 @@ function packageAction(label,callback){
   button.textContent=label; button.onclick=callback; button.disabled=false; button.hidden=false;
 }
 function renderPackageJob(){
+  document.getElementById('packageClose').textContent=uiText.close;
   const job=packageJob;
   const rec=recommendations.find(item=>item.id===job.appId);
   const operation=job.operation||'install';
@@ -80,6 +83,8 @@ function renderPackageJob(){
     const size=Number.isFinite(job.downloadBytes)?
       new Intl.NumberFormat(cfg.language,{maximumFractionDigits:1}).format(job.downloadBytes/1048576)+' MB':uiText.packageUnknownSize;
     const facts=[localizedCount('packageCount',packages.length)];
+    const source=({apt:'APT',dnf:'DNF',pacman:'Pacman',zypper:'Zypper'})[job.provider];
+    if(source) facts.push(uiText.packageSource+': '+source);
     if(!isRemoval) facts.unshift(uiText.packageDownload.replace('{size}',size));
     if(job.currentVersion) facts.push(job.targetVersion?
       maintenance.versions.replace('{current}',()=>job.currentVersion).replace('{target}',()=>job.targetVersion):
