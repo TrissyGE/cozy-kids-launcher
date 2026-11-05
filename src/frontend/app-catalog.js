@@ -9,6 +9,39 @@ function catalogName(rec){
   return catalogText(rec,'name')||catalogText(rec,'label')||rec.id;
 }
 
+const catalogSources=new Map();
+function catalogSourceMismatch(rec){
+  const tile=cfg.tiles.find(item=>item.id===rec.id);
+  return !!(tile&&rec.flatpakRoute&&
+    (String(tile.cmd?.[0]||'').split('/').pop()==='flatpak')!==(rec.packageSource==='flatpak'));
+}
+
+async function switchCatalogTileSource(rec,button){
+  const tile=cfg.tiles.find(item=>item.id===rec.id);
+  if(!tile||!catalogSourceMismatch(rec)||!rec.installed||!rec.cmd?.length) return;
+  const previous=tile.cmd;
+  tile.cmd=[...rec.cmd]; button.disabled=true;
+  try {await persistConfig(); renderAll(); if(packageIsOpen()) renderPackageJob();}
+  catch(error){tile.cmd=previous; button.disabled=false;
+    const message=document.createElement('p'); message.setAttribute('role','alert'); message.textContent=uiText.saveError;
+    button.parentElement.appendChild(message);
+  }
+}
+function catalogRecipe(rec,source){
+  const existing=cfg.tiles.find(tile=>tile.id===rec.id);
+  const savedSource=existing&&rec.flatpakRoute?
+    (String(existing.cmd?.[0]||'').split('/').pop()==='flatpak'?'flatpak':'native'):null;
+  const selected=source||catalogSources.get(rec.id)||
+    savedSource||
+    (rec.flatpakRoute?.installed&&!rec.installed?'flatpak':
+      rec.packageRoute?.mode!=='direct'&&rec.flatpakRoute?.mode==='direct'?'flatpak':'native');
+  if(selected==='flatpak'&&rec.flatpakRoute){
+    return {...rec,installed:!!rec.flatpakRoute.installed,cmd:rec.flatpakRoute.cmd||[],
+      packageRoute:rec.flatpakRoute,packageSource:'flatpak'};
+  }
+  return {...rec,packageSource:'native'};
+}
+
 function catalogAdded(rec){
   return cfg.tiles.some(tile=>tile.id===rec.id||JSON.stringify(tile.cmd||[])===JSON.stringify(rec.cmd||[]));
 }
@@ -63,7 +96,7 @@ function renderCatalogResults(){
   const results=document.getElementById('catalogResults'); if(!results) return;
   results.replaceChildren();
   const query=catalogQuery.trim().toLocaleLowerCase(cfg.language);
-  const generalApps=recommendations.filter(rec=>!rec.retroEmulator);
+  const generalApps=recommendations.filter(rec=>!rec.retroEmulator).map(rec=>catalogRecipe(rec));
   const matches=generalApps.filter(rec=>{
     const text=[catalogName(rec),catalogText(rec,'label'),catalogText(rec,'desc'),catalogCategoryLabel(rec.category)].join(' ').toLocaleLowerCase(cfg.language);
     return (!query||text.includes(query))&&(catalogCategory==='all'||rec.category===catalogCategory)&&
@@ -79,6 +112,19 @@ function renderCatalogResults(){
     const state=document.createElement('div'); state.className='status '+(rec.installed?'installed':'missing');
     state.textContent=rec.category==='browser'?uiText.catalogWeb:rec.installed?uiText.installed:uiText.notInstalled;
     const actions=document.createElement('div'); actions.className='actions';
+    card.append(createTileVisual(rec.emoji,'emoji'),name,desc,state);
+    if(rec.flatpakRoute){
+      const label=document.createElement('label'); label.className='catalog-source';
+      label.textContent=uiText.flatpakSource;
+      const select=document.createElement('select'); select.dataset.catalogSource=rec.id;
+      for(const [value,text] of [['native',uiText.flatpakNative],['flatpak','Flatpak · Flathub']]){
+        const option=document.createElement('option'); option.value=value; option.textContent=text; select.appendChild(option);
+      }
+      select.value=rec.packageSource;
+      select.onchange=()=>{catalogSources.set(rec.id,select.value); renderCatalogResults();
+        document.querySelector('[data-catalog-source="'+CSS.escape(rec.id)+'"]')?.focus();};
+      label.appendChild(select); card.appendChild(label);
+    }
     const button=document.createElement('button'); button.className='smallbtn';
     if(!rec.installed){
       setIconLabel(button,'download',uiText.install);
@@ -86,10 +132,13 @@ function renderCatalogResults(){
       button.onclick=()=>triggerInstall(rec);
     }
     else if(rec.installOnly){button.hidden=true;}
+    else if(catalogSourceMismatch(rec)){
+      setIconLabel(button,'refresh',uiText.catalogUseSource); button.onclick=()=>switchCatalogTileSource(rec,button);
+    }
     else if(catalogAdded(rec)){button.disabled=true; setIconLabel(button,'save',uiText.added);}
     else {setIconLabel(button,'add',uiText.addTile); button.onclick=()=>addCatalogTile(rec,button);}
     actions.appendChild(button);
-    card.append(createTileVisual(rec.emoji,'emoji'),name,desc,state,actions);
+    card.append(actions);
     if(!rec.installed&&!catalogCanInstall(rec)) card.append(catalogPackageHint(rec));
     card.append(catalogDetails(rec));
     grid.appendChild(card);
@@ -104,7 +153,7 @@ function catalogCanInstall(rec){
 function catalogPackageHint(rec){
   const hint=document.createElement('p');
   hint.className='muted';
-  hint.textContent=uiText.packageUnsupported;
+  hint.textContent=rec.packageSource==='flatpak'?packageErrorText(rec.packageRoute?.reason||'flatpak_setup'):uiText.packageUnsupported;
   if(rec.packageRoute?.package){
     const name=document.createElement('code');
     name.textContent=rec.packageRoute.package;
@@ -169,6 +218,10 @@ function catalogDetails(rec){
   }
   if(['dnf','zypper'].includes(rec.packageRoute?.provider)){
     const note=document.createElement('p'); note.className='muted'; note.textContent=uiText.packageSystemMaintenance;
+    details.appendChild(note);
+  }
+  if(rec.packageSource==='flatpak'){
+    const note=document.createElement('p'); note.className='muted'; note.textContent=uiText.flatpakMaintenance;
     details.appendChild(note);
   }
   return details;

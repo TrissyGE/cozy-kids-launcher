@@ -85,6 +85,60 @@ class InstallTests(unittest.TestCase):
             self.manager.start(ready['jobId'], ready['confirmationToken'])
         self.assertNotIn('confirmationToken', self.manager.snapshot())
 
+    def flatpak_manager(self):
+        backend = Backend()
+        backend.provider = 'flatpak'
+        backend.catalog_package = lambda rec: {'id': 'org.tuxpaint.Tuxpaint'}
+        backend.plan = {'installed': False, 'packages': ['app/org.tuxpaint.Tuxpaint/x86_64/stable'],
+                        'downloadBytes': 123, 'operations': [{'commit': 'a'*64}],
+                        'flatpak': {'permissions': ['Context.shared=ipc'], 'scope': 'user'}}
+        manager = PackageInstaller(self.path, lambda: self.backend, flatpak_factory=lambda: backend)
+        return manager, backend
+
+    def test_flatpak_source_keeps_native_backend_out_and_requires_new_consent(self):
+        manager, backend = self.flatpak_manager()
+        manager.prepare('tuxpaint', [{'id':'tuxpaint','package':'tuxpaint'}], source='flatpak')
+        manager.worker.join(5)
+        ready = manager.snapshot()
+        self.assertEqual(ready['source'], 'flatpak')
+        self.assertEqual(ready['provider'], 'flatpak')
+        self.assertEqual(ready['flatpak']['scope'], 'user')
+        self.assertEqual(backend.calls, 0)
+        self.assertEqual(self.backend.calls, 0)
+        manager.start(ready['jobId'], ready['confirmationToken'])
+        manager.worker.join(5)
+        self.assertEqual(manager.snapshot()['status'], 'complete')
+        self.assertEqual(backend.calls, 1)
+
+    def test_flatpak_plan_change_does_not_execute_the_new_permissions(self):
+        manager, backend = self.flatpak_manager()
+        manager.prepare('tuxpaint', [{'id':'tuxpaint','package':'tuxpaint'}], source='flatpak')
+        manager.worker.join(5)
+        ready = manager.snapshot()
+        backend.plan['flatpak']['permissions'].append('Context.shared=network')
+        manager.start(ready['jobId'], ready['confirmationToken'])
+        manager.worker.join(5)
+        self.assertEqual(manager.snapshot()['error'], 'plan_changed')
+        self.assertEqual(backend.calls, 0)
+
+    def test_flatpak_restart_keeps_only_identity_and_never_replays_or_reattaches(self):
+        self.path.parent.mkdir()
+        self.path.write_text(json.dumps({'status':'installing','operation':'install',
+            'source':'flatpak','provider':'flatpak','appId':'tuxpaint','jobId':'a'*32,'confirmationToken':'old'}))
+        backend = Mock()
+        manager = PackageInstaller(self.path, backend, flatpak_factory=backend)
+        state = manager.snapshot()
+        self.assertEqual((state['status'],state['source'],state['appId']), ('interrupted','flatpak','tuxpaint'))
+        backend.assert_not_called()
+        self.assertNotIn('confirmationToken', state)
+        with self.assertRaises(InstallError): manager.start('a'*32, 'old')
+
+    def test_invalid_or_unmapped_sources_do_not_start_any_backend(self):
+        for source in ([], {}, 'shell', '--user'):
+            with self.assertRaises(ValueError): self.manager.prepare('paint', CATALOG, source=source)
+        with self.assertRaises(ValueError): self.manager.prepare('paint', CATALOG, source='flatpak')
+        self.assertIsNone(self.manager.worker)
+
     def test_native_mapping_and_consent_stay_bound_to_the_detected_provider(self):
         catalog = [{"id": "paint", "package": "debian-paint", "packages": {"dnf": "fedora-paint", "pacman": "arch-paint"}}]
         self.backend.provider = "dnf"

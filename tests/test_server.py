@@ -620,6 +620,10 @@ class ServerApiTests(unittest.TestCase):
                                        origin=self.base_url, cookie=cookie)
         self.assertEqual(status, 202)
         self.assertEqual(data['jobId'], 'safe')
+        status, _, _ = self.request('/api/packages/prepare', method='POST',
+            body={'appId':'tuxpaint','source':'flatpak'}, origin=self.base_url, cookie=cookie)
+        self.assertEqual(status, 202)
+        self.assertEqual(installer.prepare.call_args.kwargs, {'source':'flatpak'})
         installer.start.return_value = {'status': 'installing'}
         status, _, _ = self.request('/api/packages/install', method='POST',
                                     body={'jobId': 'safe', 'confirmationToken': 'consent'},

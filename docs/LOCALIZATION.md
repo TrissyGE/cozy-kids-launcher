@@ -66,9 +66,10 @@ labels explicit about what the action does. Preserve placeholders, family
 labels, product names and commands. Follow the existing catalog guidance for
 claims about privacy, network access and age suitability.
 
-The PR author records the tested flows and remaining gaps. A fluent reviewer
-checks terminology, tone, and the rendered screens before the maintainer
-enables the pack. Review the installer, child view, Parent settings, catalog,
+The PR author records the tested flows and remaining gaps. Apply the same
+translation, placeholder and rendered-flow checks to all enabled languages;
+Italian has no separate fluent-review release gate. Additional fluent-language
+review of terminology and tone is welcome. Review the installer, child view, Parent settings, catalog,
 and error states. Include long labels, localized dates and numbers, keyboard
 use, available local voices, and 800×600 layouts. Use the required Linux
 [desktop sessions](DESKTOP_TESTING.md) for native helper acceptance. Record

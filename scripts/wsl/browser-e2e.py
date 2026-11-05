@@ -1954,7 +1954,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
-    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders"), default="all")
+    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -2035,7 +2035,7 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders"))
+            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders", "flatpak"))
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = installed_version
 
@@ -2083,6 +2083,9 @@ def main():
                         run_accessibility_scenarios(browser, args.artifacts)
                     if args.suite == "retro":
                         run_retro_scenario(browser, test_home)
+                    if args.suite == "flatpak":
+                        from browser_flatpak import run_flatpak_scenarios
+                        run_flatpak_scenarios(browser, args.artifacts)
                     if args.suite in ("all", "regressions"):
                         run_regression_scenarios(browser, args.artifacts, base_url)
                     if args.suite in ("all", "folders"):
