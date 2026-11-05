@@ -31,6 +31,9 @@ STATE_ENTRY = re.compile(
 )
 
 EXTRA_UI_KEYS = {
+    "packageSource": "package_source",
+    "packageSystemMaintenance": "package_system_maintenance",
+    "packageSystemUpdate": "package_system_update",
     "retroBenchmarkTitle": "retro_benchmark_title",
     "retroBenchmarkGuide": "retro_benchmark_guide",
     "retroBenchmarkStart": "retro_benchmark_start",

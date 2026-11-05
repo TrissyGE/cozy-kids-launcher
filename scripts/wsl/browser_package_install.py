@@ -172,6 +172,7 @@ def run_catalog_install_scenarios(browser, artifacts):
             document.querySelector('[data-catalog-id="e2e-catalog"] .actions button').textContent===uiText.install &&
             !document.querySelector('[data-catalog-id="e2e-catalog"] [data-package-operation="remove"]')
         """, 'Removing a package lost its tile or prevented reinstalling from the catalog')
+        run_native_package_scenarios(browser, artifacts)
         browser.set_device_metrics(1440, 900)
     finally:
         # Adding a tile deliberately exercises the real config endpoint. Restore
@@ -183,3 +184,51 @@ def run_catalog_install_scenarios(browser, artifacts):
             cfg=window.__pkgClientConfig; renderAll();
         })()""", await_promise=True)
     print('  ✓ terminal-free install, update and removal review, consent, progress, errors and tile preservation', flush=True)
+
+
+def run_native_package_scenarios(browser, artifacts):
+    """Use the existing package mutation fixture to check native provider policy."""
+    def check(expression, message):
+        if browser.evaluate(expression) is not True:
+            raise AssertionError(message)
+    for provider, title in (("dnf", "DNF"), ("zypper", "Zypper"), ("pacman", "Pacman")):
+        browser.evaluate(f"""
+          __pkgMode='maintenance'; __pkgRec.installed=true;
+          __pkgRec.packageRoute={{mode:'direct',provider:{json.dumps(provider)},package:'native-paint',
+            operations:{json.dumps(['install', 'remove'] if provider == 'pacman' else ['install'])}}};
+          __pkgReady.provider={json.dumps(provider)}; recommendations=__pkgRecommendations; renderRecommendations();
+        """)
+        browser.click('[data-catalog-id="e2e-catalog"] summary')
+        update_exists = browser.evaluate("!!document.querySelector('[data-catalog-id=\"e2e-catalog\"] [data-package-operation=\"update\"]')")
+        if update_exists:
+            raise AssertionError(f"The {provider} catalog offered an unqualified per-app update")
+        if provider == "pacman":
+            check("document.querySelector('[data-catalog-id=\"e2e-catalog\"]').textContent.includes(uiText.packageSystemUpdate)",
+                  "Arch did not explain the coordinated system update requirement")
+            browser.click('[data-catalog-id="e2e-catalog"] [data-package-operation="remove"]')
+        else:
+            check("!document.querySelector('[data-catalog-id=\"e2e-catalog\"] [data-package-operation=\"remove\"]') && document.querySelector('[data-catalog-id=\"e2e-catalog\"]').textContent.includes(uiText.packageSystemMaintenance)",
+                  "RPM maintenance was offered instead of its system-manager explanation")
+            browser.evaluate("__pkgState={...__pkgReady,operation:'install'}; showPackageOverlay(); refreshPackageStatus()", await_promise=True)
+        browser.wait_for("packageJob.status==='ready'")
+        check("document.getElementById('packageSummary').textContent.includes(uiText.packageSource+': '+" + json.dumps(title) + ")",
+              "The native review omitted its package manager")
+        browser.click('#packageClose')
+    browser.evaluate("window.__nativeLanguage=interfaceLanguage(); __pkgState={...__pkgReady,operation:'install',provider:'dnf'}; showPackageOverlay(); refreshPackageStatus()", await_promise=True)
+    browser.set_device_metrics(800, 600)
+    for language in ("de", "en", "es", "fr", "it"):
+        browser.evaluate(f"loadInterfaceLanguage({json.dumps(language)})", await_promise=True)
+        browser.evaluate("renderAll(); renderPackageJob()")
+        check("document.querySelector('.package-box').scrollWidth<=document.querySelector('.package-box').clientWidth+1 && document.getElementById('packageSummary').textContent.includes(uiText.packageSource+': DNF') && document.getElementById('packageClose').textContent===uiText.close",
+              "Localized native review overflowed or retained a stale source label")
+        browser.evaluate("packageJob={status:'error',operation:'update',error:'system_update_required',provider:'pacman'}; renderPackageJob()")
+        check("document.getElementById('packageMessage').textContent.includes(uiText.packageSystemUpdate)",
+              "The partial-update refusal lost its localized explanation")
+        browser.evaluate("packageJob={status:'error',operation:'remove',error:'system_maintenance_required',provider:'dnf'}; renderPackageJob()")
+        check("document.getElementById('packageMessage').textContent.includes(uiText.packageSystemMaintenance)",
+              "The RPM maintenance boundary lost its localized explanation")
+        browser.evaluate("packageJob=__pkgState; renderPackageJob()")
+    browser.screenshot(artifacts / 'native-package-review-800x600.png')
+    browser.evaluate("loadInterfaceLanguage(__nativeLanguage)", await_promise=True)
+    browser.evaluate("closePackageOverlay()")
+    print('  ✓ DNF, Zypper and Arch reviews retain native policy, source and five-language explanations', flush=True)

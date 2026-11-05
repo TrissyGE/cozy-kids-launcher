@@ -1,4 +1,7 @@
 {
+  "package_system_maintenance": "Use your system software manager to update or remove apps. Direct installation remains available here.",
+  "package_source": "Package manager",
+  "package_system_update": "Use your package manager's full system update on Arch Linux. Individual app updates are not offered here.",
   "retro_benchmark_scope_current": "Matches the currently checked device and core configuration.",
   "retro_benchmark_scope_unknown": "The current device configuration has not been compared yet.",
   "retro_benchmark_scope_stale": "This result belongs to a different device, driver or core configuration. Run the test again.",
@@ -354,7 +357,7 @@
   "package_status": "View package status",
   "package_storage": "The installation status could not be saved safely. Check free disk space and access permissions.",
   "package_unknown_size": "Size not available yet",
-  "package_unsupported": "Direct installation is not available here yet. Initial support requires PackageKit on Ubuntu, Linux Mint, or Zorin. Use your graphical system software manager for now.",
+  "package_unsupported": "Direct installation is not available with this system configuration. Use your distribution’s graphical software manager.",
   "package_waiting": "Waiting for the software manager …",
   "palette_bg_end": "Background end",
   "palette_bg_start": "Background start",

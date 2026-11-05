@@ -1,4 +1,7 @@
 {
+  "package_system_maintenance": "Usa il gestore software del sistema per aggiornare o rimuovere le app. L’installazione diretta resta disponibile qui.",
+  "package_source": "Gestore dei pacchetti",
+  "package_system_update": "Su Arch Linux, usa l’aggiornamento completo del sistema del gestore dei pacchetti. Qui non vengono offerti aggiornamenti delle singole app.",
   "retro_benchmark_scope_current": "Corrisponde alla configurazione del dispositivo e del core attualmente verificata.",
   "retro_benchmark_scope_unknown": "La configurazione attuale del dispositivo non è ancora stata confrontata.",
   "retro_benchmark_scope_stale": "Questo risultato appartiene a una configurazione diversa del dispositivo, del driver o del core. Ripeti il test.",
@@ -354,7 +357,7 @@
   "package_status": "Visualizza lo stato del pacchetto",
   "package_storage": "Impossibile salvare in sicurezza lo stato dell'installazione. Controlla lo spazio libero e i permessi di accesso.",
   "package_unknown_size": "Dimensione ancora sconosciuta",
-  "package_unsupported": "L'installazione diretta non è ancora disponibile qui. I sistemi supportati inizialmente richiedono PackageKit su Ubuntu, Linux Mint o Zorin. Per ora usa il gestore software grafico di sistema.",
+  "package_unsupported": "L’installazione diretta non è disponibile con questa configurazione del sistema. Usa il gestore software grafico della tua distribuzione.",
   "package_waiting": "In attesa del gestore software…",
   "palette_bg_end": "Fine sfondo",
   "palette_bg_start": "Inizio sfondo",

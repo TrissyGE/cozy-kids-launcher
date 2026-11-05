@@ -193,6 +193,11 @@ their own evidence is complete. See the release standard at the end.
 - [x] Reconcile jobs that finish while the launcher is offline using exact daemon history and a fresh package lookup
 - [ ] Implement tested native DNF/Pacman/Zypper and managed Flatpak execution adapters
   - [x] Show source-checked native package names for five apps across Fedora, Arch and openSUSE and distinguish graphical software-manager guidance from direct installation
+  - [x] Add native PackageKit adapters with distro/backend/role checks, explicit mappings, provider-bound consent/recovery and exact installed-version verification
+  - [x] Keep Arch app updates outside the per-app flow and refuse installation while coordinated system updates are pending
+  - [x] Exercise trusted installation, provider-specific maintenance policy, daemon-history reconciliation and ordinary-user authorization refusal in disposable Fedora, Arch and Tumbleweed containers; retain image/runtime evidence in focused CI
+  - [ ] Qualify RPM maintenance with reliable execution-time removal restrictions, real version-to-version update transitions and target-distribution graphical acceptance
+  - [ ] Add managed Flatpak installation with reviewed remote, ref and permissions
 - [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation
 - [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
 
@@ -329,7 +334,7 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Check installed-package startup, owned KTurtle fullscreen, overlay close and process cleanup on GNOME Wayland, KDE Wayland and XFCE X11; retain manual acceptance and the first GNOME launch failure separately
   - [x] Exercise the installed package's optional systemd user service with a real graphical browser, status, manual stop, cleanup and disable in the GNOME VM
   - [x] Add CI gates for repeat package builds, real installation, installed-runtime API checks and a rebuild on an installed build host
-  - [ ] Complete Linux Mint and Zorin package lifecycle and desktop acceptance, and diagnose the first GNOME KTurtle launch failure
+  - [ ] Complete Linux Mint and Zorin package lifecycle and desktop acceptance, and diagnose the first-launch KTurtle failures observed after fresh GNOME/XFCE sessions
   - [ ] Publish through a signed first-party APT repository or Ubuntu PPA
 - [ ] Produce first-party RPM packages and evaluate signed COPR or Open Build Service distribution after the Debian package layout is stable
 - [ ] Publish an Arch Linux AUR recipe after the Debian package layout is stable

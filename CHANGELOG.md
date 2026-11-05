@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Native app-store adapters
+
+- Extend terminal-free catalog installation to matching Fedora DNF, openSUSE Tumbleweed ZYpp and Arch ALPM PackageKit backends, using explicit native names and advertised daemon roles.
+- Bind consent and restart recovery to the native provider and reviewed backend; verify the installed target version and architecture before success.
+- Keep Arch on coordinated system updates: hide per-app updates and refuse new installations while system updates are pending.
+- Delegate RPM updates/removal to the system manager after finding incomplete removal-flag enforcement in the reviewed backends; keep Arch's checked single-target removal available.
+- Show the native package manager in the review, localize policy explanations in all five languages and report unavailable download sizes honestly.
+- Add disposable native installation/removal/recovery/authorization probes and a focused three-distribution CI workflow, with graphical release acceptance tracked separately.
+
 ### System package and child folders
 
 - Build a reproducible Debian package with system-owned code, private localized first start, package-managed updates and an application-menu entry.

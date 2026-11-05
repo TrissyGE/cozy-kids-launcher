@@ -151,16 +151,25 @@ function catalogDetails(rec){
     if(reference&&typeof reference==='object') addSource(reference.url,catalogText(reference,'label'));
   }
   if(sources.childElementCount) details.appendChild(sources);
-  const aptPackage=rec.packages?.apt??rec.package;
-  if(rec.installed&&catalogCanInstall(rec)&&typeof aptPackage==='string'&&aptPackage){
+  const nativePackage=rec.packageRoute?.package??rec.packages?.apt??rec.package;
+  if(rec.installed&&catalogCanInstall(rec)&&typeof nativePackage==='string'&&nativePackage){
     const maintenance=document.createElement('div'); maintenance.className='actions catalog-maintenance';
     for(const [operation,label] of [['update',uiText.packageMaintenance.checkUpdate],['remove',uiText.packageMaintenance.remove]]){
+      if(rec.packageRoute?.operations&&!rec.packageRoute.operations.includes(operation)) continue;
       const button=document.createElement('button');
       button.type='button'; button.className='smallbtn'; button.dataset.packageOperation=operation;
       button.textContent=label; button.onclick=()=>preparePackageOperation(rec,operation);
       maintenance.appendChild(button);
     }
     details.appendChild(maintenance);
+  }
+  if(rec.packageRoute?.provider==='pacman'){
+    const note=document.createElement('p'); note.className='muted'; note.textContent=uiText.packageSystemUpdate;
+    details.appendChild(note);
+  }
+  if(['dnf','zypper'].includes(rec.packageRoute?.provider)){
+    const note=document.createElement('p'); note.className='muted'; note.textContent=uiText.packageSystemMaintenance;
+    details.appendChild(note);
   }
   return details;
 }

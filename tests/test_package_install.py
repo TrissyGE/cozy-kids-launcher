@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from package_install import PackageInstaller
 from packagekit_backend import InstallError, PackageKitBackend, error_category
+from package_provider import mapped_package
 
 PLAN = {'installed': False, 'packageIds': ['paint;1;amd64;repo'],
         'changeIds': ['paint;1;amd64;+manual:repo'], 'packages': ['paint'], 'downloadBytes': 1024}
@@ -17,6 +18,14 @@ CATALOG = [{'id': 'paint', 'package': 'paint'}]
 
 
 class Backend:
+    provider = "apt"
+
+    def catalog_package(self, recommendation):
+        package = mapped_package(recommendation, self.provider)
+        if package is None:
+            raise InstallError("unsupported")
+        return package
+
     def __init__(self):
         self.plan = copy.deepcopy(PLAN)
         self.calls = 0
@@ -25,6 +34,7 @@ class Backend:
         self.block = None
 
     def prepare(self, package, operation="install"):
+        self.requested_package = package
         if self.block:
             self.block.wait(5)
         if self.failure:
@@ -75,6 +85,38 @@ class InstallTests(unittest.TestCase):
             self.manager.start(ready['jobId'], ready['confirmationToken'])
         self.assertNotIn('confirmationToken', self.manager.snapshot())
 
+    def test_native_mapping_and_consent_stay_bound_to_the_detected_provider(self):
+        catalog = [{"id": "paint", "package": "debian-paint", "packages": {"dnf": "fedora-paint", "pacman": "arch-paint"}}]
+        self.backend.provider = "dnf"
+        self.manager.prepare("paint", catalog)
+        self.manager.worker.join(5)
+        ready = self.manager.snapshot()
+        self.assertEqual(ready["status"], "ready")
+        self.assertEqual(ready["provider"], "dnf")
+        self.assertEqual(self.backend.requested_package, "fedora-paint")
+        self.assertEqual(json.loads(self.path.read_text())["provider"], "dnf")
+        self.backend.provider = "pacman"
+        self.manager.start(ready["jobId"], ready["confirmationToken"])
+        self.manager.worker.join(5)
+        self.assertEqual(self.manager.snapshot()["error"], "plan_changed")
+        self.assertEqual(self.backend.calls, 0)
+
+    def test_unmapped_native_package_never_falls_back_to_the_apt_name(self):
+        self.backend.provider = "dnf"
+        self.assertEqual(self.prepare()["error"], "unsupported")
+        self.assertEqual(self.backend.calls, 0)
+        self.assertFalse(hasattr(self.backend, "requested_package"))
+
+    def test_restart_cannot_adopt_a_transaction_from_another_native_provider(self):
+        self.path.parent.mkdir(parents=True)
+        self.path.write_text(json.dumps({"jobId": "a" * 32, "appId": "paint", "operation": "install", "status": "installing",
+                                         "transactionId": "/42_abc", "target": ["paint", "1", "amd64"], "provider": "dnf"}))
+        self.backend.recover = Mock()
+        restarted = PackageInstaller(self.path, lambda: self.backend)
+        restarted.worker.join(5)
+        self.assertEqual(restarted.snapshot()["status"], "interrupted")
+        self.backend.recover.assert_not_called()
+
     def test_changed_or_expired_plan_never_installs(self):
         ready = self.prepare()
         self.backend.plan['changeIds'] = ['different dependency']
@@ -105,7 +147,7 @@ class InstallTests(unittest.TestCase):
     def test_restart_never_replays_and_journal_excludes_plans_and_consent(self):
         ready = self.prepare()
         journal = json.loads(self.path.read_text())
-        self.assertEqual(set(journal), {'jobId', 'appId', 'operation', 'status'})
+        self.assertEqual(set(journal), {'jobId', 'appId', 'operation', 'status', 'provider'})
         self.assertNotIn(ready['confirmationToken'], self.path.read_text())
         recovered = PackageInstaller(self.path, lambda: self.backend)
         self.assertEqual(recovered.snapshot()['status'], 'interrupted')

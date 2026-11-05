@@ -1,6 +1,7 @@
 """Single, Parent-confirmed catalog package operation with bounded private state."""
 
 import json
+import copy
 from pathlib import Path
 import re
 import secrets
@@ -8,7 +9,7 @@ import threading
 import time
 
 from config_store import atomic_write_config
-from package_provider import PACKAGE_NAME
+from package_provider import PACKAGE_NAME, PROVIDERS, mapped_package
 from packagekit_backend import (
     InstallError, PACKAGE_OPERATIONS, PackageKitBackend, TRANSACTION_ID, package_identity,
 )
@@ -17,7 +18,7 @@ from packagekit_backend import (
 ACTIVE_STATES = {"checking", "installing"}
 ERRORS = {"network", "authorization", "busy", "not_found", "unsupported", "unavailable",
           "changes_required", "plan_changed", "failed", "interrupted", "storage",
-          "not_installed", "no_update"}
+          "not_installed", "no_update", "system_update_required", "system_maintenance_required"}
 PHASES = {"waiting-for-auth": "authorization", "download": "downloading", "install": "installing",
           "update": "updating", "remove": "removing", "wait": "waiting",
           "waiting-for-lock": "waiting", "setup": "checking"}
@@ -60,9 +61,12 @@ class PackageInstaller:
                        for value in target)
                 or not PACKAGE_NAME.fullmatch(target[0])):
             return
+        provider = previous.get("provider", "apt")
+        if not isinstance(provider, str) or provider not in PROVIDERS:
+            return
         self.recovery = {"transactionId": transaction, "target": target}
         self.job = {"status": "installing", "operation": previous["operation"], "jobId": job_id,
-                    "appId": app_id, "phase": "checking", "percent": None, "recovered": True}
+                    "appId": app_id, "phase": "checking", "percent": None, "recovered": True, "provider": provider}
         self.worker = threading.Thread(target=self._recover, daemon=True)
         self.worker.start()
 
@@ -70,6 +74,8 @@ class PackageInstaller:
         backend = None
         try:
             backend = self.backend_factory()
+            if backend.provider != self.job["provider"]:
+                raise InstallError("interrupted")
             if not backend.recover(self.recovery["transactionId"], self.job["operation"],
                                    self.recovery["target"], self._progress):
                 raise InstallError("failed")
@@ -90,7 +96,7 @@ class PackageInstaller:
     def _persist(self):
         self.journal.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         record = {key: self.job[key] for key in
-                  ("jobId", "appId", "operation", "status") if key in self.job}
+                  ("jobId", "appId", "operation", "status", "provider") if key in self.job}
         if self.job["status"] == "installing" and self.recovery:
             record.update(self.recovery)
         atomic_write_config(str(self.journal), record)
@@ -118,8 +124,8 @@ class PackageInstaller:
         mappings = rec.get("packages", {})
         if not isinstance(mappings, dict):
             raise ValueError("Invalid native package mapping")
-        package = mappings.get("apt", rec.get("package"))
-        if not isinstance(package, str) or not PACKAGE_NAME.fullmatch(package):
+        packages = [mapped_package(rec, provider) for provider in PROVIDERS]
+        if not any(packages):
             raise ValueError("App has no native package")
         with self.lock:
             if self.job["status"] in ACTIVE_STATES:
@@ -134,7 +140,7 @@ class PackageInstaller:
             except OSError:
                 self.job = {"status": "error", "error": "storage"}
                 raise InstallError("storage") from None
-            self.package = package
+            self.recipe = copy.deepcopy({key: rec[key] for key in ("package", "packages") if key in rec})
             self.worker = threading.Thread(target=self._run, args=(False,), daemon=True)
             self.worker.start()
             return self.snapshot()
@@ -190,6 +196,11 @@ class PackageInstaller:
         operation = self.job["operation"]
         try:
             backend = self.backend_factory()
+            self.package = backend.catalog_package(self.recipe)
+            if confirmed and backend.provider != self.job.get("provider"):
+                raise InstallError("plan_changed")
+            if not confirmed:
+                self._update(provider=backend.provider)
             plan = backend.prepare(self.package, operation)
             if plan.get("installed"):
                 self._update(status="complete", phase="complete", percent=100)
