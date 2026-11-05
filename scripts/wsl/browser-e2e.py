@@ -237,6 +237,7 @@ def run_retro_scenario(browser, test_home):
                   "document.querySelector('#retroDeviceResults summary').textContent===uiText.retroDeviceDetails",
                   "Hardware requirements overflowed the localized compact Parent layout")
     browser.click('#retroDeviceResults > li:nth-child(4) details summary')
+    browser.evaluate("document.querySelector('#retroDeviceResults > li:nth-child(4) details').scrollIntoView({block:'start'})")
     browser.screenshot(Path(browser.log_path).parent / 'retro-device-details.png')
     browser.set_device_metrics(1440, 900)
     browser.evaluate("loadInterfaceLanguage('en')", await_promise=True)

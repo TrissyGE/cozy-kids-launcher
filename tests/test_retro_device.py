@@ -7,10 +7,11 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import retro_device
+import retro_games
 
 
 class RetroDeviceTests(unittest.TestCase):
-    def report(self, *, arch="x86_64", flags=None, memory=16, gl="", vk="", extensions="", version="1.0", catalog=None):
+    def report(self, *, arch="x86_64", flags=None, memory=16, gl="", vk="", extensions="", version="1.0", catalog=None, core_ready=False):
         def output(command):
             if command[0] == "glxinfo":
                 return gl if "-B" in command else extensions
@@ -23,7 +24,7 @@ class RetroDeviceTests(unittest.TestCase):
                 patch.object(retro_device, "_graphics_output", side_effect=output), \
                 patch.object(retro_device, "read_os_release", return_value={"ID": "ubuntu"}), \
                 patch.object(retro_device, "detect_native_provider", return_value="apt"):
-            return retro_device.retro_device_report(catalog or [], core_ready=False)
+            return retro_device.retro_device_report(catalog or [], core_ready=core_ready)
 
     def test_data_registry_contains_review_dates_and_primary_https_sources(self):
         self.assertRegex(retro_device.REQUIREMENTS["reviewed"], r"^\d{4}-\d{2}-\d{2}$")
@@ -68,6 +69,23 @@ class RetroDeviceTests(unittest.TestCase):
         self.assertNotEqual(first["deviceKey"], graphics["deviceKey"])
         self.assertNotIn(str(Path.home()), json.dumps(first))
         self.assertRegex(first["checkedAt"], r"^\d{4}-\d{2}-\d{2}T")
+        with patch.dict(retro_device.REQUIREMENTS, {"revision": "changed-rules"}):
+            rules = self.report(catalog=catalog)
+        self.assertNotEqual(first["systems"][0]["resultKey"], rules["systems"][0]["resultKey"])
+        catalog = [{"id": "retroarch", "retroEmulator": True, "installed": True, "package": "retroarch"}]
+        core_before = self.report(catalog=catalog, core_ready=True)["systems"][2]
+        with patch.object(retro_games, "PS1_CORE_SHA256", "0" * 64):
+            core_after = self.report(catalog=catalog, core_ready=True)["systems"][2]
+        self.assertNotEqual(core_before["resultKey"], core_after["resultKey"])
+
+    def test_oversized_or_failed_probe_is_unknown(self):
+        with patch.object(retro_device.shutil, "which", return_value="/usr/bin/glxinfo"), \
+                patch.object(retro_device.subprocess, "run") as run:
+            run.return_value.stdout = "a" * (128 * 1024 + 1)
+            self.assertEqual(retro_device._graphics_output(("glxinfo",)), "")
+            run.side_effect = retro_device.subprocess.TimeoutExpired("glxinfo", 2)
+            self.assertEqual(retro_device._graphics_output(("glxinfo",)), "")
+            self.assertEqual(run.call_args.kwargs["timeout"], 2)
 
     def test_unusable_version_output_is_not_exposed(self):
         catalog = [{"id": "mgba-qt", "retroEmulator": True, "installed": True, "package": "mgba-qt"}]

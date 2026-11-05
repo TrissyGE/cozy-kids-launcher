@@ -152,7 +152,8 @@ RetroGameCorner matrix. The package runtime is read-only to the family user.
 The final native probes used the runtime from `fc2949f`, packaged as
 `0.6.0+package4-1`. The `.deb` SHA-256 was
 `bcdf0a1c1d7b1f1e880f65d8c3540137c7b46c9e3c5b7b6512ed645de57ada27`.
-Subsequent commits change test orchestration and evidence only.
+The lifecycle rows below refer to that package candidate. The later
+RetroGameCorner preflight increment has separate evidence below.
 Actual dpkg install, upgrade and downgrade between two candidate package
 revisions passed. A real script installation was migrated with its exact
 configuration retained. The installed server restored a configuration
@@ -196,6 +197,26 @@ Child folder browser checks cover real save/reload, hidden tiles, folder
 deletion without deleting apps, keyboard back/focus recovery, a synthetic
 standard gamepad, media-return state, and the five enabled languages at
 800×600. The physical gamepad gate below still applies.
+
+### Sourced RetroGameCorner preflight, 2026-11-05
+
+The `f7c6879` runtime, packaged as `0.6.0+package5-1`, produced complete
+eight-system capability reports in Plasma Wayland, a fresh GNOME Wayland
+user session, and XFCE X11 with LightDM. The `.deb` SHA-256 was
+`7b95a58680e3b19f3f9cba173cb87c213bf2c52b956cbaac05f17e3c5edee6c2`.
+The guest reported x86-64 and 5.8 GiB of usable RAM. Accelerated graphics
+capabilities stayed unknown; the report did not turn software rendering
+into a hardware-performance pass. PS2 was limited by memory guidance and
+unqualified candidate installation routes stayed unavailable.
+
+The real installed-package API probe also checked the requirements resource
+and all eight report rows. Browser tests exercised each enabled language at
+800×600, source/detail expansion, a fresh check before emulator installation,
+confirmed incompatibility, unknown performance with a reviewed route, and
+discarding a late result after Parent settings closed. Requirement/parser
+tests cover alternative renderers, missing extensions, package/core/rule
+version changes and unknown probe results. These are preflight checks and
+do not measure gameplay, frame pacing or candidate driver correctness.
 
 ## Physical Linux test laptop
 
