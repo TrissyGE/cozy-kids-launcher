@@ -140,6 +140,11 @@ def log_scenario(name):
 
 
 def enter_parent_settings(browser):
+    browser.wait_for(
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "!document.getElementById('saveBtn').disabled",
+        message="Parent settings did not finish closing before reopening",
+    )
     browser.click("#parentBtn")
     browser.wait_for(
         "!document.getElementById('pin').classList.contains('hidden')",
@@ -1443,10 +1448,33 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     browser.wait_for("!document.getElementById('admin').classList.contains('hidden')")
     browser.click("[data-admin-section='screen-time']")
     browser.click("#weeklyScheduleEnabled")
+    # A background availability poll may observe the saved configuration before
+    # saveConfig's own awaited poll finishes. Reproduce that interleaving: an
+    # allowed profile and hidden block alone do not mean Parent settings closed.
+    browser.evaluate("""
+      window.__scheduleOriginalPoll=pollAvailability;
+      window.__scheduleSavePoll=null;
+      pollAvailability=async()=>{
+        await new Promise(resolve=>{window.__scheduleSavePoll=resolve;});
+        return __scheduleOriginalPoll();
+      };
+    """)
     browser.click("#saveBtn")
+    browser.wait_for("typeof __scheduleSavePoll==='function'")
+    browser.evaluate("__scheduleOriginalPoll()", await_promise=True)
+    assert_js(browser,
+        "availabilityStatus.profileAllowed===true && "
+        "document.getElementById('availabilityBlock').classList.contains('hidden') && "
+        "!document.getElementById('admin').classList.contains('hidden') && "
+        "document.getElementById('saveBtn').disabled",
+        "The delayed save fixture did not expose the availability/close race",
+    )
+    browser.evaluate("pollAvailability=__scheduleOriginalPoll; __scheduleSavePoll()")
     browser.wait_for(
         "availabilityStatus.profileAllowed===true && "
-        "document.getElementById('availabilityBlock').classList.contains('hidden')",
+        "document.getElementById('availabilityBlock').classList.contains('hidden') && "
+        "document.getElementById('admin').classList.contains('hidden') && "
+        "!document.getElementById('saveBtn').disabled",
         message="Disabling the weekly schedule did not restore launcher availability",
     )
     log_scenario("weekly and per-app schedules persist and explain blocked states")
