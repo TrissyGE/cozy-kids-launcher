@@ -963,6 +963,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "items": [
                     {"id": identifier, "title": approved[identifier]["label"],
                      "system": ROM_SYSTEMS[games[identifier]["romExtension"]][2],
+                     "systemLabel": ROM_SYSTEMS[games[identifier]["romExtension"]][3],
                      "coverUrl": f"/api/retro/cover?id={identifier}"}
                     for identifier in sorted(games.keys() & approved.keys(),
                                              key=lambda key: (approved[key]["label"].casefold(), key))

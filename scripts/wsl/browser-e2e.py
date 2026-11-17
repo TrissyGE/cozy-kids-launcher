@@ -220,7 +220,9 @@ def run_retro_scenario(browser, test_home):
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
         zipped.writestr("Local Test.gba", b"scanner fixture")
     (retro_root / "TV Game.nes").write_bytes(b"scanner fixture")
-    (retro_root / "Game Bundle.png").write_bytes(base64.b64decode(
+    images = retro_root / "Imgs"
+    images.mkdir()
+    (images / "Game Bundle.png").write_bytes(base64.b64decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
     ))
     browser.evaluate("enterAdmin(); activateAdminSection('retro')")
@@ -353,6 +355,15 @@ def run_retro_scenario(browser, test_home):
               "Approved games appeared as extra Home tiles")
     browser.click('#grid .tile[data-tile-id="retro-corner"]')
     browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
+    browser.click("#retroGroup")
+    assert_js(browser, "document.getElementById('retroGroup').getAttribute('aria-pressed')==='true' && "
+              "Array.from(document.querySelectorAll('.retro-console-heading')).map(h=>h.textContent).join(',')==='Game Boy Advance,NES' && "
+              "document.querySelectorAll('.retro-console-cards .media-card').length===2",
+              "Grouping did not retain the approved games under their console headings")
+    browser.evaluate("document.querySelector('.media-card').focus()")
+    browser.key_press("ArrowDown")
+    assert_js(browser, "document.activeElement.querySelector('.media-card-title')?.textContent==='TV Game'",
+              "Keyboard navigation stopped at the first console")
     browser.click('[data-retro-system="Nintendo - Nintendo Entertainment System"]')
     assert_js(browser, "document.querySelectorAll('.media-card').length===1 && "
               "document.querySelector('.media-card-title').textContent==='TV Game'",

@@ -9,6 +9,7 @@ let mediaFavoriteIds=new Set();
 let mediaRecentIds=[];
 let mediaFilter='all';
 let retroSystem='';
+let retroGrouped=false;
 let mediaSourceRevision='';
 let mediaCatalogLoading=false;
 let mediaSourceChecking=false;
@@ -49,7 +50,7 @@ function localizeMediaPage(tile){
   const title=(tile&&tile.label)||mediaText.mediaLibraryTitle;
   document.title=title+' · Cozy Kids Launcher';
   document.getElementById('mediaTitle').textContent=title;
-  document.getElementById('mediaHint').textContent=mediaText.mediaLibraryHint;
+  document.getElementById('mediaHint').textContent=retroLibrary?'':mediaText.mediaLibraryHint;
   setIconLabel(document.getElementById('mediaBack'),'back',mediaText.mediaLibraryBack);
   const filters=document.getElementById('mediaFilters');
   filters.setAttribute('aria-label',mediaText.mediaLibraryViews);
@@ -63,6 +64,7 @@ function localizeMediaPage(tile){
     button.hidden=retroLibrary;
   });
   document.getElementById('mediaRefresh').textContent=mediaText.mediaLibraryRefresh;
+  document.getElementById('retroGroup').textContent=mediaText.retroLibraryByConsole;
 }
 
 function showMediaState(kind,message,retryAction=null){
@@ -95,7 +97,7 @@ function hideMediaState(){
 function mediaCoverFallback(container,kind){
   const playMark=container.querySelector('.media-play-mark');
   container.classList.add('media-cover-fallback');
-  const icon=createLocalIcon(retroLibrary?'apps':kind==='video'?'video':'media');
+  const icon=createLocalIcon(retroLibrary?'gamepad':kind==='video'?'video':'media');
   container.replaceChildren(...(icon?[icon]:[]),...(playMark?[playMark]:[]));
 }
 
@@ -137,11 +139,12 @@ function mediaCard(item){
   const title=document.createElement('span');
   title.className='media-card-title';
   title.textContent=item.title;
+  title.dir='auto';
   const kind=document.createElement('span');
   kind.className='media-card-kind';
-  kind.textContent=retroLibrary?'':item.kind==='video'?mediaText.mediaLibraryVideo:mediaText.mediaLibraryAudio;
+  kind.textContent=retroLibrary?item.systemLabel:item.kind==='video'?mediaText.mediaLibraryVideo:mediaText.mediaLibraryAudio;
   copy.appendChild(title);
-  if(!retroLibrary) copy.appendChild(kind);
+  if(!retroLibrary||(!retroGrouped&&!retroSystem)) copy.appendChild(kind);
   button.append(cover,copy);
   const favorite=mediaFavoriteIds.has(item.id);
   if(retroLibrary){
@@ -181,27 +184,56 @@ function emptyMediaMessage(){
 function renderRetroFilters(){
   const filters=document.getElementById('mediaFilters');
   filters.querySelectorAll('[data-retro-system]').forEach(button=>button.remove());
-  const systems=[...new Set(mediaItems.map(item=>item.system).filter(system=>typeof system==='string'&&system))].sort();
+  const labels=new Map(mediaItems.map(item=>[item.system,item.systemLabel]));
+  const systems=[...labels.keys()].sort((first,second)=>labels.get(first).localeCompare(labels.get(second)));
+  const group=document.getElementById('retroGroup');
+  group.hidden=systems.length<2;
   if(!systems.includes(retroSystem)||systems.length<2) retroSystem='';
-  if(systems.length<2) return;
+  if(group.hidden){ retroGrouped=false; return; }
   for(const system of ['',...systems]){
     const button=document.createElement('button');
     button.type='button';
-    button.className='smallbtn';
+    button.className='smallbtn media-filter';
     button.dataset.retroSystem=system;
-    button.textContent=system||mediaText.mediaLibraryAll;
-    filters.appendChild(button);
+    button.textContent=labels.get(system)||mediaText.mediaLibraryAll;
+    filters.insertBefore(button,group);
   }
+}
+
+function retroConsoleSections(items){
+  const consoles=new Map();
+  for(const item of items){
+    if(!consoles.has(item.systemLabel)) consoles.set(item.systemLabel,[]);
+    consoles.get(item.systemLabel).push(item);
+  }
+  return [...consoles].sort(([first],[second])=>first.localeCompare(second)).map(([label,games],index)=>{
+    const section=document.createElement('section');
+    const title=document.createElement('h2');
+    title.id='retroConsole'+index;
+    title.className='retro-console-heading';
+    title.textContent=label;
+    section.setAttribute('aria-labelledby',title.id);
+    const list=document.createElement('div');
+    list.className='retro-console-cards';
+    list.setAttribute('role','list');
+    list.replaceChildren(...games.map(mediaCard));
+    section.append(title,list);
+    return section;
+  });
 }
 
 function renderMediaCatalog(){
   const items=visibleMediaItems();
   const grid=document.getElementById('mediaGrid');
-  grid.replaceChildren(...items.map(mediaCard));
+  grid.classList.toggle('retro-grouped',retroGrouped);
+  if(retroGrouped) grid.removeAttribute('role');
+  else grid.setAttribute('role','list');
+  grid.replaceChildren(...(retroGrouped?retroConsoleSections(items):items.map(mediaCard)));
   grid.hidden=items.length===0;
+  document.getElementById('retroGroup').setAttribute('aria-pressed',String(retroGrouped));
   document.querySelectorAll('[data-media-filter],[data-retro-system]').forEach(button=>{
     const active=button.hasAttribute('data-retro-system')
-      ?button.dataset.retroSystem===retroSystem:button.dataset.mediaFilter===mediaFilter;
+      ?!retroGrouped&&button.dataset.retroSystem===retroSystem:button.dataset.mediaFilter===mediaFilter;
     button.classList.toggle('is-active',active);
     button.setAttribute('aria-pressed',active?'true':'false');
   });
@@ -351,8 +383,12 @@ function handleMediaKeys(event){
     mediaHome();
     return;
   }
-  if(!event.target.matches('.media-card')||!event.key.startsWith('Arrow')) return;
+  if(!event.target.matches('.media-card')||!Object.hasOwn(navigationDirections,event.key)) return;
   const cards=Array.from(document.querySelectorAll('.media-card'));
+  if(retroGrouped){
+    if(moveDirectionalFocus(event.key,cards,event.target)) event.preventDefault();
+    return;
+  }
   const index=cards.indexOf(event.target);
   const columns=getComputedStyle(document.getElementById('mediaGrid')).gridTemplateColumns.split(' ').length;
   const offset={ArrowLeft:-inlineDirection(),ArrowRight:inlineDirection(),ArrowUp:-columns,ArrowDown:columns}[event.key];
@@ -363,10 +399,18 @@ function handleMediaKeys(event){
 async function initializeMediaLibrary(){
   document.getElementById('mediaBack').addEventListener('click',mediaHome);
   document.getElementById('mediaRefresh').addEventListener('click',loadMediaCatalog);
+  document.getElementById('retroGroup').addEventListener('click',()=>{
+    if(mediaCatalogLoading) return;
+    retroGrouped=!retroGrouped;
+    retroSystem='';
+    renderMediaCatalog();
+    document.getElementById('mediaGrid').scrollTop=0;
+  });
   document.getElementById('mediaFilters').addEventListener('click',event=>{
     const system=event.target.closest('[data-retro-system]');
     if(system&&retroLibrary&&!mediaCatalogLoading){
       retroSystem=system.dataset.retroSystem;
+      retroGrouped=false;
       renderMediaCatalog();
       document.querySelector('.media-card')?.focus();
       return;

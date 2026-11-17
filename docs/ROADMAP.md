@@ -297,7 +297,8 @@ that lack an equivalent core, including Wii U and PS3.
 - [x] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
 - [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
 - [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix
-- [x] Group approved RetroGameCorner games by console with optional library filters
+- [x] Offer larger covers, optional console sections and individual console filters in the approved game library
+- [x] Put activation and game approval first in the Parent RetroGameCorner section, with hardware, BIOS and saves in their own panels
 - [x] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
   - [x] Keep bounded folder definitions and tile assignments private to each child profile, with validated references and safe profile copying
   - [x] Add the Parent editor, child folder tiles, keyboard/gamepad back navigation and media return to the containing folder

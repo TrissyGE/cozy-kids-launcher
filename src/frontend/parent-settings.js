@@ -955,6 +955,9 @@ function renderRetroEmulators(){
 function renderAdmin(){
   document.getElementById('retroEnabledLabel').textContent=uiText.retroEnabled;
   document.getElementById('retroCoversLabel').textContent=uiText.retroCovers;
+  document.getElementById('retroTitle').textContent=uiText.retroLibrarySetup;
+  document.getElementById('retroEmulatorTitle').textContent=uiText.retroEmulatorTitle;
+  document.getElementById('retroSourcesHint').textContent=uiText.retroSourcesHint;
   document.getElementById('retroGuide').textContent=uiText.retroGuide;
   document.getElementById('retroDeviceTitle').textContent=uiText.retroDeviceTitle;
   document.getElementById('retroDeviceGuide').textContent=uiText.retroDeviceGuide;

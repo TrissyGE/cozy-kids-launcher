@@ -347,35 +347,42 @@
 
           <section id="adminSectionRetro" class="admin-section" data-admin-panel="retro" aria-labelledby="adminNavRetro" hidden>
             <h3 class="section-heading" tabindex="-1"></h3>
-            <div id="retroEmulators"></div>
-            <details class="backup-panel media-roots-panel">
+            <div class="backup-panel retro-panel retro-switches">
+              <label class="chk"><input id="retroEnabled" type="checkbox" onchange="saveRetroSettings()" aria-describedby="retroSettingsStatus"><span id="retroEnabledLabel"></span></label>
+              <label class="chk"><input id="retroCovers" type="checkbox" onchange="saveRetroSettings()" aria-describedby="retroSettingsStatus"><span id="retroCoversLabel"></span></label>
+              <p id="retroSettingsStatus" role="status" aria-live="polite"></p>
+            </div>
+            <section class="backup-panel retro-panel media-roots-panel" aria-labelledby="retroTitle">
+              <h4 id="retroTitle"></h4>
+              <label id="retroRootsLabel" for="retroRoots"></label>
+              <p id="retroSourcesHint" class="muted"></p>
+              <textarea id="retroRoots" aria-describedby="retroSourcesHint" rows="3" maxlength="16391" dir="ltr" spellcheck="false" disabled></textarea>
+              <div class="actions">
+                <button id="retroSave" class="smallbtn" type="button" onclick="saveRetroRoots()" disabled></button>
+                <button id="retroRefresh" class="smallbtn" type="button" onclick="loadRetroGames()"></button>
+              </div>
+              <label id="retroGameLabel" for="retroGame"></label>
+              <div class="retro-action-field">
+                <select id="retroGame" disabled></select>
+                <button id="retroApprove" class="smallbtn" type="button" onclick="approveRetroGame()" disabled></button>
+              </div>
+              <div id="retroStatus" role="status" aria-live="polite"></div>
+            </section>
+            <section class="backup-panel retro-panel" aria-labelledby="retroEmulatorTitle">
+              <h4 id="retroEmulatorTitle"></h4>
+              <p id="retroGuide" class="muted"></p>
+              <div id="retroEmulators" class="retro-emulator-grid"></div>
+            </section>
+            <details class="backup-panel retro-panel media-roots-panel">
               <summary id="retroDeviceTitle"></summary>
               <p id="retroDeviceGuide" class="muted"></p>
               <button id="retroDeviceRun" class="smallbtn" type="button" onclick="runRetroDeviceCheck()" disabled></button>
               <p id="retroDeviceStatus" role="status" aria-live="polite"></p>
               <ul id="retroDeviceResults"></ul>
             </details>
-            <section class="backup-panel media-roots-panel" aria-labelledby="retroBenchmarkTitle">
-              <h4 id="retroBenchmarkTitle"></h4>
-              <p id="retroBenchmarkGuide" class="muted"></p>
-              <div class="actions">
-                <button id="retroBenchmarkRun" class="smallbtn" type="button" onclick="startRetroBenchmark()" disabled></button>
-                <button id="retroBenchmarkCancel" class="smallbtn" type="button" onclick="changeRetroBenchmark('cancel')" hidden></button>
-                <button id="retroBenchmarkClear" class="smallbtn" type="button" onclick="changeRetroBenchmark('clear')" hidden></button>
-              </div>
-              <p id="retroBenchmarkStatus" role="status" aria-live="polite"></p>
-              <div id="retroBenchmarkResult"></div>
-            </section>
-            <div class="backup-panel media-roots-panel">
-              <label class="chk"><input id="retroEnabled" type="checkbox" onchange="saveRetroSettings()" aria-describedby="retroSettingsStatus"><span id="retroEnabledLabel"></span></label>
-              <label class="chk"><input id="retroCovers" type="checkbox" onchange="saveRetroSettings()" aria-describedby="retroSettingsStatus"><span id="retroCoversLabel"></span></label>
-              <p id="retroSettingsStatus" role="status" aria-live="polite"></p>
-            </div>
-            <section class="backup-panel media-roots-panel" aria-labelledby="retroTitle">
-              <h3 id="retroTitle">RetroGameCorner</h3>
-              <p id="retroGuide" class="muted"></p>
-              <details>
-                <summary id="ps1BiosTitle"></summary>
+            <details class="backup-panel retro-panel">
+              <summary id="ps1BiosTitle"></summary>
+              <div class="retro-detail-fields">
                 <p id="ps1BiosGuide" class="muted"></p>
                 <p id="ps1RuntimeStatus" class="muted"></p>
                 <div class="actions">
@@ -388,19 +395,11 @@
                 <input id="ps1BiosInput" type="file" accept=".bin" onchange="importPs1Bios()" disabled>
                 <ul id="ps1BiosRegions"></ul>
                 <p id="ps1BiosStatus" role="status" aria-live="polite"></p>
-              </details>
-              <label id="retroRootsLabel" for="retroRoots"></label>
-              <textarea id="retroRoots" rows="3" maxlength="16391" dir="ltr" spellcheck="false" disabled></textarea>
-              <div class="actions">
-                <button id="retroSave" class="smallbtn" type="button" onclick="saveRetroRoots()" disabled></button>
-                <button id="retroRefresh" class="smallbtn" type="button" onclick="loadRetroGames()"></button>
               </div>
-              <label id="retroGameLabel" for="retroGame"></label>
-              <select id="retroGame" disabled></select>
-              <button id="retroApprove" class="smallbtn" type="button" onclick="approveRetroGame()" disabled></button>
-              <div id="retroStatus" role="status" aria-live="polite"></div>
-              <details>
-                <summary id="retroSavesTitle"></summary>
+            </details>
+            <details class="backup-panel retro-panel">
+              <summary id="retroSavesTitle"></summary>
+              <div class="retro-detail-fields">
                 <label id="retroSaveGameLabel" for="retroSaveGame"></label>
                 <select id="retroSaveGame" disabled></select>
                 <div class="actions">
@@ -408,7 +407,18 @@
                   <button id="retroSaveRemove" class="smallbtn" type="button" onclick="manageRetroSave(true)" disabled></button>
                 </div>
                 <p id="retroSaveStatus" role="status" aria-live="polite"></p>
-              </details>
+              </div>
+            </details>
+            <section class="backup-panel retro-panel media-roots-panel" aria-labelledby="retroBenchmarkTitle">
+              <h4 id="retroBenchmarkTitle"></h4>
+              <p id="retroBenchmarkGuide" class="muted"></p>
+              <div class="actions">
+                <button id="retroBenchmarkRun" class="smallbtn" type="button" onclick="startRetroBenchmark()" disabled></button>
+                <button id="retroBenchmarkCancel" class="smallbtn" type="button" onclick="changeRetroBenchmark('cancel')" hidden></button>
+                <button id="retroBenchmarkClear" class="smallbtn" type="button" onclick="changeRetroBenchmark('clear')" hidden></button>
+              </div>
+              <p id="retroBenchmarkStatus" role="status" aria-live="polite"></p>
+              <div id="retroBenchmarkResult"></div>
             </section>
           </section>
 

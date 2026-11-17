@@ -739,7 +739,7 @@ keys = (
     "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
     "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
     "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget", "updateTrack",
-    "retroSettingsSaved",
+    "retroSettingsSaved", "retroLibrarySetup", "retroEmulatorTitle", "retroSourcesHint",
 )
 print(json.dumps({key: value for key, value in locale.items() if key in keys or key.startswith(("folder", "flatpak", "package")) or key == "catalogUseSource"}, ensure_ascii=True))
 PY
