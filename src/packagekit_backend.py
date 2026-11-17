@@ -86,6 +86,10 @@ class PackageKitBackend:
         return package
 
     def _require_operation(self, operation):
+        if self.control.props.backend_name == "aptcc" and operation != "install":
+            # APTcc 1.2.5 reads allow_deps but does not pass it to the solver.
+            # Keep maintenance in the system software manager on this backend.
+            raise InstallError("system_maintenance_required")
         if operation not in self.profile["operations"]:
             if self.provider in {"dnf", "zypper"}:
                 # Reviewed RPM backends do not fully enforce the no-dependent-

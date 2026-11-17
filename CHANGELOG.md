@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Release laptop fixes
+
+- Install catalog apps through Zorin's APTcc PackageKit backend. Review and confirm installation in Parent settings, with maintenance handled by the system software manager on APTcc.
+- Start the selected Game Boy ROM in fullscreen on mGBA 0.9.3 and newer versions using the supported short command-line option.
+- Preserve profiles, approvals and the Parent PIN when rerunning the installer with `--force`.
+
 ### Managed Flatpak app source
 
 - Add explicit Native/Flatpak source selection and an initial reviewed Tux Paint Flatpak recipe, retaining the complete native catalog.

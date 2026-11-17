@@ -216,7 +216,7 @@ function catalogDetails(rec){
     const note=document.createElement('p'); note.className='muted'; note.textContent=uiText.packageSystemUpdate;
     details.appendChild(note);
   }
-  if(['dnf','zypper'].includes(rec.packageRoute?.provider)){
+  if(rec.packageRoute?.maintenance==='system'||['dnf','zypper'].includes(rec.packageRoute?.provider)){
     const note=document.createElement('p'); note.className='muted'; note.textContent=uiText.packageSystemMaintenance;
     details.appendChild(note);
   }

@@ -12,6 +12,13 @@ tile to the current child's screen. Nothing is installed merely by opening an
 app or its review. The manual-plan API from the first increment remains
 compatible, but is no longer the catalog's primary Install action.
 
+Ubuntu 22.04-based installations such as Zorin OS 17 use PackageKit's
+older `aptcc` backend. It supports direct catalog installation with the same
+review and consent flow. Update and removal use the system software manager
+on this backend because its removal path does not enforce `allow_deps`.
+The worker checks the daemon ID before executing any package action.
+[PackageKit 1.2.5 APTcc source](https://github.com/PackageKit/PackageKit/blob/PACKAGEKIT_1_2_5/backends/aptcc/pk-backend-aptcc.cpp#L681-L755).
+
 ## Terminal-free runtime and boundaries
 
 The core launcher remains usable with only its existing dependencies. Direct
