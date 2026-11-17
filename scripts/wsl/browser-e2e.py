@@ -1519,7 +1519,13 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     )
     log_scenario("screen timer starts, renders its badge, and stops")
 
-    release_fixture.latest_version = installed_version
+    run_update_scenarios(browser, release_fixture, installed_version, test_home)
+
+
+def run_update_scenarios(browser, release_fixture, installed_version, test_home):
+    # The stable feed never contains a release candidate. A preview build is
+    # current on the stable track until a newer final release is available.
+    release_fixture.latest_version = "0.0.0" if "-rc." in installed_version else installed_version
     release_fixture.mode = "ok"
     browser.click("[data-admin-section='system']")
     browser.wait_for("!document.getElementById('updateTrack').disabled")
@@ -1971,7 +1977,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
-    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak"), default="all")
+    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak", "updates"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -2052,9 +2058,9 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders", "flatpak"))
+            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders", "flatpak", "updates"))
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
-            ReleaseFixtureHandler.latest_version = installed_version
+            ReleaseFixtureHandler.latest_version = "0.0.0" if "-rc." in installed_version else installed_version
 
             app_port = available_port()
             environment = dict(os.environ)
@@ -2098,6 +2104,10 @@ def main():
                             test_home,
                         )
                         run_accessibility_scenarios(browser, args.artifacts)
+                    if args.suite == "updates":
+                        browser.wait_for("typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+                        browser.evaluate("enterAdmin()")
+                        run_update_scenarios(browser, ReleaseFixtureHandler, installed_version, test_home)
                     if args.suite == "retro":
                         run_retro_scenario(browser, test_home)
                     if args.suite == "flatpak":
