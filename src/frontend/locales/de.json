@@ -325,6 +325,8 @@
   "retroCovers": "Cover automatisch von Libretro laden (übermittelt Spieltitel und Konsole)",
   "retroLibraryEmpty": "Es sind noch keine freigegebenen Spiele verfügbar.",
   "retroLibraryByConsole": "Nach Konsole",
+  "retroLibraryAll": "Alle Spiele",
+  "retroLibraryLoading": "Spiele werden gesucht …",
   "retroLibrarySetup": "Spielebibliothek",
   "retroEmulatorTitle": "Emulatoren",
   "retroSourcesHint": "Gib pro Zeile einen Ordnerpfad ein. Bei großen Miyoo-Karten wähle einzelne Konsolenordner aus „Roms“. Passende PNG-Cover im Unterordner „Imgs“ werden automatisch angezeigt.",

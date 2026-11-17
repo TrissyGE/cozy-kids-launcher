@@ -325,6 +325,8 @@
   "retroCovers": "Scarica le copertine da Libretro (invia il titolo e la console)",
   "retroLibraryEmpty": "Non ci sono ancora giochi approvati disponibili.",
   "retroLibraryByConsole": "Per console",
+  "retroLibraryAll": "Tutti i giochi",
+  "retroLibraryLoading": "Ricerca dei giochi…",
   "retroLibrarySetup": "Raccolta giochi",
   "retroEmulatorTitle": "Emulatori",
   "retroSourcesHint": "Inserisci un percorso di cartella per riga. Se la scheda Miyoo contiene molti giochi, seleziona le singole cartelle delle console in «Roms». Le copertine PNG corrispondenti nella sottocartella «Imgs» vengono visualizzate automaticamente.",

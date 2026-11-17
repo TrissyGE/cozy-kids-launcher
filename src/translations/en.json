@@ -416,6 +416,8 @@
   "retro_enabled": "Enable RetroGameCorner for this child",
   "retro_covers": "Download cover art automatically from Libretro (sends the game title and console)",
   "retro_library_empty": "There are no approved games available yet.",
+  "retro_library_all": "All games",
+  "retro_library_loading": "Looking for your games…",
   "retro_library_by_console": "By console",
   "retro_library_setup": "Game library",
   "retro_emulator_title": "Emulators",

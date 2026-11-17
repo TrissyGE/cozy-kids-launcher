@@ -416,6 +416,8 @@
   "retro_enabled": "Activar RetroGameCorner para este perfil",
   "retro_covers": "Descargar carátulas de Libretro (envía el título y la consola)",
   "retro_library_empty": "Todavía no hay juegos aprobados disponibles.",
+  "retro_library_all": "Todos los juegos",
+  "retro_library_loading": "Buscando tus juegos…",
   "retro_library_by_console": "Por consola",
   "retro_library_setup": "Biblioteca de juegos",
   "retro_emulator_title": "Emuladores",

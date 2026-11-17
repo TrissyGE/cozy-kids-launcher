@@ -416,6 +416,8 @@
   "retro_enabled": "RetroGameCorner für dieses Kind einschalten",
   "retro_covers": "Cover automatisch von Libretro laden (übermittelt Spieltitel und Konsole)",
   "retro_library_empty": "Es sind noch keine freigegebenen Spiele verfügbar.",
+  "retro_library_all": "Alle Spiele",
+  "retro_library_loading": "Spiele werden gesucht …",
   "retro_library_by_console": "Nach Konsole",
   "retro_library_setup": "Spielebibliothek",
   "retro_emulator_title": "Emulatoren",

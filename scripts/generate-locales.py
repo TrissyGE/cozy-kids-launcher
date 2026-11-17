@@ -102,6 +102,8 @@ EXTRA_UI_KEYS = {
     "retroCovers": "retro_covers",
     "retroLibraryEmpty": "retro_library_empty",
     "retroLibraryByConsole": "retro_library_by_console",
+    "retroLibraryAll": "retro_library_all",
+    "retroLibraryLoading": "retro_library_loading",
     "retroLibrarySetup": "retro_library_setup",
     "retroEmulatorTitle": "retro_emulator_title",
     "retroSourcesHint": "retro_sources_hint",

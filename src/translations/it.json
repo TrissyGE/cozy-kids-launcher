@@ -416,6 +416,8 @@
   "retro_enabled": "Attiva RetroGameCorner per questo profilo",
   "retro_covers": "Scarica le copertine da Libretro (invia il titolo e la console)",
   "retro_library_empty": "Non ci sono ancora giochi approvati disponibili.",
+  "retro_library_all": "Tutti i giochi",
+  "retro_library_loading": "Ricerca dei giochi…",
   "retro_library_by_console": "Per console",
   "retro_library_setup": "Raccolta giochi",
   "retro_emulator_title": "Emulatori",

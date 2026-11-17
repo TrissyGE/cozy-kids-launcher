@@ -325,6 +325,8 @@
   "retroCovers": "Descargar carátulas de Libretro (envía el título y la consola)",
   "retroLibraryEmpty": "Todavía no hay juegos aprobados disponibles.",
   "retroLibraryByConsole": "Por consola",
+  "retroLibraryAll": "Todos los juegos",
+  "retroLibraryLoading": "Buscando tus juegos…",
   "retroLibrarySetup": "Biblioteca de juegos",
   "retroEmulatorTitle": "Emuladores",
   "retroSourcesHint": "Introduce una ruta de carpeta por línea. Si la tarjeta Miyoo tiene muchos juegos, selecciona carpetas de consolas dentro de «Roms». Las portadas PNG correspondientes de la subcarpeta «Imgs» aparecen automáticamente.",

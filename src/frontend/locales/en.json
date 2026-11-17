@@ -325,6 +325,8 @@
   "retroCovers": "Download cover art automatically from Libretro (sends the game title and console)",
   "retroLibraryEmpty": "There are no approved games available yet.",
   "retroLibraryByConsole": "By console",
+  "retroLibraryAll": "All games",
+  "retroLibraryLoading": "Looking for your games…",
   "retroLibrarySetup": "Game library",
   "retroEmulatorTitle": "Emulators",
   "retroSourcesHint": "Enter one folder path per line. For large Miyoo cards, select individual console folders inside “Roms”. Matching PNG covers in the “Imgs” subfolder appear automatically.",

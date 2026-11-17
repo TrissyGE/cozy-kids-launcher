@@ -47,7 +47,7 @@ async function loadMediaText(language){
 }
 
 function localizeMediaPage(tile){
-  const title=(tile&&tile.label)||mediaText.mediaLibraryTitle;
+  const title=(tile&&tile.label)||(retroLibrary?'RetroGameCorner':mediaText.mediaLibraryTitle);
   document.title=title+' · Cozy Kids Launcher';
   document.getElementById('mediaTitle').textContent=title;
   document.getElementById('mediaHint').textContent=retroLibrary?'':mediaText.mediaLibraryHint;
@@ -63,7 +63,7 @@ function localizeMediaPage(tile){
     button.textContent=labels[button.dataset.mediaFilter];
     button.hidden=retroLibrary;
   });
-  document.getElementById('mediaRefresh').textContent=mediaText.mediaLibraryRefresh;
+  document.getElementById('mediaRefresh').textContent=retroLibrary?mediaText.retroRefresh:mediaText.mediaLibraryRefresh;
   document.getElementById('retroGroup').textContent=mediaText.retroLibraryByConsole;
 }
 
@@ -195,7 +195,7 @@ function renderRetroFilters(){
     button.type='button';
     button.className='smallbtn media-filter';
     button.dataset.retroSystem=system;
-    button.textContent=labels.get(system)||mediaText.mediaLibraryAll;
+    button.textContent=labels.get(system)||mediaText.retroLibraryAll;
     filters.insertBefore(button,group);
   }
 }
@@ -262,7 +262,7 @@ async function loadMediaCatalog(){
   const refresh=document.getElementById('mediaRefresh');
   if(focusedId) refresh.focus();
   refresh.setAttribute('aria-busy','true');
-  showMediaState('loading',mediaText.mediaLibraryLoading);
+  showMediaState('loading',retroLibrary?mediaText.retroLibraryLoading:mediaText.mediaLibraryLoading);
   document.getElementById('mediaGrid').hidden=true;
   try{
     const response=await fetch(retroLibrary?'/api/retro/library':'/api/media',{cache:'no-store'});
@@ -419,9 +419,10 @@ async function initializeMediaLibrary(){
     if(button) setMediaFilter(button.dataset.mediaFilter);
   });
   document.addEventListener('keydown',handleMediaKeys);
-  localizeMediaPage(null);
-  showMediaState('loading',mediaText.mediaLibraryLoading);
   mediaTileId=new URLSearchParams(window.location.search).get('tile')||'';
+  retroLibrary=mediaTileId==='retro-corner';
+  localizeMediaPage(null);
+  showMediaState('loading',retroLibrary?mediaText.retroLibraryLoading:mediaText.mediaLibraryLoading);
   try{
     const response=await fetch('/api/config',{cache:'no-store'});
     if(!response.ok) throw new Error('Config unavailable');

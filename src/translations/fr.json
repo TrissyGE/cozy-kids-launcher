@@ -416,6 +416,8 @@
   "retro_enabled": "Activer RetroGameCorner pour ce profil",
   "retro_covers": "Télécharger les jaquettes via Libretro (transmet le titre et la console)",
   "retro_library_empty": "Aucun jeu autorisé n’est encore disponible.",
+  "retro_library_all": "Tous les jeux",
+  "retro_library_loading": "Recherche de vos jeux…",
   "retro_library_by_console": "Par console",
   "retro_library_setup": "Bibliothèque de jeux",
   "retro_emulator_title": "Émulateurs",
