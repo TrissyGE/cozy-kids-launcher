@@ -98,6 +98,7 @@ EXTRA_UI_KEYS = {
     "updatePackageManaged": "update_package_managed",
     "adminRetro": "admin_retro",
     "retroEnabled": "retro_enabled",
+    "retroSettingsSaved": "retro_settings_saved",
     "retroCovers": "retro_covers",
     "retroLibraryEmpty": "retro_library_empty",
     "retroGuide": "retro_guide",

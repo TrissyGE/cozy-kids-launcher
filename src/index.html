@@ -367,9 +367,9 @@
               <div id="retroBenchmarkResult"></div>
             </section>
             <div class="backup-panel media-roots-panel">
-              <label class="chk"><input id="retroEnabled" type="checkbox"><span id="retroEnabledLabel"></span></label>
-              <label class="chk"><input id="retroCovers" type="checkbox"><span id="retroCoversLabel"></span></label>
-              <button id="retroSettingsSave" class="smallbtn" type="button" onclick="saveRetroSettings()"></button>
+              <label class="chk"><input id="retroEnabled" type="checkbox" onchange="saveRetroSettings()" aria-describedby="retroSettingsStatus"><span id="retroEnabledLabel"></span></label>
+              <label class="chk"><input id="retroCovers" type="checkbox" onchange="saveRetroSettings()" aria-describedby="retroSettingsStatus"><span id="retroCoversLabel"></span></label>
+              <p id="retroSettingsStatus" role="status" aria-live="polite"></p>
             </div>
             <section class="backup-panel media-roots-panel" aria-labelledby="retroTitle">
               <h3 id="retroTitle">RetroGameCorner</h3>

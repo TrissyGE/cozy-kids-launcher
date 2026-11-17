@@ -1,4 +1,5 @@
 {
+  "retro_settings_saved": "RetroGameCorner settings saved.",
   "package_system_maintenance": "Use your system software manager to update or remove apps. Direct installation remains available here.",
   "package_source": "Package manager",
   "package_system_update": "Use your package manager's full system update on Arch Linux. Individual app updates are not offered here.",

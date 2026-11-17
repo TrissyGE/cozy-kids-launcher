@@ -547,7 +547,8 @@ function clearRetroGames(){
   document.getElementById('ps1RuntimeStatus').textContent='';
   document.getElementById('ps1CoreInput').value='';
   document.getElementById('ps1CoreStatus').textContent='';
-  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers','retroSettingsSave',
+  document.getElementById('retroSettingsStatus').textContent='';
+  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers',
     'retroSaveGame','retroSaveDownload','retroSaveRemove','ps1BiosInput','ps1CoreInput','ps1CoreDownload']) document.getElementById(id).disabled=true;
 }
 
@@ -657,7 +658,6 @@ async function loadRetroGames(){
       field.checked=value;
       field.disabled=false;
     }
-    document.getElementById('retroSettingsSave').disabled=false;
     const select=document.getElementById('retroGame');
     for(const game of data.games){
       if(data.approvedIds.includes(game.id)) continue;
@@ -781,12 +781,41 @@ function approveRetroGame(){
   return updateRetroGames('approve',{gameId,profileId:cfg.activeProfileId},document.getElementById('retroApprove'));
 }
 
-function saveRetroSettings(){
-  return updateRetroGames('settings',{
-    profileId:cfg.activeProfileId,
-    enabled:document.getElementById('retroEnabled').checked,
-    covers:document.getElementById('retroCovers').checked
-  },document.getElementById('retroSettingsSave'));
+async function saveRetroSettings(){
+  const signal=retroSession?.signal;
+  if(!signal||signal.aborted) return;
+  const enabled=document.getElementById('retroEnabled');
+  const covers=document.getElementById('retroCovers');
+  const status=document.getElementById('retroSettingsStatus');
+  const previous=cfg.tiles.find(tile=>tile.id==='retro-corner');
+  const body={profileId:cfg.activeProfileId,enabled:enabled.checked,covers:covers.checked};
+  enabled.disabled=true;
+  covers.disabled=true;
+  status.textContent='';
+  try{
+    const response=await fetch('/api/retro/settings',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal
+    });
+    if(!response.ok) throw new Error('Retro settings could not be saved');
+    const {tile}=await response.json();
+    if(signal.aborted) return;
+    if(!tile||tile.id!=='retro-corner') throw new Error('Invalid RetroGameCorner settings');
+    const existing=cfg.tiles.find(item=>item.id===tile.id);
+    if(existing) Object.assign(existing,tile);
+    else cfg.tiles.push(tile);
+    renderAll();
+    status.textContent=uiText.retroSettingsSaved;
+  }catch(error){
+    if(signal.aborted) return;
+    enabled.checked=previous?.visible===true;
+    covers.checked=previous?.retroCovers===true;
+    status.textContent=uiText.saveError;
+  }finally{
+    if(!signal.aborted){
+      enabled.disabled=false;
+      covers.disabled=false;
+    }
+  }
 }
 
 function retroDeviceLabels(row){
@@ -926,7 +955,6 @@ function renderRetroEmulators(){
 function renderAdmin(){
   document.getElementById('retroEnabledLabel').textContent=uiText.retroEnabled;
   document.getElementById('retroCoversLabel').textContent=uiText.retroCovers;
-  document.getElementById('retroSettingsSave').textContent=uiText.save;
   document.getElementById('retroGuide').textContent=uiText.retroGuide;
   document.getElementById('retroDeviceTitle').textContent=uiText.retroDeviceTitle;
   document.getElementById('retroDeviceGuide').textContent=uiText.retroDeviceGuide;

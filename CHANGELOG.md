@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Release laptop fixes
 
+- Save the RetroGameCorner visibility and cover switches immediately for the current child profile. Show confirmation or restore the previous setting if saving fails.
 - Install catalog apps through Zorin's APTcc PackageKit backend. Review and confirm installation in Parent settings, with maintenance handled by the system software manager on APTcc.
 - Start the selected Game Boy ROM in fullscreen on mGBA 0.9.3 and newer versions using the supported short command-line option.
 - Preserve profiles, approvals and the Parent PIN when rerunning the installer with `--force`.

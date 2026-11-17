@@ -340,8 +340,14 @@ def run_retro_scenario(browser, test_home):
               "!document.querySelector('[data-catalog-id='+id+']'))",
               "The emulator install action is outside RetroGameCorner")
     browser.click("#retroEnabled")
-    browser.click("#retroSettingsSave")
     browser.wait_for("cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.visible)")
+    browser.wait_for("document.getElementById('retroSettingsStatus').textContent===uiText.retroSettingsSaved")
+    persisted = browser.evaluate(
+        "fetch('/api/retro/games').then(response=>response.json()).then(data=>data.enabled)",
+        await_promise=True,
+    )
+    if persisted is not True:
+        raise AssertionError("Toggling RetroGameCorner did not persist to the current child profile")
     browser.evaluate("closeAdmin()")
     assert_js(browser, "document.querySelectorAll('#grid .tile[data-tile-id^=retro-]').length===1",
               "Approved games appeared as extra Home tiles")

@@ -321,6 +321,7 @@
   "updatePackageManaged": "Instala las actualizaciones con el gestor de paquetes del sistema.",
   "adminRetro": "RetroGameCorner",
   "retroEnabled": "Activar RetroGameCorner para este perfil",
+  "retroSettingsSaved": "Ajustes de RetroGameCorner guardados.",
   "retroCovers": "Descargar carátulas de Libretro (envía el título y la consola)",
   "retroLibraryEmpty": "Todavía no hay juegos aprobados disponibles.",
   "retroGuide": "En RetroGameCorner, instala mGBA para Game Boy, Game Boy Color y Game Boy Advance, o Mednafen para NES, Super Nintendo, Sega Master System y Game Gear. Una ROM es una copia local de un juego. Consigue tus propias ROM y utiliza solo archivos que tengas permiso para usar. Estos juegos de cartucho no requieren una BIOS externa. Revisa el contenido y los controles antes de aprobar un juego. Las partidas se guardan por separado para cada perfil y juego.",
