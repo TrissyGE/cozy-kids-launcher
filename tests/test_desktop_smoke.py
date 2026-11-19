@@ -77,14 +77,15 @@ class SmokeConfigTests(unittest.TestCase):
             display.request.assert_not_called()
 
     def test_catalog_selection_rejects_web_and_unknown_entries(self):
-        entry = desktop_smoke.kde_catalog_entry("kturtle")
+        entry = desktop_smoke.fullscreen_catalog_entry("kturtle")
         self.assertEqual(entry["cmd"], ["kstart", "--fullscreen", "kturtle"])
+        self.assertEqual(desktop_smoke.fullscreen_catalog_entry("tuxmath")["cmd"], ["tuxmath", "--fullscreen"])
         for app_id in ("youtube-kids", "unknown"):
             with self.subTest(app=app_id), self.assertRaises(ValueError):
-                desktop_smoke.kde_catalog_entry(app_id)
+                desktop_smoke.fullscreen_catalog_entry(app_id)
 
     def test_real_catalog_fixture_uses_the_same_launch_vector_as_the_appstore(self):
-        entry = desktop_smoke.kde_catalog_entry("kturtle")
+        entry = desktop_smoke.fullscreen_catalog_entry("kturtle")
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "config.json"
             path.write_text(json.dumps({"activeProfileId": "default", "profiles": [{"id": "default"}]}), encoding="utf-8")

@@ -141,6 +141,21 @@ class ScheduleEvaluationTests(unittest.TestCase):
             {"profileAllowed": True, "blockedTileIds": ["paint"]},
         )
 
+    def test_parent_overview_skips_a_contiguous_window_boundary(self):
+        rule = schedule_rules.validate_schedule({
+            "enabled": True,
+            "days": {"monday": [{"start": "08:00", "end": "12:00"},
+                                 {"start": "12:00", "end": "18:00"}]},
+        })
+        self.assertEqual(
+            schedule_rules.schedule_overview(rule, self.monday_morning.timestamp()),
+            {"enabled": True, "allowed": True, "nextChangeAt": int(datetime(2026, 8, 31, 18).timestamp())},
+        )
+        self.assertEqual(
+            schedule_rules.schedule_overview(rule, self.monday_evening.timestamp()),
+            {"enabled": True, "allowed": False, "nextChangeAt": int(datetime(2026, 9, 7, 8).timestamp())},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

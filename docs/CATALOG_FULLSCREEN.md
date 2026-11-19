@@ -32,7 +32,8 @@ python3 scripts/linux/desktop_smoke.py \
   --launch-mode kiosk --catalog-app kbruch
 ```
 
-`--catalog-app` currently accepts existing KDE-wrapper recommendations only.
+`--catalog-app` accepts the TuxMath fullscreen recipe and existing
+KDE-wrapper recommendations.
 It does not install system packages. The harness installs the checkout into a
 temporary home and uses the catalog's actual command. It independently observes
 the owned app's fullscreen property without requesting fullscreen itself,
@@ -77,3 +78,21 @@ KStars and Stellarium remain candidates. The Ubuntu packages were available.
 The probe observed launcher start failures on KDE Wayland and inconsistent
 launch or input on GNOME Wayland. The astronomy candidates need separate
 qualification.
+
+## TuxMath follow-up
+
+Use `--catalog-app tuxmath` with the primary desktop and browser mode to
+exercise the actual catalog vector in the automated probe. For the manual
+check, open TuxMath from its catalog tile. Choose **Play Alone**,
+**Math Command Training Academy**, and **Number Typing**. Enter an answer and
+confirm the score changes. Click the launcher's close overlay and check that
+the child screen returns and accepts input.
+
+On 2026-11-19 the focused probe from `1e7927e` observed an owned fullscreen
+window and successful overlay close on Plasma Wayland and XFCE X11 using
+TuxMath 2.0.3-9build2. On XFCE the score changed from 0 to 7 with XTest keyboard
+input after activating the game window. Record physical input separately.
+On GNOME Wayland with Firefox kiosk, the probe ended with
+`fullscreen-timeout` even after unlocking the disposable session. A separate
+trace observed TuxMath's owned 640×480 XWayland window without a compositor
+fullscreen acknowledgement. That desktop row remains open.

@@ -176,6 +176,8 @@ function activateAdminSection(section,focusHeading=false){
   if(changed) playAdminPanelTransition(activePanel);
   if(changed&&section==='system') void loadUpdateTrack();
   if(changed&&section==='retro') void loadRetroGames();
+  if(changed&&section==='screen-time') void loadParentTimeOverview();
+  if(changed) document.querySelector('.admin-workspace').scrollTop=0;
   if(focusHeading){
     const heading=document.querySelector('[data-admin-panel="'+section+'"] .section-heading');
     if(heading) heading.focus({preventScroll:true});
@@ -198,6 +200,9 @@ function handleAdminNavKey(event){
   button.focus();
 }
 function renderAdminSections(){
+  const child=activeProfileSummary();
+  document.getElementById('adminActiveChild').textContent=
+    uiText.adminActiveChild.replace('{child}',()=>[child.avatar,child.name].filter(Boolean).join(' '));
   document.getElementById('adminNav').setAttribute('aria-label',uiText.adminNavLabel);
   for(const [section,labelKey] of ADMIN_SECTIONS){
     const label=uiText[labelKey];
@@ -521,6 +526,10 @@ async function saveMediaRoots(){
 }
 
 let retroSession=null;
+let retroCandidates=[];
+let retroSelectedGames=new Set();
+let retroApprovalLimit=0;
+let retroApprovalInProgress=false;
 let ps1Runtime=null;
 let retroDevice=null;
 
@@ -537,7 +546,16 @@ function clearRetroGames(){
   document.getElementById('retroDeviceStatus').textContent='';
   document.getElementById('retroDeviceResults').replaceChildren();
   document.getElementById('retroRoots').value='';
-  document.getElementById('retroGame').replaceChildren();
+  retroCandidates=[];
+  retroSelectedGames.clear();
+  retroApprovalLimit=0;
+  document.getElementById('retroGameSearch').value='';
+  document.getElementById('retroGameConsole').replaceChildren();
+  document.getElementById('retroGameChoices').replaceChildren();
+  document.getElementById('retroGameSelection').textContent='';
+  document.getElementById('retroApprovalResult').textContent='';
+  document.getElementById('retroApprovalFailures').replaceChildren();
+  document.getElementById('retroApprovalFailures').hidden=true;
   document.getElementById('retroStatus').textContent='';
   document.getElementById('retroSaveGame').replaceChildren();
   document.getElementById('retroSaveStatus').textContent='';
@@ -548,7 +566,7 @@ function clearRetroGames(){
   document.getElementById('ps1CoreInput').value='';
   document.getElementById('ps1CoreStatus').textContent='';
   document.getElementById('retroSettingsStatus').textContent='';
-  for(const id of ['retroRoots','retroSave','retroGame','retroApprove','retroEnabled','retroCovers',
+  for(const id of ['retroRoots','retroSave','retroGameSearch','retroGameConsole','retroApprove','retroEnabled','retroCovers',
     'retroSaveGame','retroSaveDownload','retroSaveRemove','ps1BiosInput','ps1CoreInput','ps1CoreDownload']) document.getElementById(id).disabled=true;
 }
 
@@ -633,6 +651,8 @@ async function importPs1Bios(){
 }
 
 async function loadRetroGames(){
+  const query=document.getElementById('retroGameSearch').value;
+  const consoleId=document.getElementById('retroGameConsole').value;
   clearRetroGames();
   retroSession=new AbortController();
   const {signal}=retroSession;
@@ -644,7 +664,7 @@ async function loadRetroGames(){
     const response=await fetch('/api/retro/games',{cache:'no-store',signal});
     if(!response.ok) throw new Error('Retro library unavailable');
     const data=await response.json();
-    if(signal.aborted) return;
+    if(signal.aborted||data.profileId!==cfg.activeProfileId) return;
     renderPs1Bios(data.ps1Bios);
     document.getElementById('ps1BiosInput').disabled=false;
     ps1Runtime=data.ps1Runtime;
@@ -658,19 +678,24 @@ async function loadRetroGames(){
       field.checked=value;
       field.disabled=false;
     }
-    const select=document.getElementById('retroGame');
-    for(const game of data.games){
-      if(data.approvedIds.includes(game.id)) continue;
-      const option=new Option(game.title,game.id);
-      option.title=game.path;
-      select.appendChild(option);
-    }
-    select.disabled=!select.options.length;
-    document.getElementById('retroApprove').disabled=select.disabled;
+    const approvedIds=new Set(data.approvedIds);
+    retroCandidates=data.games.filter(game=>!approvedIds.has(game.id));
+    retroApprovalLimit=data.approvalLimit;
+    const search=document.getElementById('retroGameSearch');
+    const consoles=document.getElementById('retroGameConsole');
+    const names=new Map(retroCandidates.map(game=>[game.system,game.systemLabel]));
+    consoles.replaceChildren(new Option(uiText.retroLibraryAllConsoles,''),
+      ...[...names].sort((a,b)=>a[1].localeCompare(b[1],interfaceLanguage()))
+        .map(([id,label])=>new Option(label,id)));
+    search.value=query;
+    consoles.value=names.has(consoleId)?consoleId:'';
+    search.disabled=!retroCandidates.length;
+    consoles.disabled=!names.size;
+    renderRetroApproval();
     status.textContent=[
       data.unavailable>0?uiText.mediaLibrarySourcesMissing:'',
       data.truncated?uiText.retroLimit:'',
-      select.disabled?uiText.retroEmpty:''
+      !retroCandidates.length?uiText.retroEmpty:''
     ].filter(Boolean).join(' ');
   }catch(e){
     if(!signal.aborted) status.textContent=uiText.retroUnavailable;
@@ -743,25 +768,19 @@ async function manageRetroSave(remove){
   }
 }
 
-async function updateRetroGames(endpoint,body,button){
+async function saveRetroRoots(){
+  const roots=document.getElementById('retroRoots').value.split('\n').filter(path=>path.trim());
+  const button=document.getElementById('retroSave');
   if(!retroSession||button.disabled) return;
   const {signal}=retroSession;
   button.disabled=true;
   const status=document.getElementById('retroStatus');
   try{
-    const response=await fetch('/api/retro/'+endpoint,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal
+    const response=await fetch('/api/retro/games',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roots}),signal
     });
     if(!response.ok) throw new Error('Retro settings could not be saved');
-    const data=await response.json();
     if(signal.aborted) return;
-    if(data.tile){
-      if(data.hub&&!cfg.tiles.some(tile=>tile.id===data.hub.id)) cfg.tiles.push(data.hub);
-      const existing=cfg.tiles.find(tile=>tile.id===data.tile.id);
-      if(existing) Object.assign(existing,data.tile);
-      else cfg.tiles.push(data.tile);
-      renderAll();
-    }
     await loadRetroGames();
   }catch(e){
     if(!signal.aborted){
@@ -771,14 +790,92 @@ async function updateRetroGames(endpoint,body,button){
   }
 }
 
-function saveRetroRoots(){
-  const roots=document.getElementById('retroRoots').value.split('\n').filter(path=>path.trim());
-  return updateRetroGames('games',{roots},document.getElementById('retroSave'));
+function renderRetroSelection(){
+  const count=retroSelectedGames.size;
+  const number=new Intl.NumberFormat(interfaceLanguage());
+  document.getElementById('retroGameSelection').textContent=retroCandidates.length?
+    uiText.retroApprovalCount.replace('{count}',number.format(count)).replace('{limit}',number.format(retroApprovalLimit)):'';
+  document.getElementById('retroApprove').disabled=!count||retroApprovalInProgress;
+  for(const input of document.querySelectorAll('#retroGameChoices input')){
+    input.disabled=retroApprovalInProgress||(count>=retroApprovalLimit&&!input.checked);
+  }
 }
 
-function approveRetroGame(){
-  const gameId=document.getElementById('retroGame').value;
-  return updateRetroGames('approve',{gameId,profileId:cfg.activeProfileId},document.getElementById('retroApprove'));
+function renderRetroApproval(){
+  const language=interfaceLanguage();
+  const query=document.getElementById('retroGameSearch').value.trim().toLocaleLowerCase(language);
+  const system=document.getElementById('retroGameConsole').value;
+  const list=document.getElementById('retroGameChoices');
+  const rows=retroCandidates.filter(game=>(!system||game.system===system)&&
+    game.title.toLocaleLowerCase(language).includes(query)).map(game=>{
+    const field=document.createElement('label');
+    const input=document.createElement('input');
+    const label=document.createElement('span');
+    input.type='checkbox';
+    input.value=game.id;
+    input.checked=retroSelectedGames.has(game.id);
+    input.addEventListener('change',()=>{
+      if(input.checked) retroSelectedGames.add(game.id);
+      else retroSelectedGames.delete(game.id);
+      renderRetroSelection();
+    });
+    label.textContent=game.title+' · '+game.systemLabel;
+    field.append(input,label);
+    return field;
+  });
+  list.replaceChildren(...rows);
+  if(!rows.length&&retroCandidates.length) list.textContent=uiText.retroSearchEmpty;
+  renderRetroSelection();
+}
+
+async function approveRetroSelection(){
+  const signal=retroSession?.signal;
+  const profileId=cfg.activeProfileId;
+  const selection=[...retroSelectedGames];
+  if(!signal||signal.aborted||!selection.length||retroApprovalInProgress) return;
+  const titles=new Map(retroCandidates.map(game=>[game.id,game.title]));
+  const message=uiText.retroApprovalConfirm
+    .replace('{count}',new Intl.NumberFormat(interfaceLanguage()).format(selection.length))
+    .replace('{child}',()=>activeProfileSummary().name);
+  if(!(await requestConfirmation(message,uiText.retroApproveSelection))||signal.aborted||
+      cfg.activeProfileId!==profileId||adminSection!=='retro') return;
+  retroApprovalInProgress=true;
+  renderRetroSelection();
+  try{
+    const response=await fetch('/api/retro/approve',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gameIds:selection,profileId})
+    });
+    if(!response.ok) throw new Error('Retro approval failed');
+    const result=await response.json();
+    if(cfg.activeProfileId!==profileId) return;
+    for(const tile of [result.hub,...result.tiles].filter(Boolean)){
+      const existing=cfg.tiles.find(candidate=>candidate.id===tile.id);
+      if(existing) Object.assign(existing,tile);
+      else cfg.tiles.push(tile);
+    }
+    renderAll();
+    if(adminSection!=='retro'||document.getElementById('admin').classList.contains('hidden')) return;
+    await loadRetroGames();
+    if(cfg.activeProfileId!==profileId||adminSection!=='retro'||
+        document.getElementById('admin').classList.contains('hidden')) return;
+    document.getElementById('retroApprovalResult').textContent=uiText.retroApprovedCount
+      .replace('{count}',new Intl.NumberFormat(interfaceLanguage()).format(result.tiles.length));
+    const list=document.getElementById('retroApprovalFailures');
+    const reasons={unavailable:uiText.retroApprovalUnavailable,conflict:uiText.retroApprovalConflict,limit:uiText.retroApprovalCapacity};
+    for(const {gameId,reason} of result.failed){
+      const item=document.createElement('li');
+      item.textContent=titles.get(gameId)+' · '+(reasons[reason]||uiText.saveError);
+      list.appendChild(item);
+    }
+    list.hidden=!result.failed.length;
+    const search=document.getElementById('retroGameSearch');
+    (search.disabled?document.getElementById('retroRefresh'):search).focus({preventScroll:true});
+  }catch(e){
+    if(!signal.aborted) document.getElementById('retroApprovalResult').textContent=uiText.saveError;
+  }finally{
+    retroApprovalInProgress=false;
+    renderRetroSelection();
+  }
 }
 
 async function saveRetroSettings(){
@@ -971,7 +1068,9 @@ function renderAdmin(){
   document.getElementById('retroSave').textContent=uiText.save;
   document.getElementById('retroRefresh').textContent=uiText.retroRefresh;
   document.getElementById('retroGameLabel').textContent=uiText.retroGame;
-  document.getElementById('retroApprove').textContent=uiText.retroApprove;
+  document.getElementById('retroGameSearchLabel').textContent=uiText.retroSearchGames;
+  document.getElementById('retroGameConsoleLabel').textContent=uiText.retroFilterConsole;
+  document.getElementById('retroApprove').textContent=uiText.retroApproveSelection;
   document.getElementById('retroSavesTitle').textContent=uiText.retroSavesTitle;
   document.getElementById('retroSaveGameLabel').textContent=uiText.retroGame;
   document.getElementById('retroSaveDownload').textContent=uiText.retroSaveDownload;

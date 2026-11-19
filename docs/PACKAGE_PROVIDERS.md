@@ -298,6 +298,16 @@ that Linux system and leaves the selected app installed. For full acceptance,
 also follow the catalog UI's review → install → add tile → launch flow, deny
 authentication once, test offline/busy states, and record the exact revision.
 
+### v0.8.1 catalog follow-up
+
+On 2026-11-19, the candidate package planner at `1e7927e` prepared a real
+Blinken review on Ubuntu 24.04.4 and on the Zorin 17.3 laptop. Both returned
+available packages with unknown download size. On Ubuntu, an installation
+attempt from the non-admin disposable test user stopped at
+`status: error`, `phase: authorization`, `error: authorization`.
+Graphical dialog cancellation, backend failure, and a successful retry
+through Parent settings on both desktops remain open acceptance cases.
+
 Primary references checked on September 9, 2026:
 
 - [PackageKit transaction API](https://github.com/PackageKit/PackageKit/blob/main/src/org.freedesktop.PackageKit.Transaction.xml) and [PackageKit architecture](https://github.com/PackageKit/PackageKit)

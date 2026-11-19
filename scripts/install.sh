@@ -734,16 +734,9 @@ from pathlib import Path
 import sys
 
 locale = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-keys = (
-    "firstRun", "profiles", "defaultTitle", "defaultParentLabel", "defaultExitLabel",
-    "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
-    "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
-    "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget", "updateTrack",
-    "retroSettingsSaved", "retroLibrarySetup", "retroEmulatorTitle", "retroSourcesHint",
-)
-print(json.dumps({key: value for key, value in locale.items() if key in keys or key.startswith(("folder", "flatpak", "package")) or key == "catalogUseSource"}, ensure_ascii=True))
+print(json.dumps(locale, ensure_ascii=True))
 PY
-)" || die "Could not prepare setup and profile translations for $ACTIVE_LANG"
+)" || die "Could not prepare fallback interface translations for $ACTIVE_LANG"
 JSON_MEDIA_LOCALE="$(python3 - "$SRC_DIR/frontend/locales/$ACTIVE_LANG.json" <<'PY'
 import json
 from pathlib import Path

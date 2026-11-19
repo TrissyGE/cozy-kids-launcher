@@ -292,15 +292,17 @@ def request(url, method="GET", timeout=10):
         return response.status, body
 
 
-def kde_catalog_entry(app_id):
+def fullscreen_catalog_entry(app_id):
     entries = json.loads((REPOSITORY_ROOT / "src" / "recommendations.json").read_text(encoding="utf-8"))
     for entry in entries:
         command = entry.get("cmd", [])
-        if entry.get("id") == app_id and len(command) >= 3 and command[:2] in (
+        kde_fullscreen = len(command) >= 3 and command[:2] in (
             ["kstart", "--fullscreen"], ["kstart5", "--fullscreen"],
-        ):
+        )
+        tuxmath_fullscreen = app_id == "tuxmath" and command == ["tuxmath", "--fullscreen"]
+        if entry.get("id") == app_id and (kde_fullscreen or tuxmath_fullscreen):
             return entry
-    raise ValueError("Choose an existing KDE fullscreen catalog app")
+    raise ValueError("Choose TuxMath or an existing KDE fullscreen catalog app")
 
 
 def runtime_processes(*roots):
@@ -898,7 +900,7 @@ def main():
     parser.add_argument("--desktop", choices=tuple(DESKTOP_ALIASES), required=True)
     parser.add_argument("--session", choices=("x11", "wayland"), required=True)
     parser.add_argument("--browser", help="Browser executable name")
-    parser.add_argument("--catalog-app", help="Existing KDE catalog ID for real fullscreen/overlay checks on X11/XWayland")
+    parser.add_argument("--catalog-app", help="TuxMath or a KDE catalog ID for fullscreen/overlay checks on X11/XWayland")
     parser.add_argument(
         "--launch-mode",
         choices=("window", "fullscreen", "kiosk"),
@@ -933,7 +935,7 @@ def main():
     if args.performance_only and (args.interactive or args.catalog_app):
         parser.error("--performance-only cannot be combined with --interactive or --catalog-app")
     try:
-        args.catalog_entry = kde_catalog_entry(args.catalog_app) if args.catalog_app else None
+        args.catalog_entry = fullscreen_catalog_entry(args.catalog_app) if args.catalog_app else None
     except ValueError as error:
         parser.error(str(error))
     args.artifacts = args.artifacts or (

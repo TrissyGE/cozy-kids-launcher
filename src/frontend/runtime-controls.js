@@ -325,6 +325,9 @@ function renderBackupOptions(){
   const select=document.getElementById('backupSelect');
   const button=document.getElementById('restoreBackupBtn');
   if(!select||!button) return;
+  document.getElementById('backupTitle').textContent=uiText.backupTitle;
+  document.getElementById('backupPinPreserved').textContent=uiText.backupPinPreserved;
+  select.setAttribute('aria-label',uiText.backupTitle);
   select.replaceChildren();
   setIconLabel(button,'restore',uiText.backupRestore);
   if(backupState!=='ready'){
@@ -352,6 +355,8 @@ function renderBackupOptions(){
 }
 async function loadBackups(){
   const msg=document.getElementById('backupMsg');
+  const incompatible=document.getElementById('backupIncompatible');
+  incompatible.hidden=true;
   backupState='loading';
   renderBackupOptions();
   renderUiState(msg,'loading',uiText.backupLoading);
@@ -360,6 +365,11 @@ async function loadBackups(){
     if(!response.ok) throw new Error('backup list failed');
     const result=await response.json();
     backups=Array.isArray(result.backups)?result.backups:[];
+    if(result.incompatibleCount>0){
+      incompatible.textContent=uiText.backupIncompatibleCount.replace('{count}',
+        new Intl.NumberFormat(interfaceLanguage()).format(result.incompatibleCount));
+      incompatible.hidden=false;
+    }
     backupState=backups.length?'ready':'empty';
     renderBackupOptions();
     if(backupState==='empty') renderUiState(msg,'empty',uiText.backupEmpty,loadBackups);
@@ -371,21 +381,53 @@ async function loadBackups(){
     renderUiState(msg,'error',uiText.backupLoadError,loadBackups);
   }
 }
+let backupRestoreBusy=false;
+
 async function restoreBackup(){
   const select=document.getElementById('backupSelect');
   const button=document.getElementById('restoreBackupBtn');
   const msg=document.getElementById('backupMsg');
   const backupId=select.value;
-  if(!backupId||!(await requestConfirmation(uiText.backupConfirm,uiText.backupRestore))) return;
-  button.disabled=true;
-  renderUiState(msg,'loading',uiText.backupRestoring);
+  const backup=backups.find(item=>item.id===backupId);
+  if(!backup||backupRestoreBusy) return;
+  backupRestoreBusy=true;
+  renderUiState(msg,'loading',uiText.backupPreviewLoading);
   try{
+    const previewResponse=await fetch('/api/backups/preview?'+new URLSearchParams({id:backupId}),{cache:'no-store'});
+    if(!previewResponse.ok){
+      renderUiState(msg,'error',previewResponse.status===400?uiText.backupIncompatible:uiText.backupPreviewError);
+      return;
+    }
+    const preview=await previewResponse.json();
+    if(select.value!==backupId||adminSection!=='system'||document.getElementById('admin').classList.contains('hidden')){
+      clearUiState(msg);
+      return;
+    }
+    const number=new Intl.NumberFormat(interfaceLanguage());
+    const groups={profiles:uiText.backupChangesProfiles,sources:uiText.backupChangesSources,
+      settings:uiText.backupChangesSettings};
+    const message=[
+      backupLabel(backup),
+      uiText.backupPreviewDetails.replace('{schema}',number.format(preview.configVersion))
+        .replace('{count}',number.format(preview.profileCount)),
+      preview.changes.length?uiText.backupPreviewChanges.replace('{changes}',
+        new Intl.ListFormat(interfaceLanguage()).format(preview.changes.map(group=>groups[group]))):uiText.backupNoChanges,
+      uiText.backupConfirm
+    ].join('\n');
+    clearUiState(msg);
+    if(!(await requestConfirmation(message,uiText.backupRestore))||select.value!==backupId) return;
+    button.disabled=true;
+    renderUiState(msg,'loading',uiText.backupRestoring);
     const response=await fetch('/api/backups/restore',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({backupId:backupId})
+      body:JSON.stringify({backupId,revision:preview.revision})
     });
     const result=await response.json();
+    if(response.status===409){
+      renderUiState(msg,'error',uiText.backupPreviewChanged);
+      return;
+    }
     if(!response.ok||result.status!=='ok') throw new Error('backup restore failed');
     await loadConfig(true);
     await loadBackups();
@@ -393,6 +435,7 @@ async function restoreBackup(){
   }catch(e){
     renderUiState(msg,'error',uiText.backupError);
   }finally{
+    backupRestoreBusy=false;
     button.disabled=backupState!=='ready';
   }
 }

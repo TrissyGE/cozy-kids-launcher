@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import http.server
 import json
 import os
@@ -132,7 +133,7 @@ from runtime_diagnostics import (
     configure_runtime_logging,
     log_runtime_event,
 )
-from schedule_rules import availability_summary, next_profile_opening, tile_availability
+from schedule_rules import availability_summary, next_profile_opening, schedule_overview, tile_availability
 from speech_feedback import SpeechFeedback
 from timer_state import (
     clear_timer as remove_timer_state,
@@ -217,6 +218,7 @@ LEGACY_WEB_ACTION_MIGRATIONS = {
 }
 TIMER_FILE = os.path.join(HOME, ".cache", "{{APP_ID}}", "timer.json")
 MAX_JSON_BODY_BYTES = 512 * 1024
+MAX_RETRO_APPROVAL_BATCH = 32
 _tile_launch_lock = threading.Lock()
 _activity_sessions_lock = threading.Lock()
 _activity_sessions = None
@@ -327,11 +329,15 @@ def write_browser_override(data):
 
 def available_config_backups():
     backups = []
+    incompatible = 0
     for metadata in discover_config_backups(BACKUP_ROOT):
         try:
             raw = read_config_backup(BACKUP_ROOT, metadata["id"])
             validated = validate_stored_config(raw, existing_pin_hash="")
-        except (FileNotFoundError, OSError, ValueError):
+        except ValueError:
+            incompatible += 1
+            continue
+        except OSError:
             continue
         backups.append({
             **metadata,
@@ -340,16 +346,38 @@ def available_config_backups():
                 CURRENT_CONFIG_VERSION,
             ),
         })
-    return backups
+    return {"backups": backups, "incompatibleCount": incompatible}
 
 
-def restore_config_backup(backup_id):
+def prepare_backup_restore(backup_id):
     current = load_stored_cfg()
     raw = read_config_backup(BACKUP_ROOT, backup_id)
     restored = validate_stored_config(
         raw,
         existing_pin_hash=current.get("pinHash", ""),
     )
+    return current, restored, raw.get("configVersion", 0)
+
+
+def backup_restore_revision(backup_id, current, restored):
+    snapshot = json.dumps([backup_id, current, restored], sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(snapshot.encode("utf-8")).hexdigest()
+
+
+def backup_restore_changes(current, restored):
+    groups = {
+        "profiles": {"profiles", "activeProfileId"},
+        "sources": {"mediaRoots", "retroRoots"},
+    }
+    changed = {name for name in current.keys() | restored.keys()
+               if current.get(name) != restored.get(name)}
+    result = [name for name, fields in groups.items() if changed & fields]
+    if changed - groups["profiles"] - groups["sources"] - {"configVersion", "pinHash"}:
+        result.append("settings")
+    return result
+
+
+def restore_config_backup(current, restored):
     safety_backup = create_pre_restore_backup(BACKUP_ROOT, current)
     restored = save_stored_cfg(restored)
     runtime = active_config(restored)
@@ -362,6 +390,44 @@ def restore_config_backup(backup_id):
         ),
     )
     return runtime, safety_backup
+
+
+def apply_retro_approvals(cfg, games, identifiers):
+    tiles = {tile["id"]: tile for tile in cfg["tiles"]}
+    hub = retro_hub(cfg, require_visible=False)
+    approved, failed = [], []
+    changed = False
+    for identifier in identifiers:
+        game = games.get(identifier)
+        tile_id = f"retro-{identifier}"
+        tile = tiles.get(tile_id)
+        command = [f"special:retro:{identifier}"]
+        if game is None:
+            reason = "unavailable"
+        elif tile is not None and tile["cmd"] != command:
+            reason = "conflict"
+        elif tile is None and hub is None and HUB_ID in tiles:
+            reason = "conflict"
+        elif tile is None and len(cfg["tiles"]) + 1 + (hub is None) > MAX_TILES:
+            reason = "limit"
+        else:
+            if tile is None:
+                if hub is None:
+                    hub = {"id": HUB_ID, "label": "RetroGameCorner", "emoji": "🎮",
+                           "cmd": [HUB_COMMAND], "visible": False}
+                    cfg["tiles"].append(hub)
+                tile = {"id": tile_id, "label": game["title"], "emoji": "🎮",
+                        "cmd": command, "visible": False}
+                cfg["tiles"].append(tile)
+            if not tile["visible"]:
+                tile["visible"] = True
+                changed = True
+            approved.append(tile)
+            continue
+        failed.append({"gameId": identifier, "reason": reason})
+    if changed:
+        save_cfg(cfg)
+    return approved, failed, hub
 
 
 def scan_apps():
@@ -925,7 +991,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                              if game["path"] not in playlist_discs or game["id"] in approved)
             return self.json_response({
                 "roots": roots,
-                "games": sorted(visible_games, key=lambda game: (game["title"].casefold(), game["path"])),
+                "games": sorted((
+                    {**game, "system": ROM_SYSTEMS[game["romExtension"]][2],
+                     "systemLabel": ROM_SYSTEMS[game["romExtension"]][3]}
+                    for game in visible_games
+                ), key=lambda game: (game["title"].casefold(), game["path"])),
+                "profileId": cfg["activeProfileId"],
+                "approvalLimit": MAX_RETRO_APPROVAL_BATCH,
                 "unavailable": unavailable,
                 "truncated": truncated,
                 "enabled": bool(retro_hub(cfg)),
@@ -960,6 +1032,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(payload)
                 return
             return self.json_response({
+                "profileId": cfg["activeProfileId"],
                 "items": [
                     {"id": identifier, "title": approved[identifier]["label"],
                      "system": ROM_SYSTEMS[games[identifier]["romExtension"]][2],
@@ -1066,6 +1139,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             )
         if self.path == "/api/timer/status":
             return self.json_response(timer_status(load_cfg()))
+        if request_url.path == "/api/budget/overview":
+            with _family_lock:
+                cfg = load_cfg()
+                if not self.require_admin(cfg):
+                    return
+                profile = cfg["activeProfileId"]
+                now = time.time()
+                return self.json_response({
+                    "profileId": profile,
+                    "daily": budget().status(profile, cfg.get("dailyBudgetMinutes", 0), details=True),
+                    "weekly": schedule_overview(cfg.get("weeklySchedule"), now),
+                })
         if self.path == "/api/availability/status":
             with _family_lock:
                 cfg = load_cfg()
@@ -1117,7 +1202,28 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             data = load_cfg()
             if not self.require_admin(data):
                 return
-            return self.json_response({"backups": available_config_backups()})
+            return self.json_response(available_config_backups())
+        if request_url.path == "/api/backups/preview":
+            with _family_lock:
+                if not self.require_admin():
+                    return
+                try:
+                    ids = parse_qs(request_url.query, max_num_fields=4).get("id", [])
+                    if len(ids) != 1:
+                        raise ValueError("Invalid backup identifier")
+                    current, restored, version = prepare_backup_restore(ids[0])
+                except FileNotFoundError:
+                    return self.json_response({"status": "unavailable"}, 404)
+                except ValueError:
+                    return self.json_response({"status": "incompatible"}, 400)
+                except OSError:
+                    return self.json_response({"status": "unavailable"}, 500)
+                return self.json_response({
+                    "configVersion": version,
+                    "profileCount": len(restored["profiles"]),
+                    "changes": backup_restore_changes(current, restored),
+                    "revision": backup_restore_revision(ids[0], current, restored),
+                })
         if self.path == "/api/export-config":
             data = load_stored_cfg()
             if not self.require_admin(active_config(data)):
@@ -1350,41 +1456,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if not isinstance(body, dict):
                 return
             cfg = active_config(stored)
-            identifier = body.get("gameId")
-            if not isinstance(identifier, str) or body.get("profileId") != cfg["activeProfileId"]:
+            batch = "gameIds" in body
+            identifiers = body.get("gameIds") if batch else [body.get("gameId")]
+            if (body.get("profileId") != cfg["activeProfileId"]
+                    or not isinstance(identifiers, list)
+                    or not 1 <= len(identifiers) <= MAX_RETRO_APPROVAL_BATCH
+                    or any(not isinstance(identifier, str) or len(identifier) > 128 for identifier in identifiers)
+                    or len(set(identifiers)) != len(identifiers)):
                 return self.json_response({"status": "invalid"}, 400)
             games, _, _ = scan_retro_games(stored.get("retroRoots", []))
-            game = games.get(identifier)
-            if not game:
-                return self.json_response({"status": "unavailable"}, 404)
-            tile_id = f"retro-{identifier}"
-            tile = next((tile for tile in cfg["tiles"] if tile["id"] == tile_id), None)
-            if tile is None:
-                if not retro_hub(cfg, require_visible=False):
-                    if any(item["id"] == HUB_ID for item in cfg["tiles"]):
-                        return self.json_response({"status": "conflict"}, 409)
-                    cfg["tiles"].append({
-                        "id": HUB_ID, "label": "RetroGameCorner", "emoji": "🎮",
-                        "cmd": [HUB_COMMAND], "visible": False,
-                    })
-                tile = {
-                    "id": tile_id, "label": game["title"], "emoji": "🎮",
-                    "cmd": [f"special:retro:{identifier}"], "visible": True,
-                }
-                cfg["tiles"].append(tile)
-                try:
-                    save_cfg(cfg)
-                except (OSError, ValueError):
-                    return self.json_response({"status": "error"}, 400)
-            elif tile["cmd"] != [f"special:retro:{identifier}"]:
-                return self.json_response({"status": "conflict"}, 409)
-            elif not tile["visible"]:
-                tile["visible"] = True
-                try:
-                    save_cfg(cfg)
-                except (OSError, ValueError):
-                    return self.json_response({"status": "error"}, 400)
-            return self.json_response({"tile": tile, "hub": retro_hub(cfg, require_visible=False)})
+            try:
+                approved, failed, hub = apply_retro_approvals(cfg, games, identifiers)
+            except (OSError, ValueError):
+                return self.json_response({"status": "error"}, 400)
+            if batch:
+                return self.json_response({"tiles": approved, "failed": failed, "hub": hub})
+            if failed:
+                reason = failed[0]["reason"]
+                return self.json_response({"status": reason}, {"unavailable": 404, "conflict": 409, "limit": 400}[reason])
+            return self.json_response({"tile": approved[0], "hub": hub})
         if action in ("api/media/roots", "api/retro/games"):
             stored = load_stored_cfg()
             if not self.require_admin(stored):
@@ -1875,7 +1965,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 )
                 return
             try:
-                restored, safety_backup = restore_config_backup(backup_id)
+                current, requested, _ = prepare_backup_restore(backup_id)
+                if ("revision" in data
+                        and data["revision"] != backup_restore_revision(backup_id, current, requested)):
+                    return self.json_response({"status": "changed"}, 409)
+                restored, safety_backup = restore_config_backup(current, requested)
                 reset_active_tile()
                 retain_profile_budgets(restored)
             except FileNotFoundError as exc:

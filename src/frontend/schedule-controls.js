@@ -239,6 +239,52 @@ async function extendDailyBudget(event){
   }finally{ button.disabled=false; }
 }
 function openParentsFromAvailability(){ hideAvailabilityBlock(true); openAdmin(); }
+
+let parentTimeRequest=null;
+
+async function loadParentTimeOverview(){
+  const profileId=cfg.activeProfileId;
+  if(parentTimeRequest?.profileId===profileId) return;
+  const request={profileId};
+  parentTimeRequest=request;
+  const budget=document.getElementById('timeOverviewBudget');
+  const schedule=document.getElementById('timeOverviewSchedule');
+  document.getElementById('timeOverviewTitle').textContent=uiText.timeOverviewTitle;
+  document.getElementById('timeOverviewHint').textContent=uiText.timeOverviewHint;
+  if(budget.dataset.profile!==profileId){
+    budget.dataset.profile=profileId;
+    budget.textContent='';
+    schedule.textContent='';
+  }
+  const isCurrent=()=>parentTimeRequest===request&&cfg.activeProfileId===profileId;
+  try{
+    const response=await fetch('/api/budget/overview',{cache:'no-store'});
+    if(!response.ok) throw new Error('Time overview unavailable');
+    const {profileId:currentProfile,daily,weekly}=await response.json();
+    if(!isCurrent()||currentProfile!==profileId) return;
+    const language=interfaceLanguage();
+    const number=new Intl.NumberFormat(language);
+    budget.textContent=!daily.enabled?uiText.timeOverviewBudgetOff:
+      daily.unavailable?uiText.timeOverviewBudgetUnavailable:
+      uiText.timeOverviewBudget
+        .replace('{used}',number.format(Math.floor(daily.usedSeconds/60)))
+        .replace('{remaining}',number.format(Math.ceil(daily.remainingSeconds/60)))
+        .replace('{extra}',number.format(daily.extraMinutes));
+    const change=weekly.enabled&&weekly.nextChangeAt!=null?
+      new Intl.DateTimeFormat(language,{dateStyle:'short',timeStyle:'short'}).format(weekly.nextChangeAt*1000):'';
+    schedule.textContent=!weekly.enabled?uiText.timeOverviewScheduleOff:
+      change?(weekly.allowed?uiText.timeOverviewCloses:uiText.timeOverviewOpens).replace('{time}',change):
+      weekly.allowed?uiText.timeOverviewAlwaysOpen:uiText.timeOverviewAlwaysClosed;
+  }catch(e){
+    if(isCurrent()){
+      budget.textContent=uiText.timeOverviewError;
+      schedule.textContent='';
+    }
+  }finally{
+    if(parentTimeRequest===request) parentTimeRequest=null;
+  }
+}
+
 async function pollAvailability(){
   try{
     const response=await fetch('/api/availability/status',{cache:'no-store'});
@@ -263,6 +309,11 @@ async function pollAvailability(){
     }
     if(cfg&&changed) renderKids();
   }catch(e){}
+  finally{
+    if(cfg&&adminSection==='screen-time'&&!document.getElementById('admin').classList.contains('hidden')){
+      void loadParentTimeOverview();
+    }
+  }
 }
 document.getElementById('availabilityBlock').addEventListener('keydown',event=>{
   if(event.key!=='Tab') return;
