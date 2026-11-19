@@ -243,7 +243,11 @@ and Italian are enabled.
 - [x] Verify preview archives with the existing checksum and rollback path and fail closed when preview discovery is unavailable
 - [x] Build and attest preview releases through a workflow path that excludes stable-main promotion
 - [x] Share the release archive builder between local and hosted checks and require two builds of the same commit to match
-- [ ] Verify the first published release candidate on an opted-in disposable installation
+- [x] Verify the first published release candidate on an opted-in disposable installation. [v0.8.0-rc.1](https://github.com/TrissyGE/cozy-kids-launcher/releases/tag/v0.8.0-rc.1)
+  The candidate updater installed the GitHub release over a disposable v0.6.0
+  installation on 2026-11-19. It verified the archive checksum and preserved
+  the configuration byte for byte. Switching to Stable reported v0.6.0 and
+  refused the downgrade.
 
 ### Family time and profiles
 
