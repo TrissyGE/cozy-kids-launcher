@@ -1,4 +1,5 @@
 {
+  "retro_settings_saved": "Paramètres de RetroGameCorner enregistrés.",
   "package_system_maintenance": "Utilisez le gestionnaire de logiciels du système pour mettre à jour ou supprimer des applications. L’installation directe reste disponible ici.",
   "package_source": "Gestionnaire de paquets",
   "package_system_update": "Sur Arch Linux, utilisez la mise à jour complète du système de votre gestionnaire de paquets. Les mises à jour d’applications individuelles ne sont pas proposées ici.",
@@ -415,6 +416,12 @@
   "retro_enabled": "Activer RetroGameCorner pour ce profil",
   "retro_covers": "Télécharger les jaquettes via Libretro (transmet le titre et la console)",
   "retro_library_empty": "Aucun jeu autorisé n’est encore disponible.",
+  "retro_library_all": "Tous les jeux",
+  "retro_library_loading": "Recherche de vos jeux…",
+  "retro_library_by_console": "Par console",
+  "retro_library_setup": "Bibliothèque de jeux",
+  "retro_emulator_title": "Émulateurs",
+  "retro_sources_hint": "Saisissez un chemin de dossier par ligne. Si la carte Miyoo contient beaucoup de jeux, choisissez les dossiers de consoles dans « Roms ». Les jaquettes PNG correspondantes du sous-dossier « Imgs » s’affichent automatiquement.",
   "retro_saves_title": "Sauvegardes de jeu",
   "retro_saves_empty": "Ce profil ne contient aucune sauvegarde de jeu.",
   "retro_save_download": "Télécharger les sauvegardes",

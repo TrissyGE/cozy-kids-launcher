@@ -220,7 +220,9 @@ def run_retro_scenario(browser, test_home):
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zipped:
         zipped.writestr("Local Test.gba", b"scanner fixture")
     (retro_root / "TV Game.nes").write_bytes(b"scanner fixture")
-    (retro_root / "Game Bundle.png").write_bytes(base64.b64decode(
+    images = retro_root / "Imgs"
+    images.mkdir()
+    (images / "Game Bundle.png").write_bytes(base64.b64decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII="
     ))
     browser.evaluate("enterAdmin(); activateAdminSection('retro')")
@@ -340,13 +342,28 @@ def run_retro_scenario(browser, test_home):
               "!document.querySelector('[data-catalog-id='+id+']'))",
               "The emulator install action is outside RetroGameCorner")
     browser.click("#retroEnabled")
-    browser.click("#retroSettingsSave")
     browser.wait_for("cfg.tiles.some(tile=>tile.id==='retro-corner'&&tile.visible)")
+    browser.wait_for("document.getElementById('retroSettingsStatus').textContent===uiText.retroSettingsSaved")
+    persisted = browser.evaluate(
+        "fetch('/api/retro/games').then(response=>response.json()).then(data=>data.enabled)",
+        await_promise=True,
+    )
+    if persisted is not True:
+        raise AssertionError("Toggling RetroGameCorner did not persist to the current child profile")
     browser.evaluate("closeAdmin()")
     assert_js(browser, "document.querySelectorAll('#grid .tile[data-tile-id^=retro-]').length===1",
               "Approved games appeared as extra Home tiles")
     browser.click('#grid .tile[data-tile-id="retro-corner"]')
     browser.wait_for("location.pathname==='/media.html' && document.querySelector('.media-card-title')?.textContent==='Local Test'")
+    browser.click("#retroGroup")
+    assert_js(browser, "document.getElementById('retroGroup').getAttribute('aria-pressed')==='true' && "
+              "Array.from(document.querySelectorAll('.retro-console-heading')).map(h=>h.textContent).join(',')==='Game Boy Advance,NES' && "
+              "document.querySelectorAll('.retro-console-cards .media-card').length===2",
+              "Grouping did not retain the approved games under their console headings")
+    browser.evaluate("document.querySelector('.media-card').focus()")
+    browser.key_press("ArrowDown")
+    assert_js(browser, "document.activeElement.querySelector('.media-card-title')?.textContent==='TV Game'",
+              "Keyboard navigation stopped at the first console")
     browser.click('[data-retro-system="Nintendo - Nintendo Entertainment System"]')
     assert_js(browser, "document.querySelectorAll('.media-card').length===1 && "
               "document.querySelector('.media-card-title').textContent==='TV Game'",
@@ -1502,7 +1519,13 @@ def run_scenarios(browser, release_fixture, installed_version, artifacts, test_h
     )
     log_scenario("screen timer starts, renders its badge, and stops")
 
-    release_fixture.latest_version = installed_version
+    run_update_scenarios(browser, release_fixture, installed_version, test_home)
+
+
+def run_update_scenarios(browser, release_fixture, installed_version, test_home):
+    # The stable feed never contains a release candidate. A preview build is
+    # current on the stable track until a newer final release is available.
+    release_fixture.latest_version = "0.0.0" if "-rc." in installed_version else installed_version
     release_fixture.mode = "ok"
     browser.click("[data-admin-section='system']")
     browser.wait_for("!document.getElementById('updateTrack').disabled")
@@ -1954,7 +1977,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
-    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak"), default="all")
+    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak", "updates"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -2035,9 +2058,9 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders", "flatpak"))
+            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders", "flatpak", "updates"))
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
-            ReleaseFixtureHandler.latest_version = installed_version
+            ReleaseFixtureHandler.latest_version = "0.0.0" if "-rc." in installed_version else installed_version
 
             app_port = available_port()
             environment = dict(os.environ)
@@ -2081,6 +2104,10 @@ def main():
                             test_home,
                         )
                         run_accessibility_scenarios(browser, args.artifacts)
+                    if args.suite == "updates":
+                        browser.wait_for("typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+                        browser.evaluate("enterAdmin()")
+                        run_update_scenarios(browser, ReleaseFixtureHandler, installed_version, test_home)
                     if args.suite == "retro":
                         run_retro_scenario(browser, test_home)
                     if args.suite == "flatpak":

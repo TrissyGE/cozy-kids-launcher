@@ -739,6 +739,7 @@ keys = (
     "defaultShutdownLabel", "tilePaint", "tileGames", "tileMusic", "tileBrowser",
     "themes", "counts", "browserHint", "browserLabel", "languageLabel", "paletteBgStart", "paletteBgEnd",
     "paletteText", "paletteButton", "paletteCard", "packageMaintenance", "budget", "updateTrack",
+    "retroSettingsSaved", "retroLibrarySetup", "retroEmulatorTitle", "retroSourcesHint",
 )
 print(json.dumps({key: value for key, value in locale.items() if key in keys or key.startswith(("folder", "flatpak", "package")) or key == "catalogUseSource"}, ensure_ascii=True))
 PY
@@ -1418,7 +1419,9 @@ if [[ -d "$SRC_DIR/../themes" ]]; then
   cp -r "$SRC_DIR/../themes" "$APP_ROOT/themes"
 fi
 
-# Generate config JSON with proper escaping
+# Generate the initial configuration once. --force refreshes generated
+# launcher files and shortcuts, while family settings stay in the user's home.
+if [[ ! -e "$CONFIG_FILE" && ! -L "$CONFIG_FILE" ]]; then
 python3 - "$CONFIG_FILE" "$ACTIVE_LANG" "$DEFAULT_TITLE" "$DEFAULT_THEME" "$DEFAULT_LAYOUT" "$DEFAULT_PARENT_LABEL" "$DEFAULT_EXIT_LABEL" "$SHUTDOWN_LABEL" "$DEFAULT_TILE_PAINT" "$DEFAULT_TILE_GAMES" "$DEFAULT_TILE_MUSIC" "$DEFAULT_TILE_BROWSER" "$DEFAULT_BROWSER_URL" "$SRC_DIR/recommendations.json" "$RECOMMENDED" <<'PY'
 import json, sys, shutil, os
 path, lang, title, theme, layout, parent_label, exit_label, shutdown_label, tile_paint, tile_games, tile_music, tile_browser, browser_url, rec_path, recommended = sys.argv[1:16]
@@ -1509,6 +1512,7 @@ with open(path, 'w', encoding='utf-8') as f:
     f.write('\n')
 PY
 chmod 0600 "$CONFIG_FILE"
+fi
 
 # Copy recommendations data for runtime use
 if [[ -f "$SRC_DIR/recommendations.json" ]]; then

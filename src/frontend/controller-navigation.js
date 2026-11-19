@@ -1,8 +1,34 @@
 // Shared directional navigation for the child launcher and media library.
+const navigationDirections={
+  ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]
+};
+
+function moveDirectionalFocus(key,buttons,focused){
+  if(!focused){
+    buttons[0]?.focus();
+    return Boolean(buttons.length);
+  }
+  const [dx,dy]=navigationDirections[key];
+  const origin=focused.getBoundingClientRect();
+  let best=null;
+  let bestScore=Infinity;
+  for(const button of buttons){
+    const rect=button.getBoundingClientRect();
+    const x=(rect.left+rect.right-origin.left-origin.right)/2;
+    const y=(rect.top+rect.bottom-origin.top-origin.bottom)/2;
+    const forward=x*dx+y*dy;
+    if(forward<=4) continue;
+    const score=forward+2*Math.abs(x*dy-y*dx);
+    if(score<bestScore){
+      best=button;
+      bestScore=score;
+    }
+  }
+  if(best) best.focus();
+  return Boolean(best);
+}
+
 function createControllerNavigation(getScope){
-  const directions={
-    ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]
-  };
   let enabled=false;
   let pollId=null;
   let lastScope=null;
@@ -16,31 +42,6 @@ function createControllerNavigation(getScope){
     return Array.from(document.querySelectorAll(scope.buttons)).filter(button=>
       !button.disabled&&!button.closest('[hidden],.hidden,[inert]')&&button.getClientRects().length
     );
-  }
-
-  function move(key,buttons,focused){
-    if(!focused){
-      buttons[0]?.focus();
-      return Boolean(buttons.length);
-    }
-    const [dx,dy]=directions[key];
-    const origin=focused.getBoundingClientRect();
-    let best=null;
-    let bestScore=Infinity;
-    for(const button of buttons){
-      const rect=button.getBoundingClientRect();
-      const x=(rect.left+rect.right-origin.left-origin.right)/2;
-      const y=(rect.top+rect.bottom-origin.top-origin.bottom)/2;
-      const forward=x*dx+y*dy;
-      if(forward<=4) continue;
-      const score=forward+2*Math.abs(x*dy-y*dx);
-      if(score<bestScore){
-        best=button;
-        bestScore=score;
-      }
-    }
-    if(best) best.focus();
-    return Boolean(best);
   }
 
   function controllerAction(pad){
@@ -88,7 +89,7 @@ function createControllerNavigation(getScope){
     }
     if(needsRelease) return;
     const now=performance.now();
-    const direction=Object.hasOwn(directions,action);
+    const direction=Object.hasOwn(navigationDirections,action);
     if(direction) activationHeld=false;
     else if(activationHeld) return;
     else activationHeld=true;
@@ -99,7 +100,7 @@ function createControllerNavigation(getScope){
     if(action==='back'){ scope.back?.(); return; }
     const buttons=availableButtons(scope);
     const focused=buttons.includes(document.activeElement)?document.activeElement:null;
-    if(direction) move(action,buttons,focused);
+    if(direction) moveDirectionalFocus(action,buttons,focused);
     else if(focused) focused.click();
     else buttons[0]?.focus();
   }
@@ -112,7 +113,7 @@ function createControllerNavigation(getScope){
     if(!enabled||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey) return;
     const scope=getScope();
     if(scope?.modal&&!scope.modal.contains(event.target)&&
-        (event.key==='Enter'||event.key===' '||Object.hasOwn(directions,event.key))){
+        (event.key==='Enter'||event.key===' '||Object.hasOwn(navigationDirections,event.key))){
       event.preventDefault();
       event.stopImmediatePropagation();
       return;
@@ -124,9 +125,9 @@ function createControllerNavigation(getScope){
       event.preventDefault();
       return;
     }
-    if(!Object.hasOwn(directions,event.key)) return;
+    if(!Object.hasOwn(navigationDirections,event.key)) return;
     const focused=buttons.includes(event.target)?event.target:null;
-    move(event.key,buttons,focused);
+    moveDirectionalFocus(event.key,buttons,focused);
     event.preventDefault();
     event.stopImmediatePropagation();
   },true);

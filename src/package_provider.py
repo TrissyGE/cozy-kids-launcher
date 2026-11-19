@@ -23,7 +23,7 @@ IMMUTABLE_VARIANTS = {"silverblue", "kinoite", "sericea", "onyx", "coreos", "aeo
 PACKAGE_NAME = re.compile(r"[a-z0-9](?:[a-z0-9+.-]{0,126}[a-z0-9])?")
 APT_PACKAGEKIT_SYSTEMS = {"ubuntu", "linuxmint", "zorin"}
 NATIVE_PACKAGEKIT_PROFILES = {
-    "apt": {"systems": APT_PACKAGEKIT_SYSTEMS, "backends": {"apt"},
+    "apt": {"systems": APT_PACKAGEKIT_SYSTEMS, "backends": {"apt", "aptcc"},
             "operations": ("install", "update", "remove")},
     "dnf": {"systems": {"fedora"}, "backends": {"dnf", "dnf5"},
             "operations": ("install",)},
@@ -50,7 +50,7 @@ def read_os_release(paths=("/etc/os-release", "/usr/lib/os-release")):
         result = {}
         for line in contents.splitlines():
             key, separator, value = line.partition("=")
-            if not separator or key not in ("ID", "ID_LIKE", "VARIANT_ID"):
+            if not separator or key not in ("ID", "ID_LIKE", "VARIANT_ID", "UBUNTU_CODENAME", "VERSION_CODENAME"):
                 continue
             try:
                 words = shlex.split(value, comments=True)
@@ -112,8 +112,13 @@ def catalog_package_route(recommendation, release, provider):
         return {"mode": "unavailable"}
     profile = native_packagekit_profile(release, provider)
     if profile is not None:
-        return {"mode": "direct", "package": package, "provider": provider,
-                "operations": list(profile["operations"])}
+        operations = list(profile["operations"])
+        route = {"mode": "direct", "package": package, "provider": provider, "operations": operations}
+        # Ubuntu 22.04 and derivatives ship the older APTcc backend. The
+        # worker independently enforces the policy using the real daemon ID.
+        if provider == "apt" and release.get("UBUNTU_CODENAME", release.get("VERSION_CODENAME")) == "jammy":
+            route.update(operations=["install"], maintenance="system")
+        return route
     return {"mode": "software-manager", "package": package}
 
 

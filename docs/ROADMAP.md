@@ -169,6 +169,18 @@ their own evidence is complete. See the release standard at the end.
 
 ## v0.8.0 — Platform & Living Room
 
+The first 0.8 candidate bundles the family profiles and time controls, the
+Parent catalog with qualified install routes, the five enabled translations,
+and the existing cartridge RetroGameCorner. PS1 remains an opt-in preview
+requiring a matching local core and firmware. The hardware check describes
+known requirements and the measured PS1 workload with its current limits.
+
+Before stable publication, verify setup, PIN and profile/time enforcement,
+catalog consent and app return, cartridge gameplay and saves, real controller
+input, and the release/update paths. Use the required desktop matrix and the
+physical laptop. Keep dated evidence with the exact candidate commit.
+The remaining platform and console expansion is tracked under 0.8.5 and later.
+
 ### Cross-distribution app catalog
 
 - [x] Add Parent app-store search, category/status filters, counts and keyboard-accessible detail views (#62)
@@ -183,7 +195,6 @@ their own evidence is complete. See the release standard at the end.
 - [x] Add sourced learning guidance for Blinken, KWordQuiz and Parley
 - [x] Review the remaining eleven native recommendations and document network/privacy findings with explicit unknowns ([catalog guidance](CATALOG_GUIDANCE.md))
 - [x] Add curated KolourPaint and KGeography recommendations after package, fullscreen, input and return checks
-- [ ] Qualify KStars and Stellarium for the catalog after reliable launch and input across the desktop matrix
 - [x] Detect native APT, DNF, Pacman and Zypper environments and prepare allowlisted manual plans (#59; [provider scope](PACKAGE_PROVIDERS.md))
 - [x] Add terminal-free PackageKit/APT review, consent, system authorization, progress and add-tile flow (#60)
 - [x] Protect existing package routes with Parent/origin checks, catalog-controlled names and expiring single-use confirmation (#60)
@@ -191,18 +202,15 @@ their own evidence is complete. See the release standard at the end.
 - [x] Add explicit APT PackageKit update and removal review, consent and progress for a single selected app
 - [x] Reattach known APT PackageKit jobs after a launcher restart, with read-only progress and no replay of consent
 - [x] Reconcile jobs that finish while the launcher is offline using exact daemon history and a fresh package lookup
-- [ ] Implement tested native DNF/Pacman/Zypper and managed Flatpak execution adapters
+- [x] Implement native DNF/Pacman/Zypper installation adapters and the initial managed user Flatpak route
   - [x] Show source-checked native package names for five apps across Fedora, Arch and openSUSE and distinguish graphical software-manager guidance from direct installation
   - [x] Add native PackageKit adapters with distro/backend/role checks, explicit mappings, provider-bound consent/recovery and exact installed-version verification
   - [x] Keep Arch app updates outside the per-app flow and refuse installation while coordinated system updates are pending
   - [x] Exercise trusted installation, provider-specific maintenance policy, daemon-history reconciliation and ordinary-user authorization refusal in disposable Fedora, Arch and Tumbleweed containers; retain image/runtime evidence in focused CI
-  - [ ] Qualify RPM maintenance with reliable execution-time removal restrictions, real version-to-version update transitions and target-distribution graphical acceptance
   - [x] Add user-scoped Flatpak installation with an explicitly selected, signed Flathub source, exact app/runtime commit review, permission ceilings, single-use consent and verified installation; validate the initial Tux Paint mapping through the shared Parent installation flow
   - [x] Add five-language source selection, visible sandbox permissions and explicit tile-source switching with rollback, preserving existing labels, visibility and approvals
   - [x] Exercise the installed Flatpak runtime, sandbox/process ownership and real overlay close on GNOME Wayland, KDE Wayland and XFCE X11; retain physical input and final visual/focus acceptance separately
-  - [ ] Qualify additional Flatpak app mappings and system-wide installations; add app update/removal only after their own review and execution checks
 - [ ] Complete Ubuntu/Mint/Zorin authorization/failure scenarios and remaining desktop acceptance for direct installation
-- [ ] Test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
 
 ### More languages and extensible translations
 
@@ -222,7 +230,6 @@ their own evidence is complete. See the release standard at the end.
 - [x] Exercise all five enabled languages in the 800×600 Parent layout with localized counts and keyboard focus recovery
 - [ ] Complete physical-device language acceptance for long labels, localized dates and available speech voices
 - [x] Add registry-driven RTL layout, mirrored navigation and synthetic browser coverage
-- [ ] Complete RTL language acceptance with a reviewed language pack such as Arabic or Hebrew
 
 The [translation guide](LOCALIZATION.md) describes the shared registry,
 contributor workflow, and coverage reports. German, English, Spanish, French
@@ -237,7 +244,6 @@ and Italian are enabled.
 - [x] Build and attest preview releases through a workflow path that excludes stable-main promotion
 - [x] Share the release archive builder between local and hosted checks and require two builds of the same commit to match
 - [ ] Verify the first published release candidate on an opted-in disposable installation
-- [ ] Expand the automated and manual compatibility matrix across supported distributions
 
 ### Family time and profiles
 
@@ -268,19 +274,60 @@ that lack an equivalent core, including Wii U and PS3.
 - [x] Keep approvals per child, hide folder paths from the child configuration, and handle unavailable or replaced ROMs
 - [x] Assign private mGBA save and save-state directories per child and game
 - [x] Add NES, Super Nintendo, Sega Master System and Game Gear cartridge games through the Mednafen Parent installer
-- [ ] Make PlayStation 1 the next optional system in RetroGameCorner
+- [x] Add the optional PlayStation 1 preview for verified local firmware and the reviewed core
   - [x] Import Parent-supplied BIOS files locally, validate regional PS1 and supported PSP BIOS checksums and show readiness in Parent settings
   - [x] Verify that Ubuntu RetroArch can launch the upstream Linux x86-64 PCSX ReARMed core with a CHD, the supported PSP BIOS and a private save directory
   - [x] Offer the RetroArch package in the Parent installer and report whether the reviewed PCSX ReARMed core is available
   - [x] Install the explicitly versioned PCSX ReARMed core with one click when Libretro serves the reviewed checksum, and accept a matching local copy
-  - [ ] Qualify a durable versioned source for the core so that installs remain available after upstream rolls the download. Evaluate Beetle PSX or DuckStation if needed for game compatibility
   - [x] Discover single-disc CHDs, enforce per-child approval and verify the firmware, disc and pre-provisioned core before launch
   - [x] Discover CUE/BIN discs with raw 2352-byte tracks, validate every track in the source, and invalidate approval when the CUE or a BIN changes
   - [x] Keep memory cards private per child and game, and verify CUE/BIN fullscreen, overlay close and memory-card persistence in all three desktop VM sessions
-  - [ ] Verify gameplay controls, audible output and save persistence on the physical Linux test laptop
   - [x] Import M3U sets of CHD and CUE/BIN discs with a single approval, including Miyoo playlists whose entries are resolved within the playlist folder
-  - [ ] Verify a disc change requested during gameplay and memory-card persistence on the desktop matrix and the physical Linux test laptop
 - [x] Add Parent-only save backup and removal controls for each child and game
+- [x] Add a local hardware preflight for installed options and future candidates through Wii U / PS3.
+  Report known requirements, unknowns and install-route availability separately.
+- [x] Add the generated PS1 short test with private, device/core/settings-scoped results and explicit measurement limits.
+- [x] Support bounded single-ROM ZIP archives from handheld game libraries
+- [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
+
+#### Living-room foundations
+
+- [x] Add optional standard gamepad and keyboard-style remote navigation on Home and in the media library, with modal focus boundaries
+- [ ] Verify standard gamepads and physical remotes on the release desktop matrix
+- [x] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
+- [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
+- [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix
+- [x] Offer larger covers, optional console sections and individual console filters in the approved game library
+- [x] Put activation and game approval first in the Parent RetroGameCorner section, with hardware, BIOS and saves in their own panels
+- [x] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
+  - [x] Keep bounded folder definitions and tile assignments private to each child profile, with validated references and safe profile copying
+  - [x] Add the Parent editor, child folder tiles, keyboard/gamepad back navigation and media return to the containing folder
+  - [x] Exercise persistence, hidden apps, safe folder deletion and all five languages in the small Parent layout
+- [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
+  - [x] Wait for a fresh session's window manager before starting managed fullscreen apps, with bounded startup, cancellable ownership and private fixed-code failure diagnostics
+  - [x] Reassert lost fullscreen state on owned main windows without restarting the application or taking focus from another app
+  - [x] Acknowledge the close overlay only after its button is mapped; keep status HTTP requests off the Tk thread and restore only the verified launcher browser
+  - [x] Reposition a displaced close overlay inside an active RandR monitor; verify an XFCE virtual-output resize and cover offset/primary layouts with focused tests
+  - [x] Verify suspend/resume and launcher use on the physical Linux test laptop ([v0.8 laptop acceptance](DESKTOP_TESTING.md#v08-laptop-acceptance))
+  - [ ] Complete suspend/resume, physical multi-monitor hotplug and audio-device removal/reconnection across the required desktop sessions
+- [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
+  - [x] Add first-launch timings and proportional idle memory to the opt-in desktop smoke report
+  - [ ] Establish a repeatable baseline and confirm the provisional budgets on the low-powered physical test device
+
+## v0.8.5 and later — Platform & Living Room expansion
+
+- [ ] Qualify KStars and Stellarium for the catalog after reliable launch and input across the desktop matrix
+- [ ] Qualify RPM maintenance with reliable execution-time removal restrictions, real version-to-version update transitions and target-distribution graphical acceptance
+- [ ] Qualify additional Flatpak app mappings and system-wide installations. Review and test app updates and removal separately.
+- [ ] Expand the automated and manual compatibility matrix and test catalog discovery and package actions on Debian/Ubuntu derivatives, Fedora, openSUSE, and Arch derivatives
+- [ ] Complete RTL language acceptance with a reviewed language pack such as Arabic or Hebrew
+
+### RetroGameCorner expansion
+
+- [ ] Promote the optional PS1 preview after the following acceptance checks
+  - [ ] Qualify a durable versioned source for the core so that installs remain available after upstream rolls the download. Evaluate Beetle PSX or DuckStation if needed for game compatibility
+  - [ ] Verify gameplay controls, audible output and save persistence on the physical Linux test laptop
+  - [ ] Verify a disc change requested during gameplay and memory-card persistence on the desktop matrix and the physical Linux test laptop
 - [ ] Compare RetroArch cores for the existing cartridge systems. Switch a system only after verifying that existing game approvals and saves still work or have a tested migration.
 - [ ] Add a short local device check in Parent settings that recommends optional systems through the Wii U and PS3 era
   - [x] Show an on-demand local hardware preflight and separate catalog-route status for the current emulators and later candidates through Wii U and PS3. Keep unknown performance explicit and block an incompatible reviewed PS1 core.
@@ -304,30 +351,6 @@ that lack an equivalent core, including Wii U and PS3.
   - [ ] PlayStation 2, GameCube, Wii and original Xbox. Test [PCSX2](https://pcsx2.net/docs/setup/requirements/) first for PS2 on the physical Linux laptop and compare performance, input and fullscreen before selection. Review [Dolphin](https://dolphin-emu.org/docs/faq/) and [xemu](https://xemu.app/) for the other systems, including Wii motion input and Xbox firmware setup.
   - [ ] Wii U and PlayStation 3. Qualify [Cemu](https://cemu.info/faq.html) and [RPCS3](https://github.com/RPCS3/rpcs3), including firmware or game installation where required and per-game compatibility guidance. Evaluate [Xenia](https://github.com/xenia-project/xenia) for Xbox 360 in the same era once a Linux installation and launch path passes review.
   - [ ] For each new system, qualify the Parent install flow, supported game formats, required user-supplied files, child approvals, private saves and desktop acceptance before offering it in RetroGameCorner.
-- [x] Support bounded single-ROM ZIP archives from handheld game libraries
-- [ ] Verify gamepad/keyboard input, actual fullscreen, a reachable close control and return to the launcher for each supported emulator
-
-#### Living-room foundations
-
-- [x] Add optional standard gamepad and keyboard-style remote navigation on Home and in the media library, with modal focus boundaries
-- [ ] Verify standard gamepads and physical remotes on the release desktop matrix
-- [x] Let parents add bounded local media roots without exposing filesystem paths to the child-facing API
-- [x] Refresh the media library when a configured folder disappears or returns, remove stale cards and covers, and preserve favorites
-- [ ] Verify physical removable-drive eject and remount behavior on the release desktop matrix
-- [x] Group approved RetroGameCorner games by console with optional library filters
-- [x] Add optional custom child-friendly folders without recommendations, streaks, or engagement scoring
-  - [x] Keep bounded folder definitions and tile assignments private to each child profile, with validated references and safe profile copying
-  - [x] Add the Parent editor, child folder tiles, keyboard/gamepad back navigation and media return to the containing folder
-  - [x] Exercise persistence, hidden apps, safe folder deletion and all five languages in the small Parent layout
-- [ ] Recover cleanly from suspend, resume, display hotplug, and temporary audio-device loss
-  - [x] Wait for a fresh session's window manager before starting managed fullscreen apps, with bounded startup, cancellable ownership and private fixed-code failure diagnostics
-  - [x] Reassert lost fullscreen state on owned main windows without restarting the application or taking focus from another app
-  - [x] Acknowledge the close overlay only after its button is mapped; keep status HTTP requests off the Tk thread and restore only the verified launcher browser
-  - [x] Reposition a displaced close overlay inside an active RandR monitor; verify an XFCE virtual-output resize and cover offset/primary layouts with focused tests
-  - [ ] Complete real suspend/resume, physical multi-monitor hotplug and audio-device removal/reconnection on the Linux test laptop and required desktop sessions
-- [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
-  - [x] Add first-launch timings and proportional idle memory to the opt-in desktop smoke report
-  - [ ] Establish a repeatable baseline and confirm the provisional budgets on the low-powered physical test device
 
 ## v1.0.0 — Long-term Stable
 
@@ -385,4 +408,5 @@ A release milestone additionally requires its open distribution/desktop gates
 and the full gate in [RELEASING.md](RELEASING.md). A checked implementation task
 does not substitute for an unperformed release or physical-device acceptance.
 
-- [ ] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix.
+- [x] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix. [v0.8 laptop acceptance](DESKTOP_TESTING.md#v08-laptop-acceptance)
+- [x] Complete manual acceptance of the v0.8 release candidate on GNOME Wayland, Plasma Wayland and XFCE X11. [v0.8 desktop VM acceptance](DESKTOP_TESTING.md#v08-desktop-vm-acceptance)

@@ -110,33 +110,23 @@ class StableMainReleaseContractTests(unittest.TestCase):
     @unittest.skipUnless(os.name == "posix", "Installer smoke test requires Linux")
     def test_isolated_installer_writes_the_current_config_schema(self):
         with tempfile.TemporaryDirectory() as home:
-            subprocess.run(
-                [
-                    "bash",
-                    str(REPOSITORY_ROOT / "scripts" / "install.sh"),
-                    "--user",
-                    getpass.getuser(),
-                    "--home",
-                    home,
-                    "--lang",
-                    "en",
-                    "--launch-mode",
-                    "window",
-                    "--skip-browser-check",
-                    "--force",
-                ],
-                cwd=REPOSITORY_ROOT,
-                check=True,
-                stdout=subprocess.DEVNULL,
-            )
-            installed = json.loads(
-                (
-                    Path(home)
-                    / ".config"
-                    / "cozy-kids-launcher"
-                    / "config.json"
-                ).read_text(encoding="utf-8")
-            )
+            command = [
+                "bash",
+                str(REPOSITORY_ROOT / "scripts" / "install.sh"),
+                "--user",
+                getpass.getuser(),
+                "--home",
+                home,
+                "--lang",
+                "en",
+                "--launch-mode",
+                "window",
+                "--skip-browser-check",
+                "--force",
+            ]
+            subprocess.run(command, cwd=REPOSITORY_ROOT, check=True, stdout=subprocess.DEVNULL)
+            config = Path(home) / ".config/cozy-kids-launcher/config.json"
+            installed = json.loads(config.read_text(encoding="utf-8"))
             self.assertFalse(installed["setupCompleted"])
             self.assertEqual(installed["language"], "en")
             app_root = Path(home) / ".local/share/cozy-kids-launcher"
@@ -151,12 +141,7 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertFalse(installed["profiles"][0]["accessibilityHighContrast"])
             self.assertFalse(installed["profiles"][0]["accessibilityReducedMotion"])
             self.assertFalse(installed["profiles"][0]["accessibilityKeyboardFocus"])
-            config_path = (
-                Path(home)
-                / ".config"
-                / "cozy-kids-launcher"
-                / "config.json"
-            )
+            config_path = config
             backup_root = (
                 Path(home)
                 / ".local"
@@ -413,6 +398,15 @@ class StableMainReleaseContractTests(unittest.TestCase):
             self.assertFalse(installed["activityTrackingEnabled"])
             self.assertEqual(installed["activeProfileId"], "default")
             self.assertEqual(len(installed["profiles"]), 1)
+            installed["setupCompleted"] = True
+            installed["pinHash"] = "fixture-pin-hash"
+            installed["profiles"][0]["title"] = "Keep this family profile"
+            saved = json.dumps(installed, ensure_ascii=False).encode("utf-8")
+            config_path.write_bytes(saved)
+            (app_root / "version").write_text("0.0.1\n", encoding="utf-8")
+            subprocess.run(command, cwd=REPOSITORY_ROOT, check=True, stdout=subprocess.DEVNULL)
+            self.assertEqual(config_path.read_bytes(), saved)
+            self.assertEqual((app_root / "version").read_bytes(), (REPOSITORY_ROOT / "VERSION").read_bytes())
 
 
 if __name__ == "__main__":

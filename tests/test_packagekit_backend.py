@@ -15,7 +15,7 @@ def package(name='paint', info=2, origin='repo', version='1', arch='amd64'):
 
 class BackendTests(unittest.TestCase):
     def test_initialization_matches_the_distribution_to_its_actual_daemon_backend(self):
-        for system, provider, daemon in (("ubuntu", "apt", "apt"), ("fedora", "dnf", "dnf5"),
+        for system, provider, daemon in (("ubuntu", "apt", "apt"), ("zorin", "apt", "aptcc"), ("fedora", "dnf", "dnf5"),
                                          ("arch", "pacman", "alpm"), ("opensuse-tumbleweed", "zypper", "zypp")):
             for actual in (daemon, "foreign-backend"):
                 with self.subTest(system=system, actual=actual):
@@ -80,6 +80,17 @@ class BackendTests(unittest.TestCase):
             backend.prepare("paint", "update")
         with self.assertRaisesRegex(InstallError, "system_update_required"):
             backend.perform("update", {}, mock.Mock())
+        backend.client.set_interactive.assert_not_called()
+
+    def test_legacy_aptcc_accepts_install_and_refuses_maintenance_at_both_boundaries(self):
+        backend = self.backend()
+        backend.control.props.backend_name = "aptcc"
+        self.assertEqual(backend.prepare("paint")["backend"], "aptcc")
+        for operation in ("update", "remove"):
+            with self.assertRaisesRegex(InstallError, "system_maintenance_required"):
+                backend.prepare("paint", operation)
+            with self.assertRaisesRegex(InstallError, "system_maintenance_required"):
+                backend.perform(operation, {}, mock.Mock())
         backend.client.set_interactive.assert_not_called()
 
     def test_unknown_download_sizes_do_not_reuse_installed_size(self):

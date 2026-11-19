@@ -1,0 +1,28 @@
+{
+  "desktop": "xfce",
+  "session": "x11",
+  "browser": "google-chrome",
+  "mode": "kiosk",
+  "version": "cozy-kids-launcher\t0.8.0~rc.1",
+  "checks": [
+    "system runtime server and requested browser mode",
+    "package update owner and release updater refusal",
+    "mapped overlay leaves keyboard focus on the owned app (X11)",
+    "same owned application window regains fullscreen after observed EWMH state loss",
+    "displaced close control recovers inside resized XFCE output and restored layout",
+    "real Tk close button works while status worker is stalled for 15 seconds",
+    "owned KTurtle fullscreen and overlay close from system code",
+    "overlay close restores the owned launcher browser focus (X11)",
+    "Parent exit and owned-process cleanup"
+  ],
+  "manualPending": [
+    "Physical gameplay input",
+    "Native Wayland focus and visual stacking"
+  ],
+  "stalledStatus": {
+    "check": "real Tk close button works while status worker is stalled for 15 seconds",
+    "fixtureStartSeconds": 1.996,
+    "closeSeconds": 0.87
+  },
+  "outcome": "automation-passed-manual-pending"
+}

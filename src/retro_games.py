@@ -25,17 +25,17 @@ RETRO_PREFIX = "special:retro:"
 HUB_COMMAND = "special:retro-library"
 HUB_ID = "retro-corner"
 ROM_SYSTEMS = {
-    ".gb": ("mgba-qt", "", "Nintendo - Game Boy"),
-    ".gbc": ("mgba-qt", "", "Nintendo - Game Boy Color"),
-    ".gba": ("mgba-qt", "", "Nintendo - Game Boy Advance"),
-    ".nes": ("mednafen", "nes", "Nintendo - Nintendo Entertainment System"),
-    ".sfc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System"),
-    ".smc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System"),
-    ".sms": ("mednafen", "sms", "Sega - Master System - Mark III"),
-    ".gg": ("mednafen", "gg", "Sega - Game Gear"),
-    ".chd": ("retroarch", "", "Sony - PlayStation"),
-    ".m3u": ("retroarch", "", "Sony - PlayStation"),
-    ".cue": ("retroarch", "", "Sony - PlayStation"),
+    ".gb": ("mgba-qt", "", "Nintendo - Game Boy", "Game Boy"),
+    ".gbc": ("mgba-qt", "", "Nintendo - Game Boy Color", "Game Boy Color"),
+    ".gba": ("mgba-qt", "", "Nintendo - Game Boy Advance", "Game Boy Advance"),
+    ".nes": ("mednafen", "nes", "Nintendo - Nintendo Entertainment System", "NES"),
+    ".sfc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System", "Super Nintendo"),
+    ".smc": ("mednafen", "snes", "Nintendo - Super Nintendo Entertainment System", "Super Nintendo"),
+    ".sms": ("mednafen", "sms", "Sega - Master System - Mark III", "Master System"),
+    ".gg": ("mednafen", "gg", "Sega - Game Gear", "Game Gear"),
+    ".chd": ("retroarch", "", "Sony - PlayStation", "PlayStation"),
+    ".m3u": ("retroarch", "", "Sony - PlayStation", "PlayStation"),
+    ".cue": ("retroarch", "", "Sony - PlayStation", "PlayStation"),
 }
 PS1_EXTENSIONS = {".chd", ".m3u", ".cue"}
 MAX_ROM_BYTES = 32 * 1024 * 1024
@@ -674,7 +674,7 @@ def emulator_command(executable, game, save_root, profile_id):
     """Keep battery saves and state slots in a private child/game directory."""
     if game.get("zipMember") is not None and inspect_rom_zip(game["path"], verify=True) != game["zipMember"]:
         raise ValueError("ROM archive is unavailable or damaged")
-    _, module, _ = ROM_SYSTEMS[game["romExtension"]]
+    module = ROM_SYSTEMS[game["romExtension"]][1]
     if module and os.path.lexists(game["path"] + ".ips"):
         raise ValueError("Mednafen would apply an unapproved IPS patch")
     profile = prepare_profile_resume_directory(save_root, profile_id)
@@ -696,7 +696,7 @@ def emulator_command(executable, game, save_root, profile_id):
     return [
         "kstart", "--fullscreen",
         "/usr/bin/env", f"XDG_CONFIG_HOME={config_directory}", executable,
-        "--fullscreen",
+        "-f",
         "-C", f"savegamePath={game_directory}",
         "-C", f"savestatePath={game_directory}",
         game["path"],

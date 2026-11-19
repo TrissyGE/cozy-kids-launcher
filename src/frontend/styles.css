@@ -98,9 +98,9 @@
   #admin .wrap { max-height:calc(100vh - 120px); overflow-y:auto; padding-inline-end:8px; }
   .admin .smallbtn { min-height:40px; min-width:80px; padding:0 12px; font-size:0.9rem; border-radius:12px; }
   .admin-shell { min-height:min(680px,calc(100vh - 120px)); }
-  .admin-header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--input-border); }
+  .admin-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--input-border); }
   .panel .admin-header h2 { margin:0; }
-  .admin-header-actions { display:flex; gap:var(--space-2); }
+  .admin-header-actions { display:flex; flex-wrap:wrap; gap:var(--space-2); }
   .admin-workspace { display:grid; grid-template-columns:210px minmax(0,1fr); gap:var(--space-6); padding-top:var(--space-4); }
   .admin-nav { position:sticky; top:0; align-self:start; display:flex; flex-direction:column; gap:var(--space-2); }
   .admin-tab { min-height:var(--touch-target-min); padding:0 var(--space-3); border:1px solid transparent; border-radius:var(--radius-field); background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:var(--space-2); font:inherit; font-weight:700; text-align:start; }
@@ -544,6 +544,29 @@
 .folder-editor-row input{min-width:0;width:100%;box-sizing:border-box}
 .folder-assignment{grid-column:2 / -1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .folder-assignment select{max-width:100%;min-width:0}
-#retroDeviceResults{padding-inline-start:1.25rem;overflow-wrap:anywhere}
-#retroDeviceResults details{margin-block:.5rem 1rem}
-#retroDeviceResults details li{margin-block:.5rem}
+.retro-panel { min-width:0; margin-block:0 var(--space-4); overflow-wrap:anywhere; }
+.retro-panel h4 { margin:0; font-size:1.1rem; }
+.retro-panel p { margin:0; line-height:1.5; }
+.retro-panel > .muted { color:inherit; }
+.retro-panel summary { cursor:pointer; font-weight:750; }
+.retro-panel[open] > summary { margin-bottom:var(--space-3); }
+.retro-panel .actions { display:flex; flex-wrap:wrap; gap:var(--space-2); margin:0; }
+.retro-panel :is(p[role="status"],div[role="status"],ul, #retroBenchmarkResult):empty { margin:0; padding:0; }
+.retro-switches { display:grid; gap:var(--space-2); }
+.retro-switches .chk { display:flex; align-items:center; gap:var(--space-3); min-height:44px; margin:0; padding-block:var(--space-2); }
+.retro-switches input { flex:none; width:22px; height:22px; margin:0; }
+.retro-action-field { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:var(--space-2); }
+.retro-detail-fields { display:grid; gap:var(--space-2); }
+.retro-detail-fields > :is(input,select) { min-width:0; width:100%; }
+.retro-emulator-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr)); gap:var(--space-3); margin-top:var(--space-3); }
+.retro-emulator-grid .rec-card { min-width:0; gap:var(--space-2); }
+#retroGuide { margin-block-start:var(--space-2); }
+#retroDeviceResults { margin:0; padding-inline-start:1.25rem; }
+#retroDeviceResults details { margin-block:.5rem 1rem; }
+#retroDeviceResults details li { margin-block:.5rem; }
+
+@media (max-width:560px) {
+  .admin-nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .admin-tab { min-width:0; padding-inline:var(--space-2); overflow-wrap:anywhere; }
+  .retro-action-field { grid-template-columns:1fr; }
+}

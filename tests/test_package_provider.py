@@ -110,6 +110,13 @@ class PackageProviderTests(unittest.TestCase):
         for system in ("ubuntu", "linuxmint", "zorin"):
             self.assertEqual(package_provider.catalog_package_route(apps["gcompris"], {"ID": system}, "apt"),
                              {"mode": "direct", "package": "gcompris-qt", "provider": "apt", "operations": ["install", "update", "remove"]})
+        self.assertEqual(
+            package_provider.catalog_package_route(
+                apps["gcompris"], {"ID": "zorin", "VERSION_CODENAME": "zorin", "UBUNTU_CODENAME": "jammy"}, "apt",
+            ),
+            {"mode": "direct", "package": "gcompris-qt", "provider": "apt",
+             "operations": ["install"], "maintenance": "system"},
+        )
         for system, provider in (("fedora", "dnf"), ("arch", "pacman"), ("opensuse-tumbleweed", "zypper")):
             for identifier in ("gcompris", "kturtle", "kgeography", "kolourpaint", "supertuxkart"):
                 app = apps[identifier]
