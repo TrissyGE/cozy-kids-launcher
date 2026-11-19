@@ -6,15 +6,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_SCREENSHOTS = {
     "screenshot-app-details.png",
+    "screenshot-app-sources.png",
     "screenshot-app-store.png",
     "screenshot-admin-appearance.png",
     "screenshot-admin-children.png",
     "screenshot-admin-general.png",
     "screenshot-admin-screen-time.png",
+    "screenshot-folders.png",
     "screenshot-home-default.png",
     "screenshot-home-world.png",
     "screenshot-media-library.png",
     "screenshot-profile-picker.png",
+    "screenshot-retro-library.png",
+    "screenshot-retro-parent.png",
     "screenshot-theme-picker.png",
 }
 

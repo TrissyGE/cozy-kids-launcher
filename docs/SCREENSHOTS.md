@@ -26,7 +26,7 @@ wsl.exe -d Ubuntu --cd /path/to/cozy-kids-launcher -- python3 scripts/take-scree
 The script:
 
 1. installs the current checkout into a temporary home directory;
-2. writes curated English profiles, local media placeholders, and activity records containing no personal data;
+2. writes curated English profiles, local media placeholders, activity records, and fictional games with original covers;
 3. starts the local launcher server on an ephemeral port;
 4. captures real browser renders at 1440×900;
 5. removes the temporary profile and browser data.
@@ -43,11 +43,15 @@ It does not read or change the developer's installed launcher configuration.
 | `screenshots/screenshot-theme-picker.png` | Localized theme selection overlay |
 | `screenshots/screenshot-app-store.png` | Searchable app store with curated guidance and direct-install entry point |
 | `screenshots/screenshot-app-details.png` | One filtered result with reviewed parent guidance and source links |
+| `screenshots/screenshot-app-sources.png` | Tux Paint with the user-scoped Flathub source selected |
 | `screenshots/screenshot-profile-picker.png` | Child-facing profile selection |
 | `screenshots/screenshot-admin-children.png` | Separate child profile management |
-| `screenshots/screenshot-admin-screen-time.png` | Weekly and per-app availability schedules |
+| `screenshots/screenshot-admin-screen-time.png` | A daily budget with weekly and per-app availability schedules |
 | `screenshots/screenshot-admin-appearance.png` | Themes, feedback, celebrations, and accessibility presets |
 | `screenshots/screenshot-media-library.png` | Local cover library with favorites and recents |
+| `screenshots/screenshot-folders.png` | A child folder and the RetroGameCorner tile on Home |
+| `screenshots/screenshot-retro-library.png` | Approved demo games with covers, grouped by console |
+| `screenshots/screenshot-retro-parent.png` | Game folders, cover settings and emulator setup in Parent settings |
 
 Use `--browser <command>` to select a specific Chromium-family browser or `--output-dir <directory>` for a review run that should not replace the checked-in images.
 
@@ -57,6 +61,11 @@ native package-manager acceptance run on the capture host.
 The app-details image searches the full catalog for KTurtle, opens its real
 guidance, and uses a deterministic missing-package flag. It does not install
 software or reduce the catalog to one entry.
+
+The package-source image stages a native/Flathub route for Tux Paint without
+installing software. RetroGameCorner uses original covers and scanner
+fixtures for fictional titles. The folder displayed in Parent settings is
+a demo path.
 
 ## Review checklist
 
