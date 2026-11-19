@@ -325,6 +325,9 @@ function renderBackupOptions(){
   const select=document.getElementById('backupSelect');
   const button=document.getElementById('restoreBackupBtn');
   if(!select||!button) return;
+  document.getElementById('backupTitle').textContent=uiText.backupTitle;
+  document.getElementById('backupPinPreserved').textContent=uiText.backupPinPreserved;
+  select.setAttribute('aria-label',uiText.backupTitle);
   select.replaceChildren();
   setIconLabel(button,'restore',uiText.backupRestore);
   if(backupState!=='ready'){
@@ -409,7 +412,6 @@ async function restoreBackup(){
         .replace('{count}',number.format(preview.profileCount)),
       preview.changes.length?uiText.backupPreviewChanges.replace('{changes}',
         new Intl.ListFormat(interfaceLanguage()).format(preview.changes.map(group=>groups[group]))):uiText.backupNoChanges,
-      uiText.backupPinPreserved,
       uiText.backupConfirm
     ].join('\n');
     clearUiState(msg);

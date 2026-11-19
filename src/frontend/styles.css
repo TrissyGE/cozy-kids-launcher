@@ -104,7 +104,7 @@
   .admin-heading p { margin:4px 0 0; overflow-wrap:anywhere; }
   .panel .admin-header h2 { margin:0; }
   .admin-header-actions { display:flex; flex-wrap:wrap; gap:var(--space-2); }
-  .admin-workspace { display:grid; min-height:0; overflow:auto; scroll-padding:8px; grid-template-columns:210px minmax(0,1fr); gap:var(--space-6); padding:var(--space-4) 4px 8px; }
+  .admin-workspace { display:grid; min-height:0; overflow:auto; scroll-padding:8px; grid-template-columns:210px minmax(0,1fr); gap:var(--space-6); padding:var(--space-4) 8px 8px; }
   .admin-nav { position:sticky; top:0; align-self:start; display:flex; flex-direction:column; gap:var(--space-2); }
   .admin-tab { min-width:0; min-height:var(--touch-target-min); padding:4px var(--space-3); border:1px solid transparent; border-radius:var(--radius-field); background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:var(--space-2); font:inherit; font-weight:700; text-align:start; overflow-wrap:anywhere; }
   .admin-tab:hover { background:var(--smallbtn-bg); }
