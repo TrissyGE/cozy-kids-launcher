@@ -30,28 +30,28 @@ acceptance evidence is ready. [Branching](BRANCHING.md)
 
 ### Parent settings
 
-- [ ] **Make frequently used controls easy to reach.** Show the active child
+- [x] **Make frequently used controls easy to reach.** Show the active child
   consistently in the editor. Keep save, back, and confirmation actions
   reachable at 800×600 across all five languages. Cover long labels, zoom,
   keyboard order, and focus return in Screen Time, Apps & Media, and
   RetroGameCorner.
-- [ ] **Explain the current screen-time rules in one place.** Show today's
+- [x] **Explain the current screen-time rules in one place.** Show today's
   used and remaining allowance, extra minutes already granted, and the next
   applicable schedule restriction for the active child. Use the existing
   local allowance and schedule state, including disabled rules and midnight
   rollover. Keep Parent-authorized extra time available with a custom duration.
-- [ ] **Preview a backup before restoring it.** Show its date, schema, profile
+- [x] **Preview a backup before restoring it.** Show its date, schema, profile
   count, and which settings would be replaced. Report incompatible backups
   before confirmation. Exercise cancelled and failed restores and confirm that
   the previous family configuration is recoverable.
 
 ### RetroGameCorner
 
-- [ ] **Approve several games for the active child.** Add Parent search,
+- [x] **Approve several games for the active child.** Add Parent search,
   console filtering, selected-title counts, and an explicit confirmation.
   Reuse the per-game approval checks and report individual failures when a
   source disappears or a file changes during the operation.
-- [ ] **Remember the child's library view.** Keep the selected console or
+- [x] **Remember the child's library view.** Keep the selected console or
   grouping mode across library visits for that profile. Offer an obvious
   return to all games and handle a missing console or empty list gracefully
   after a drive is removed or a profile is switched.
@@ -64,11 +64,19 @@ acceptance evidence is ready. [Branching](BRANCHING.md)
   installation status and the offer to add a tile reflect the result on APT
   and APTcc. Use the existing Zorin success path as the baseline.
   [Provider scope](PACKAGE_PROVIDERS.md) · [Zorin qualification](https://github.com/TrissyGE/cozy-kids-launcher/pull/100)
+  - [x] Verify a fresh Blinken package review on Ubuntu and Zorin, and confirm
+    that a real PackageKit authorization denial on Ubuntu reports an error.
+  - [ ] Finish graphical authorization cancellation, failure, and successful
+    retry on both target desktops.
 - [ ] **Finish the targeted TuxMath fullscreen checks.** Exercise a real game,
   usable input, the close overlay, and return to the fullscreen child launcher
   on GNOME Wayland and XFCE X11. Include physical keyboard and touch where
   available and retain the prior Plasma Wayland result for its tested revision.
   [Fullscreen evidence](CATALOG_FULLSCREEN.md)
+  - [x] Confirm owned fullscreen and overlay close on Plasma Wayland and
+    XFCE X11, and exercise a real number-typing round with XTest on XFCE.
+  - [ ] Resolve the GNOME Wayland fullscreen timeout and finish the physical
+    input check.
 
 ## v0.8.5 — Desktop and package qualification
 

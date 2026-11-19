@@ -2030,6 +2030,7 @@ def run_everyday_parent_scenario(browser, test_home, artifacts):
     backup.write_text(json.dumps(saved), encoding="utf-8")
     browser.evaluate("activateAdminSection('system'); loadBackups()", await_promise=True)
     browser.set_value("#backupSelect", "20261118-120000")
+    browser.evaluate("document.getElementById('restoreBackupBtn').focus()")
     browser.click("#restoreBackupBtn")
     browser.wait_for("confirmationIsOpen() && document.getElementById('confirmMessage').textContent.includes('2026')")
     browser.screenshot(artifacts / "backup-preview.png")

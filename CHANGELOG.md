@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Keep the active child, Back and Save visible while scrolling Parent settings.
+  Show today’s app allowance, granted extra time and the next weekly schedule
+  change in Screen Time.
+- Preview backup details and affected settings before restoring. Require a
+  fresh review if the backup or current settings change during confirmation.
+- Search and filter games by console in Parent settings, approve a selection
+  for one child and report individual failures. Remember that child’s console
+  or grouped library view.
+
 ## [0.8.0] - 2026-11-19
 
 This release adds family time controls, child folders, a searchable Parent

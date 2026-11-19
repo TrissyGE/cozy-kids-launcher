@@ -768,25 +768,19 @@ async function manageRetroSave(remove){
   }
 }
 
-async function updateRetroGames(endpoint,body,button){
+async function saveRetroRoots(){
+  const roots=document.getElementById('retroRoots').value.split('\n').filter(path=>path.trim());
+  const button=document.getElementById('retroSave');
   if(!retroSession||button.disabled) return;
   const {signal}=retroSession;
   button.disabled=true;
   const status=document.getElementById('retroStatus');
   try{
-    const response=await fetch('/api/retro/'+endpoint,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal
+    const response=await fetch('/api/retro/games',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roots}),signal
     });
     if(!response.ok) throw new Error('Retro settings could not be saved');
-    const data=await response.json();
     if(signal.aborted) return;
-    if(data.tile){
-      if(data.hub&&!cfg.tiles.some(tile=>tile.id===data.hub.id)) cfg.tiles.push(data.hub);
-      const existing=cfg.tiles.find(tile=>tile.id===data.tile.id);
-      if(existing) Object.assign(existing,data.tile);
-      else cfg.tiles.push(data.tile);
-      renderAll();
-    }
     await loadRetroGames();
   }catch(e){
     if(!signal.aborted){
@@ -794,11 +788,6 @@ async function updateRetroGames(endpoint,body,button){
       status.textContent=uiText.saveError;
     }
   }
-}
-
-function saveRetroRoots(){
-  const roots=document.getElementById('retroRoots').value.split('\n').filter(path=>path.trim());
-  return updateRetroGames('games',{roots},document.getElementById('retroSave'));
 }
 
 function renderRetroSelection(){
@@ -839,7 +828,7 @@ function renderRetroApproval(){
   renderRetroSelection();
 }
 
-async function approveRetroGame(){
+async function approveRetroSelection(){
   const signal=retroSession?.signal;
   const profileId=cfg.activeProfileId;
   const selection=[...retroSelectedGames];
