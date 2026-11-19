@@ -364,7 +364,7 @@
   @keyframes pageEnterBack { from { opacity:.72; transform:translateX(calc(-16px * var(--inline-motion-sign,1))); } to { opacity:1; transform:translateX(0); } }
   @keyframes screenEnterForward { from { opacity:.74; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   @keyframes screenEnterReturn { from { opacity:.78; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes panelEnter { from { opacity:.76; transform:translateX(12px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes panelEnter { from { opacity:.76; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
   @keyframes setupStepNext { from { opacity:.76; transform:translateX(calc(14px * var(--inline-motion-sign,1))); } to { opacity:1; transform:translateX(0); } }
   @keyframes setupStepBack { from { opacity:.76; transform:translateX(calc(-14px * var(--inline-motion-sign,1))); } to { opacity:1; transform:translateX(0); } }
   @keyframes overlayEnter { from { opacity:0; } to { opacity:1; } }
