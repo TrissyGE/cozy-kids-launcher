@@ -7,9 +7,9 @@
 
 **Turn an old Linux laptop into a friendly learning and media PC for kids—without taking the normal desktop away from parents.**
 
-Cozy Kids Launcher is a local-first, fullscreen home screen with large tiles, parent settings, screen-time controls, themes, and unified launching for apps, websites, music, and videos. There is no account, cloud dependency, subscription, or locked-down replacement operating system.
+Cozy Kids Launcher is a local-first, fullscreen home screen with large tiles, parent settings, screen-time controls, themes, and unified launching for apps, websites, music, videos, and retro games. There is no account, cloud dependency, subscription, or locked-down replacement operating system.
 
-[Install](#quick-start) · [Features](#highlights) · [Documentation](#documentation) · [Contribute](CONTRIBUTING.md)
+[Install](#quick-start) · [What's new in 0.8.0](#whats-new-in-080) · [Screenshots](#more-screenshots) · [Documentation](#documentation) · [Contribute](CONTRIBUTING.md) · [Website](https://cozykids.org/en/)
 
 ![Cozy Kids Launcher home screen](screenshots/screenshot-home-default.png)
 
@@ -25,17 +25,29 @@ Log out and back in. The launcher then starts automatically. Python 3 and either
 
 See the [installation guide](docs/INSTALL.md) for language, browser, launch-mode, manual-install, and troubleshooting options.
 
+## What's new in 0.8.0
+
+- **Daily screen-time budgets** let parents set a total per child alongside weekly and per-app schedules, and grant extra time when needed.
+- **Folders and controller navigation** keep each child's Home organized. Standard gamepads and keyboard-style remotes are optional for Home and the libraries.
+- **Parent app store** lets parents search the catalog and install supported apps from the guided package review. The full native catalog is joined by an optional user-scoped Flathub source for Tux Paint. [App-store guide](docs/APP_STORE.md)
+- **RetroGameCorner** is an optional tile for parent-approved local games. It offers large covers, console grouping, separate saves per child, emulator installation on supported systems, and a local device check. Families supply their own game files and any required firmware. [Device check](docs/RETRO_DEVICE.md)
+- **Five interface languages and update channels** let families use English, German, Spanish, French, or Italian and choose the optional Preview channel in Parent settings. Stable is the default. [Release notes](https://github.com/TrissyGE/cozy-kids-launcher/releases/tag/v0.8.0)
+
 ## Highlights
 
 - **Made for kids:** fullscreen interface, large touch-friendly tiles, keyboard navigation, multiple pages, and 4- or 9-tile layouts
 - **Made for parents:** optional PIN, editable and reorderable tiles, configuration import/export and restore, an opt-in local activity overview, privacy-safe diagnostics, desktop exit, and safe shutdown
 - **Apps and media:** one consistent launch path for Linux apps, exact-origin-bounded embedded websites, and a local cover library with per-child favorites, recents, and isolated MPV/VLC resume state
-- **Screen time:** timer controls, weekly and per-app schedules, remaining-time overlay, warning state, and PIN-protected block screens
+- **Screen time:** daily budgets, timer controls, weekly and per-app schedules, remaining-time overlay, warnings, and PIN-protected block screens
 - **Personal:** English, German, Spanish, French and Italian interfaces, color themes, gently animated illustrated worlds, optional local time-of-day tinting, local sounds and Linux speech feedback, a brief unscored celebration option, combinable accessibility presets, and a custom theme
 - **Local-first:** configuration and browser profiles stay on the device
 - **Safe updates:** immutable GitHub Releases, SHA-256 verification, downgrade protection, rollback, and compatibility with legacy installations
 
 ## More screenshots
+
+| Home with a child folder | RetroGameCorner grouped by console |
+|---|---|
+| ![Home with a Create and learn folder and the RetroGameCorner tile](screenshots/screenshot-folders.png) | ![Child game library with large cover images grouped by Game Boy and Game Boy Advance](screenshots/screenshot-retro-library.png) |
 
 | Child profile picker | Local media library |
 |---|---|
@@ -45,9 +57,9 @@ See the [installation guide](docs/INSTALL.md) for language, browser, launch-mode
 |---|---|
 | ![Opt-in local activity overview](screenshots/screenshot-admin-general.png) | ![Parent settings for separate child profiles](screenshots/screenshot-admin-children.png) |
 
-| Weekly and per-app schedules | Feedback and accessibility |
+| Daily budget and schedules | Feedback and accessibility |
 |---|---|
-| ![Parent settings for weekly and per-app schedules](screenshots/screenshot-admin-screen-time.png) | ![Appearance settings with audio feedback, celebrations, and accessibility presets](screenshots/screenshot-admin-appearance.png) |
+| ![Parent settings for a child's daily budget and weekly and per-app schedules](screenshots/screenshot-admin-screen-time.png) | ![Appearance settings with audio feedback, celebrations, and accessibility presets](screenshots/screenshot-admin-appearance.png) |
 
 | Illustrated world theme | Theme picker |
 |---|---|
@@ -64,7 +76,15 @@ directly through the desktop's package authorization. See the
 Parent guidance includes its review date and links to the project documentation.
 Unknown network behavior stays explicit rather than implying a privacy audit.
 
-![App details with review date and supporting sources](screenshots/screenshot-app-details.png)
+| Reviewed app guidance | Package source selection |
+|---|---|
+| ![App details with review date and supporting sources](screenshots/screenshot-app-details.png) | ![Tux Paint search result with Flathub selected and an installation button](screenshots/screenshot-app-sources.png) |
+
+### RetroGameCorner
+
+Parents choose game folders, approve games for each child, and can enable automatic cover downloads from Libretro. The v0.8.0 library supports Game Boy, Game Boy Color, Game Boy Advance, NES, SNES, Master System, and Game Gear. PlayStation 1 is an optional preview with a reviewed RetroArch core and parent-supplied firmware. [PS1 short test](docs/RETRO_BENCHMARK.md)
+
+![Parent RetroGameCorner settings for enabling the library and covers, choosing game folders, and setting up emulators](screenshots/screenshot-retro-parent.png)
 
 The screenshots use a clean, generated demo profile. Maintainers can recreate them with `python3 scripts/take-screenshots.py`; see the [screenshot guide](docs/SCREENSHOTS.md).
 
@@ -74,7 +94,7 @@ The screenshots use a clean, generated demo profile. Maintainers can recreate th
 Kids UI in the browser
         │ localhost only
         ▼
-Python launcher server ──► Linux apps / websites / VLC or MPV
+Python launcher server ──► Linux apps / websites / VLC or MPV / emulators
         │
         ├──► parent session, settings, timer
         └──► local JSON configuration and release updater

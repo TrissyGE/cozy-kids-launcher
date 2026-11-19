@@ -12,13 +12,16 @@ import getpass
 import hashlib
 import http.client
 import json
+import math
 import os
 import shutil
 import socket
+import struct
 import subprocess
 import sys
 import tempfile
 import time
+import zlib
 from pathlib import Path
 
 
@@ -182,6 +185,74 @@ def write_config(profile, theme):
     )
 
 
+def write_demo_cover(path, sky, sun, hills, foreground, phase):
+    """Draw an original landscape for a fictional game."""
+    width, height = 156, 208
+    rows = bytearray()
+    for y in range(height):
+        rows.append(0)  # PNG row filter
+        for x in range(width):
+            ridge = 130 + 17 * math.sin(x / 25 + phase)
+            slope = 168 + 14 * math.cos(x / 28 + phase)
+            if y > slope:
+                color = foreground
+            elif y > ridge:
+                color = hills
+            elif (x - 99) ** 2 + (y - 63) ** 2 < 27 ** 2:
+                color = sun
+            else:
+                color = tuple(min(255, channel + y // 5) for channel in sky)
+            rows.extend(color)
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header)
+                     + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+
+
+def write_v08_demo(home):
+    from retro_games import HUB_COMMAND, HUB_ID, RETRO_PREFIX, scan_retro_games
+
+    games_root = home / "Games"
+    games_root.mkdir()
+    pending_game = games_root / "Windmill Workshop.gbc"
+    pending_game.write_bytes(b"Fictional scanner fixture for screenshots\n")
+    titles = [
+        ("Clover Trails.gb", (62, 128, 143), (248, 228, 157), (38, 105, 100), (26, 64, 84)),
+        ("Moonlight Mail.gb", (55, 48, 100), (204, 203, 250), (84, 74, 129), (38, 35, 72)),
+        ("Lantern Lake.gba", (69, 92, 157), (255, 184, 117), (86, 111, 164), (39, 57, 100)),
+        ("Pebble Harbor.gba", (155, 92, 124), (255, 215, 153), (73, 112, 145), (43, 69, 106)),
+    ]
+    for phase, (filename, *palette) in enumerate(titles):
+        game_path = games_root / filename
+        game_path.write_bytes(b"Fictional scanner fixture for screenshots\n")
+        write_demo_cover(game_path.with_suffix(".png"), *palette, phase)
+
+    path = home / ".config" / "cozy-kids-launcher" / "config.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["retroRoots"] = [str(games_root)]
+    child = data["profiles"][0]
+    child["folders"] = [{"id": "creative", "label": "Create & learn", "emoji": "🎨"}]
+    for tile in child["tiles"]:
+        if tile["id"] in {"paint", "games"}:
+            tile["folderId"] = "creative"
+    child["tiles"].append({
+        "id": HUB_ID, "label": "RetroGameCorner", "emoji": "🎮",
+        "cmd": [HUB_COMMAND], "visible": True, "retroCovers": True,
+    })
+    games, _, _ = scan_retro_games(data["retroRoots"])
+    for identifier, game in games.items():
+        if game["path"] == str(pending_game):
+            continue
+        child["tiles"].append({
+            "id": f"retro-{identifier}", "label": game["title"], "emoji": "🎮",
+            "cmd": [f"{RETRO_PREFIX}{identifier}"], "visible": True,
+        })
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def write_demo_state(profile):
     media_files = [
         profile / "Videos" / "Moon Mission.mp4",
@@ -271,6 +342,7 @@ def main():
         raise SystemExit("Run this command on Linux or through WSL.")
 
     browser = find_browser(args.browser)
+    sys.path.insert(0, str(REPOSITORY_ROOT / "src"))
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -403,6 +475,7 @@ def main():
                         wednesday:[{start:'15:00',end:'18:00'}],
                         friday:[{start:'15:00',end:'18:30'}]
                       }}};
+                      cfg.dailyBudgetMinutes=90;
                       renderAdmin();
                       selectAppSchedule('games');
                       activateAdminSection('screen-time');
@@ -448,6 +521,68 @@ def main():
                     url,
                     output_dir / "screenshot-home-world.png",
                     root / "chrome-home-world",
+                )
+                write_config(launcher_home, "ocean")
+                write_v08_demo(launcher_home)
+                capture(
+                    browser, url, output_dir / "screenshot-folders.png",
+                    root / "chrome-folders",
+                )
+                capture(
+                    browser,
+                    url + "/media.html?tile=retro-corner",
+                    output_dir / "screenshot-retro-library.png",
+                    root / "chrome-retro-library",
+                    """(async () => {
+                      document.getElementById('retroGroup').click();
+                      const grid=document.getElementById('mediaGrid');
+                      grid.style.zoom='0.94';
+                      const covers=[...grid.querySelectorAll('img')];
+                      if(covers.length!==4) throw new Error('Expected four demo covers');
+                      await Promise.all(covers.map(img=>img.decode()));
+                      return true;
+                    })()""",
+                    ready_expression=(
+                        "typeof mediaItems !== 'undefined' && mediaItems.length === 4 "
+                        "&& !document.getElementById('retroGroup').hidden"
+                    ),
+                )
+                capture(
+                    browser, url, output_dir / "screenshot-retro-parent.png",
+                    root / "chrome-retro-parent",
+                    """(async () => {
+                      enterAdmin();
+                      activateAdminSection('retro');
+                      await loadRetroGames();
+                      document.querySelector('[data-admin-panel="retro"]').style.zoom='0.84';
+                      document.getElementById('retroRoots').value='/home/alex/Games';
+                      document.querySelector('[data-admin-section="retro"]').focus();
+                      return true;
+                    })()""",
+                )
+                write_config(launcher_home, "wald")
+                capture(
+                    browser, url, output_dir / "screenshot-app-sources.png",
+                    root / "chrome-app-sources",
+                    """(async () => {
+                      enterAdmin();
+                      activateAdminSection('apps');
+                      await loadRecommendations();
+                      recommendations=recommendations.map(rec=>rec.id==='tuxpaint'?{
+                        ...rec, installed:false,
+                        packageRoute:{mode:'direct',provider:'apt',operations:['install']},
+                        flatpakRoute:{mode:'direct',provider:'flatpak',operations:['install'],
+                          installed:false,cmd:['flatpak','run','--user','org.tuxpaint.Tuxpaint']}
+                      }:rec);
+                      catalogQuery='Tux Paint'; catalogCategory='all'; catalogStatus='all';
+                      catalogSources.set('tuxpaint','flatpak');
+                      renderRecommendations();
+                      const panel=document.getElementById('recommendations');
+                      panel.style.minHeight='calc(100vh - 120px)';
+                      document.getElementById('catalogSearch').focus({preventScroll:true});
+                      panel.scrollIntoView({block:'start'});
+                      return true;
+                    })()""",
                 )
             except Exception:
                 stop_process(server)
