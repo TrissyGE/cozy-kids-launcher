@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.8.0-rc.1] - 2026-11-19
+
+This candidate brings family time controls, child folders, a searchable Parent
+app store, five interface languages and the RetroGameCorner cartridge library.
+PlayStation 1 is an optional preview for a matching reviewed local core and
+firmware. The [roadmap](docs/ROADMAP.md) tracks further platform and console
+qualification after 0.8.
+
 ### Release laptop fixes
 
 - Save the RetroGameCorner visibility and cover switches immediately for the current child profile. Show confirmation or restore the previous setting if saving fails.
