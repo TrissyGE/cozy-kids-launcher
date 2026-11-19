@@ -308,7 +308,8 @@ that lack an equivalent core, including Wii U and PS3.
   - [x] Reassert lost fullscreen state on owned main windows without restarting the application or taking focus from another app
   - [x] Acknowledge the close overlay only after its button is mapped; keep status HTTP requests off the Tk thread and restore only the verified launcher browser
   - [x] Reposition a displaced close overlay inside an active RandR monitor; verify an XFCE virtual-output resize and cover offset/primary layouts with focused tests
-  - [ ] Complete real suspend/resume, physical multi-monitor hotplug and audio-device removal/reconnection on the Linux test laptop and required desktop sessions
+  - [x] Verify suspend/resume and launcher use on the physical Linux test laptop ([v0.8 laptop acceptance](DESKTOP_TESTING.md#v08-laptop-acceptance))
+  - [ ] Complete suspend/resume, physical multi-monitor hotplug and audio-device removal/reconnection across the required desktop sessions
 - [ ] Define and measure cold-start, idle-memory, and low-powered-device performance budgets
   - [x] Add first-launch timings and proportional idle memory to the opt-in desktop smoke report
   - [ ] Establish a repeatable baseline and confirm the provisional budgets on the low-powered physical test device
@@ -407,4 +408,4 @@ A release milestone additionally requires its open distribution/desktop gates
 and the full gate in [RELEASING.md](RELEASING.md). A checked implementation task
 does not substitute for an unperformed release or physical-device acceptance.
 
-- [ ] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix.
+- [x] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix. [v0.8 laptop acceptance](DESKTOP_TESTING.md#v08-laptop-acceptance)

@@ -396,6 +396,30 @@ comparison point for the physical device.
 - Reconnect the gamepad and removable game storage and check that the launcher recovers without restarting.
 - Suspend and resume with a child app running; reconnect an external monitor and the audio device, then confirm app input, audible output, reachable close and launcher return. Repeat across the required desktop sessions and record any app-specific audio restart requirement.
 
+### v0.8 laptop acceptance
+
+On 2026-11-19 the tester reported that the remaining manual laptop checks
+worked as expected. The disposable profile ran the v0.8.0-rc.1 runtime
+(`cc97f0e`, with identical runtime and Debian control files in the candidate
+`c12a2da`) on a Lenovo V320-17IKB with Zorin OS 17.3, GNOME Wayland,
+Firefox in kiosk mode and a ThrustMaster XB1 Classic Controller.
+
+- The system journal recorded suspend and resume. The launcher recorded a
+  RetroGameCorner start 20 seconds after resume.
+- The earlier hands-on run verified keyboard and gamepad input and a persistent
+  Game Boy save. Mednafen and the PS1 preview reached fullscreen, opened audio
+  streams, and returned to the launcher through the close overlay.
+- The upgrade from the official v0.6.0 archive to the candidate preserved the
+  configuration byte for byte. The Parent PIN boundary and local Miyoo library
+  recovery after remount were also verified.
+- Across three fresh browser profiles, median server readiness was 494 ms
+  and median browser executable startup was 895 ms. The two complete idle PSS
+  measurements were 532 and 541 MiB. A third idle measurement was incomplete.
+  The provisional 450 MiB investigation target remains open.
+
+The automated VM runs on GNOME Wayland, Plasma Wayland and XFCE X11 retain
+`automation-passed-manual-pending` for the observations specific to each row.
+
 ## Release evidence
 
 Attach the three primary `report.json` files to the release-candidate test notes or CI run. Record the exact commit, distribution version, desktop version, session type, browser version, display topology, and any compositor-specific workaround beside the reports.
