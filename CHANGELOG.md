@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.8.0-rc.1] - 2026-11-19
+## [0.8.0] - 2026-11-19
 
-This candidate brings family time controls, child folders, a searchable Parent
+This release adds family time controls, child folders, a searchable Parent
 app store, five interface languages and the RetroGameCorner cartridge library.
 PlayStation 1 is an optional preview for a matching reviewed local core and
 firmware. The [roadmap](docs/ROADMAP.md) tracks further platform and console
