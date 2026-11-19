@@ -417,8 +417,24 @@ Firefox in kiosk mode and a ThrustMaster XB1 Classic Controller.
   measurements were 532 and 541 MiB. A third idle measurement was incomplete.
   The provisional 450 MiB investigation target remains open.
 
-The automated VM runs on GNOME Wayland, Plasma Wayland and XFCE X11 retain
-`automation-passed-manual-pending` for the observations specific to each row.
+### v0.8 desktop VM acceptance
+
+The tester accepted all three desktop sessions on 2026-11-19 after testing
+the visible VirtualBox guests. The guests used one 1600×900 virtual display
+each and ran a normal per-user installation from the checked v0.8.0-rc.1
+archive built at `c12a2da0302640dc9c814aa6ff90b78045d63398`.
+
+| Ubuntu 24.04.4 LTS desktop | Session | Browser and mode | Automated package report | Manual desktop acceptance |
+| --- | --- | --- | --- | --- |
+| GNOME 46 | Wayland | Firefox Snap 154.0.1, kiosk | [report.json](test-evidence/v0.8.0-rc.1/gnome/report.json) | Accepted |
+| Plasma 5.27.12 | Wayland | Chrome 152.0.7977.64, fullscreen | [report.json](test-evidence/v0.8.0-rc.1/plasma/report.json) | Accepted |
+| XFCE 4.18.3 | X11 | Chrome 152.0.7977.64, kiosk | [report.json](test-evidence/v0.8.0-rc.1/xfce/report.json) | Accepted |
+
+The reports capture the earlier automated Debian package run (`cc97f0e`,
+with runtime and Debian control files identical to `c12a2da`). In XFCE, the
+passing package run launched KTurtle by clicking the Home tile after earlier
+direct API launches intermittently lost focus. The GNOME test session was
+unlocked after going idle before the tester completed the manual pass.
 
 ## Release evidence
 

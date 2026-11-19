@@ -409,3 +409,4 @@ and the full gate in [RELEASING.md](RELEASING.md). A checked implementation task
 does not substitute for an unperformed release or physical-device acceptance.
 
 - [x] Run the release candidate end to end on the physical Linux test laptop and record real keyboard and gamepad input, including RetroGameCorner, alongside the VM matrix. [v0.8 laptop acceptance](DESKTOP_TESTING.md#v08-laptop-acceptance)
+- [x] Complete manual acceptance of the v0.8 release candidate on GNOME Wayland, Plasma Wayland and XFCE X11. [v0.8 desktop VM acceptance](DESKTOP_TESTING.md#v08-desktop-vm-acceptance)
