@@ -72,6 +72,16 @@ acceptance evidence is ready. [Branching](BRANCHING.md)
 
 ## v0.8.5 — Desktop and package qualification
 
+### Visual refresh
+
+- [ ] **Give Cozy Kids a more distinct, modern visual identity.** Start with
+  a consistent type scale, spacing, icon style, and clearer focus and action
+  states. Apply them to Home, Parent settings, and the media and retro
+  libraries, using the large tiles and illustrated worlds as the foundation.
+  Review the resulting screens at 800×600 and on a living-room display,
+  including large text, high contrast, keyboard, and controller use. Refresh
+  the README and website gallery from the finished launcher.
+
 ### Native packages and catalog
 
 - [ ] **Qualify the first-party DEB on Mint and Zorin.** Repeat clean first

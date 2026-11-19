@@ -677,6 +677,9 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(availability["reason"], "daily_budget")
         self.assertEqual(availability["budget"]["remainingSeconds"], 0)
+        self.assertNotIn("usedSeconds", availability["budget"])
+        self.assertNotIn("extraMinutes", availability["budget"])
+        self.assertEqual(self.request("/api/budget/overview")[0], 403)
         self.assertIn("nextAllowedAt", availability)
         self.assertNotIn("weeklySchedule", availability)
         with mock.patch.object(server_module, "launch_owned_tile") as launch:
@@ -690,6 +693,12 @@ class ServerApiTests(unittest.TestCase):
             self.assertNotIn("Set-Cookie", headers)
             if expected == 200:
                 self.assertEqual(payload["budget"]["remainingSeconds"], 5400)
+        status, overview, _ = self.request("/api/budget/overview", cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(overview["daily"], {
+            "enabled": True, "usedSeconds": 60, "remainingSeconds": 5400, "extraMinutes": 90,
+        })
+        self.assertEqual(overview["weekly"], {"enabled": False})
 
     def test_copy_profile_requires_parent_and_copies_policy_without_consumed_time(self):
         self.enable_pin("1234")
@@ -875,6 +884,31 @@ class ServerApiTests(unittest.TestCase):
             launch.assert_called_once()
 
     @unittest.skipUnless(sys.platform.startswith("linux"), "BIOS storage uses Linux permissions")
+    def test_batch_retro_approval_rechecks_changed_files_and_keeps_valid_items(self):
+        root = Path(self.temp_dir.name).resolve() / "Retro fixtures"
+        root.mkdir()
+        (root / "Ready.gba").write_bytes(b"ready")
+        changed = root / "Changed.nes"
+        changed.write_bytes(b"original game")
+        self.enable_pin()
+        cookie = self.authenticate()
+        endpoint = "/api/retro/approve"
+        self.assertEqual(self.request("/api/retro/games", "POST", {"roots": [str(root)]}, cookie)[0], 200)
+        _, library, _ = self.request("/api/retro/games", cookie=cookie)
+        ids = {game["title"]: game["id"] for game in library["games"]}
+        selection = {"gameIds": [ids["Ready"], ids["Changed"]], "profileId": "default"}
+        changed.write_bytes(b"changed")
+        self.assertEqual(self.request(endpoint, "POST", selection)[0], 403)
+        self.assertEqual(self.request(endpoint, "POST", {**selection, "profileId": "another"}, cookie)[0], 400)
+        with mock.patch.object(server_module, "save_cfg", side_effect=OSError("fixture")):
+            self.assertEqual(self.request(endpoint, "POST", selection, cookie)[0], 400)
+        status, approved, _ = self.request(endpoint, "POST", selection, cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual([tile["id"] for tile in approved["tiles"]], [f"retro-{ids['Ready']}"])
+        self.assertEqual(approved["failed"], [{"gameId": ids["Changed"], "reason": "unavailable"}])
+        _, library, _ = self.request("/api/retro/games", cookie=cookie)
+        self.assertEqual(library["approvedIds"], [ids["Ready"]])
+
     def test_retro_saves_are_parent_only_and_isolated_by_profile(self):
         self.enable_pin()
         cookie = self.authenticate()
@@ -2029,10 +2063,25 @@ class ServerApiTests(unittest.TestCase):
         self.assertNotIn("pinHash", serialized)
         self.assertNotIn(self.temp_dir.name, serialized)
 
+        preview_url = "/api/backups/preview?id=20260825-120000"
+        self.assertEqual(self.request(preview_url)[0], 403)
+        status, preview, _ = self.request(preview_url, cookie=cookie)
+        self.assertEqual(status, 200)
+        self.assertEqual(preview["profileCount"], 1)
+        self.assertEqual(preview["changes"], ["profiles", "settings"])
+        self.assertNotIn("Restored family settings", json.dumps(preview))
+        current["title"] = "A newer family setting"
+        server_module.save_cfg(current)
+        stale_request = {"backupId": "20260825-120000", "revision": preview["revision"]}
+        self.assertEqual(self.request("/api/backups/restore", "POST", stale_request, cookie)[0], 409)
+        self.assertEqual(server_module.load_cfg()["title"], "A newer family setting")
+        current["title"] = "Current family settings"
+        server_module.save_cfg(current)
+        _, preview, _ = self.request(preview_url, cookie=cookie)
         status, result, _ = self.request(
             "/api/backups/restore",
             method="POST",
-            body={"backupId": "20260825-120000"},
+            body={"backupId": "20260825-120000", "revision": preview["revision"]},
             cookie=cookie,
             origin=self.base_url,
         )
@@ -2085,6 +2134,8 @@ class ServerApiTests(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertEqual(data["backups"], [])
+        self.assertEqual(data["incompatibleCount"], 2)
+        self.assertEqual(self.request("/api/backups/preview?id=20260825-120000")[0], 400)
 
     def test_login_allows_save_without_overwriting_pin(self):
         self.enable_pin()
@@ -2846,7 +2897,8 @@ class FrontendSafetyTests(unittest.TestCase):
         self.assertIn("@media (forced-colors: active)", styles)
         self.assertIn("border:2px solid ButtonText", styles)
         self.assertIn("@media (max-width:900px), (max-height:700px)", styles)
-        self.assertIn("#admin .wrap { max-height:calc(100vh - 76px)", styles)
+        self.assertIn("#admin { --admin-height:calc(100dvh - 76px)", styles)
+        self.assertIn(".admin-workspace { display:grid; min-height:0; overflow:auto", styles)
         for field in (
             "accessibilityLargeText",
             "accessibilityHighContrast",

@@ -50,7 +50,9 @@ class DailyBudgetTests(unittest.TestCase):
         self.local_time -= timedelta(days=1)
         self.assertEqual(self.budget.status("child", 1)["remainingSeconds"], 0)
         self.local_time += timedelta(days=2)
-        self.assertEqual(self.budget.status("child", 1)["remainingSeconds"], 60)
+        self.assertEqual(self.budget.status("child", 1, details=True), {
+            "enabled": True, "remainingSeconds": 60, "usedSeconds": 0, "extraMinutes": 0,
+        })
         self.budget.begin("child", "game", 1, alive=lambda: True)
         self.monotonic += 5
         self.budget.finish()

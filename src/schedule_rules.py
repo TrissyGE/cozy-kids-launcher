@@ -137,6 +137,28 @@ def next_profile_opening(schedule, earliest):
     return None
 
 
+def schedule_overview(schedule, now):
+    """Summarize the saved weekly schedule and its next change in local time."""
+    if not schedule or not schedule.get("enabled"):
+        return {"enabled": False}
+    current = datetime.fromtimestamp(now)
+    allowed = schedule_is_open(schedule, current)
+    boundaries = set()
+    for offset in range(8):
+        day = current.date() + timedelta(days=offset)
+        for window in schedule["days"].get(WEEKDAYS[day.weekday()], []):
+            start = _minute_of_day(window["start"], "schedule.start")
+            end = _minute_of_day(window["end"], "schedule.end", allow_end_of_day=True)
+            midnight = datetime.combine(day, datetime.min.time())
+            for minute in (start, end):
+                local = midnight + timedelta(minutes=minute)
+                boundaries.update(local.replace(fold=fold).timestamp() for fold in (0, 1))
+    change = next((int(boundary) for boundary in sorted(boundaries)
+                   if boundary > now and schedule_is_open(
+                       schedule, datetime.fromtimestamp(boundary)) != allowed), None)
+    return {"enabled": True, "allowed": allowed, "nextChangeAt": change}
+
+
 def availability_summary(config, when=None):
     """Return the child-safe status used by the launcher interface."""
     profile_allowed = schedule_is_open(config.get("weeklySchedule"), when=when)

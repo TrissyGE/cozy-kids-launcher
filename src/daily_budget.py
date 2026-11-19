@@ -71,7 +71,7 @@ class DailyBudget:
     def _now_ms(self):
         return int(self.clock() * 1000)
 
-    def status(self, profile, minutes):
+    def status(self, profile, minutes, *, details=False):
         if not minutes:
             return {"enabled": False}
         try:
@@ -84,6 +84,8 @@ class DailyBudget:
             used = max(0, used + self._now_ms() - session.last_ms - CHECKPOINT_MS)
         remaining = max(0, (minutes + entry["extra"]) * 60_000 - used)
         result = {"enabled": True, "remainingSeconds": (remaining + 999) // 1000}
+        if details:
+            result.update(usedSeconds=used // 1000, extraMinutes=entry["extra"])
         if not remaining:
             next_day = date.fromisoformat(entry["day"]) + timedelta(days=1)
             result["nextAvailableAt"] = int(datetime.combine(next_day, midnight.min).timestamp())

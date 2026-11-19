@@ -10,6 +10,8 @@ let mediaRecentIds=[];
 let mediaFilter='all';
 let retroSystem='';
 let retroGrouped=false;
+let retroViewPreference='';
+const RETRO_GROUPED_VIEW='@grouped';
 let mediaSourceRevision='';
 let mediaCatalogLoading=false;
 let mediaSourceChecking=false;
@@ -188,8 +190,9 @@ function renderRetroFilters(){
   const systems=[...labels.keys()].sort((first,second)=>labels.get(first).localeCompare(labels.get(second)));
   const group=document.getElementById('retroGroup');
   group.hidden=systems.length<2;
-  if(!systems.includes(retroSystem)||systems.length<2) retroSystem='';
-  if(group.hidden){ retroGrouped=false; return; }
+  retroSystem=!group.hidden&&systems.includes(retroViewPreference)?retroViewPreference:'';
+  retroGrouped=!group.hidden&&retroViewPreference===RETRO_GROUPED_VIEW;
+  if(group.hidden) return;
   for(const system of ['',...systems]){
     const button=document.createElement('button');
     button.type='button';
@@ -198,6 +201,11 @@ function renderRetroFilters(){
     button.textContent=labels.get(system)||mediaText.retroLibraryAll;
     filters.insertBefore(button,group);
   }
+}
+
+function rememberRetroView(view){
+  retroViewPreference=view;
+  try{ localStorage.setItem('cozyRetroView:'+mediaConfig.activeProfileId,view); }catch(e){}
 }
 
 function retroConsoleSections(items){
@@ -273,6 +281,10 @@ async function loadMediaCatalog(){
           typeof payload.sourceRevision!=='string'||!Array.isArray(payload.favoriteIds)||!Array.isArray(payload.recentIds)
         ))){
       throw new Error('Invalid catalog');
+    }
+    if(retroLibrary&&payload.profileId&&payload.profileId!==mediaConfig.activeProfileId){
+      mediaHome();
+      return;
     }
     mediaItems=payload.items;
     mediaCoverRevision+=1;
@@ -403,6 +415,7 @@ async function initializeMediaLibrary(){
     if(mediaCatalogLoading) return;
     retroGrouped=!retroGrouped;
     retroSystem='';
+    rememberRetroView(retroGrouped?RETRO_GROUPED_VIEW:'');
     renderMediaCatalog();
     document.getElementById('mediaGrid').scrollTop=0;
   });
@@ -411,6 +424,7 @@ async function initializeMediaLibrary(){
     if(system&&retroLibrary&&!mediaCatalogLoading){
       retroSystem=system.dataset.retroSystem;
       retroGrouped=false;
+      rememberRetroView(retroSystem);
       renderMediaCatalog();
       document.querySelector('.media-card')?.focus();
       return;
@@ -431,6 +445,9 @@ async function initializeMediaLibrary(){
     const tile=mediaTile(mediaConfig,mediaTileId);
     if(!tile){ mediaHome(); return; }
     retroLibrary=tile.cmd[0]==='special:retro-library';
+    if(retroLibrary){
+      try{ retroViewPreference=localStorage.getItem('cozyRetroView:'+mediaConfig.activeProfileId)||''; }catch(e){}
+    }
     applyMediaTheme(mediaConfig);
     localizeMediaPage(tile);
     await loadMediaCatalog();

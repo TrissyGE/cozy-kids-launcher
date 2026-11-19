@@ -313,11 +313,26 @@ def run_retro_scenario(browser, test_home):
     browser.click("#ps1BiosTitle")
     browser.set_value("#retroRoots", str(retro_root))
     browser.click("#retroSave")
-    browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='Local Test'")
+    browser.wait_for("document.querySelectorAll('#retroGameChoices input').length===2")
+    browser.set_value("#retroGameSearch", "Local")
+    assert_js(browser, "document.querySelectorAll('#retroGameChoices input').length===1 && "
+              "document.getElementById('retroGameChoices').textContent.includes('Local Test')",
+              "The Parent game search did not narrow the list")
+    browser.click("#retroGameChoices input")
+    browser.set_value("#retroGameSearch", "")
+    browser.set_value("#retroGameConsole", "Nintendo - Nintendo Entertainment System")
+    assert_js(browser, "document.querySelectorAll('#retroGameChoices input').length===1 && "
+              "document.getElementById('retroGameChoices').textContent.includes('TV Game')",
+              "The Parent console filter did not narrow the list")
+    browser.click("#retroGameChoices input")
     browser.click("#retroApprove")
+    browser.wait_for("confirmationIsOpen() && document.getElementById('confirmMessage').textContent.includes('(2)')")
+    browser.click("#confirmCancelBtn")
+    assert_js(browser, "retroSelectedGames.size===2 && !cfg.tiles.some(tile=>tile.id.startsWith('retro-'))",
+              "Cancelling bulk approval changed the child library or selection")
+    browser.click("#retroApprove")
+    browser.click("#confirmActionBtn")
     browser.wait_for("cfg.tiles.some(tile=>tile.label==='Local Test' && tile.cmd[0].startsWith('special:retro:'))")
-    browser.wait_for("document.getElementById('retroGame').selectedOptions[0]?.textContent==='TV Game'")
-    browser.click("#retroApprove")
     browser.wait_for("cfg.tiles.some(tile=>tile.label==='TV Game' && tile.cmd[0].startsWith('special:retro:'))")
     game_id = browser.evaluate("cfg.tiles.find(tile=>tile.label==='Local Test').cmd[0].split(':').at(-1)")
     save_dir = test_home / ".local/state/cozy-kids-launcher/retro/default" / game_id
@@ -368,6 +383,10 @@ def run_retro_scenario(browser, test_home):
     assert_js(browser, "document.querySelectorAll('.media-card').length===1 && "
               "document.querySelector('.media-card-title').textContent==='TV Game'",
               "The console filter did not isolate the selected system")
+    browser.evaluate("window.__beforeRetroReload=true; location.reload()")
+    browser.wait_for("!window.__beforeRetroReload && document.querySelector('.media-card-title')?.textContent==='TV Game'")
+    assert_js(browser, "document.querySelectorAll('.media-card').length===1",
+              "The child console choice did not survive library reload")
     browser.click('[data-retro-system="Nintendo - Game Boy Advance"]')
     browser.wait_for("document.querySelector('.media-cover img')?.naturalWidth>0",
                      message="The approved game did not display its local cover")
@@ -1912,7 +1931,7 @@ def run_accessibility_scenarios(browser, artifacts):
         browser,
         "document.documentElement.scrollWidth<=window.innerWidth && "
         "document.querySelector('#admin .wrap').scrollWidth<=document.querySelector('#admin .wrap').clientWidth+1 && "
-        "getComputedStyle(document.querySelector('#admin .wrap')).overflowY==='auto' && "
+        "getComputedStyle(document.querySelector('.admin-workspace')).overflowY==='auto' && "
         "document.getElementById('adminTitle').getBoundingClientRect().top>=64 && "
         "document.querySelectorAll('[data-admin-section]').length===7 && "
         "Array.from(document.querySelectorAll('[data-admin-section]')).every(button => "
@@ -1926,6 +1945,7 @@ def run_accessibility_scenarios(browser, artifacts):
         "overview",
         "children",
         "apps",
+        "retro",
         "screen-time",
         "appearance",
         "system",
@@ -1934,25 +1954,28 @@ def run_accessibility_scenarios(browser, artifacts):
         metrics = browser.evaluate(
             "(() => { activateAdminSection(" + json.dumps(section) + "); "
             "const panel=document.querySelector(" + panel_selector + "); "
-            "const wrap=document.querySelector('#admin .wrap'); "
+            "const wrap=document.querySelector('.admin-workspace'); "
+            "wrap.scrollTop=wrap.scrollHeight; "
+            "const controls=['backBtn','saveBtn'].map(id=>document.getElementById(id).getBoundingClientRect()); "
             "return {hidden:panel.hidden,panelScroll:panel.scrollWidth,"
             "panelClient:panel.clientWidth,wrapScroll:wrap.scrollWidth,"
-            "wrapClient:wrap.clientWidth}; })()"
+            "wrapClient:wrap.clientWidth,actionsVisible:controls.every(rect=>rect.top>=0&&rect.bottom<=innerHeight)}; })()"
         )
         if (
             metrics["hidden"]
             or metrics["panelScroll"] > metrics["panelClient"] + 1
             or metrics["wrapScroll"] > metrics["wrapClient"] + 1
+            or not metrics["actionsVisible"]
         ):
             raise AssertionError(
                 f"Parent section {section!r} overflows at 800x600: {metrics!r}"
             )
     browser.evaluate(
-        "activateAdminSection('appearance'); document.querySelector('#admin .wrap').scrollTop=0"
+        "activateAdminSection('appearance'); document.querySelector('.admin-workspace').scrollTop=0"
     )
     browser.screenshot(artifacts / "low-resolution-appearance.png")
     browser.evaluate(
-        "activateAdminSection('apps'); document.querySelector('#admin .wrap').scrollTop=0"
+        "activateAdminSection('apps'); document.querySelector('.admin-workspace').scrollTop=0"
     )
     browser.screenshot(artifacts / "low-resolution-apps.png")
     browser.evaluate("activateAdminSection('overview')")
@@ -1968,6 +1991,61 @@ def run_accessibility_scenarios(browser, artifacts):
     run_rtl_layout_scenario(browser, artifacts)
 
 
+def run_everyday_parent_scenario(browser, test_home, artifacts):
+    browser.wait_for("typeof cfg!=='undefined' && cfg && bootstrapPromise===null")
+    browser.evaluate("enterAdmin(); activateAdminSection('screen-time')")
+    for width, height in ((800, 600), (640, 480)):
+        browser.set_device_metrics(width, height)
+        for language in ("de", "en", "es", "fr", "it"):
+            browser.evaluate(
+                f"loadInterfaceLanguage({json.dumps(language)}).then(renderAdmin)",
+                await_promise=True,
+            )
+            for section in ("screen-time", "apps", "retro"):
+                assert_js(browser, f"""(() => {{
+                  activateAdminSection({json.dumps(section)});
+                  const area=document.querySelector('.admin-workspace');
+                  area.scrollTop=area.scrollHeight;
+                  return area.scrollWidth<=area.clientWidth+1 &&
+                    ['backBtn','saveBtn'].every(id=>{{
+                      const rect=document.getElementById(id).getBoundingClientRect();
+                      return rect.bottom<=innerHeight && rect.right<=innerWidth && rect.height>0;
+                    }}) && document.getElementById('adminActiveChild').textContent.includes(activeProfileSummary().name);
+                }})()""", f"Parent controls clipped in {language}/{section} at {width}x{height}")
+    browser.set_device_metrics(800, 600)
+    browser.evaluate("activateAdminSection('screen-time')")
+    browser.wait_for("document.getElementById('timeOverviewBudget').textContent.length>0 && "
+                     "document.getElementById('timeOverviewSchedule').textContent.length>0")
+    browser.screenshot(artifacts / "screen-time-overview.png")
+    config = test_home / ".config" / "cozy-kids-launcher" / "config.json"
+    saved = json.loads(config.read_text(encoding="utf-8"))
+    original_title = browser.evaluate("cfg.title")
+    if "profiles" in saved:
+        active = next(child for child in saved["profiles"] if child["id"] == saved["activeProfileId"])
+    else:
+        active = saved
+    active["title"] = "Backup preview fixture"
+    backup = test_home / ".local/share/cozy-kids-launcher-backups/20261118-120000/config.json"
+    backup.parent.mkdir(parents=True)
+    backup.write_text(json.dumps(saved), encoding="utf-8")
+    browser.evaluate("activateAdminSection('system'); loadBackups()", await_promise=True)
+    browser.set_value("#backupSelect", "20261118-120000")
+    browser.click("#restoreBackupBtn")
+    browser.wait_for("confirmationIsOpen() && document.getElementById('confirmMessage').textContent.includes('2026')")
+    browser.screenshot(artifacts / "backup-preview.png")
+    browser.key_press("Escape")
+    assert_js(browser, "document.activeElement.id==='restoreBackupBtn' && cfg.title===" + json.dumps(original_title),
+              "Cancelling the backup preview changed settings or lost focus")
+    browser.click("#restoreBackupBtn")
+    browser.wait_for("confirmationIsOpen()")
+    browser.click("#confirmActionBtn")
+    browser.wait_for("cfg.title==='Backup preview fixture' && backupState==='ready'")
+    browser.evaluate("cfg.title=" + json.dumps(original_title) + ";persistConfig()", await_promise=True)
+    browser.evaluate("closeAdmin()")
+    browser.set_device_metrics(1440, 900)
+    log_scenario("Parent actions stay visible across five languages and restore previews require confirmation")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--browser", help="Chromium-family executable name")
@@ -1977,7 +2055,7 @@ def main():
         default=REPOSITORY_ROOT / ".test-artifacts" / "browser-e2e",
     )
     parser.add_argument("--timeout", type=float, default=25)
-    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak", "updates"), default="all")
+    parser.add_argument("--suite", choices=("all", "core", "regressions", "retro", "folders", "flatpak", "updates", "everyday"), default="all")
     args = parser.parse_args()
 
     browser_path = find_browser(args.browser)
@@ -2058,7 +2136,7 @@ def main():
                 }),
                 encoding="utf-8",
             )
-            write_demo_config(config_path, browser_name, setup_completed=args.suite in ("regressions", "retro", "folders", "flatpak", "updates"))
+            write_demo_config(config_path, browser_name, setup_completed=args.suite not in ("all", "core"))
             installed_version = (app_root / "version").read_text(encoding="utf-8").strip()
             ReleaseFixtureHandler.latest_version = "0.0.0" if "-rc." in installed_version else installed_version
 
@@ -2119,6 +2197,8 @@ def main():
                         if args.suite == "all":
                             browser.devtools.call("Page.navigate", {"url": base_url + "/index.html"})
                         run_folder_scenarios(browser, args.artifacts)
+                    if args.suite in ("all", "everyday"):
+                        run_everyday_parent_scenario(browser, test_home, args.artifacts)
                     browser.screenshot(args.artifacts / "final-state.png")
                 except Exception:
                     browser.screenshot(args.artifacts / "failure.png")
